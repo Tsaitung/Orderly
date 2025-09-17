@@ -1,0 +1,35 @@
+{
+  "name": "orderly-platform",
+  "version": "1.0.0",
+  "description": "井然 Orderly - 餐飲供應鏈數位平台",
+  "private": true,
+  "workspaces": [
+    "backend/api-gateway",
+    "backend/user-service",
+    "frontend",
+    "shared/types"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "concurrently \"npm run dev --workspace=backend/api-gateway\" \"npm run dev --workspace=backend/user-service\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.0",
+    "eslint": "^8.45.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.6"
+  },
+  "keywords": ["orderly", "supply-chain", "restaurant", "platform"],
+  "author": "Orderly Team",
+  "license": "MIT"
+}
