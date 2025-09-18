@@ -1,6 +1,47 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '../../../lib/db'
-import { CacheService } from '../../../lib/redis'
+import { PrismaClient } from '@prisma/client'
+import Redis from 'ioredis'
+
+// Inline prisma connection (from lib/db.ts)
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined
+}
+const prisma = globalThis.prisma || new PrismaClient()
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma
+}
+
+// Inline Redis connection (from lib/redis.ts)
+declare global {
+  // eslint-disable-next-line no-var
+  var redis: Redis | undefined
+}
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
+const redis = globalThis.redis || new Redis(redisUrl, {
+  maxRetriesPerRequest: 3,
+  connectTimeout: 10000,
+  lazyConnect: true,
+  ...(process.env.NODE_ENV === 'development' && {
+    enableReadyCheck: false,
+    maxRetriesPerRequest: null
+  })
+})
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.redis = redis
+}
+
+// Simple health check for Redis  
+const CacheService = {
+  async healthCheck(): Promise<boolean> {
+    try {
+      await redis.ping()
+      return true
+    } catch {
+      return false
+    }
+  }
+}
 
 export async function GET() {
   const strictMode = process.env.HEALTH_STRICT === '1'
