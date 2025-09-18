@@ -2,7 +2,7 @@
 
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 
 # Install dependencies (root project)
 FROM base AS deps
@@ -15,7 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 # Generate Prisma Client for server code bundling
-RUN npx prisma generate --schema=./prisma/schema.prisma
+RUN npx prisma generate --schema=/app/prisma/schema.prisma
 # Build Next.js (standalone)
 RUN npm run build
 
