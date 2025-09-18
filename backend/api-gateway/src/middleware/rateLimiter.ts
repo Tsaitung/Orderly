@@ -8,8 +8,6 @@ import { logger } from './logger';
 const redis = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
-  retryDelayOnFailover: 100,
-  maxRetriesPerRequest: 3,
 });
 
 redis.on('error', (err) => {
@@ -25,7 +23,7 @@ export const rateLimitConfigs = {
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args),
+      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
       prefix: 'rl:public:',
     }),
     message: {
@@ -47,13 +45,15 @@ export const rateLimitConfigs = {
   authenticated: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // 1000 requests per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Use user ID for authenticated requests
       const userId = req.user?.id || req.ip;
       return `user:${userId}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args),
+      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
       prefix: 'rl:auth:',
     }),
     message: {
@@ -75,12 +75,14 @@ export const rateLimitConfigs = {
   premium: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5000, // 5000 requests per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
     keyGenerator: (req: Request) => {
       const userId = req.user?.id || req.ip;
       return `premium:${userId}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args),
+      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
       prefix: 'rl:premium:',
     }),
     message: {
@@ -88,18 +90,28 @@ export const rateLimitConfigs = {
       retryAfter: '15 minutes',
       limit: 5000,
     },
+    onLimitReached: (req: Request) => {
+      logger.warn(`Rate limit exceeded for premium user`, {
+        userId: req.user?.id,
+        ip: req.ip,
+        path: req.path,
+        correlationId: req.headers['x-correlation-id'],
+      });
+    },
   },
 
   // API keys - highest limits for B2B integrations
   apiKey: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10000, // 10000 requests per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
     keyGenerator: (req: Request) => {
       const apiKey = req.headers['x-api-key'] as string;
       return `api:${apiKey}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args),
+      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
       prefix: 'rl:api:',
     }),
     message: {
@@ -107,14 +119,24 @@ export const rateLimitConfigs = {
       retryAfter: '15 minutes',
       limit: 10000,
     },
+    onLimitReached: (req: Request) => {
+      logger.warn(`Rate limit exceeded for API key`, {
+        apiKey: req.headers['x-api-key'],
+        ip: req.ip,
+        path: req.path,
+        correlationId: req.headers['x-correlation-id'],
+      });
+    },
   },
 
   // Burst protection for sensitive operations
   sensitive: {
     windowMs: 5 * 60 * 1000, // 5 minutes
     max: 10, // Only 10 sensitive operations per 5 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args),
+      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
       prefix: 'rl:sensitive:',
     }),
     message: {
