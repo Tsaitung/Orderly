@@ -56,3 +56,31 @@ docker-compose.override.yml
 
 # Kubernetes
 k8s/secrets/
+
+# Next.js
+.next/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Google Cloud
+gcloud-service-key.json
+*.json
+!package*.json
+!tsconfig*.json
+
+# Certificates
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.bak
+*.backup

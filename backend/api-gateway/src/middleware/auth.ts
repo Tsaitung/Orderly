@@ -1,58 +1,94 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/services';
-import { UserRole } from '@orderly/types';
+import { logger } from './logger';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: UserRole;
-    organizationId: string;
+    role: string;
   };
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      res.status(401).json({
+        success: false,
+        message: 'No token provided, authorization denied',
+      });
+      return;
+    }
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      logger.error('JWT_SECRET not configured');
+      res.status(500).json({
+        success: false,
+        message: 'Server configuration error',
+      });
+      return;
+    }
+
+    try {
+      const decoded = jwt.verify(token, jwtSecret) as {
+        id: string;
+        email: string;
+        role: string;
+      };
+
+      req.user = decoded;
+      next();
+    } catch (jwtError) {
+      logger.warn('Invalid token:', { 
+        token: token.substring(0, 20) + '...', 
+        error: jwtError instanceof Error ? jwtError.message : 'Unknown error' 
+      });
+      
+      res.status(401).json({
+        success: false,
+        message: 'Token is not valid',
+      });
+      return;
+    }
+  } catch (error) {
+    logger.error('Auth middleware error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during authentication',
+    });
+    return;
+  }
+};
+
+export const optionalAuth = (req: AuthRequest, res: Response, next: NextFunction) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
-    return res.status(401).json({ success: false, error: 'Access token required' });
+    return next();
+  }
+
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    logger.error('JWT_SECRET not configured');
+    return next();
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, jwtSecret) as {
+      id: string;
+      email: string;
+      role: string;
+    };
+
     req.user = decoded;
-    next();
-  } catch (error) {
-    return res.status(403).json({ success: false, error: 'Invalid or expired token' });
+  } catch (jwtError) {
+    logger.warn('Invalid token in optional auth:', { 
+      error: jwtError instanceof Error ? jwtError.message : 'Unknown error' 
+    });
   }
+
+  next();
 };
-
-export const requireRole = (roles: UserRole[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ success: false, error: 'Authentication required' });
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ success: false, error: 'Insufficient permissions' });
-    }
-
-    next();
-  };
-};
-
-export const requireRestaurant = requireRole([
-  UserRole.RESTAURANT_OWNER,
-  UserRole.RESTAURANT_STAFF
-]);
-
-export const requireSupplier = requireRole([
-  UserRole.SUPPLIER_OWNER,
-  UserRole.SUPPLIER_STAFF
-]);
-
-export const requireAdmin = requireRole([
-  UserRole.PLATFORM_ADMIN
-]);

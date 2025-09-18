@@ -10,19 +10,25 @@
 ## 執行摘要
 
 ### 產品願景
-井然 Orderly 是一個全鏈路數位供應平台，旨在革新餐飲產業的供應鏈管理。透過單一介面串接餐廳與供應商，實現「下單 → 配送 → 驗收 → 對帳 → 結算」全流程數位化，並提供平台級監控與數據洞察。
+井然 Orderly 是一個以**自動化對帳**為核心的餐飲供應鏈數位解決方案，專注解決行業最大痛點——繁瑣易錯的對帳流程。透過 ERP 整合和 API 優先架構，實現「下單 → 配送 → 驗收 → 對帳 → 結算」全流程自動化，讓餐廳和供應商徹底告別手工對帳的時代。
 
 ### 核心價值主張
-- **餐廳端**: 數位化下單、透明化驗收、自動化對帳
-- **供應端**: 統一訂單管理、即時庫存同步、簡化收款流程
-- **平台端**: 全域數據監控、異常預警、業務洞察
+- **餐廳端**: **對帳時間減少90%**、ERP深度整合、透明化驗收、智能異常檢測
+- **供應端**: **應收週期縮短50%**、統一訂單管理、自動化收款流程、零爭議對帳
+- **平台端**: API驅動生態、全域數據監控、異常預警、業務洞察
 
 ### 關鍵成功指標
-| 角色 | KPI |
-|------|-----|
-| 餐廳端 | 下單時間減少70%、驗收錯漏率降至2%以下、結帳日準確率達95% |
-| 供應端 | 接單確認時長縮短至5分鐘內、補貨率提升至85%、應收週期縮短30% |
-| 平台端 | 平台GMV年增長150%、異常處理週期縮短至24小時、日誌覆蓋率達99% |
+| 角色 | 核心KPI | 目標值 |
+|------|---------|--------|
+| 餐廳端 | 對帳處理時間 | 從8小時減少至30分鐘 |
+| | 對帳錯誤率 | 從15%降至0.5%以下 |
+| | ERP整合率 | 60%客戶實現API整合 |
+| 供應端 | 收款週期 | 從45天縮短至22天 |
+| | 對帳爭議率 | 從20%降至2%以下 |
+| | 數位化率 | 80%供應商使用平台對帳 |
+| 平台端 | API調用量 | 月度100萬次API調用 |
+| | 平台GMV | 年增長150% |
+| | 自動化率 | 95%對帳流程無人工介入 |
 
 ---
 
@@ -75,15 +81,67 @@
 
 ### 主要競品對比
 
-| 維度 | 井然Orderly | FoodPanda供應鏈 | iCHEF市集 | 傳統ERP |
-|------|-------------|----------------|-----------|----------|
-| **目標市場** | 中小型餐飲 | 大型連鎖 | 小型餐飲 | 各規模企業 |
-| **核心優勢** | 全流程整合 | 物流配送 | POS整合 | 功能完整 |
-| **月費** | NT$0-9,999 | NT$15,000+ | NT$3,000+ | NT$20,000+ |
-| **上手難度** | 極簡單（10分鐘） | 中等（1週） | 簡單（3天） | 複雜（2週） |
-| **供應商網絡** | 開放生態 | 封閉體系 | 有限選擇 | 無 |
-| **行動支援** | 原生優化 | 基本功能 | 良好 | 有限 |
-| **數據智能** | AI驅動 | 基礎分析 | 基礎報表 | 複雜查詢 |
+| 維度 | 井然Orderly | CoCoMart | FoodPanda供應鏈 | iCHEF市集 | 傳統ERP |
+|------|-------------|----------|----------------|-----------|----------|
+| **目標市場** | 中小型餐飲 | 中小型餐飲 | 大型連鎖 | 小型餐飲 | 各規模企業 |
+| **核心優勢** | 自動化對帳 | 一站購足 | 物流配送 | POS整合 | 功能完整 |
+| **對帳功能** | 智能自動化 | 人工對帳 | 基礎對帳 | 無 | 複雜設定 |
+| **供應商發現** | 開放透明 | 僅付費廣告 | 封閉體系 | 有限選擇 | 無 |
+| **ERP整合** | 原生API | 無整合 | 基本整合 | 深度整合 | 完整整合 |
+| **月費** | NT$0-9,999 | NT$2,000+ | NT$15,000+ | NT$3,000+ | NT$20,000+ |
+| **上手難度** | 極簡單（10分鐘） | 簡單（30分鐘） | 中等（1週） | 簡單（3天） | 複雜（2週） |
+| **暫存倉儲** | 菜蟲合作 | 無 | 自有倉庫 | 無 | 無 |
+| **價格透明度** | 全市場比價 | 隱藏比價 | 封閉定價 | 基礎比價 | 無 |
+| **行動支援** | 原生優化 | 良好 | 基本功能 | 良好 | 有限 |
+
+### CoCoMart 直接競爭分析
+
+#### 市場定位相似性
+CoCoMart 是我們最直接的競爭對手，同樣專注於中小型餐飲的採購需求，已在市場建立一定知名度。然而，深入分析發現 CoCoMart 存在關鍵痛點，正是我們的機會點。
+
+#### 關鍵差異優勢分析
+
+**1. 對帳功能：核心差異化**
+- **CoCoMart**：依然需要人工對帳，月底餐廳需要逐筆核對發票
+- **井然優勢**：全自動對帳系統，90%減少對帳時間，0.5%錯誤率
+
+**2. 供應商發現機制**
+- **CoCoMart問題**：只顯示付費廣告的供應商，限制餐廳選擇
+- **井然優勢**：開放透明的供應商生態，真實價格比較，最佳性價比
+
+**3. ERP 整合能力**
+- **CoCoMart限制**：獨立平台，需要餐廳額外操作，無法與現有系統整合
+- **井然優勢**：原生 API 整合，與 ERP 無縫連接，工作流程不中斷
+
+**4. 暫存倉儲服務**
+- **CoCoMart缺失**：無法解決餐廳冷藏空間不足問題
+- **井然優勢**：與菜蟲合作提供暫時倉儲，解決空間限制（如烤食組合案例）
+
+**5. 價格透明度**
+- **CoCoMart問題**：隱藏供應商間價格比較，影響採購決策
+- **井然優勢**：全市場比價功能，幫助餐廳降低 5-8% 採購成本
+
+#### 轉換 CoCoMart 用戶策略
+
+**烤食組合案例分析**
+- **現狀**：已使用 CoCoMart，但冷藏空間不足，對帳仍需人工處理
+- **轉換價值主張**：
+  1. 解決冷藏空間問題（暫存倉儲）
+  2. 自動化對帳，減少月底 3-5 天人工作業
+  3. 更透明的價格比較，降低採購成本
+  4. 未來可與 ERP 整合，提升整體效率
+
+**轉換策略**
+1. **並行試用**：先解決 CoCoMart 無法解決的問題（對帳、倉儲）
+2. **逐步遷移**：從最痛點的供應商開始轉換
+3. **ROI 展示**：量化展示成本節省和效率提升
+4. **無縫切換**：提供數據遷移和過渡期支援
+
+#### 防守策略
+- **技術護城河**：深度 ERP 整合，CoCoMart 短期難以複製
+- **網絡效應**：供應商和餐廳雙邊網絡，先發優勢
+- **服務差異化**：專注對帳痛點，建立專業形象
+- **成本優勢**：API 優先架構，運營成本更低
 
 ### 差異化策略
 
@@ -115,40 +173,258 @@
 
 ---
 
+## ERP 整合進入市場策略
+
+### 核心策略：ERP 優先，API 驅動
+
+井然 Orderly 採用「ERP 整合優先」的進入市場策略，而非傳統的平台替代模式。我們認知到目標客戶已有 ERP 投資，強制遷移將面臨巨大阻力。因此，我們選擇與現有系統共存，透過 API 整合提供增值服務。
+
+### 三階段實施路徑
+
+#### 第一階段：種子客戶深度整合（0-6個月）
+**目標客戶特徵**
+- 已導入 ERP 系統的中型餐廳（月營收 200-800 萬）
+- 對帳痛點明顯，每月花費 20+ 小時處理對帳
+- 有 1-3 家主要供應商，願意配合數位化轉型
+- 決策層對提升營運效率有強烈需求
+
+**實施方式**
+- 提供完整 API 接口：報價、下單、查詢、修改、對帳
+- 菜蟲現有下單介面作為 API 情境不完善時的備用方案
+- 整合合作夥伴：與 ERP 廠商、代理商、數位轉型顧問建立合作關係
+- 我們直接提供 ERP 整合服務，建立技術能力和客戶關係
+
+**成功指標**
+- 完成 5-10 家餐廳的 ERP 整合
+- API 調用穩定性達 99.9%
+- 對帳時間平均減少 80%
+- 客戶 NPS 達 70+
+
+#### 第二階段：供應商網絡擴展（6-12個月）
+**自動化供應商導入**
+- 餐廳透過 ERP 發送採購需求至平台
+- 平台自動化發送 Line、傳真、電話給其他供應商
+- 建立供應商回覆標準化流程
+- 逐步引導供應商使用平台界面
+
+**供應商數位化輔導**
+- 協助願意轉型的供應商建立數位化作業流程
+- 提供免費基礎版帳號和培訓
+- 將其他餐廳訂單逐步遷移至統一平台
+- 建立供應商社群和最佳實踐分享
+
+**網絡效應啟動**
+- 餐廳：更多供應商選擇，更好的價格比較
+- 供應商：統一平台管理多個餐廳客戶
+- 平台：數據累積，AI 預測能力提升
+
+#### 第三階段：生態系統建設（12個月+）
+**ERP 合作夥伴計劃**
+- 與主要 ERP 廠商建立官方合作關係
+- 開發標準化整合套件和文件
+- 聯合行銷和客戶開發
+- 成為 ERP 生態系統的重要一環
+
+**垂直行業解決方案**
+- 針對不同餐飲類型（快餐、正餐、連鎖）客製化解決方案
+- 行業特定的對帳規則和流程
+- 專業化的客戶成功團隊
+
+### 客戶分層策略
+
+#### KA-Elite 級客戶（月營收 1000萬+）
+**代表客戶**：樂多多
+- **策略**：優先解決核心供應商整合，建立標杆案例
+- **服務模式**：專屬客戶成功經理，定制化 API 開發
+- **預期效果**：高端客戶背書，帶動產業標準制定
+
+#### KA-Growth 級客戶（月營收 500-1000萬）
+**代表客戶**：大樂司
+- **策略**：標準化 API 整合，重點關注 ROI 展示
+- **服務模式**：標準整合套件 + 專業技術支援
+- **預期效果**：規模化推廣的主力客群
+
+#### KA-Pilot 級客戶（月營收 200-500萬）
+**代表客戶**：烤食組合
+- **策略**：先解決最大痛點（對帳），再逐步擴展功能
+- **服務模式**：基礎 API + 人工輔助
+- **特殊考量**：CoCoMart 用戶需要提供明顯差異化價值
+
+#### 新導入 ERP 客戶
+**代表客戶**：KKH（營收雖未達標但剛導入 ERP）
+- **策略**：ERP 導入階段就整合我們的 API
+- **合作模式**：與 ERP 實施顧問合作
+- **長期價值**：培養數位化習慣，未來成長潛力大
+
+### 特殊情況處理策略
+
+#### 無 ERP 或不願 API 整合的客戶
+**代表客戶**：稻舍（ERP API 成本 NT$30,000，老闆不願支付）
+- **解決方案**：批次處理模式
+  - 每日批次匯出採購數據
+  - Excel/CSV 格式標準化
+  - 人工輔助 + 自動化對帳
+- **成本考量**：減少人工成本，提高處理效率
+- **升級路徑**：展示 ROI 後，推動 API 整合
+
+#### 多據點分散經營客戶
+**代表客戶**：稻舍（80% 在百貨公司）
+- **解決方案**：多據點統一管理
+- **技術架構**：分店數據聚合 + 總部統一對帳
+- **差異化服務**：據點間庫存調撥、採購協同
+
+### 競爭優勢驗證
+
+#### 相較於 CoCoMart 的關鍵優勢
+1. **供應商發現能力**
+   - CoCoMart：僅顯示付費廣告的供應商
+   - 井然：開放生態，最佳價格比較
+
+2. **暫存倉儲能力**
+   - 與菜蟲合作，提供暫時倉儲服務
+   - 解決餐廳冷藏空間不足問題（如烤食組合）
+
+3. **ERP 深度整合**
+   - CoCoMart：獨立平台，需要額外操作
+   - 井然：ERP 原生整合，無縫工作流程
+
+### 成功指標與里程碑
+
+#### 6個月目標
+- ERP 整合客戶：10家
+- API 月調用量：10萬次
+- 平均對帳時間減少：70%
+- 供應商網絡：每家餐廳對接 3+ 供應商
+
+#### 12個月目標
+- ERP 整合客戶：50家
+- 供應商數位化：100家
+- 月 GMV：NT$5,000萬
+- 自動化對帳率：85%
+
+#### 24個月目標
+- 成為主要 ERP 廠商官方合作夥伴
+- 建立行業標準化對帳流程
+- 月 GMV：NT$2億
+- 市場佔有率：台北餐飲採購市場 15%
+
+---
+
 ## MVP定義與路線圖
 
-### Phase 0 - MVP核心功能（3個月內上線）
+### 對帳優先的 MVP 策略
 
-#### 必備功能 (Must Have)
-1. **基礎訂單流程**（4週）
-   - 簡化版商品目錄（支援100個SKU）
-   - 單一供應商下單流程
-   - 5個核心狀態追蹤
-   - 基礎驗收（數量確認，無拍照）
+基於深度市場調研，我們將 MVP 重新定義為「**對帳自動化優先**」的產品策略，專注解決行業最大痛點，輔以 API 優先架構支援 ERP 整合。
 
-2. **用戶與權限管理**（2週）
-   - 手機號註冊/登入（OTP驗證）
-   - 餐廳/供應商角色區分
-   - 基礎公司資料維護
-   - 簡單權限控制
+### Phase 0 - 對帳自動化 MVP（2個月內上線）
 
-3. **最小可行對帳**（2週）
-   - 手動產生週/月對帳單
-   - Excel/PDF匯出功能
-   - 簡單異議標記
-   - 基礎金額計算
+#### P0 核心功能：對帳自動化引擎
+**開發週期**：6週（並行開發）
 
-#### 成功指標
-| 指標類型 | 具體指標 | 目標值 | 衡量週期 |
+**1. 智能對帳核心（3週）**
+- 自動化對帳算法：數量、價格、時價商品處理
+- 差異檢測引擎：95% 準確率識別對帳差異
+- 對帳單自動生成：週/月報表，支援自定義週期
+- 異議管理工作流：提出、協商、解決、確認完整流程
+
+**2. ERP 整合 API 框架（3週）**
+- RESTful API 完整接口：訂單、價格表、對帳數據
+- 標準化數據格式：支援主流 ERP 系統
+- Webhook 事件通知：即時狀態更新
+- API 文檔和 SDK：快速整合支援
+
+**3. 基礎訂單管理（2週）**
+- 簡化訂單流程：僅支援核心狀態流轉
+- 價格表管理：支援固定價格和時價
+- 基礎驗收功能：數量確認和異常標記
+- 多租戶架構：餐廳/供應商角色隔離
+
+#### P1 支援功能：MVP 運營支援
+**開發週期**：2週
+
+**4. 用戶管理系統（1週）**
+- JWT 身份驗證：支援 ERP 系統單點登入
+- 角色權限控制：餐廳、供應商、平台管理員
+- 公司資料管理：基礎企業信息維護
+
+**5. 數據匯出入（1週）**
+- Excel/CSV 批量匯入：支援稻舍等批次處理客戶
+- 標準格式匯出：對帳單、訂單記錄
+- 數據驗證機制：確保匯入數據完整性
+
+#### MVP 成功指標（以對帳效果為核心）
+| 指標類別 | 核心指標 | 目標值 | 測量方式 |
 |----------|----------|--------|----------|
-| **用戶規模** | 註冊餐廳數 | 10家 | 3個月 |
-| | 註冊供應商數 | 5家 | 3個月 |
-| **交易指標** | 月GMV | NT$500萬 | Month 3 |
-| | 平均訂單金額 | NT$15,000 | 月度 |
-| **用戶體驗** | NPS淨推薦值 | >40 | 月度調查 |
-| | 日活躍率 | >60% | 每日 |
-| **營運健康** | 首單轉換率 | >40% | 週度 |
-| | 月留存率 | >70% | 月度 |
+| **對帳效果** | 對帳時間減少 | 80%+ | 使用前後對比 |
+| | 對帳錯誤率 | <2% | 系統 vs 人工對比 |
+| | 異議解決時間 | <24小時 | 平台數據追蹤 |
+| **技術指標** | API 可用性 | >99.5% | 系統監控 |
+| | API 響應時間 | <300ms | APM 監控 |
+| | ERP 整合成功率 | >90% | 整合測試 |
+| **商業指標** | 標杆客戶簽約 | 2家 | 大樂司+樂多多 |
+| | 月 GMV | NT$1,000萬 | 2個月內達成 |
+| | 客戶 NPS | >70 | 月度調查 |
+
+### 產品路線圖：對帳驅動的演進
+
+#### Phase 1: 對帳自動化驗證（Month 1-2）
+**核心目標**：驗證對帳自動化的市場價值
+
+**關鍵交付物**
+- [x] 對帳自動化引擎上線
+- [x] 大樂司 PoC 成功（2週內）
+- [x] 樂多多專屬服務啟動
+- [x] API 文檔和 SDK 發布
+- [x] 烤食組合轉換項目啟動
+
+**驗證指標**
+- 大樂司對帳時間從 8小時 → 30分鐘
+- 對帳錯誤率從 15% → <2%
+- 客戶滿意度 NPS >70
+
+#### Phase 2: 供應商網絡建設（Month 3-4）
+**核心目標**：建立供應商生態，實現網絡效應
+
+**關鍵功能開發**
+- 供應商自動化導入工具（Line/傳真/電話）
+- 供應商基礎數位化平台
+- 多供應商協同對帳
+- 價格比較和透明化
+
+**成功指標**
+- 每家餐廳對接 3+ 供應商
+- 供應商數位化率 60%
+- 供應商平台活躍度 >80%
+
+#### Phase 3: 進階對帳功能（Month 5-6）
+**核心目標**：提升對帳系統智能化水平
+
+**功能增強**
+- AI 驅動的異常檢測
+- 智能對帳規則學習
+- 預測性對帳提醒
+- 對帳數據分析報表
+
+**技術提升**
+- 對帳算法優化（準確率 >98%）
+- 即時對帳能力
+- 移動端對帳APP
+- 對帳數據 BI 分析
+
+#### Phase 4: 生態系統擴展（Month 7-12）
+**核心目標**：建立完整的供應鏈金融生態
+
+**生態建設**
+- 供應鏈金融服務
+- 電子發票整合
+- 支付系統整合
+- 風控和信用評估
+
+**規模化運營**
+- 多區域部署
+- 行業垂直解決方案
+- 合作夥伴生態
+- 開放平台建設
 
 ### 功能優先級矩陣
 
@@ -189,18 +465,29 @@
 
 ### 餐廳端痛點層次分析
 
-#### 表層痛點（已知問題）
-- 下單流程繁瑣：電話、Line溝通效率低
-- 對帳作業耗時：人工核對容易出錯
-- 驗收無標準：缺乏客觀依據
+#### 核心痛點（最高優先級 P0）
+- **對帳作業是最大痛點**：月底3-5天手工對帳，錯誤率高達15%
+  - 單據格式不統一，需要逐筆核對每張發票
+  - 價格變動頻繁，時價商品難以對帳
+  - 數量差異常見（缺貨、替代品、臨時調整）
+  - 對帳錯誤直接影響現金流和供應商關係
+- **ERP整合困難**：現有ERP無法與供應商系統對接
+  - API整合費用高昂（NT$30,000+）且功能有限
+  - 數據格式不統一，需要大量人工轉換
+  - 多供應商使用不同系統，無法統一管理
 
-#### 中層痛點（經營壓力）
+#### 表層痛點（日常作業問題 P1）
+- 下單流程繁瑣：電話、Line溝通效率低，容易遺漏或重複
+- 驗收無標準：缺乏客觀依據，品質爭議難以解決
+- 庫存管控困難：無法即時掌握庫存狀態，影響下單決策
+
+#### 中層痛點（經營壓力 P2）
 - **現金流壓力**：應付帳期30天 vs 營收週期7天的錯配
 - **庫存積壓風險**：生鮮損耗率15-20%，直接影響3-5%成本
 - **人力成本上升**：專職採購人員薪資佔營收2-3%
 - **議價能力弱勢**：單店採購量小，毛利率比連鎖店低5-8%
 
-#### 深層痛點（管理失控）
+#### 深層痛點（管理失控 P3）
 - **資訊不對稱**：缺乏市場價格參考，被動接受供應商報價
 - **採購透明度低**：老闆無法即時掌握採購狀況，月底才發現超支
 - **供應商依賴風險**：單一供應商佔比過高，缺乏替代方案
@@ -208,18 +495,29 @@
 
 ### 供應商端痛點層次分析
 
-#### 表層痛點（作業效率）
-- 收款週期長：平均45-60天
-- 對帳流程亂：缺乏統一標準
-- 訂單分散：多管道接單管理困難
+#### 核心痛點（最高優先級 P0）
+- **對帳流程混亂是最大痛點**：每家餐廳對帳方式不同，耗費大量人力
+  - 缺乏統一對帳標準，格式五花八門
+  - 對帳爭議處理耗時，影響客戶關係
+  - 人工對帳錯誤率高，導致應收帳款延遲
+  - 對帳資料分散，無法有效分析客戶行為
+- **收款週期過長**：平均45-60天，嚴重影響現金流
+  - 對帳完成後還需要等待付款流程
+  - 缺乏有效的應收帳款管理工具
+  - 無法即時追蹤付款狀態
 
-#### 中層痛點（營運挑戰）
+#### 表層痛點（作業效率 P1）
+- 訂單分散：多管道接單管理困難，容易遺漏或重複處理
+- 庫存同步困難：無法即時更新庫存狀態給各餐廳
+- 客戶溝通成本高：電話、Line、傳真多管道維護
+
+#### 中層痛點（營運挑戰 P2）
 - **客戶流失率高**：年流失率30-40%，缺乏客戶黏性
 - **物流成本攀升**：小額多次配送，物流成本佔8-12%
 - **壞帳風險升高**：年壞帳率2-3%，缺乏有效風控
 - **價格競爭激烈**：透明度低導致價格戰，毛利持續下降
 
-#### 深層痛點（策略困境）
+#### 深層痛點（策略困境 P3）
 - **需求預測困難**：無法準確預估客戶需求，備貨不準確導致庫存周轉率低
 - **客戶關係脆弱**：缺乏數據支撐的客戶經營，容易被競爭對手挖走
 - **規模化困難**：人工作業模式難以支撐業務快速擴張
@@ -269,57 +567,127 @@
 
 ## 用戶增長策略
 
-### 用戶獲取策略（Customer Acquisition）
+### 基於客戶分層的精準獲取策略
 
-#### Phase 1: 種子用戶培育（0-100家，Month 1-3）
+#### 實際客戶分析與策略制定
 
-**目標市場**：台北東區中型餐廳（月營收200-800萬）
+基於實際市場調研，我們識別出五個關鍵客戶原型，每個都代表不同的市場機會和挑戰：
 
-**BD地推策略**
-- **目標客戶**：20家指標性餐廳（每家帶動2-3家供應商）
-- **獲客成本**：CAC ≤ NT$5,000/客戶
-- **激勵方案**：
-  - 免費使用專業版3個月（價值NT$12,000）
-  - 專人1對1導入服務
-  - 首月交易0佣金
-- **預算配置**：NT$50萬（人力成本為主）
+**A 級優先客戶：大樂司 (KA-Growth + ERP Ready)**
+- **客戶特徵**：月營收 500-1000萬，已有 ERP，採購主管有數位化意願
+- **進入策略**：標準化 API 整合 + ROI 量化展示
+- **價值主張**：30天內實現 80% 對帳自動化，年節省人力成本 50萬+
+- **實施方案**：
+  - 2週 PoC 驗證（免費）
+  - 標準 ERP 接口包 + 技術支援
+  - 成功案例制作，用於後續推廣
+- **預期 LTV**：NT$15萬/年，成功率 70%
 
-**KOL合作計劃**
-- **合作對象**：3位餐飲業意見領袖
-- **內容策略**：數位轉型成功案例分享
-- **預期效果**：每位KOL帶動10-15家餐廳註冊
-- **投資回報**：ROI目標3:1
+**B 級重點客戶：樂多多 (KA-Elite 標杆)**
+- **客戶特徵**：月營收 1000萬+，高端客戶，對品質要求極高
+- **進入策略**：定制化服務 + 專屬客戶經理
+- **價值主張**：優先解決核心食材供應商整合，建立標杆案例
+- **實施方案**：
+  - 專屬 PM + 定制 API 開發
+  - 高端供應商網絡整合
+  - 行業標準制定參與
+- **預期 LTV**：NT$50萬/年，標杆價值無價
 
-#### Phase 2: 早期採用者擴展（100-1000家，Month 4-9）
+**C 級挑戰客戶：烤食組合 (CoCoMart 轉換)**
+- **客戶特徵**：月營收 200-500萬，使用 CoCoMart，冷藏空間不足
+- **進入策略**：差異化價值 + 並行試用
+- **價值主張**：解決 CoCoMart 無法解決的問題（暫存倉儲 + 自動對帳）
+- **實施方案**：
+  - 暫存倉儲服務優先提供
+  - 對帳功能免費試用 3 個月
+  - 逐步遷移，降低轉換風險
+- **預期 LTV**：NT$8萬/年，轉換率 40%
 
-**供應商驅動增長**
-- **策略**：與5家大型供應商深度合作
-- **機制**：供應商推薦既有客戶，雙向獎勵
-- **激勵**：
-  - 推薦成功獎勵：NT$2,000/家
-  - 被推薦餐廳首次交易補貼：5%返現
-- **目標**：每家供應商帶動20家餐廳
+**D 級潛力客戶：KKH (ERP 新手)**
+- **客戶特徵**：營收未達標但剛導入 ERP，有成長潛力
+- **進入策略**：ERP 導入階段整合 + 成長期培養
+- **價值主張**：從數位化初期就建立正確的對帳自動化習慣
+- **實施方案**：
+  - 與 ERP 實施顧問合作
+  - 基礎版免費使用 6 個月
+  - 成長階段升級引導
+- **預期 LTV**：NT$5萬/年（初期），未來增長空間大
 
-**內容行銷**
-- **白皮書**：「餐飲業數位供應鏈轉型指南」
-- **研討會**：月度線上分享會（邀請成功客戶分享）
-- **SEO優化**：
-  - 核心關鍵字：餐廳進貨系統、餐飲供應鏈、下單APP
-  - 目標：搜尋首頁前3名
-  - 月預算：NT$30萬
+**E 級特殊客戶：稻舍 (無 API 整合)**
+- **客戶特徵**：不願支付 API 整合費用，多據點分散經營
+- **進入策略**：批次處理 + 低成本方案
+- **價值主張**：無需昂貴 API 整合，依然享受對帳自動化
+- **實施方案**：
+  - Excel/CSV 批次上傳
+  - 人工輔助 + 自動化對帳
+  - 據點統一管理
+- **預期 LTV**：NT$3萬/年，成本控制導向
 
-#### Phase 3: 規模化增長（1000+家，Month 10+）
+### 分階段獲客策略
 
-**數位行銷矩陣**
-- **Facebook/Instagram廣告**：精準投放餐飲業者
-- **Google Ads**：搜尋關鍵字競價
-- **LINE官方帳號**：客服+內容推播
-- **YouTube頻道**：教學影片+案例分享
+#### Phase 1: 標杆建立（Month 1-6）
+**目標**：完成 A、B 級客戶簽約，建立成功案例
 
-**合作夥伴計劃**
-- **POS系統商合作**：iCHEF、iPad POS等
-- **餐飲顧問公司**：推薦獎金分潤機制
-- **會計師事務所**：財務管理整合方案
+**具體行動**
+- 大樂司：2週內完成 PoC，1個月內正式上線
+- 樂多多：專屬服務團隊，3個月內完成核心供應商整合
+- 成功案例素材製作：ROI 數據、客戶證言、操作演示
+
+**成功指標**
+- 2 家標杆客戶成功上線
+- 平均對帳時間減少 70%+
+- 客戶 NPS 達 80+
+- 標杆案例完成製作
+
+#### Phase 2: 差異化攻擊（Month 4-9）
+**目標**：攻擊 CoCoMart 用戶，建立競爭優勢
+
+**具體行動**
+- 烤食組合轉換項目：暫存倉儲 + 對帳自動化
+- 競爭對比內容製作：功能、成本、效果對比表
+- 轉換激勵方案：遷移支援、過渡期免費使用
+
+**成功指標**
+- 3-5 家 CoCoMart 用戶成功轉換
+- 轉換客戶滿意度 > 85%
+- 競爭優勢驗證和固化
+
+#### Phase 3: 規模化複製（Month 7-12）
+**目標**：基於標杆案例，規模化獲取同類客戶
+
+**具體行動**
+- 針對每個客戶類型，制定標準化獲客流程
+- KKH 模式：與 ERP 顧問建立合作關係
+- 稻舍模式：低成本批次處理方案推廣
+- 建立客戶成功團隊，確保客戶價值實現
+
+**成功指標**
+- 月新增客戶 20+ 家
+- 客戶分層成功率達 60%+
+- CAC < NT$3,000
+- 月留存率 > 85%
+
+### 合作夥伴生態建設
+
+#### ERP 系統商合作
+- **目標夥伴**：主要 ERP 廠商（鼎新、資通、叡揚等）
+- **合作模式**：技術整合 + 聯合銷售
+- **激勵機制**：成功整合案例分潤 20%
+- **預期效果**：每季新增 10+ 家 ERP 整合客戶
+
+#### 數位轉型顧問合作
+- **目標夥伴**：資訊服務公司、管顧公司
+- **合作模式**：KKH 模式推廣，從 ERP 導入階段就整合我們的服務
+- **訓練計劃**：顧問培訓，了解對帳自動化價值
+- **合作獎勵**：客戶成功後的年度分潤
+
+#### 內容行銷矩陣
+- **白皮書**：「餐飲對帳自動化最佳實踐指南」
+- **案例研究**：大樂司、樂多多成功案例詳細分析
+- **研討會**：月度線上「對帳效率提升」專場
+- **SEO 優化**：
+  - 核心關鍵字：餐廳對帳系統、ERP 整合、自動化對帳
+  - 目標：6個月內搜尋首頁前3名
 
 ### 用戶留存策略（Retention）
 
@@ -875,24 +1243,316 @@ Prometheus & Grafana:
 
 ## 技術架構需求
 
-### 6.1 系統架構
-- **前端**: React + TypeScript + PWA
-- **後端**: Node.js + Express + TypeScript
-- **資料庫**: PostgreSQL (主) + Redis (快取)
-- **檔案儲存**: AWS S3 / Google Cloud Storage
-- **即時通訊**: Socket.IO
-- **推播通知**: Firebase Cloud Messaging
+### 系統架構概述
 
-### 6.2 微服務設計
+井然 Orderly 採用 **API 優先** 的微服務架構，專為 ERP 整合和對帳自動化而設計。系統核心以 RESTful API 為主，輔以 WebSocket 實現即時通訊，並提供完整的 SDK 支援主流 ERP 系統整合。
+
+#### 核心技術棧
+- **前端**: Next.js (App Router) + TypeScript + TailwindCSS + PWA
+- **後端**: Next.js API Routes + TypeScript (逐步替代 Node.js 微服務)
+- **資料庫**: PostgreSQL (主) + Prisma ORM + Redis (快取/Session)
+- **檔案儲存**: Google Cloud Storage + CDN
+- **即時通訊**: WebSocket + Server-Sent Events (SSE)
+- **推播通知**: Firebase Cloud Messaging
+- **API 文件**: OpenAPI 3.0 + Swagger UI
+
+#### 遷移中的架構設計
 ```
-├── User Service (用戶管理)
-├── Product Service (商品管理)
-├── Order Service (訂單管理)
-├── Inventory Service (庫存管理)
-├── Payment Service (支付對帳)
-├── Notification Service (通知服務)
-├── File Service (檔案處理)
-└── Analytics Service (數據分析)
+目前架構:
+├── API Gateway (Node.js) - 逐步淘汰
+├── User Service (Node.js) - 遷移至 Next.js API
+├── Order Service (Node.js) - 遷移至 Next.js API
+├── Product Service (Node.js) - 遷移至 Next.js API
+└── 其他微服務...
+
+目標架構:
+├── Next.js Frontend + API Routes
+├── Prisma Database Layer
+├── External Integration Services
+└── Background Job Processing
+```
+
+### API 架構設計
+
+#### 核心 API 模組
+
+**1. 價格表管理 API (Price Table Management)**
+```typescript
+// 價格表數據結構
+interface PriceTable {
+  id: string;
+  supplier_id: string;
+  customer_segment_code?: string; // 客戶群體代碼
+  valid_from: Date;
+  valid_to: Date;
+  version_code: string;
+  price_elements: PriceElement[];
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface PriceElement {
+  item_code: string;
+  item_name: string;
+  description?: string;
+  supply_status: 'available' | 'out_of_stock' | 'discontinued';
+  price_type: 'fixed' | 'market_price';
+  price?: number; // 固定價格
+  price_range?: { min: number; max: number }; // 時價區間
+  unit: string;
+  is_taxable: boolean;
+}
+
+// API 端點
+POST /api/price-tables          // 創建價格表
+PUT /api/price-tables/:id       // 更新價格表
+GET /api/price-tables           // 查詢價格表清單
+GET /api/price-tables/:id       // 查詢單一價格表
+DELETE /api/price-tables/:id    // 刪除價格表
+```
+
+**2. 訂單生命週期 API (Order Lifecycle Management)**
+```typescript
+// 訂單數據結構
+interface Order {
+  id: string;
+  order_number: string;
+  restaurant_id: string;
+  supplier_id: string;
+  order_time: Date;
+  delivery_date: Date;
+  special_delivery_time?: Date;
+  price_table_version: string;
+  receiving_unit: string;
+  special_location?: string;
+  demand_elements: DemandElement[];
+  status: OrderStatus;
+  adjustments: OrderAdjustments;
+  total_amount: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface DemandElement {
+  item_code: string;
+  item_name: string;
+  ordered_quantity: number;
+  actual_quantity?: number; // 實際配送量
+  price: number;
+  unit: string;
+  amount_range?: { min: number; max: number }; // 時價商品金額範圍
+}
+
+interface OrderAdjustments {
+  vegetable_price_offset_taxed: number;    // 菜價折抵（含稅）
+  vegetable_price_offset_untaxed: number;  // 菜價折抵（不含稅）
+  shipping_offset: number;                 // 運費折抵
+  other_offsets: { [key: string]: number }; // 其他折抵
+}
+
+type OrderStatus = 'created' | 'confirmed' | 'shipped' | 'arrived' | 
+                   'accepted' | 'settled' | 'cancelled' | 'returned';
+
+// 餐廳端 API
+POST /api/orders                    // 創建訂單
+PUT /api/orders/:id                 // 修改訂單（確認前）
+DELETE /api/orders/:id              // 取消訂單（確認前）
+GET /api/orders                     // 查詢訂單清單
+GET /api/orders/:id                 // 查詢單一訂單
+GET /api/orders/:id/history         // 查詢訂單歷程
+
+// 供應商端 API
+PUT /api/orders/:id/confirm         // 確認訂單（設定時價、調整數量）
+PUT /api/orders/:id/ship            // 訂單出貨
+PUT /api/orders/:id/arrive          // 訂單到貨
+PUT /api/orders/:id/return          // 訂單退回
+PUT /api/orders/:id/inventory-update // 理貨更新
+PUT /api/orders/:id/adjust          // 訂單異動（驗收後）
+```
+
+**3. 對帳自動化 API (Reconciliation Automation)**
+```typescript
+// 對帳數據結構
+interface ReconciliationRecord {
+  id: string;
+  restaurant_id: string;
+  supplier_id: string;
+  period_start: Date;
+  period_end: Date;
+  orders: string[]; // 相關訂單 ID 列表
+  total_amount: number;
+  status: 'pending' | 'reviewing' | 'disputed' | 'resolved' | 'paid';
+  discrepancies: Discrepancy[];
+  created_at: Date;
+  resolved_at?: Date;
+}
+
+interface Discrepancy {
+  order_id: string;
+  item_code: string;
+  type: 'quantity' | 'price' | 'quality' | 'missing' | 'extra';
+  expected_value: any;
+  actual_value: any;
+  status: 'open' | 'resolved' | 'accepted';
+  resolution?: string;
+  evidence?: string[]; // 照片或文件 URL
+}
+
+// API 端點
+POST /api/reconciliation/generate   // 生成對帳單
+GET /api/reconciliation            // 查詢對帳記錄
+PUT /api/reconciliation/:id/dispute // 提出異議
+PUT /api/reconciliation/:id/resolve // 解決異議
+POST /api/reconciliation/:id/accept // 接受對帳結果
+```
+
+**4. 驗收點收 API (Acceptance & Receiving)**
+```typescript
+// 驗收數據結構
+interface AcceptanceRecord {
+  id: string;
+  order_id: string;
+  accepted_by: string; // 驗收人員 ID
+  acceptance_time: Date;
+  items: AcceptedItem[];
+  photos: string[]; // 照片 URL 列表
+  notes?: string;
+  discrepancies: AcceptanceDiscrepancy[];
+}
+
+interface AcceptedItem {
+  item_code: string;
+  ordered_quantity: number;
+  received_quantity: number;
+  quality_rating: 1 | 2 | 3 | 4 | 5;
+  expiry_date?: Date;
+  batch_number?: string;
+}
+
+interface AcceptanceDiscrepancy {
+  type: 'quantity_short' | 'quantity_over' | 'quality_issue' | 
+        'packaging_damage' | 'expired' | 'other';
+  severity: 'minor' | 'major' | 'critical';
+  description: string;
+  evidence_photos: string[];
+  proposed_resolution: string;
+}
+
+// API 端點
+POST /api/acceptance               // 創建驗收記錄
+GET /api/acceptance/:order_id      // 查詢訂單驗收記錄
+POST /api/acceptance/upload-photo  // 上傳驗收照片
+PUT /api/acceptance/:id/complete   // 完成驗收流程
+```
+
+#### ERP 整合專用 API
+
+**5. ERP 整合介面 (ERP Integration Layer)**
+```typescript
+// ERP 同步數據結構
+interface ERPSyncPayload {
+  timestamp: Date;
+  sync_type: 'full' | 'incremental';
+  data_type: 'orders' | 'products' | 'reconciliation';
+  records: any[];
+  checksum: string; // 數據完整性驗證
+}
+
+// Webhook 配置
+interface WebhookConfig {
+  restaurant_id: string;
+  endpoint_url: string;
+  events: WebhookEvent[];
+  secret_key: string;
+  is_active: boolean;
+}
+
+type WebhookEvent = 'order.confirmed' | 'order.shipped' | 'order.delivered' |
+                    'reconciliation.generated' | 'price.updated';
+
+// ERP API 端點
+POST /api/erp/sync                 // ERP 數據同步
+GET /api/erp/sync-status          // 查詢同步狀態
+POST /api/erp/webhook/configure   // 配置 Webhook
+GET /api/erp/webhook/test         // 測試 Webhook 連接
+POST /api/erp/bulk-import         // 批量數據匯入
+GET /api/erp/export/:format       // 數據匯出（Excel/CSV/JSON）
+```
+
+### 技術實現詳細規範
+
+#### 數據驗證與安全
+```typescript
+// 請求驗證中間件
+interface APIRequest {
+  headers: {
+    'Authorization': 'Bearer <JWT_TOKEN>';
+    'Content-Type': 'application/json';
+    'X-API-Version': '1.0';
+    'X-Request-ID': string; // 請求追蹤 ID
+  };
+  body: any;
+}
+
+// 響應格式標準
+interface APIResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+  metadata: {
+    timestamp: Date;
+    request_id: string;
+    version: string;
+  };
+}
+```
+
+#### 即時通知系統
+```typescript
+// WebSocket 事件類型
+type WSEvent = {
+  type: 'order_update' | 'price_change' | 'reconciliation_alert';
+  data: any;
+  timestamp: Date;
+  target_users: string[];
+};
+
+// Server-Sent Events 配置
+interface SSEConfig {
+  endpoint: '/api/events/stream';
+  events: ['order_status', 'price_alerts', 'system_notifications'];
+  heartbeat_interval: 30000; // 30秒
+}
+```
+
+#### 效能與監控
+```typescript
+// API 限流配置
+interface RateLimitConfig {
+  requests_per_minute: {
+    standard: 1000;
+    premium: 5000;
+    enterprise: 10000;
+  };
+  burst_allowance: 100;
+  throttle_response: {
+    status: 429;
+    retry_after: 60;
+  };
+}
+
+// 監控指標
+interface APIMetrics {
+  response_time_p95: number;
+  error_rate: number;
+  throughput_per_second: number;
+  cache_hit_ratio: number;
+  database_connection_pool: number;
+}
 ```
 
 ### 6.3 資料庫設計

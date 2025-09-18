@@ -1,0 +1,75 @@
+# GitHub Secrets 設置指南
+
+為了部署到 Google Cloud Platform，您需要在 GitHub 倉庫中設置以下 Secrets。
+
+## 必要的 Secrets
+
+### 1. GCP_SA_KEY (Google Cloud Platform 服務帳號密鑰)
+**描述**: GCP 服務帳號的 JSON 密鑰（base64 編碼）
+**值**: 
+```
+ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAib3JkZXJseS00NzI0MTMiLAogICJwcml2YXRlX2tleV9pZCI6ICI4YjYzYjRkZmNlMWQ0MzNmYmI5NDFjZmZlNTk0Y2Y5MTQ2Mjk2MmM4IiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdlFJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLY3dnZ1NqQWdFQUFvSUJBUUNyVHo2aVZtcEx5YlpaXG5hM1J2cksvRjlFZ3p4b1hWWHVEdExST2tZM1k3YmhFSndnbHM2dWVYMGtMY2JzamN5em9tajRiSC9kQ280dFQwXG5VNFVWT21Galc5SDl5TjFOOGc2SGhsWmdYVy84L09DUGxOTi9aUW54YkZUb21QNUhPUmlrL2N2ZW5Ed1hYVTdZXG5jOWppZS9RamJ6WDVOSWlJUnR4K2p4eG5wV291Nnd3WnkySWpjVzNWeE1jRDdHREh3L0FkZnFvRmNWdFJXYStQXG5nVWdlRnRvaGU3clNuc252bnVnUzRCbzVFTFBuczVzOEVnVXpXMFdJbjBjd2JlbkFkR3kwYWhqVWxLbzJkb1BXXG5RRnFZVnM5U0dmako5cjZERm1pdUZ5ckhCWXRyZllFYVFtd2xscktVOXo2L2JnOEJqejBWV09jUnNEeGx0NW04XG5hUnI2cXB1SkFnTUJBQUVDZ2dFQUEvUElGaWE0UFJkaVJaM2RDZGFLRjU4VEsxNmhKOU1RaldoRTA3NFh0RGROXG4zVlBFcythWGdVRXdtYlZVblFOelRBQnpzNWwvZnVYODA4WTVnOHZkQTFYUyttL3Y2eVJ5Z1Yzd0VEa1hwRmFSXG5ONzdQUWxrcWFZOStSZitCbmxNSzVvT1VlSVpTUEpmQ2dldnFUUTlmQ3BJK1JJbVp2TXNsdXlYQ0dnSU8rUllaXG5kamxiL0JWNHN3WmVPam9WU2k4ME5MVXNwL2c3VUk4L0xGSkQ0RlNaYlliYkhrQkptTGlJQUtQQ3AxOVVGM3hVXG5XMnhQdzN1MkVabmNrbXFOdGdUK2hiOUNmQjF1RzRSeEtCWkJkazcxcjJ1Tmwrajg5TUtYakhlSy9lSHpIbUtJXG5zUFR5ZzZGRmZZS2JLMHQzTVZsN21mUTV1aVprV0hmeEtHM1VLbTQ4Z1FLQmdRRGtnR3Z4N0pUNmUxdnJWKy90XG5STHNMY3d3cHlmUEpDVjNJRURSOFptbHk0ckdwcE9xcURONkhKUlYrWTZtZ3pQNTQwZEdwZkVsb2dBUC80cVU0XG5DblNibUVsbGorVFlOZ0RXTm1uM3BBK1ZpbW1sM1JwV2hnYmFlY3VKYko3ZGVWbFJ0OElUS0I2MlFKdEEraDRwXG5TOFd0ZjZpNTBWM2t4UERHRVJ3TWhCdEY5UUtCZ1FDLzdOKzkyb0krY1pnTnIvODk5c0s3WGx5WkdNenVRTWNmXG55RE1HNER0VDdCM3Z6ay9xNDc3bTAyczhmUVpSbktzQW1ERHJVNXBucGIxelJ5alhpaktFeXp2QVBlM0FPNkE3XG5GR3g1TlRrQktsdC9DWXVxdlhuVXpDY21oNTRMV1hzSGcyaTd4VXNZK3ZJNXVWcFA1bTlUWjZvaXNMbUo3L2RRXG5PRmNkVVpUdXhRS0JnRjQzOGNxVVlhMlMxZ2tKZm4zWVBFUHhVVStkM1M3RTlPMThlUmZlWnBhZmtPQkJoeDFOXG5KeWlVaXZOTmh2RXQ5Yk85MkhUSk1iK3NJWG9PYTAvYlI4K3NrSDhYUVNaQnhrQ051VTRLVVA2NVR1eThhWkxKXG51dU8xR3M3MGdlRVNtMWpOcTNHWXRta3g1Sko3VDVwNWl1NEtXSGtlTWxnVk9LNkMrWXpUb0NkTkFvR0JBTFlXXG5wSWhab2F4ZzFhUlcwRkVYcHRWaHgzU3hKT3orcEcwdzRjaXFRVjl6NjBzemNIc29MRnlQUlhTVUljU1lZVjBsXG5CM1NkVXliM0JuRXltRHMyc0l0d3puV3J5Ny9RVWtyN0s1Y3J1Yk96WGk5Ky9QVzI0cm5VSDJqY3prTnlWOWxmXG5BYVQwb0RWSkVUdFc4YXBRdEZwclJlMjN3YkJ1N1RNODRObStKeEVKQW9HQVFDNmtWSUlxTi9rYjN2L3M4SkxnXG41cEd6MFZTem5pTy9STE1pVUltTzlCTVNnRFI0YmJDOUhKK2t0a0xFbzcydjJLT1MvQUxUU0M0dVFQM2I1V3QyXG5Xc3NwOXE1VmNNZEFhSXN6OGc2RHZUSlBKWjdiOFErbFk2cFZUanlISjNjOTNBMTg1TGphNkF3dDlqQUovRlQrXG5teUxIQzcvaGFhYU15Qk1hb3BtQlJvUT1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJvcmRlcmx5LWNpY2RAb3JkZXJseS00NzI0MTMuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICJjbGllbnRfaWQiOiAiMTA3ODYwMDg1ODE0MDg1OTM2MTczIiwKICAiYXV0aF91cmkiOiAiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tL28vb2F1dGgyL2F1dGgiLAogICJ0b2tlbl91cmkiOiAiaHR0cHM6Ly9vYXV0aDIuZ29vZ2xlYXBpcy5jb20vdG9rZW4iLAogICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwKICAiY2xpZW50X3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vcm9ib3QvdjEvbWV0YWRhdGEveDUwOS9vcmRlcmx5LWNpY2QlNDBvcmRlcmx5LTQ3MjQxMy5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIKfQo=
+```
+
+### 2. GCP_PROJECT_ID (Google Cloud 專案 ID)
+**描述**: GCP 專案的唯一識別碼
+**值**: `orderly-472413`
+
+### 3. JWT_SECRET (Staging JWT 密鑰)
+**描述**: 用於 staging 環境的 JWT 簽名密鑰
+**值**: `staging-jwt-secret-2024`
+
+### 4. JWT_SECRET_PROD (Production JWT 密鑰)
+**描述**: 用於 production 環境的 JWT 簽名密鑰
+**值**: `CHANGE_THIS_TO_SECURE_PRODUCTION_SECRET`
+
+## 設置步驟
+
+### 1. 進入 GitHub 倉庫設置
+1. 在 GitHub 上打開您的 `Orderly` 倉庫
+2. 點擊 "Settings" 標籤
+3. 在左側選單選擇 "Secrets and variables" → "Actions"
+
+### 2. 添加每個 Secret
+對於每個上述的 Secret：
+1. 點擊 "New repository secret"
+2. 在 "Name" 欄位輸入 Secret 名稱（例如：`GCP_SA_KEY`）
+3. 在 "Secret" 欄位貼上對應的值
+4. 點擊 "Add secret"
+
+### 3. 驗證設置
+設置完成後，您應該看到以下 4 個 Secrets：
+- ✅ `GCP_SA_KEY`
+- ✅ `GCP_PROJECT_ID`
+- ✅ `JWT_SECRET`
+- ✅ `JWT_SECRET_PROD`
+
+## 安全注意事項
+
+⚠️ **重要**: 
+- 這些 Secrets 包含敏感資訊，切勿在代碼或公開場所分享
+- Production JWT 密鑰應該使用強隨機字符串
+- 定期輪換生產環境的密鑰
+- 確保只有必要的團隊成員有訪問權限
+
+## 環境配置
+
+### Staging 環境
+- 觸發條件：推送到 `develop` 分支
+- 部署到：Cloud Run staging 服務
+- JWT 密鑰：使用 `JWT_SECRET`
+
+### Production 環境
+- 觸發條件：推送到 `main` 分支
+- 部署到：Cloud Run production 服務
+- JWT 密鑰：使用 `JWT_SECRET_PROD`
+- 需要手動批准部署
+
+## 下一步
+
+設置完 GitHub Secrets 後，您可以：
+1. 推送代碼到 `develop` 分支來觸發 staging 部署
+2. 推送代碼到 `main` 分支來觸發 production 部署
+3. 監控 GitHub Actions 頁面查看部署狀態
+
+部署完成後，您將收到服務的 URL，可以直接訪問您的 Hello World 應用程式！

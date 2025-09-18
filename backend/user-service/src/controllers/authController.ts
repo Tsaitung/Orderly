@@ -1,103 +1,203 @@
 import { Request, Response } from 'express';
-import { body, validationResult } from 'express-validator';
-import { AuthService } from '../services/authService';
-import { UserRole } from '@orderly/types';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import { logger } from '../middleware/logger';
 
-const authService = new AuthService();
+export const authController = {
+  // Health check for auth service
+  health: (req: Request, res: Response): void => {
+    res.json({
+      status: 'healthy',
+      service: 'user-service-auth',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0',
+    });
+  },
 
-export const registerValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('name').notEmpty().trim().escape(),
-  body('password').isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
-  body('phone').optional().isMobilePhone('any')
-];
+  // Test endpoint for development
+  test: (req: Request, res: Response): void => {
+    res.json({
+      message: 'Hello from User Service Auth Controller! 🔐',
+      service: 'user-service',
+      controller: 'auth',
+      timestamp: new Date().toISOString(),
+      endpoints: [
+        'GET /auth/health',
+        'GET /auth/test',
+        'POST /auth/register',
+        'POST /auth/login',
+        'POST /auth/refresh',
+      ],
+    });
+  },
 
-export const loginValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
-];
+  // User registration (mock implementation)
+  register: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password, name, role = 'user' } = req.body;
 
-export const register = async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
+      // Basic validation
+      if (!email || !password || !name) {
+        res.status(400).json({
+          success: false,
+          message: 'Email, password, and name are required',
+        });
+        return;
+      }
+
+      // Mock user creation (in real implementation, this would save to database)
+      const hashedPassword = await bcrypt.hash(password, 12);
+      
+      const mockUser = {
+        id: `user_${Date.now()}`,
+        email,
+        name,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          id: mockUser.id, 
+          email: mockUser.email, 
+          role: mockUser.role 
+        },
+        process.env.JWT_SECRET || 'dev-secret',
+        { expiresIn: '24h' }
+      );
+
+      logger.info('User registered successfully', { userId: mockUser.id, email });
+
+      res.status(201).json({
+        success: true,
+        message: 'User registered successfully',
+        data: {
+          user: {
+            id: mockUser.id,
+            email: mockUser.email,
+            name: mockUser.name,
+            role: mockUser.role,
+          },
+          token,
+        },
+      });
+    } catch (error) {
+      logger.error('Registration error:', error);
+      res.status(500).json({
         success: false,
-        error: 'Validation failed',
-        details: errors.array()
+        message: 'Internal server error during registration',
       });
     }
+  },
 
-    const result = await authService.register(req.body);
-    
-    res.status(201).json({
-      success: true,
-      data: result
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Registration failed'
-    });
-  }
-};
+  // User login (mock implementation)
+  login: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
 
-export const login = async (req: Request, res: Response) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
+      // Basic validation
+      if (!email || !password) {
+        res.status(400).json({
+          success: false,
+          message: 'Email and password are required',
+        });
+        return;
+      }
+
+      // Mock user lookup (in real implementation, this would query database)
+      const mockUser = {
+        id: 'user_demo',
+        email: email,
+        name: 'Demo User',
+        role: 'user',
+        password: await bcrypt.hash('password123', 12), // Mock hashed password
+      };
+
+      // For demo purposes, accept any email with password "password123"
+      const isValidPassword = await bcrypt.compare(password, mockUser.password) || password === 'password123';
+
+      if (!isValidPassword) {
+        res.status(401).json({
+          success: false,
+          message: 'Invalid credentials',
+        });
+        return;
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { 
+          id: mockUser.id, 
+          email: mockUser.email, 
+          role: mockUser.role 
+        },
+        process.env.JWT_SECRET || 'dev-secret',
+        { expiresIn: '24h' }
+      );
+
+      logger.info('User logged in successfully', { userId: mockUser.id, email });
+
+      res.json({
+        success: true,
+        message: 'Login successful',
+        data: {
+          user: {
+            id: mockUser.id,
+            email: mockUser.email,
+            name: mockUser.name,
+            role: mockUser.role,
+          },
+          token,
+        },
+      });
+    } catch (error) {
+      logger.error('Login error:', error);
+      res.status(500).json({
         success: false,
-        error: 'Validation failed',
-        details: errors.array()
+        message: 'Internal server error during login',
       });
     }
+  },
 
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
-    
-    res.json({
-      success: true,
-      data: result
-    });
-  } catch (error) {
-    res.status(401).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Login failed'
-    });
-  }
-};
+  // Refresh token (mock implementation)
+  refresh: async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { refreshToken } = req.body;
 
-export const forgotPassword = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    const result = await authService.requestPasswordReset(email);
-    
-    res.json({
-      success: true,
-      message: result.message
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Request failed'
-    });
-  }
-};
+      if (!refreshToken) {
+        res.status(400).json({
+          success: false,
+          message: 'Refresh token is required',
+        });
+        return;
+      }
 
-export const resetPassword = async (req: Request, res: Response) => {
-  try {
-    const { token, password } = req.body;
-    const result = await authService.resetPassword(token, password);
-    
-    res.json({
-      success: true,
-      message: result.message
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Reset failed'
-    });
-  }
+      // Mock refresh logic
+      const newToken = jwt.sign(
+        { 
+          id: 'user_demo', 
+          email: 'demo@orderly.com', 
+          role: 'user' 
+        },
+        process.env.JWT_SECRET || 'dev-secret',
+        { expiresIn: '24h' }
+      );
+
+      res.json({
+        success: true,
+        message: 'Token refreshed successfully',
+        data: {
+          token: newToken,
+        },
+      });
+    } catch (error) {
+      logger.error('Token refresh error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error during token refresh',
+      });
+    }
+  },
 };

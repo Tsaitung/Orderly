@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Key Directories
 - `backend/` - Microservices (each with own Dockerfile, package.json, TypeScript)
-- `frontend/` - React/Vite application
+- `frontend/` - Next.js App Router application
 - `shared/types/` - TypeScript type definitions shared across services
 - `infrastructure/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
 - `.github/workflows/` - 8 advanced CI/CD workflows including ML-powered quality gates

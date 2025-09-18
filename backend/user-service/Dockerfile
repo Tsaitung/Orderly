@@ -1,24 +1,54 @@
-FROM node:18-alpine
+# User Service Dockerfile
+FROM node:20-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY prisma ./prisma/
-COPY ../../shared/types/package.json ../../shared/types/
-
-# Install dependencies
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
 RUN npm ci --only=production
 
-# Generate Prisma client
-RUN npx prisma generate
-
-# Copy source code
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the application
+ENV NODE_ENV=production
 RUN npm run build
 
-EXPOSE 3001
+# Production image, copy all the files and run the application
+FROM base AS runner
+WORKDIR /app
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+ENV NODE_ENV=production
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 userservice
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R userservice:nodejs /app/logs
+
+# Copy built application
+COPY --from=builder --chown=userservice:nodejs /app/dist ./dist
+COPY --from=builder --chown=userservice:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=userservice:nodejs /app/package.json ./package.json
+
+USER userservice
+
+# Expose port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8001/health || exit 1
+
+# Start the application
+CMD ["node", "dist/index.js"]

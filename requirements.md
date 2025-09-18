@@ -1,6 +1,6 @@
-# 井然 Orderly 產品完整計畫 - Requirements Document
+# Orderly Platform Product Requirements Document - Requirements Document
 
-基於requirement.md制定的全面產品策略與執行計畫
+Comprehensive Product Requirements Document (PRD) for the Orderly digital supply chain platform focusing on reconciliation automation as the MVP. This PRD defines the product vision, strategy, feature specifications, success metrics, and implementation roadmap for the platform that aims to reduce reconciliation time by 90% for restaurants and payment cycles by 50% for suppliers.
 
 ## Core Features
 

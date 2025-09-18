@@ -1,23 +1,54 @@
-FROM node:18-alpine
+# API Gateway Dockerfile
+FROM node:20-alpine AS base
 
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY ../../shared/types/package.json ../../shared/types/
-
-# Install dependencies
+# Install dependencies based on the preferred package manager
+COPY package.json package-lock.json* ./
 RUN npm ci --only=production
 
-# Copy source code
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build the application
+ENV NODE_ENV=production
 RUN npm run build
 
-# Create logs directory
-RUN mkdir -p logs
+# Production image, copy all the files and run the application
+FROM base AS runner
+WORKDIR /app
 
+ENV NODE_ENV=production
+
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 apigateway
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R apigateway:nodejs /app/logs
+
+# Copy built application
+COPY --from=builder --chown=apigateway:nodejs /app/dist ./dist
+COPY --from=builder --chown=apigateway:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=apigateway:nodejs /app/package.json ./package.json
+
+USER apigateway
+
+# Expose port
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Start the application
+CMD ["node", "dist/index.js"]

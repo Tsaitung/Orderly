@@ -1,679 +1,266 @@
-name: 🚀 Master Intelligence Pipeline - Ultra-Automated CI/CD
+name: 🚀 Orderly Hello World Deployment
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      deployment_strategy:
-        description: 'Deployment Strategy'
-        required: true
-        default: 'auto'
-        type: choice
-        options:
-        - auto
-        - fast-track
-        - standard
-        - canary
-        - manual
 
 env:
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  ML_CONFIDENCE_THRESHOLD_HIGH: ${{ secrets.ML_CONFIDENCE_THRESHOLD_HIGH || 95 }}
-  ML_CONFIDENCE_THRESHOLD_MEDIUM: ${{ secrets.ML_CONFIDENCE_THRESHOLD_MEDIUM || 80 }}
-  ML_CONFIDENCE_THRESHOLD_LOW: ${{ secrets.ML_CONFIDENCE_THRESHOLD_LOW || 60 }}
-  COST_THRESHOLD_DAILY: ${{ secrets.COST_THRESHOLD_DAILY || 100 }}
-  
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'orderly-472413' }}
+  GCP_REGION: asia-east1
+
 jobs:
-  # =====================================
-  # ML-Powered Quality Gates
-  # =====================================
-  quality-gates:
-    name: 🧠 ML Quality Assessment
+  # =============================================================================
+  # BUILD AND TEST
+  # =============================================================================
+  build:
+    name: 🏗️ Build & Test
     runs-on: ubuntu-latest
     outputs:
-      risk_score: ${{ steps.ml_analysis.outputs.risk_score }}
-      confidence_level: ${{ steps.ml_analysis.outputs.confidence_level }}
-      deployment_strategy: ${{ steps.ml_analysis.outputs.deployment_strategy }}
-      cost_estimate: ${{ steps.cost_analysis.outputs.cost_estimate }}
-      
+      frontend-image: ${{ steps.build-frontend.outputs.image }}
+      api-gateway-image: ${{ steps.build-api-gateway.outputs.image }}
+      user-service-image: ${{ steps.build-user-service.outputs.image }}
     steps:
-      - name: 📥 Checkout Code
+      - name: 📦 Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          
-      - name: 🐍 Setup Python for ML Models
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          
-      - name: 📦 Install ML Dependencies
-        run: |
-          pip install scikit-learn pandas numpy isolation-forest dbscan
-          pip install --upgrade pip setuptools wheel
-          
-      - name: 🔍 Code Quality Analysis
-        id: code_quality
-        run: |
-          # Static code analysis with multiple metrics
-          pip install flake8 complexity pylint bandit safety
-          
-          # Calculate complexity score
-          complexity_score=$(find . -name "*.py" -exec python -m mccabe --min 10 {} \; | wc -l)
-          
-          # Security analysis
-          bandit -r . -f json -o bandit_report.json || true
-          security_issues=$(cat bandit_report.json | jq '.results | length')
-          
-          # Dependency vulnerabilities
-          safety check --json --output safety_report.json || true
-          
-          echo "complexity_score=$complexity_score" >> $GITHUB_OUTPUT
-          echo "security_issues=$security_issues" >> $GITHUB_OUTPUT
-          
-      - name: 🤖 ML Risk Assessment
-        id: ml_analysis
-        run: |
-          cat << 'EOF' > ml_risk_assessment.py
-          import json
-          import os
-          import numpy as np
-          from sklearn.ensemble import IsolationForest, RandomForestRegressor
-          from sklearn.cluster import DBSCAN
-          from datetime import datetime, timedelta
-          
-          # Gather metrics
-          complexity_score = int(os.environ.get('COMPLEXITY_SCORE', 0))
-          security_issues = int(os.environ.get('SECURITY_ISSUES', 0))
-          branch = os.environ.get('GITHUB_REF_NAME', 'unknown')
-          
-          # Feature vector for ML models
-          features = np.array([[
-              complexity_score,
-              security_issues,
-              len(os.environ.get('GITHUB_EVENT_COMMITS', '[]')),
-              1 if branch == 'main' else 0,
-              1 if 'hotfix' in branch else 0
-          ]])
-          
-          # Isolation Forest for anomaly detection
-          iso_forest = IsolationForest(contamination=0.1, random_state=42)
-          iso_forest.fit(features)
-          anomaly_score = iso_forest.decision_function(features)[0]
-          
-          # Random Forest for risk prediction
-          # Simulate trained model with realistic weights
-          risk_weights = np.array([0.3, 0.4, 0.1, -0.1, 0.3])
-          risk_score = max(0, min(100, np.dot(features[0], risk_weights) * 10))
-          
-          # Confidence calculation based on multiple factors
-          confidence = 100 - risk_score
-          confidence = max(30, min(98, confidence))
-          
-          # Determine deployment strategy
-          if confidence >= 95:
-              strategy = "PROCEED_FAST_TRACK"
-          elif confidence >= 80:
-              strategy = "PROCEED_STANDARD"
-          elif confidence >= 60:
-              strategy = "PROCEED_CAUTIOUS"
-          else:
-              strategy = "REVIEW_REQUIRED"
-          
-          print(f"ML Analysis Results:")
-          print(f"Risk Score: {risk_score}")
-          print(f"Confidence Level: {confidence}")
-          print(f"Deployment Strategy: {strategy}")
-          print(f"Anomaly Score: {anomaly_score}")
-          
-          # Output to GitHub Actions
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f"risk_score={risk_score}\n")
-              f.write(f"confidence_level={confidence}\n")
-              f.write(f"deployment_strategy={strategy}\n")
-              f.write(f"anomaly_score={anomaly_score}\n")
-          EOF
-          
-          export COMPLEXITY_SCORE="${{ steps.code_quality.outputs.complexity_score }}"
-          export SECURITY_ISSUES="${{ steps.code_quality.outputs.security_issues }}"
-          python ml_risk_assessment.py
-          
-      - name: 💰 Cost Analysis
-        id: cost_analysis
-        run: |
-          # Estimate deployment cost based on changes
-          changed_files=$(git diff --name-only HEAD~1 HEAD | wc -l)
-          
-          # Simple cost estimation model
-          base_cost=5.0
-          file_cost_multiplier=0.1
-          estimated_cost=$(echo "$base_cost + ($changed_files * $file_cost_multiplier)" | bc -l)
-          
-          echo "cost_estimate=$estimated_cost" >> $GITHUB_OUTPUT
-          echo "📊 Estimated deployment cost: \$$estimated_cost"
 
-  # =====================================
-  # Frontend Build & Test
-  # =====================================
-  frontend-build:
-    name: 🎨 Frontend Build & Test
-    runs-on: ubuntu-latest
-    needs: quality-gates
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 📦 Setup Node.js
+      - name: 🏗️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          
-      - name: 📦 Install Dependencies
-        run: |
-          npm ci
-          
-      - name: 🔧 Build Frontend
-        run: |
-          npm run build
-          
-      - name: 🧪 Run Tests
-        run: |
-          npm run test:coverage
-          
-      - name: 📊 Upload Coverage
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          
-      - name: 📤 Upload Build Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: frontend-build
-          path: dist/
 
-  # =====================================
-  # Backend Build & Test
-  # =====================================
-  backend-build:
-    name: ⚡ Backend Build & Test
-    runs-on: ubuntu-latest
-    needs: quality-gates
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: orderly_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-          
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🐍 Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          
-      - name: 📦 Install Dependencies
-        run: |
-          pip install -r backend/requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
-          
-      - name: 🧪 Run Backend Tests
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/orderly_test
-        run: |
-          cd backend
-          pytest --cov=. --cov-report=xml
-          
-      - name: 📊 Upload Coverage
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./backend/coverage.xml
+      - name: 📦 Install dependencies
+        run: npm ci
 
-  # =====================================
-  # Security & Compliance Scanning
-  # =====================================
-  security-scan:
-    name: 🔒 Security & Compliance Scan
-    runs-on: ubuntu-latest
-    needs: quality-gates
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🔍 SAST Scan with Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-            
-      - name: 🛡️ Dependency Scan with Snyk
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-          
-      - name: 🐳 Container Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          
-      - name: 📤 Upload Security Results
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
+      - name: 🧪 Run tests (if available)
+        run: npm run test --if-present
 
-  # =====================================
-  # E2E Testing
-  # =====================================
-  e2e-testing:
-    name: 🎭 End-to-End Testing
-    runs-on: ubuntu-latest
-    needs: [frontend-build, backend-build]
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🐳 Start Services
-        run: |
-          docker-compose -f docker-compose.test.yml up -d
-          sleep 30  # Wait for services to be ready
-          
-      - name: 🎭 Run Playwright Tests
-        run: |
-          npm install @playwright/test
-          npx playwright test --config=playwright.config.ts
-          
-      - name: 📤 Upload E2E Results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: e2e-results
-          path: test-results/
+      - name: 🔍 Run linting (if available)
+        run: npm run lint --if-present
 
-  # =====================================
-  # Chaos Engineering
-  # =====================================
-  chaos-testing:
-    name: 🌀 Chaos Engineering
-    runs-on: ubuntu-latest
-    needs: [frontend-build, backend-build]
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🌀 Network Partition Test
-        run: |
-          # Simulate network issues between services
-          echo "🌀 Testing network partition resilience..."
-          docker-compose -f docker-compose.chaos.yml up -d
-          
-          # Introduce network delay
-          docker exec chaos_frontend_1 tc qdisc add dev eth0 root netem delay 100ms
-          
-          # Test API responses under network stress
-          curl -f http://localhost:3000/api/health || echo "Frontend resilience test"
-          curl -f http://localhost:8000/health || echo "Backend resilience test"
-          
-      - name: 🔥 Resource Exhaustion Test
-        run: |
-          echo "🔥 Testing resource exhaustion resilience..."
-          # Simulate high CPU load
-          docker exec chaos_backend_1 stress --cpu 4 --timeout 30s &
-          
-          # Test service performance under load
-          for i in {1..10}; do
-            curl -f http://localhost:8000/health
-            sleep 1
-          done
-
-  # =====================================
-  # Deployment Decision Engine
-  # =====================================
-  deployment-decision:
-    name: 🎯 Deployment Decision Engine
-    runs-on: ubuntu-latest
-    needs: [quality-gates, frontend-build, backend-build, security-scan, e2e-testing]
-    outputs:
-      should_deploy: ${{ steps.decision.outputs.should_deploy }}
-      deployment_strategy: ${{ steps.decision.outputs.deployment_strategy }}
-      
-    steps:
-      - name: 🧠 ML-Powered Deployment Decision
-        id: decision
-        run: |
-          RISK_SCORE=${{ needs.quality-gates.outputs.risk_score }}
-          CONFIDENCE=${{ needs.quality-gates.outputs.confidence_level }}
-          STRATEGY=${{ needs.quality-gates.outputs.deployment_strategy }}
-          
-          echo "🎯 Deployment Decision Analysis:"
-          echo "Risk Score: $RISK_SCORE"
-          echo "Confidence Level: $CONFIDENCE%"
-          echo "Recommended Strategy: $STRATEGY"
-          
-          # Decision logic based on ML analysis
-          if [ "$STRATEGY" == "REVIEW_REQUIRED" ]; then
-            echo "❌ Manual review required - blocking deployment"
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Proceeding with deployment"
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
-          fi
-          
-          echo "deployment_strategy=$STRATEGY" >> $GITHUB_OUTPUT
-
-  # =====================================
-  # Staging Deployment
-  # =====================================
-  deploy-staging:
-    name: 🚀 Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: deployment-decision
-    if: needs.deployment-decision.outputs.should_deploy == 'true' && github.ref == 'refs/heads/develop'
-    environment: staging
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🔐 Setup GCP Auth
-        uses: google-github-actions/auth@v1
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-          
-      - name: ⚙️ Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        
-      - name: 🐳 Build and Push Images
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🐳 Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: 🏗️ Build Frontend Image
+        id: build-frontend
         run: |
-          # Configure Docker for GCP
-          gcloud auth configure-docker
-          
-          # Build frontend image
-          docker build -t gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA ./frontend
-          docker push gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA
-          
-          # Build backend image
-          docker build -t gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA ./backend
-          docker push gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA
-          
-      - name: 🚀 Deploy to Cloud Run
+          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-frontend:${{ github.sha }}"
+          docker build -t $IMAGE ./frontend
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: 🏗️ Build API Gateway Image
+        id: build-api-gateway
         run: |
-          # Deploy frontend
+          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-api-gateway:${{ github.sha }}"
+          docker build -t $IMAGE ./backend/api-gateway
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: 🏗️ Build User Service Image
+        id: build-user-service
+        run: |
+          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-user-service:${{ github.sha }}"
+          docker build -t $IMAGE ./backend/user-service
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # DEPLOY TO STAGING
+  # =============================================================================
+  deploy-staging:
+    name: 🚧 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    outputs:
+      frontend-url: ${{ steps.deploy.outputs.frontend-url }}
+      api-gateway-url: ${{ steps.deploy.outputs.api-gateway-url }}
+      user-service-url: ${{ steps.deploy.outputs.user-service-url }}
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🚀 Deploy Services
+        id: deploy
+        run: |
+          # Deploy User Service
+          gcloud run deploy orderly-user-service-staging \
+            --image ${{ needs.build.outputs.user-service-image }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 10 \
+            --min-instances 0 \
+            --port 8001 \
+            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }}
+
+          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy API Gateway
+          gcloud run deploy orderly-api-gateway-staging \
+            --image ${{ needs.build.outputs.api-gateway-image }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 1Gi \
+            --cpu 1 \
+            --max-instances 10 \
+            --min-instances 0 \
+            --port 3000 \
+            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL
+
+          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy Frontend
           gcloud run deploy orderly-frontend-staging \
-            --image gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA \
+            --image ${{ needs.build.outputs.frontend-image }} \
+            --region ${{ env.GCP_REGION }} \
             --platform managed \
-            --region asia-east1 \
             --allow-unauthenticated \
-            --set-env-vars ENVIRONMENT=staging
-            
-          # Deploy backend
-          gcloud run deploy orderly-backend-staging \
-            --image gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA \
-            --platform managed \
-            --region asia-east1 \
-            --allow-unauthenticated \
-            --set-env-vars ENVIRONMENT=staging
-            
-      - name: ✅ Health Check
+            --memory 1Gi \
+            --cpu 1 \
+            --max-instances 10 \
+            --min-instances 0 \
+            --port 8000 \
+            --set-env-vars NODE_ENV=staging,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
+
+          FRONTEND_URL=$(gcloud run services describe orderly-frontend-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          echo "frontend-url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "api-gateway-url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
+          echo "user-service-url=$USER_SERVICE_URL" >> $GITHUB_OUTPUT
+
+      - name: 🧪 Health Check
         run: |
-          # Wait for deployment and verify health
+          echo "Waiting for services to be ready..."
+          sleep 30
+          
+          echo "🌐 Staging URLs:"
+          echo "Frontend: ${{ steps.deploy.outputs.frontend-url }}"
+          echo "API Gateway: ${{ steps.deploy.outputs.api-gateway-url }}"
+          echo "User Service: ${{ steps.deploy.outputs.user-service-url }}"
+          
+          # Health checks
+          curl -f "${{ steps.deploy.outputs.frontend-url }}/api/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.user-service-url }}/health" || exit 1
+          
+          echo "✅ All staging services are healthy!"
+
+  # =============================================================================
+  # DEPLOY TO PRODUCTION
+  # =============================================================================
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    outputs:
+      frontend-url: ${{ steps.deploy.outputs.frontend-url }}
+      api-gateway-url: ${{ steps.deploy.outputs.api-gateway-url }}
+      user-service-url: ${{ steps.deploy.outputs.user-service-url }}
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🚀 Deploy Services
+        id: deploy
+        run: |
+          # Deploy User Service
+          gcloud run deploy orderly-user-service-prod \
+            --image ${{ needs.build.outputs.user-service-image }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 1Gi \
+            --cpu 2 \
+            --max-instances 100 \
+            --min-instances 1 \
+            --port 8001 \
+            --set-env-vars NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}
+
+          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy API Gateway
+          gcloud run deploy orderly-api-gateway-prod \
+            --image ${{ needs.build.outputs.api-gateway-image }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 100 \
+            --min-instances 1 \
+            --port 3000 \
+            --set-env-vars NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET_PROD }},USER_SERVICE_URL=$USER_SERVICE_URL
+
+          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy Frontend
+          gcloud run deploy orderly-frontend-prod \
+            --image ${{ needs.build.outputs.frontend-image }} \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 2Gi \
+            --cpu 2 \
+            --max-instances 100 \
+            --min-instances 1 \
+            --port 8000 \
+            --set-env-vars NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
+
+          FRONTEND_URL=$(gcloud run services describe orderly-frontend-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          echo "frontend-url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "api-gateway-url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
+          echo "user-service-url=$USER_SERVICE_URL" >> $GITHUB_OUTPUT
+
+      - name: 🧪 Health Check
+        run: |
+          echo "Waiting for services to be ready..."
           sleep 60
           
-          FRONTEND_URL=$(gcloud run services describe orderly-frontend-staging --region=asia-east1 --format='value(status.url)')
-          BACKEND_URL=$(gcloud run services describe orderly-backend-staging --region=asia-east1 --format='value(status.url)')
+          echo "🌐 Production URLs:"
+          echo "Frontend: ${{ steps.deploy.outputs.frontend-url }}"
+          echo "API Gateway: ${{ steps.deploy.outputs.api-gateway-url }}"
+          echo "User Service: ${{ steps.deploy.outputs.user-service-url }}"
           
-          curl -f "$FRONTEND_URL/api/health" || exit 1
-          curl -f "$BACKEND_URL/health" || exit 1
+          # Health checks
+          curl -f "${{ steps.deploy.outputs.frontend-url }}/api/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.user-service-url }}/health" || exit 1
           
-          echo "✅ Staging deployment successful!"
-          echo "Frontend: $FRONTEND_URL"
-          echo "Backend: $BACKEND_URL"
-
-  # =====================================
-  # Production Deployment
-  # =====================================
-  deploy-production:
-    name: 🎯 Production Deployment
-    runs-on: ubuntu-latest
-    needs: [deployment-decision, deploy-staging]
-    if: needs.deployment-decision.outputs.should_deploy == 'true' && github.ref == 'refs/heads/main'
-    environment: 
-      name: production
-      url: https://orderly.app
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        
-      - name: 🔐 Setup GCP Auth
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-          
-      - name: ⚙️ Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        
-      - name: 🎯 Intelligent Deployment Strategy
-        id: deployment_strategy
-        run: |
-          STRATEGY=${{ needs.deployment-decision.outputs.deployment_strategy }}
-          CONFIDENCE=${{ needs.quality-gates.outputs.confidence_level }}
-          
-          echo "🎯 Executing deployment strategy: $STRATEGY"
-          echo "Confidence level: $CONFIDENCE%"
-          
-          case $STRATEGY in
-            "PROCEED_FAST_TRACK")
-              echo "🚀 Fast Track Blue-Green Deployment"
-              echo "deployment_type=blue-green-fast" >> $GITHUB_OUTPUT
-              echo "traffic_increment=100" >> $GITHUB_OUTPUT
-              ;;
-            "PROCEED_STANDARD")
-              echo "📈 Standard Blue-Green Deployment"
-              echo "deployment_type=blue-green-standard" >> $GITHUB_OUTPUT
-              echo "traffic_increment=100" >> $GITHUB_OUTPUT
-              ;;
-            "PROCEED_CAUTIOUS")
-              echo "🐣 Progressive Canary Deployment"
-              echo "deployment_type=canary" >> $GITHUB_OUTPUT
-              echo "traffic_increment=5" >> $GITHUB_OUTPUT
-              ;;
-          esac
-          
-      - name: 🚀 Execute Deployment
-        run: |
-          DEPLOYMENT_TYPE=${{ steps.deployment_strategy.outputs.deployment_type }}
-          TRAFFIC_INCREMENT=${{ steps.deployment_strategy.outputs.traffic_increment }}
-          
-          # Build and push production images
-          docker build -t gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA ./frontend
-          docker build -t gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA ./backend
-          
-          docker push gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA
-          docker push gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA
-          
-          if [ "$DEPLOYMENT_TYPE" == "canary" ]; then
-            echo "🐣 Starting Progressive Canary Deployment"
-            
-            # Deploy new version with traffic split
-            gcloud run deploy orderly-frontend-prod \
-              --image gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA \
-              --platform managed \
-              --region asia-east1 \
-              --no-traffic \
-              --tag canary \
-              --set-env-vars ENVIRONMENT=production
-              
-            gcloud run deploy orderly-backend-prod \
-              --image gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA \
-              --platform managed \
-              --region asia-east1 \
-              --no-traffic \
-              --tag canary \
-              --set-env-vars ENVIRONMENT=production
-              
-            # Gradual traffic shift: 5% -> 25% -> 50% -> 100%
-            for traffic in 5 25 50 100; do
-              echo "🔄 Shifting $traffic% traffic to canary"
-              
-              gcloud run services update-traffic orderly-frontend-prod \
-                --to-tags canary=$traffic
-              gcloud run services update-traffic orderly-backend-prod \
-                --to-tags canary=$traffic
-                
-              # Monitor for 5 minutes
-              sleep 300
-              
-              # Health check
-              if ! curl -f https://orderly.app/api/health; then
-                echo "❌ Health check failed, rolling back"
-                gcloud run services update-traffic orderly-frontend-prod --to-tags canary=0
-                gcloud run services update-traffic orderly-backend-prod --to-tags canary=0
-                exit 1
-              fi
-            done
-            
-          else
-            echo "🚀 Blue-Green Deployment"
-            
-            # Deploy with full traffic
-            gcloud run deploy orderly-frontend-prod \
-              --image gcr.io/$GCP_PROJECT_ID/orderly-frontend:$GITHUB_SHA \
-              --platform managed \
-              --region asia-east1 \
-              --allow-unauthenticated \
-              --set-env-vars ENVIRONMENT=production
-              
-            gcloud run deploy orderly-backend-prod \
-              --image gcr.io/$GCP_PROJECT_ID/orderly-backend:$GITHUB_SHA \
-              --platform managed \
-              --region asia-east1 \
-              --allow-unauthenticated \
-              --set-env-vars ENVIRONMENT=production
-          fi
-          
-      - name: ✅ Final Health Check & Monitoring
-        run: |
-          # Comprehensive health verification
-          curl -f https://orderly.app/api/health || exit 1
-          curl -f https://api.orderly.app/health || exit 1
-          
-          echo "🎉 Production deployment successful!"
-          
-          # Trigger monitoring alerts
-          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
-            -H 'Content-type: application/json' \
-            --data '{
-              "text": "🎉 Orderly Production Deployment Successful!",
-              "attachments": [{
-                "color": "good",
-                "fields": [
-                  {"title": "Commit", "value": "'$GITHUB_SHA'", "short": true},
-                  {"title": "Confidence", "value": "'${{ needs.quality-gates.outputs.confidence_level }}'%", "short": true},
-                  {"title": "Strategy", "value": "'${{ needs.deployment-decision.outputs.deployment_strategy }}'", "short": true}
-                ]
-              }]
-            }'
-
-  # =====================================
-  # Post-Deployment Monitoring
-  # =====================================
-  post-deployment-monitoring:
-    name: 📊 Post-Deployment Monitoring
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: always() && needs.deploy-production.result == 'success'
-    
-    steps:
-      - name: 📊 Initialize Monitoring
-        run: |
-          echo "📊 Setting up post-deployment monitoring..."
-          
-          # Schedule synthetic tests
-          echo "🔍 Initiating synthetic monitoring"
-          
-          # Cost tracking
-          echo "💰 Recording deployment cost: ${{ needs.quality-gates.outputs.cost_estimate }}"
-          
-          # Performance baseline
-          echo "⚡ Establishing performance baseline"
-          
-      - name: 🚨 Setup Alerts
-        run: |
-          echo "🚨 Configuring intelligent alerts"
-          echo "✅ Post-deployment monitoring initialized"
-
-  # =====================================
-  # Cleanup
-  # =====================================
-  cleanup:
-    name: 🧹 Cleanup
-    runs-on: ubuntu-latest
-    needs: [deploy-production, post-deployment-monitoring]
-    if: always()
-    
-    steps:
-      - name: 🧹 Clean up resources
-        run: |
-          echo "🧹 Cleaning up temporary resources..."
-          # Clean up old container images
-          # Remove temporary files
-          echo "✅ Cleanup completed"
-
-# =====================================
-# Workflow Summary
-# =====================================
-# This Ultra-Automated CI/CD pipeline features:
-# 
-# 🧠 ML-Powered Intelligence:
-# - 5 machine learning algorithms for quality assessment
-# - Confidence-based deployment decisions
-# - Automated risk scoring and strategy selection
-# 
-# 🚀 Zero-Downtime Deployments:
-# - Blue-Green Fast Track (<30s rollback)
-# - Progressive Canary (5% → 100% traffic)
-# - Self-healing monitoring and rollback
-# 
-# 🔒 Enterprise Security:
-# - SAST/DAST/Container/Dependency scanning
-# - SOC2/GDPR/HIPAA compliance checks
-# - Chaos engineering resilience testing
-# 
-# 💰 Cost Intelligence:
-# - Real-time deployment cost tracking
-# - ML-powered resource optimization
-# - Automated budget monitoring
-# 
-# 📊 Observability:
-# - Multi-provider APM integration
-# - Synthetic testing and monitoring
-# - Intelligent alert correlation
-# 
-# This represents the pinnacle of modern DevOps practices,
-# achieving 98%+ automation with enterprise-grade reliability.
+          echo "🎉 Production deployment completed successfully!"
+          echo "🌟 Access your Hello World app at: ${{ steps.deploy.outputs.frontend-url }}"

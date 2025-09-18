@@ -1,18 +1,15 @@
 import { Router } from 'express';
-import {
-  register,
-  login,
-  forgotPassword,
-  resetPassword,
-  registerValidation,
-  loginValidation
-} from '../controllers/authController';
+import { authController } from '../controllers/authController';
 
 const router = Router();
 
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+// Public routes
+router.get('/health', authController.health);
+router.post('/register', authController.register);
+router.post('/login', authController.login);
+router.post('/refresh', authController.refresh);
+
+// Test routes for development
+router.get('/test', authController.test);
 
 export default router;
