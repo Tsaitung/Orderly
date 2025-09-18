@@ -55,7 +55,7 @@ jobs:
       - name: 🏗️ Build Frontend Image (root Next.js)
         id: build-frontend
         run: |
-          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-frontend:${{ github.sha }}"
+          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
           docker build -f Dockerfile.frontend -t $IMAGE .
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
@@ -63,7 +63,7 @@ jobs:
       - name: 🏗️ Build API Gateway Image
         id: build-api-gateway
         run: |
-          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-api-gateway:${{ github.sha }}"
+          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
           docker build -t $IMAGE ./backend/api-gateway
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
@@ -71,7 +71,7 @@ jobs:
       - name: 🏗️ Build User Service Image
         id: build-user-service
         run: |
-          IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-user-service:${{ github.sha }}"
+          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
           docker build -t $IMAGE ./backend/user-service
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
