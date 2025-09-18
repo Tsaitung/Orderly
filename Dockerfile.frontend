@@ -14,8 +14,6 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# Generate Prisma Client for server code bundling
-RUN npx prisma generate --schema=/app/prisma/schema.prisma
 # Build Next.js (standalone)
 RUN npm run build
 
