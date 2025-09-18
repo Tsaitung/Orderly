@@ -44,6 +44,16 @@ const CacheService = {
 }
 
 export async function GET() {
+  // Skip database/Redis connections during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.REDIS_URL && !process.env.DATABASE_URL) {
+    return NextResponse.json({
+      status: 'build-time',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0',
+      message: 'Health check skipped during build'
+    })
+  }
+
   const strictMode = process.env.HEALTH_STRICT === '1'
   const healthChecks = {
     database: false,
