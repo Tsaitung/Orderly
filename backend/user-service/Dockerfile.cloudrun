@@ -18,7 +18,7 @@ RUN npm install
 
 # Install User Service dependencies
 WORKDIR /app/backend/user-service
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Build stage
 FROM base AS builder

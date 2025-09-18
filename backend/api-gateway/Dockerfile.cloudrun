@@ -18,7 +18,7 @@ RUN npm install
 
 # Install API Gateway dependencies
 WORKDIR /app/backend/api-gateway
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Build stage
 FROM base AS builder
