@@ -76,19 +76,6 @@ const nextConfig = {
   // Output configuration for standalone builds
   output: 'standalone',
   
-  // TypeScript configuration
-  typescript: {
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors. We handle this in CI/CD
-    ignoreBuildErrors: false,
-  },
-  
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  
-  // PWA support can be added later with next-pwa plugin
   // Disable ESLint during builds to unblock deployment
   eslint: {
     ignoreDuringBuilds: true,
