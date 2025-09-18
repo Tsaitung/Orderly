@@ -23,7 +23,7 @@ export const rateLimitConfigs = {
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
       prefix: 'rl:public:',
     }),
     message: {
@@ -53,7 +53,7 @@ export const rateLimitConfigs = {
       return `user:${userId}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
       prefix: 'rl:auth:',
     }),
     message: {
@@ -82,7 +82,7 @@ export const rateLimitConfigs = {
       return `premium:${userId}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
       prefix: 'rl:premium:',
     }),
     message: {
@@ -111,7 +111,7 @@ export const rateLimitConfigs = {
       return `api:${apiKey}`;
     },
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
       prefix: 'rl:api:',
     }),
     message: {
@@ -136,7 +136,7 @@ export const rateLimitConfigs = {
     standardHeaders: true,
     legacyHeaders: false,
     store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.call(...args) as Promise<any>,
+      sendCommand: (...args: string[]) => redis.call(args[0], ...args.slice(1)) as Promise<any>,
       prefix: 'rl:sensitive:',
     }),
     message: {
