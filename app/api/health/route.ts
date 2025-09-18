@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { CacheService } from '@/lib/redis'
+import { prisma } from '../../../lib/db'
+import { CacheService } from '../../../lib/redis'
 
 export async function GET() {
   const strictMode = process.env.HEALTH_STRICT === '1'
