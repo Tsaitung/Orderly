@@ -94,6 +94,7 @@ const nextConfig = {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname),
+      'lib': path.resolve(__dirname, 'lib'),
     };
     return config;
   }
