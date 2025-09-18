@@ -88,9 +88,9 @@ const SuppliersList = React.forwardRef<HTMLDivElement, SuppliersListProps>(({
       }
 
       // Handle null/undefined values
-      if (aValue == null && bValue == null) return 0
-      if (aValue == null) return 1
-      if (bValue == null) return -1
+      if (aValue === null && bValue === null) return 0
+      if (aValue === null) return 1
+      if (bValue === null) return -1
 
       // Compare values
       if (typeof aValue === 'string' && typeof bValue === 'string') {

@@ -1,0 +1,104 @@
+{
+  "summary": {
+    "testDuration": "16.00s",
+    "totalRequests": 107,
+    "successfulRequests": 107,
+    "failedRequests": 0,
+    "errorRate": "0.00%",
+    "throughput": "6.69 req/s",
+    "averageLatency": "1.90ms",
+    "maxConcurrentUsers": 10
+  },
+  "latencyStats": {
+    "min": "0.83ms",
+    "max": "15.77ms",
+    "mean": "1.90ms",
+    "median": "1.54ms",
+    "p90": "3.28ms",
+    "p95": "3.40ms",
+    "p99": "4.14ms"
+  },
+  "thresholds": {
+    "maxLatency": {
+      "threshold": "1000ms",
+      "actual": "3.40ms",
+      "passed": true
+    },
+    "errorRate": {
+      "threshold": "5.00%",
+      "actual": "0.00%",
+      "passed": true
+    },
+    "throughput": {
+      "threshold": "100 req/s",
+      "actual": "6.69 req/s",
+      "passed": false
+    }
+  },
+  "endpoints": {
+    "GET /health": {
+      "requests": 36,
+      "successes": 36,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "2.21ms",
+        "p95": "3.79ms"
+      }
+    },
+    "GET /metrics": {
+      "requests": 14,
+      "successes": 14,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "1.72ms",
+        "p95": "3.38ms"
+      }
+    },
+    "GET /apm/status": {
+      "requests": 7,
+      "successes": 7,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "1.50ms",
+        "p95": "2.02ms"
+      }
+    },
+    "GET /metrics/business": {
+      "requests": 20,
+      "successes": 20,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "1.63ms",
+        "p95": "4.11ms"
+      }
+    },
+    "POST /demo/order": {
+      "requests": 21,
+      "successes": 21,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "1.75ms",
+        "p95": "2.76ms"
+      }
+    },
+    "POST /demo/delivery": {
+      "requests": 9,
+      "successes": 9,
+      "failures": 0,
+      "errorRate": "0.00%",
+      "latencyStats": {
+        "mean": "2.25ms",
+        "p95": "4.14ms"
+      }
+    }
+  },
+  "errors": [],
+  "recommendations": [
+    "Low throughput detected. Consider scaling resources or optimizing bottlenecks."
+  ]
+}
