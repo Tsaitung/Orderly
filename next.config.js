@@ -89,7 +89,6 @@ const nextConfig = {
   },
   
   // PWA support can be added later with next-pwa plugin
-  ,
   // Ensure TS path aliases like '@/lib/*' resolve in Docker/CI builds
   webpack: (config) => {
     config.resolve.alias = {
