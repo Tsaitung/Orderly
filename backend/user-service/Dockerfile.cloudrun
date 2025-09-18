@@ -7,14 +7,33 @@ RUN apk update && apk upgrade && apk add --no-cache dumb-init curl
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+
+# Copy workspace dependencies first
+COPY shared/types/package*.json ./shared/types/
+COPY backend/user-service/package*.json ./backend/user-service/
+
+# Install shared types dependencies
+WORKDIR /app/shared/types
+RUN npm ci
+
+# Install User Service dependencies
+WORKDIR /app/backend/user-service
+RUN npm ci --omit=dev
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy node_modules from deps stage
+COPY --from=deps /app/shared/types ./shared/types
+COPY --from=deps /app/backend/user-service/node_modules ./backend/user-service/node_modules
+
+# Copy source code
+COPY shared/types ./shared/types
+COPY backend/user-service ./backend/user-service
+
+# Build from User Service directory
+WORKDIR /app/backend/user-service
 ENV NODE_ENV=production
 RUN npm run build
 
@@ -30,9 +49,9 @@ RUN adduser --system --uid 1001 user-service
 RUN mkdir -p /app/logs && chown -R user-service:nodejs /app/logs
 
 # Copy built application
-COPY --from=builder --chown=user-service:nodejs /app/dist ./dist
-COPY --from=builder --chown=user-service:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=user-service:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=user-service:nodejs /app/backend/user-service/dist ./dist
+COPY --from=builder --chown=user-service:nodejs /app/backend/user-service/node_modules ./node_modules
+COPY --from=builder --chown=user-service:nodejs /app/backend/user-service/package.json ./package.json
 
 # Switch to non-root user
 USER user-service
