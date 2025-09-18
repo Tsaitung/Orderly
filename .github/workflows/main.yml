@@ -52,11 +52,11 @@ jobs:
       - name: 🐳 Configure Docker
         run: gcloud auth configure-docker
 
-      - name: 🏗️ Build Frontend Image
+      - name: 🏗️ Build Frontend Image (root Next.js)
         id: build-frontend
         run: |
           IMAGE="gcr.io/${{ env.GCP_PROJECT_ID }}/orderly-frontend:${{ github.sha }}"
-          docker build -t $IMAGE ./frontend
+          docker build -f Dockerfile.frontend -t $IMAGE .
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
