@@ -72,9 +72,8 @@ out/
 
 # Google Cloud
 gcloud-service-key.json
-*.json
-!package*.json
-!tsconfig*.json
+# Do NOT blanket-ignore all JSON; many config files are JSON.
+# If you have local secrets, place them under a dedicated folder and ignore that folder.
 
 # Certificates
 *.pem
