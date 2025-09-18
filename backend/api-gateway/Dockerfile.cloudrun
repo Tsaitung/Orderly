@@ -14,7 +14,7 @@ COPY backend/api-gateway/package*.json ./backend/api-gateway/
 
 # Install shared types dependencies
 WORKDIR /app/shared/types
-RUN npm ci
+RUN npm install
 
 # Install API Gateway dependencies
 WORKDIR /app/backend/api-gateway

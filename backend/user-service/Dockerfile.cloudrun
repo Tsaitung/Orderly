@@ -14,7 +14,7 @@ COPY backend/user-service/package*.json ./backend/user-service/
 
 # Install shared types dependencies
 WORKDIR /app/shared/types
-RUN npm ci
+RUN npm install
 
 # Install User Service dependencies
 WORKDIR /app/backend/user-service
