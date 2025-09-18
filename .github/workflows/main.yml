@@ -106,9 +106,14 @@ jobs:
       - name: 🚀 Deploy Services
         id: deploy
         run: |
+          # Generate image URLs (same as build job)
+          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
+          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
+          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
+          
           # Deploy User Service
           gcloud run deploy orderly-user-service-staging \
-            --image ${{ needs.build.outputs.user-service-image }} \
+            --image $USER_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -123,7 +128,7 @@ jobs:
 
           # Deploy API Gateway
           gcloud run deploy orderly-api-gateway-staging \
-            --image ${{ needs.build.outputs.api-gateway-image }} \
+            --image $API_GATEWAY_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -138,7 +143,7 @@ jobs:
 
           # Deploy Frontend
           gcloud run deploy orderly-frontend-staging \
-            --image ${{ needs.build.outputs.frontend-image }} \
+            --image $FRONTEND_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -200,9 +205,14 @@ jobs:
       - name: 🚀 Deploy Services
         id: deploy
         run: |
+          # Generate image URLs (same as build job)
+          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
+          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
+          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
+          
           # Deploy User Service
           gcloud run deploy orderly-user-service-prod \
-            --image ${{ needs.build.outputs.user-service-image }} \
+            --image $USER_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -217,7 +227,7 @@ jobs:
 
           # Deploy API Gateway
           gcloud run deploy orderly-api-gateway-prod \
-            --image ${{ needs.build.outputs.api-gateway-image }} \
+            --image $API_GATEWAY_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
@@ -232,7 +242,7 @@ jobs:
 
           # Deploy Frontend
           gcloud run deploy orderly-frontend-prod \
-            --image ${{ needs.build.outputs.frontend-image }} \
+            --image $FRONTEND_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
