@@ -16,9 +16,9 @@ COPY backend/user-service/package*.json ./backend/user-service/
 WORKDIR /app/shared/types
 RUN npm install
 
-# Install User Service dependencies
+# Install User Service dependencies (including dev deps needed for build)
 WORKDIR /app/backend/user-service
-RUN npm install --omit=dev
+RUN npm install
 
 # Build stage
 FROM base AS builder

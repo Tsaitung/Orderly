@@ -16,9 +16,9 @@ COPY backend/api-gateway/package*.json ./backend/api-gateway/
 WORKDIR /app/shared/types
 RUN npm install
 
-# Install API Gateway dependencies
+# Install API Gateway dependencies (including dev deps needed for build)
 WORKDIR /app/backend/api-gateway
-RUN npm install --omit=dev
+RUN npm install
 
 # Build stage
 FROM base AS builder
