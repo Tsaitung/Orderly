@@ -1,0 +1,258 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orderly
+      POSTGRES_USER: orderly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderly -d orderly"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - orderly-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - orderly-network
+
+  # API Gateway
+  api-gateway:
+    build: 
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # User Service
+  user-service:
+    build: 
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=production
+      - PORT=8001
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Order Service
+  order-service:
+    build: 
+      context: ./backend/order-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - NODE_ENV=production
+      - PORT=8002
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Product Service
+  product-service:
+    build: 
+      context: ./backend/product-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - NODE_ENV=production
+      - PORT=8003
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Acceptance Service
+  acceptance-service:
+    build: 
+      context: ./backend/acceptance-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      - NODE_ENV=production
+      - PORT=8004
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Billing Service
+  billing-service:
+    build: 
+      context: ./backend/billing-service
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      - NODE_ENV=production
+      - PORT=8005
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Notification Service  
+  notification-service:
+    build: 
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    ports:
+      - "8006:8006"
+    environment:
+      - NODE_ENV=production
+      - PORT=8006
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+  # Admin Service
+  admin-service:
+    build: 
+      context: ./backend/admin-service
+      dockerfile: Dockerfile
+    ports:
+      - "8008:8008"
+    environment:
+      - NODE_ENV=production
+      - PORT=8008
+      - DATABASE_URL=postgresql://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - orderly-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  orderly-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,388 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ develop, main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      services:
+        description: 'Services to deploy (comma-separated, leave empty for all)'
+        required: false
+        type: string
+
+env:
+  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+  GOOGLE_CLOUD_REGION: asia-east1
+  REGISTRY: gcr.io
+
+jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      deploy: ${{ steps.env.outputs.deploy }}
+    steps:
+      - name: Determine deployment environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "environment=none" >> $GITHUB_OUTPUT
+            echo "deploy=false" >> $GITHUB_OUTPUT
+          fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    if: needs.determine-environment.outputs.deploy == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+    needs: [determine-environment, security-scan]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    
+    strategy:
+      matrix:
+        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check if service exists
+        id: check-service
+        run: |
+          if [ -d "backend/${{ matrix.service }}" ] && [ -f "backend/${{ matrix.service }}/Dockerfile.cloudrun" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Service ${{ matrix.service }} or its Dockerfile.cloudrun not found"
+          fi
+      
+      - name: Set up Cloud SDK
+        if: steps.check-service.outputs.exists == 'true'
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Configure Docker to use gcloud as credential helper
+        if: steps.check-service.outputs.exists == 'true'
+        run: gcloud auth configure-docker
+      
+      - name: Build and push Docker image
+        if: steps.check-service.outputs.exists == 'true'
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          # Build image with both latest and SHA tags
+          gcloud builds submit backend/${{ matrix.service }} \
+            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:latest" \
+            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$IMAGE_TAG" \
+            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$ENVIRONMENT" \
+            --dockerfile="Dockerfile.cloudrun"
+
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [determine-environment, build-and-push]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Deploy infrastructure
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          chmod +x scripts/deploy-cloud-run.sh
+          scripts/deploy-cloud-run.sh infra
+
+  deploy-services:
+    name: Deploy Services
+    runs-on: ubuntu-latest
+    needs: [determine-environment, deploy-infrastructure]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    
+    strategy:
+      matrix:
+        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
+      fail-fast: false
+      max-parallel: 3  # Deploy services in batches to avoid overwhelming the infrastructure
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check if service should be deployed
+        id: check-deploy
+        run: |
+          # Check if specific services were requested
+          if [ -n "${{ github.event.inputs.services }}" ]; then
+            if echo "${{ github.event.inputs.services }}" | grep -q "${{ matrix.service }}"; then
+              echo "deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Deploy all services if none specified
+            if [ -d "backend/${{ matrix.service }}" ]; then
+              echo "deploy=true" >> $GITHUB_OUTPUT
+            else
+              echo "deploy=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Set up Cloud SDK
+        if: steps.check-deploy.outputs.deploy == 'true'
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Deploy ${{ matrix.service }}
+        if: steps.check-deploy.outputs.deploy == 'true'
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+        run: |
+          # Get service port mapping
+          case "${{ matrix.service }}" in
+            "api-gateway") PORT=8000 ;;
+            "user-service") PORT=8001 ;;
+            "order-service") PORT=8002 ;;
+            "product-service") PORT=8003 ;;
+            "acceptance-service") PORT=8004 ;;
+            "billing-service") PORT=8005 ;;
+            "notification-service") PORT=8006 ;;
+            "admin-service") PORT=8008 ;;
+            *) echo "Unknown service: ${{ matrix.service }}"; exit 1 ;;
+          esac
+          
+          # Get database connection name
+          DB_CONNECTION_NAME=$(gcloud sql instances describe orderly-db \
+            --format="value(connectionName)" --project="$GOOGLE_CLOUD_PROJECT")
+          
+          # Get Redis IP
+          REDIS_HOST=$(gcloud redis instances describe orderly-cache \
+            --region="$GOOGLE_CLOUD_REGION" --format="value(host)" --project="$GOOGLE_CLOUD_PROJECT")
+          
+          # Set resource limits based on environment
+          if [ "$ENVIRONMENT" = "production" ]; then
+            MEMORY="1Gi"
+            CPU="2"
+            MIN_INSTANCES="1"
+            MAX_INSTANCES="20"
+            CONCURRENCY="80"
+          else
+            MEMORY="512Mi"
+            CPU="1"
+            MIN_INSTANCES="0"
+            MAX_INSTANCES="10"
+            CONCURRENCY="100"
+          fi
+          
+          # Deploy to Cloud Run
+          gcloud run deploy "orderly-${{ matrix.service }}-$ENVIRONMENT" \
+            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$IMAGE_TAG" \
+            --platform=managed \
+            --region="$GOOGLE_CLOUD_REGION" \
+            --allow-unauthenticated \
+            --port="$PORT" \
+            --memory="$MEMORY" \
+            --cpu="$CPU" \
+            --min-instances="$MIN_INSTANCES" \
+            --max-instances="$MAX_INSTANCES" \
+            --concurrency="$CONCURRENCY" \
+            --timeout=300 \
+            --set-env-vars="NODE_ENV=$ENVIRONMENT,PORT=$PORT" \
+            --set-env-vars="REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379" \
+            --set-env-vars="DATABASE_URL=postgresql://orderly@/$GOOGLE_CLOUD_PROJECT?host=/cloudsql/$DB_CONNECTION_NAME" \
+            --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
+            --add-cloudsql-instances="$DB_CONNECTION_NAME" \
+            --project="$GOOGLE_CLOUD_PROJECT" \
+            --labels="environment=$ENVIRONMENT,service=${{ matrix.service }},version=$IMAGE_TAG"
+
+  configure-routing:
+    name: Configure Service Routing
+    runs-on: ubuntu-latest
+    needs: [determine-environment, deploy-services]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    environment: ${{ needs.determine-environment.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Configure API Gateway routing
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          # Get all service URLs
+          declare -A service_urls
+          for service in user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+              --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+              --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+            if [ -n "$url" ]; then
+              service_urls["$service"]="$url"
+            fi
+          done
+          
+          # Update API Gateway with service URLs
+          env_vars="NODE_ENV=$ENVIRONMENT"
+          for service in "${!service_urls[@]}"; do
+            env_name=$(echo "$service" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            env_vars="${env_vars},${env_name}_URL=${service_urls[$service]}"
+          done
+          
+          gcloud run services update "orderly-api-gateway-$ENVIRONMENT" \
+            --region="$GOOGLE_CLOUD_REGION" \
+            --set-env-vars="$env_vars" \
+            --project="$GOOGLE_CLOUD_PROJECT"
+
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    needs: [determine-environment, configure-routing]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    steps:
+      - name: Wait for services to be ready
+        run: sleep 30
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Perform health checks
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          # Health check all deployed services
+          failed_services=()
+          for service in api-gateway user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+              --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+              --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+            
+            if [ -n "$url" ]; then
+              echo "Checking health of $service at $url/health"
+              if curl -sf "$url/health" --max-time 30 > /dev/null; then
+                echo "✅ $service is healthy"
+              else
+                echo "❌ $service failed health check"
+                failed_services+=("$service")
+              fi
+            else
+              echo "⚠️ $service not found or not deployed"
+            fi
+          done
+          
+          if [ ${#failed_services[@]} -gt 0 ]; then
+            echo "Failed services: ${failed_services[*]}"
+            exit 1
+          fi
+          
+          echo "All services are healthy! 🎉"
+
+  post-deployment:
+    name: Post-Deployment Tasks
+    runs-on: ubuntu-latest
+    needs: [determine-environment, health-check]
+    if: always() && needs.determine-environment.outputs.deploy == 'true'
+    steps:
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+      
+      - name: Create deployment summary
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          HEALTH_CHECK_STATUS: ${{ needs.health-check.result }}
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Health Check:** $HEALTH_CHECK_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Service URLs:" >> $GITHUB_STEP_SUMMARY
+          
+          for service in api-gateway user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+              --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+              --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "Not deployed")
+            echo "- **$service:** $url" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Monitoring Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [Cloud Run Console](https://console.cloud.google.com/run?project=$GOOGLE_CLOUD_PROJECT)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Cloud SQL Console](https://console.cloud.google.com/sql?project=$GOOGLE_CLOUD_PROJECT)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Cloud Logging](https://console.cloud.google.com/logs?project=$GOOGLE_CLOUD_PROJECT)" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ needs.health-check.result }}" = "success" ]; then
+            echo "🎉 Deployment to ${{ needs.determine-environment.outputs.environment }} completed successfully!"
+          else
+            echo "❌ Deployment to ${{ needs.determine-environment.outputs.environment }} failed!"
+          fi

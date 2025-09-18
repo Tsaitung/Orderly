@@ -1,0 +1,188 @@
+{
+  "analysis": {
+    "timestamp": "2025-09-18T11:27:44.411Z",
+    "systemHealth": {
+      "status": "healthy",
+      "uptime": 296.064186334,
+      "memory": {
+        "rss": 55377920,
+        "heapTotal": 223281152,
+        "heapUsed": 216608152,
+        "external": 8048345,
+        "arrayBuffers": 4921583
+      },
+      "environment": "development",
+      "responseTime": 13.524167
+    },
+    "performanceMetrics": {
+      "responseTime": 10.157125,
+      "dataTransferred": 5213
+    },
+    "businessMetrics": {
+      "orders": {
+        "total": 1,
+        "recent": 1,
+        "completed": 0,
+        "avgValue": 2500
+      },
+      "users": {
+        "total": 0,
+        "unique": 0,
+        "recentActions": 0
+      },
+      "supplyChain": {
+        "total": 1,
+        "recent": 1,
+        "avgQuality": 86
+      },
+      "financial": {
+        "total": 1,
+        "recent": 1,
+        "totalVolume": 2500
+      },
+      "system": {
+        "total": 9,
+        "recent": 9,
+        "avgResponseTime": 0.6666666666666666
+      },
+      "responseTime": 15.744917000000001
+    },
+    "apmStatus": {
+      "enabled": true,
+      "initialized": true,
+      "metrics": {
+        "total": 79,
+        "recent": 79
+      },
+      "traces": {
+        "total": 9,
+        "active": 1,
+        "completed": 8
+      },
+      "integrations": {
+        "datadog": false,
+        "newrelic": false
+      },
+      "responseTime": 11.303166
+    },
+    "recommendations": [
+      {
+        "priority": "high",
+        "category": "memory",
+        "issue": "High memory usage detected",
+        "description": "Memory usage at 97.0%",
+        "solution": "Consider implementing memory optimization strategies or scaling resources"
+      },
+      {
+        "priority": "high",
+        "category": "business",
+        "issue": "Low order completion rate",
+        "description": "Only 0.0% of orders are completed",
+        "solution": "Review order processing workflow and identify bottlenecks"
+      },
+      {
+        "priority": "low",
+        "category": "monitoring",
+        "issue": "No external APM integrations enabled",
+        "description": "Both DataDog and New Relic integrations are disabled",
+        "solution": "Enable APM integrations for better production monitoring"
+      }
+    ],
+    "optimizationPriority": [
+      {
+        "rank": 1,
+        "priority": "high",
+        "category": "memory",
+        "issue": "High memory usage detected",
+        "impact": "Critical",
+        "effort": "Medium"
+      },
+      {
+        "rank": 2,
+        "priority": "high",
+        "category": "business",
+        "issue": "Low order completion rate",
+        "impact": "Critical",
+        "effort": "Low"
+      },
+      {
+        "rank": 3,
+        "priority": "low",
+        "category": "monitoring",
+        "issue": "No external APM integrations enabled",
+        "impact": "Minor",
+        "effort": "Low"
+      }
+    ]
+  },
+  "report": {
+    "summary": {
+      "analysisTime": "2025-09-18T11:27:44.411Z",
+      "overallStatus": "Needs Optimization",
+      "totalRecommendations": 3,
+      "highPriorityIssues": 2,
+      "systemResponseTime": 13.524167
+    },
+    "healthCheck": {
+      "status": "healthy",
+      "uptime": "0.1 hours",
+      "memoryUsage": "97.0%",
+      "environment": "development"
+    },
+    "performanceSnapshot": {
+      "avgResponseTime": 0.6666666666666666,
+      "orderCompletionRate": "0.0%",
+      "supplyChainQuality": 86,
+      "apmStatus": "Active"
+    },
+    "recommendations": [
+      {
+        "priority": "high",
+        "category": "memory",
+        "issue": "High memory usage detected",
+        "description": "Memory usage at 97.0%",
+        "solution": "Consider implementing memory optimization strategies or scaling resources"
+      },
+      {
+        "priority": "high",
+        "category": "business",
+        "issue": "Low order completion rate",
+        "description": "Only 0.0% of orders are completed",
+        "solution": "Review order processing workflow and identify bottlenecks"
+      },
+      {
+        "priority": "low",
+        "category": "monitoring",
+        "issue": "No external APM integrations enabled",
+        "description": "Both DataDog and New Relic integrations are disabled",
+        "solution": "Enable APM integrations for better production monitoring"
+      }
+    ],
+    "optimizationRoadmap": [
+      {
+        "rank": 1,
+        "priority": "high",
+        "category": "memory",
+        "issue": "High memory usage detected",
+        "impact": "Critical",
+        "effort": "Medium"
+      },
+      {
+        "rank": 2,
+        "priority": "high",
+        "category": "business",
+        "issue": "Low order completion rate",
+        "impact": "Critical",
+        "effort": "Low"
+      },
+      {
+        "rank": 3,
+        "priority": "low",
+        "category": "monitoring",
+        "issue": "No external APM integrations enabled",
+        "impact": "Minor",
+        "effort": "Low"
+      }
+    ]
+  }
+}

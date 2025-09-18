@@ -1,0 +1,51 @@
+# Cloud Run optimized Dockerfile for admin-service
+FROM node:20-alpine AS base
+
+# Install security updates and required packages
+RUN apk update && apk upgrade && apk add --no-cache dumb-init curl
+
+# Install dependencies only when needed
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
+
+# Build stage
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+RUN npm run build
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+# Create non-root user for Cloud Run
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 admin-service
+
+# Create logs directory
+RUN mkdir -p /app/logs && chown -R admin-service:nodejs /app/logs
+
+# Copy built application
+COPY --from=builder --chown=admin-service:nodejs /app/dist ./dist
+COPY --from=builder --chown=admin-service:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=admin-service:nodejs /app/package.json ./package.json
+
+# Switch to non-root user
+USER admin-service
+
+# Cloud Run expects the container to listen on PORT environment variable
+ENV PORT=${PORT:-8008}
+ENV NODE_ENV=production
+
+# Expose the port (Cloud Run will override this)
+EXPOSE ${PORT}
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
+CMD ["node", "dist/index.js"]

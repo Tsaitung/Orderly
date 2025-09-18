@@ -21,7 +21,7 @@ app.use(compression());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://orderly-prod.run.app', 'https://orderly-staging.run.app']
-    : ['http://localhost:5173', 'http://localhost:3000'],
+    : ['http://localhost:3000'],
   credentials: true,
 }));
 

@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Optimized for development
+  postgres:
+    image: postgres:15-alpine
+    container_name: orderly-postgres
+    environment:
+      POSTGRES_DB: orderly
+      POSTGRES_USER: orderly
+      POSTGRES_PASSWORD: orderly_dev_password
+      # Performance tuning for development
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    command: >
+      postgres
+      -c shared_preload_libraries=pg_stat_statements
+      -c pg_stat_statements.track=all
+      -c max_connections=100
+      -c shared_buffers=128MB
+      -c effective_cache_size=512MB
+      -c maintenance_work_mem=32MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=8MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+    networks:
+      - orderly-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderly -d orderly"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - Optimized for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: orderly-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./scripts/redis.conf:/usr/local/etc/redis/redis.conf
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --appendfsync everysec
+    networks:
+      - orderly-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # PgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: orderly-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@orderly.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - orderly-network
+    profiles:
+      - admin
+
+  # Redis Commander for Redis management (optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: orderly-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - orderly-network
+    profiles:
+      - admin
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  orderly-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

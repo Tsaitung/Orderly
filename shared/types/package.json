@@ -1,0 +1,22 @@
+{
+  "name": "@orderly/types",
+  "version": "1.0.0",
+  "description": "Shared TypeScript types for Orderly platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
