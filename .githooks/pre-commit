@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pre-commit hook: validate no references to deprecated docs remain
+
+SCRIPT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+bash "$SCRIPT_DIR/scripts/check-doc-references.sh" || exit 1
+

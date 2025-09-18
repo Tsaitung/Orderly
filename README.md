@@ -2,6 +2,22 @@
 
 成功建立了一個完整的 Hello World 應用程式，包含前端、後端微服務架構以及完整的 CI/CD 部署流程。
 
+## 📚 文檔入口
+
+- 全部權威文檔與索引：`docs/INDEX.md`
+  - PRD、設計系統、技術架構、API（精要 + OpenAPI）、資料庫
+  - 變更時請同步更新對應權威文檔與索引
+
+### 開發者本機 pre-commit（選用）
+
+啟用本庫的 Git hooks 以在提交前檢查舊鏈結：
+
+```bash
+git config core.hooksPath .githooks
+```
+
+CI 亦會在 PR / push 自動執行相同檢查（工作流：Docs Link Check）。
+
 ## 🎯 專案完成狀態
 
 ✅ **已完成的功能**

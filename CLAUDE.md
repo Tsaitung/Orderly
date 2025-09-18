@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> Canonical Documentation Index: see `docs/INDEX.md` for the single source of truth and cross-links to PRD, Design System, Architecture, API, and Database docs.
+
 ## Project Overview
 
 井然 Orderly is an enterprise-grade digital supply chain platform for the restaurant industry, featuring Ultra-Automated CI/CD with 98%+ automation. The platform connects restaurants and suppliers through a unified interface for the complete order-to-settlement workflow: ordering → delivery → acceptance → billing → settlement.
@@ -9,9 +11,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture
 
 ### Microservices Architecture
-- **Frontend**: Next.js/Vite + TypeScript + TailwindCSS (port 5173)
+- **Frontend**: Next.js + TypeScript + TailwindCSS (port 3000)
 - **Backend**: Node.js microservices architecture with API Gateway pattern
-  - API Gateway (port 3000) - Routes to all services
+  - API Gateway (port 8000) - Routes to all services
   - User Service (port 3001) - Authentication and user management  
   - Order Service (port 3002) - Order processing
   - Product Service (port 3003) - Product catalog
@@ -61,6 +63,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Conventional Commits (e.g., `feat(api): add rate limiting`, `fix(user): hash password correctly`).
 - PRs: concise summary, linked issues (`Closes #123`), UI screenshots, test plan, and green lint/tests.
 - Keep scope focused; update docs when behavior changes.
+
+### Documentation Maintenance
+- Single source of truth lives in `docs/INDEX.md`.
+- Update the corresponding canonical docs when changing behavior/contracts:
+  - PRD → `docs/PRD-Complete.md`
+  - Architecture → `docs/Technical-Architecture-Summary.md`
+  - Design System → `docs/design-system.md`
+  - API → `docs/API-Endpoints-Essential.md` and `docs/api-specification.yaml`
+  - Database → `docs/Database-Schema-Core.md` and `docs/database.md`
+- If adding/renaming docs, also update `docs/INDEX.md` and cross-links.
+- Before merging, run a quick link check for stale paths:
+  - `rg -n "api-specification\.md|technical-architecture\.md|PRD\.md|Orderly Design System\.md|requirement\.md"`
 
 ### Security & Configuration
 - Copy `.env.example` per workspace to `.env.local`; never commit secrets.
@@ -189,6 +203,17 @@ Core secrets for CI/CD automation:
 - **Typography**: Noto Sans TC (Chinese) / Inter (English)
 - **Accessibility**: WCAG 2.1 AA compliance (4.5:1 contrast ratio minimum)
 - **Touch Targets**: ≥44×44px for mobile interfaces
+
+## Canonical Documentation
+
+Refer to `docs/INDEX.md` for the up-to-date documentation map. Key entries:
+- PRD: `docs/PRD-Complete.md`
+- Design System: `docs/design-system.md`
+- Technical Architecture: `docs/Technical-Architecture-Summary.md`
+- API Essentials: `docs/API-Endpoints-Essential.md`
+- OpenAPI Spec: `docs/api-specification.yaml`
+- Database Core Schema: `docs/Database-Schema-Core.md`
+- Database Operations: `docs/database.md`
 
 ## Multi-Region Infrastructure
 

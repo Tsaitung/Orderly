@@ -1,0 +1,1382 @@
+openapi: 3.0.3
+info:
+  title: 井然 Orderly ERP Integration API
+  description: |
+    井然 Orderly 平台的 ERP 整合 API，提供餐廳和供應商與現有 ERP 系統的無縫整合。
+    
+    ## 核心功能
+    - **訂單同步**: 雙向同步訂單數據
+    - **產品目錄管理**: 同步產品信息和價格
+    - **庫存管理**: 即時庫存更新
+    - **對帳自動化**: 自動對帳和差異處理
+    - **Webhook 事件**: 即時事件通知
+    
+    ## 認證方式
+    使用 JWT Bearer Token 認證，需要在 Header 中包含 `Authorization: Bearer {token}`
+    
+    ## 錯誤處理
+    API 使用標準 HTTP 狀態碼和統一的錯誤響應格式
+    
+  version: 2.0.0
+  contact:
+    name: Orderly API Support
+    email: api-support@orderly.tw
+    url: https://docs.orderly.tw
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.orderly.tw/v2
+    description: Production server
+  - url: https://staging-api.orderly.tw/v2
+    description: Staging server
+  - url: http://localhost:8000/api/v2
+    description: Development server
+
+# 安全定義
+security:
+  - bearerAuth: []
+
+# 全域安全配置
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login endpoint
+
+  # 通用數據模型
+  schemas:
+    # 錯誤響應模型
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - code
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: 錯誤訊息
+          example: "Invalid product code"
+        code:
+          type: string
+          description: 錯誤代碼
+          example: "INVALID_PRODUCT_CODE"
+        details:
+          type: object
+          description: 詳細錯誤信息
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00.000Z"
+        requestId:
+          type: string
+          description: 請求追蹤ID
+          example: "req_abc123def456"
+
+    # 成功響應模型
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - data
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          description: 響應數據
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:30:00.000Z"
+        requestId:
+          type: string
+          description: 請求追蹤ID
+          example: "req_abc123def456"
+
+    # 分頁模型
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        total:
+          type: integer
+          example: 150
+        totalPages:
+          type: integer
+          example: 8
+        hasNext:
+          type: boolean
+          example: true
+        hasPrev:
+          type: boolean
+          example: false
+
+    # 組織模型
+    Organization:
+      type: object
+      required:
+        - id
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          description: 組織唯一標識符
+          example: "org_abc123"
+        name:
+          type: string
+          description: 組織名稱
+          example: "美味餐廳"
+        type:
+          type: string
+          enum: [restaurant, supplier]
+          description: 組織類型
+          example: "restaurant"
+        settings:
+          type: object
+          description: 組織設定
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # 產品模型
+    Product:
+      type: object
+      required:
+        - id
+        - supplierId
+        - code
+        - name
+        - pricing
+      properties:
+        id:
+          type: string
+          example: "prod_abc123"
+        supplierId:
+          type: string
+          example: "org_supplier123"
+        code:
+          type: string
+          description: 產品代碼
+          example: "BEEF-001"
+        name:
+          type: string
+          description: 產品名稱
+          example: "新鮮牛肉片 500g"
+        category:
+          type: string
+          description: 產品分類
+          example: "肉類"
+        pricing:
+          type: object
+          description: 定價信息
+          properties:
+            basePrice:
+              type: number
+              format: decimal
+              example: 180.00
+            unit:
+              type: string
+              example: "pack"
+            currency:
+              type: string
+              example: "TWD"
+            bulkDiscounts:
+              type: array
+              items:
+                type: object
+                properties:
+                  minQuantity:
+                    type: integer
+                  discount:
+                    type: number
+                    format: decimal
+        specifications:
+          type: object
+          description: 產品規格
+        version:
+          type: integer
+          example: 1
+        active:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # 訂單模型
+    Order:
+      type: object
+      required:
+        - id
+        - orderNumber
+        - restaurantId
+        - supplierId
+        - status
+        - items
+      properties:
+        id:
+          type: string
+          example: "order_abc123"
+        orderNumber:
+          type: string
+          description: 訂單編號
+          example: "ORD-2025-001"
+        restaurantId:
+          type: string
+          example: "org_restaurant123"
+        supplierId:
+          type: string
+          example: "org_supplier123"
+        status:
+          type: string
+          enum: [draft, submitted, confirmed, preparing, shipped, delivered, accepted, completed, cancelled]
+          example: "confirmed"
+        subtotal:
+          type: number
+          format: decimal
+          description: 小計金額
+          example: 1800.00
+        taxAmount:
+          type: number
+          format: decimal
+          description: 稅額
+          example: 90.00
+        totalAmount:
+          type: number
+          format: decimal
+          description: 總金額
+          example: 1890.00
+        deliveryDate:
+          type: string
+          format: date
+          description: 預定送貨日期
+          example: "2025-01-15"
+        deliveryAddress:
+          type: object
+          description: 送貨地址
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            postalCode:
+              type: string
+            contactPerson:
+              type: string
+            phone:
+              type: string
+        notes:
+          type: string
+          description: 備註
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # 訂單項目模型
+    OrderItem:
+      type: object
+      required:
+        - id
+        - productId
+        - productCode
+        - productName
+        - quantity
+        - unitPrice
+        - lineTotal
+      properties:
+        id:
+          type: string
+          example: "item_abc123"
+        productId:
+          type: string
+          example: "prod_abc123"
+        productCode:
+          type: string
+          example: "BEEF-001"
+        productName:
+          type: string
+          example: "新鮮牛肉片 500g"
+        quantity:
+          type: number
+          format: decimal
+          description: 數量
+          example: 10.0
+        unitPrice:
+          type: number
+          format: decimal
+          description: 單價
+          example: 180.00
+        lineTotal:
+          type: number
+          format: decimal
+          description: 行小計
+          example: 1800.00
+        notes:
+          type: string
+          description: 備註
+
+    # 對帳模型
+    Reconciliation:
+      type: object
+      required:
+        - id
+        - reconciliationNumber
+        - restaurantId
+        - supplierId
+        - status
+        - items
+      properties:
+        id:
+          type: string
+          example: "recon_abc123"
+        reconciliationNumber:
+          type: string
+          example: "REC-2025-001"
+        periodStart:
+          type: string
+          format: date
+          example: "2025-01-01"
+        periodEnd:
+          type: string
+          format: date
+          example: "2025-01-31"
+        restaurantId:
+          type: string
+          example: "org_restaurant123"
+        supplierId:
+          type: string
+          example: "org_supplier123"
+        status:
+          type: string
+          enum: [pending, processing, review_required, approved, disputed, resolved]
+          example: "approved"
+        summary:
+          type: object
+          description: 對帳摘要
+          properties:
+            totalOrders:
+              type: integer
+            totalAmount:
+              type: number
+              format: decimal
+            matchedItems:
+              type: integer
+            disputedItems:
+              type: integer
+            processingTime:
+              type: integer
+              description: 處理時間(秒)
+        confidenceScore:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 1
+          description: 信心分數
+          example: 0.98
+        autoApproved:
+          type: boolean
+          example: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReconciliationItem'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # 對帳項目模型
+    ReconciliationItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "recitem_abc123"
+        orderId:
+          type: string
+          example: "order_abc123"
+        productCode:
+          type: string
+          example: "BEEF-001"
+        orderedQuantity:
+          type: number
+          format: decimal
+          example: 10.0
+        deliveredQuantity:
+          type: number
+          format: decimal
+          example: 10.0
+        acceptedQuantity:
+          type: number
+          format: decimal
+          example: 10.0
+        unitPrice:
+          type: number
+          format: decimal
+          example: 180.00
+        lineTotal:
+          type: number
+          format: decimal
+          example: 1800.00
+        discrepancyType:
+          type: string
+          nullable: true
+          description: 差異類型
+        discrepancyAmount:
+          type: number
+          format: decimal
+          nullable: true
+          description: 差異金額
+        resolutionAction:
+          type: string
+          description: 解決動作
+          example: "auto_approved"
+        notes:
+          type: string
+          description: 備註
+
+    # Webhook 事件模型
+    WebhookEvent:
+      type: object
+      required:
+        - id
+        - type
+        - timestamp
+        - data
+      properties:
+        id:
+          type: string
+          description: 事件唯一標識符
+          example: "evt_abc123"
+        type:
+          type: string
+          description: 事件類型
+          enum: [
+            order.created,
+            order.updated,
+            order.confirmed,
+            order.shipped,
+            order.delivered,
+            order.cancelled,
+            product.created,
+            product.updated,
+            product.deleted,
+            reconciliation.completed,
+            reconciliation.disputed,
+            inventory.updated
+          ]
+          example: "order.confirmed"
+        timestamp:
+          type: string
+          format: date-time
+          description: 事件發生時間
+          example: "2025-01-15T10:30:00.000Z"
+        data:
+          type: object
+          description: 事件相關數據
+          additionalProperties: true
+        organizationId:
+          type: string
+          description: 關聯組織ID
+          example: "org_abc123"
+        version:
+          type: string
+          description: API 版本
+          example: "2.0"
+
+# API 路徑定義
+paths:
+  # 健康檢查
+  /health:
+    get:
+      tags:
+        - System
+      summary: 健康檢查
+      description: 檢查 API 服務狀態
+      security: []
+      responses:
+        '200':
+          description: 服務正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "2.0.0"
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        example: "connected"
+                      redis:
+                        type: string
+                        example: "connected"
+
+  # 組織管理
+  /organizations/me:
+    get:
+      tags:
+        - Organizations
+      summary: 獲取當前組織信息
+      description: 獲取當前認證用戶所屬的組織信息
+      responses:
+        '200':
+          description: 成功獲取組織信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Organization'
+        '401':
+          description: 未授權
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # 產品管理
+  /products:
+    get:
+      tags:
+        - Products
+      summary: 獲取產品列表
+      description: 獲取組織的產品目錄
+      parameters:
+        - name: page
+          in: query
+          description: 頁碼
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 每頁數量
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: category
+          in: query
+          description: 產品分類篩選
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: 搜尋關鍵字
+          schema:
+            type: string
+        - name: active
+          in: query
+          description: 是否啟用
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 成功獲取產品列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          products:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Product'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Products
+      summary: 創建新產品
+      description: 為供應商創建新的產品項目
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - name
+                - pricing
+              properties:
+                code:
+                  type: string
+                  description: 產品代碼
+                  example: "BEEF-002"
+                name:
+                  type: string
+                  description: 產品名稱
+                  example: "有機牛肉片 300g"
+                category:
+                  type: string
+                  description: 產品分類
+                  example: "肉類"
+                pricing:
+                  type: object
+                  description: 定價信息
+                  properties:
+                    basePrice:
+                      type: number
+                      format: decimal
+                      example: 220.00
+                    unit:
+                      type: string
+                      example: "pack"
+                    currency:
+                      type: string
+                      example: "TWD"
+                specifications:
+                  type: object
+                  description: 產品規格
+      responses:
+        '201':
+          description: 成功創建產品
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '400':
+          description: 請求參數錯誤
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /products/{productId}:
+    get:
+      tags:
+        - Products
+      summary: 獲取單一產品
+      description: 根據產品ID獲取產品詳細信息
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: 產品ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功獲取產品信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+        '404':
+          description: 產品不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Products
+      summary: 更新產品信息
+      description: 更新現有產品的信息
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: 產品ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                category:
+                  type: string
+                pricing:
+                  type: object
+                specifications:
+                  type: object
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: 成功更新產品
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Product'
+
+  # 訂單管理
+  /orders:
+    get:
+      tags:
+        - Orders
+      summary: 獲取訂單列表
+      description: 獲取組織的訂單列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 訂單狀態篩選
+          schema:
+            type: string
+            enum: [draft, submitted, confirmed, preparing, shipped, delivered, accepted, completed, cancelled]
+        - name: dateFrom
+          in: query
+          description: 開始日期
+          schema:
+            type: string
+            format: date
+        - name: dateTo
+          in: query
+          description: 結束日期
+          schema:
+            type: string
+            format: date
+        - name: supplierId
+          in: query
+          description: 供應商ID篩選（餐廳使用）
+          schema:
+            type: string
+        - name: restaurantId
+          in: query
+          description: 餐廳ID篩選（供應商使用）
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功獲取訂單列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          orders:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Order'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Orders
+      summary: 創建新訂單
+      description: 餐廳創建新的採購訂單
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - supplierId
+                - deliveryDate
+                - items
+              properties:
+                supplierId:
+                  type: string
+                  description: 供應商ID
+                  example: "org_supplier123"
+                deliveryDate:
+                  type: string
+                  format: date
+                  description: 預定送貨日期
+                  example: "2025-01-20"
+                deliveryAddress:
+                  type: object
+                  description: 送貨地址
+                notes:
+                  type: string
+                  description: 備註
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - productId
+                      - quantity
+                    properties:
+                      productId:
+                        type: string
+                        example: "prod_abc123"
+                      quantity:
+                        type: number
+                        format: decimal
+                        minimum: 0.001
+                        example: 5.0
+                      notes:
+                        type: string
+      responses:
+        '201':
+          description: 成功創建訂單
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+
+  /orders/{orderId}:
+    get:
+      tags:
+        - Orders
+      summary: 獲取單一訂單
+      description: 根據訂單ID獲取訂單詳細信息
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: 訂單ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功獲取訂單信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+
+    put:
+      tags:
+        - Orders
+      summary: 更新訂單狀態
+      description: 更新訂單狀態和相關信息
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          description: 訂單ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [confirmed, preparing, shipped, delivered, accepted, completed, cancelled]
+                  description: 新的訂單狀態
+                deliveryDate:
+                  type: string
+                  format: date
+                  description: 更新送貨日期
+                notes:
+                  type: string
+                  description: 狀態更新備註
+                deliveryInfo:
+                  type: object
+                  description: 送貨信息
+                  properties:
+                    trackingNumber:
+                      type: string
+                    estimatedArrival:
+                      type: string
+                      format: date-time
+      responses:
+        '200':
+          description: 成功更新訂單
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Order'
+
+  # 對帳管理
+  /reconciliations:
+    get:
+      tags:
+        - Reconciliations
+      summary: 獲取對帳列表
+      description: 獲取組織的對帳記錄列表
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: 對帳狀態篩選
+          schema:
+            type: string
+            enum: [pending, processing, review_required, approved, disputed, resolved]
+        - name: periodStart
+          in: query
+          description: 對帳期間開始日期
+          schema:
+            type: string
+            format: date
+        - name: periodEnd
+          in: query
+          description: 對帳期間結束日期
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: 成功獲取對帳列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reconciliations:
+                            type: array
+                            items:
+                              $ref: '#/components/schemas/Reconciliation'
+                          pagination:
+                            $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags:
+        - Reconciliations
+      summary: 觸發自動對帳
+      description: 為指定期間和合作夥伴觸發自動對帳流程
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - partnerId
+                - periodStart
+                - periodEnd
+              properties:
+                partnerId:
+                  type: string
+                  description: 合作夥伴ID（供應商或餐廳）
+                  example: "org_supplier123"
+                periodStart:
+                  type: string
+                  format: date
+                  description: 對帳期間開始日期
+                  example: "2025-01-01"
+                periodEnd:
+                  type: string
+                  format: date
+                  description: 對帳期間結束日期
+                  example: "2025-01-31"
+      responses:
+        '202':
+          description: 對帳流程已啟動
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          reconciliationId:
+                            type: string
+                            example: "recon_abc123"
+                          status:
+                            type: string
+                            example: "processing"
+                          estimatedCompletionTime:
+                            type: string
+                            description: 預估完成時間
+                            example: "2-5 minutes"
+
+  /reconciliations/{reconciliationId}:
+    get:
+      tags:
+        - Reconciliations
+      summary: 獲取對帳詳情
+      description: 根據對帳ID獲取對帳詳細信息
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          description: 對帳ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功獲取對帳信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reconciliation'
+
+    put:
+      tags:
+        - Reconciliations
+      summary: 更新對帳狀態
+      description: 核准、拒絕或更新對帳記錄
+      parameters:
+        - name: reconciliationId
+          in: path
+          required: true
+          description: 對帳ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, dispute, resolve]
+                  description: 對帳動作
+                notes:
+                  type: string
+                  description: 備註說明
+                itemAdjustments:
+                  type: array
+                  description: 項目調整
+                  items:
+                    type: object
+                    properties:
+                      itemId:
+                        type: string
+                      adjustedQuantity:
+                        type: number
+                        format: decimal
+                      adjustedAmount:
+                        type: number
+                        format: decimal
+                      reason:
+                        type: string
+      responses:
+        '200':
+          description: 成功更新對帳狀態
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Reconciliation'
+
+  # Webhook 管理
+  /webhooks/endpoints:
+    get:
+      tags:
+        - Webhooks
+      summary: 獲取 Webhook 端點列表
+      description: 獲取當前組織的 Webhook 端點配置
+      responses:
+        '200':
+          description: 成功獲取端點列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            url:
+                              type: string
+                              format: uri
+                            events:
+                              type: array
+                              items:
+                                type: string
+                            isActive:
+                              type: boolean
+                            secret:
+                              type: string
+                              description: Webhook 簽名密鑰
+                            createdAt:
+                              type: string
+                              format: date-time
+
+    post:
+      tags:
+        - Webhooks
+      summary: 註冊 Webhook 端點
+      description: 為組織註冊新的 Webhook 端點
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+                - events
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Webhook 端點 URL
+                  example: "https://your-erp.com/webhooks/orderly"
+                events:
+                  type: array
+                  description: 訂閱的事件類型
+                  items:
+                    type: string
+                    enum: [
+                      order.created,
+                      order.updated,
+                      order.confirmed,
+                      order.shipped,
+                      order.delivered,
+                      product.created,
+                      product.updated,
+                      reconciliation.completed
+                    ]
+                  example: ["order.confirmed", "reconciliation.completed"]
+                description:
+                  type: string
+                  description: 端點描述
+      responses:
+        '201':
+          description: 成功註冊 Webhook 端點
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          url:
+                            type: string
+                          events:
+                            type: array
+                            items:
+                              type: string
+                          secret:
+                            type: string
+                            description: 用於驗證 Webhook 簽名的密鑰
+
+  # 庫存同步
+  /inventory/sync:
+    post:
+      tags:
+        - Inventory
+      summary: 同步庫存數據
+      description: 從 ERP 系統同步庫存數據到 Orderly 平台
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - productCode
+                      - availableQuantity
+                    properties:
+                      productCode:
+                        type: string
+                        description: 產品代碼
+                        example: "BEEF-001"
+                      availableQuantity:
+                        type: number
+                        format: decimal
+                        description: 可用庫存數量
+                        example: 50.0
+                      reservedQuantity:
+                        type: number
+                        format: decimal
+                        description: 預留庫存數量
+                        example: 10.0
+                      lastUpdated:
+                        type: string
+                        format: date-time
+                        description: 庫存最後更新時間
+      responses:
+        '200':
+          description: 成功同步庫存
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          syncedItems:
+                            type: integer
+                            description: 成功同步的項目數量
+                          failedItems:
+                            type: integer
+                            description: 同步失敗的項目數量
+                          errors:
+                            type: array
+                            description: 同步錯誤詳情
+                            items:
+                              type: object
+                              properties:
+                                productCode:
+                                  type: string
+                                error:
+                                  type: string
+
+# 標籤分組
+tags:
+  - name: System
+    description: 系統相關 API
+  - name: Organizations
+    description: 組織管理 API
+  - name: Products
+    description: 產品管理 API
+  - name: Orders
+    description: 訂單管理 API
+  - name: Reconciliations
+    description: 對帳管理 API
+  - name: Webhooks
+    description: Webhook 管理 API
+  - name: Inventory
+    description: 庫存管理 API
