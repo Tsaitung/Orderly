@@ -2,29 +2,35 @@ import { Request, Response, NextFunction } from 'express';
 import winston from 'winston';
 
 // Configure Winston logger
-export const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+const transports: winston.transport[] = [];
+
+// Always add console transport for Cloud Run (logs go to Google Cloud Logging)
+transports.push(new winston.transports.Console({
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'acceptance-service' },
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' }),
-  ],
-});
+    process.env.NODE_ENV === 'production' 
+      ? winston.format.json()
+      : winston.format.combine(
+          winston.format.colorize(),
+          winston.format.simple()
+        )
+  )
+}));
 
-// Add console transport for development
+// Only add file transports in development (Cloud Run is stateless)
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    )
-  }));
+  transports.push(
+    new winston.transports.File({ filename: '/app/logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: '/app/logs/combined.log' })
+  );
 }
+
+export const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  defaultMeta: { service: 'acceptance-service' },
+  transports,
+});
 
 // Express logging middleware
 export const loggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
