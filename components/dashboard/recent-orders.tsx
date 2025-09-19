@@ -209,7 +209,7 @@ export default function RecentOrders() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center space-x-2">
-              <Package className="h-5 w-5 text-[#A47864]" />
+              <Package className="h-5 w-5 text-primary-500" />
               <span>近期訂單</span>
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">

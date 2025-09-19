@@ -123,7 +123,7 @@ export default function PerformanceMetrics() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
-          <Target className="h-5 w-5 text-[#A47864]" />
+          <Target className="h-5 w-5 text-[primary-500]" />
           <span>績效指標</span>
         </CardTitle>
         <p className="text-sm text-gray-600">
@@ -211,7 +211,7 @@ export default function PerformanceMetrics() {
         {/* 總體評分 */}
         <div className="pt-4 border-t border-gray-200">
           <div className="text-center space-y-2">
-            <div className="text-3xl font-bold text-[#A47864]">
+            <div className="text-3xl font-bold text-[primary-500]">
               8.7
             </div>
             <div className="text-sm text-gray-600">

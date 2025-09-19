@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
+import { LastUpdateTime } from '@/components/admin/LastUpdateTime'
 
 export const metadata: Metadata = {
   title: '儀表板',
@@ -22,9 +23,7 @@ export default function AdminDashboardPage() {
           <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
             系統正常運行
           </div>
-          <div className="text-sm text-gray-500">
-            最後更新：{new Date().toLocaleTimeString('zh-TW')}
-          </div>
+          <LastUpdateTime />
         </div>
       </div>
 

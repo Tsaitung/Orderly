@@ -165,7 +165,7 @@ export default function ReconciliationStatus() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center space-x-2">
-            <Zap className="h-5 w-5 text-[#A47864]" />
+            <Zap className="h-5 w-5 text-[primary-500]" />
             <span>AI 對帳引擎狀態</span>
           </CardTitle>
           <p className="text-sm text-gray-600 mt-1">
@@ -209,7 +209,7 @@ export default function ReconciliationStatus() {
           </div>
           
           <div className="text-center p-3 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-[#A47864]">
+            <div className="text-2xl font-bold text-[primary-500]">
               {stats.completionRate.toFixed(1)}%
             </div>
             <div className="text-sm text-gray-600">完成率</div>

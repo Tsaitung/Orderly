@@ -77,6 +77,7 @@ export default function SuppliersPage() {
     hasNext: false,
     hasPrev: false
   })
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('')
   
   // Loading and error states
   const [isLoadingSuppliers, setIsLoadingSuppliers] = useState(true)
@@ -114,6 +115,8 @@ export default function SuppliersPage() {
           hasNext: data.data.pagination.hasNext,
           hasPrev: data.data.pagination.hasPrev
         })
+        // 更新最后更新时间
+        setLastUpdateTime(new Date().toLocaleString('zh-TW'))
       } else {
         throw new Error('Failed to fetch suppliers')
       }
@@ -334,7 +337,7 @@ export default function SuppliersPage() {
       {/* Footer Actions */}
       <div className="flex items-center justify-between pt-8 border-t border-gray-200">
         <div className="text-sm text-gray-500">
-          最後更新：{new Date().toLocaleString('zh-TW')}
+          {lastUpdateTime && `最後更新：${lastUpdateTime}`}
         </div>
         
         <div className="flex items-center space-x-3">

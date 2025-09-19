@@ -242,7 +242,7 @@ export default function RestaurantHeader() {
                 <div className="space-y-4">
                   {/* 使用者資訊 */}
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-12 h-12 bg-[#A47864] rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-medium">張</span>
                     </div>
                     <div>
@@ -311,7 +311,7 @@ export default function RestaurantHeader() {
               className="flex items-center space-x-2 px-3 h-9"
               aria-label="使用者選單"
             >
-              <div className="w-7 h-7 bg-[#A47864] rounded-full flex items-center justify-center">
+              <div className="w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-medium">張</span>
               </div>
               <span className="hidden md:block text-sm font-medium">張小明</span>

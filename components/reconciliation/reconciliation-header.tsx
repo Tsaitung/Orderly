@@ -160,7 +160,7 @@ export default function ReconciliationHeader() {
                 </div>
                 <div>
                   <div className="font-medium text-gray-900 flex items-center space-x-2">
-                    <Brain className="h-4 w-4 text-[#A47864]" />
+                    <Brain className="h-4 w-4 text-primary-500" />
                     <span>AI 對帳引擎</span>
                   </div>
                   <div className="text-sm text-gray-600">
@@ -310,7 +310,7 @@ export default function ReconciliationHeader() {
         {/* ML 置信度 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[#A47864] flex items-center justify-center space-x-1">
+            <div className="text-2xl font-bold text-primary-500 flex items-center justify-center space-x-1">
               <Zap className="h-5 w-5" />
               <span>{stats.mlConfidence.toFixed(1)}%</span>
             </div>
@@ -433,7 +433,7 @@ export default function ReconciliationHeader() {
                     ...prev, 
                     enableAutoApproval: e.target.checked 
                   }))}
-                  className="rounded border-gray-300 text-[#A47864] focus:ring-[#A47864]"
+                  className="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
                   <div className="font-medium text-gray-900">啟用自動核准</div>
@@ -451,7 +451,7 @@ export default function ReconciliationHeader() {
                     ...prev, 
                     enableAdvancedMatching: e.target.checked 
                   }))}
-                  className="rounded border-gray-300 text-[#A47864] focus:ring-[#A47864]"
+                  className="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
                   <div className="font-medium text-gray-900">啟用進階匹配</div>

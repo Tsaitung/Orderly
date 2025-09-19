@@ -73,10 +73,19 @@ const SupplierCard = React.forwardRef<HTMLDivElement, SupplierCardProps>(({
     return amount.toLocaleString()
   }
 
-  const formatLastOrder = (date: Date | null) => {
+  const formatLastOrder = (date: Date | string | null) => {
     if (!date) return '無近期訂單'
+    
+    // 类型验证和转换
+    const dateObj = typeof date === 'string' ? new Date(date) : date
+    
+    // 验证日期有效性
+    if (isNaN(dateObj.getTime())) {
+      return '無近期訂單'
+    }
+    
     const now = new Date()
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+    const diffDays = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60 * 24))
     
     if (diffDays === 0) return '今天'
     if (diffDays === 1) return '昨天'
@@ -156,13 +165,13 @@ const SupplierCard = React.forwardRef<HTMLDivElement, SupplierCardProps>(({
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
             {/* Supplier Logo/Icon */}
-            <div className="w-12 h-12 bg-[#A47864] rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center">
               <Package className="h-6 w-6 text-white" />
             </div>
             
             {/* Supplier Info */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#A47864] transition-colors">
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-500 transition-colors">
                 {name}
               </h3>
               <div className="flex items-center space-x-3 mt-1">
@@ -243,7 +252,7 @@ const SupplierCard = React.forwardRef<HTMLDivElement, SupplierCardProps>(({
           <div className="flex space-x-2">
             <Button
               size="sm"
-              className="flex-1 bg-[#A47864] hover:bg-[#8B6B4F]"
+              className="flex-1 bg-primary-500 hover:bg-primary-600"
               onClick={handleQuickOrder}
             >
               <ShoppingCart className="h-4 w-4 mr-2" />

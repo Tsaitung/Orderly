@@ -21,7 +21,7 @@ const Progress = React.forwardRef<
       case 'info':
         return 'bg-blue-500'
       default:
-        return 'bg-[#A47864]'
+        return 'bg-primary-500'
     }
   }
 

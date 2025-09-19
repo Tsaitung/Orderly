@@ -348,7 +348,7 @@ export default function ReconciliationWorkspace() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
-            <Brain className="h-5 w-5 text-[#A47864]" />
+            <Brain className="h-5 w-5 text-primary-500" />
             <span>智能對帳工作區</span>
           </CardTitle>
           <div className="flex items-center space-x-2">

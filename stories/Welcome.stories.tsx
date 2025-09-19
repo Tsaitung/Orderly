@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 const Welcome = () => (
   <div className="max-w-4xl mx-auto p-8">
     <div className="text-center mb-8">
-      <h1 className="text-4xl font-bold text-[#A47864] mb-4">
+      <h1 className="text-4xl font-bold text-[primary-500] mb-4">
         歡迎使用 Orderly 組件庫
       </h1>
       <p className="text-lg text-gray-600">
@@ -11,15 +11,15 @@ const Welcome = () => (
       </p>
     </div>
 
-    <div className="bg-[#F5F2ED] rounded-lg p-6 mb-8">
-      <h2 className="text-2xl font-semibold mb-4 text-[#A47864]">
+    <div className="bg-[primary-50] rounded-lg p-6 mb-8">
+      <h2 className="text-2xl font-semibold mb-4 text-[primary-500]">
         組件庫特色
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h3 className="font-semibold mb-2">🎨 品牌一致性</h3>
           <p className="text-sm text-gray-600">
-            遵循 Orderly 品牌規範，主色調為 Mocha Mousse (#A47864)
+            遵循 Orderly 品牌規範，主色調為 Mocha Mousse (primary-500)
           </p>
         </div>
         <div>
@@ -75,7 +75,7 @@ const Welcome = () => (
       <p className="text-gray-600 mb-4">
         使用左側導航探索各種組件和它們的用法範例
       </p>
-      <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#A47864] text-white rounded-lg">
+      <div className="inline-flex items-center gap-2 px-4 py-2 bg-[primary-500] text-white rounded-lg">
         <span>開始探索</span>
         <span>→</span>
       </div>

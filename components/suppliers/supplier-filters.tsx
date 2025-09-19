@@ -166,7 +166,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
             onClick={() => setShowAdvanced(!showAdvanced)}
             className={cn(
               'relative',
-              activeFilterCount > 0 && 'border-[#A47864] text-[#A47864]'
+              activeFilterCount > 0 && 'border-[primary-500] text-[primary-500]'
             )}
           >
             <Filter className="h-4 w-4 mr-2" />
@@ -176,7 +176,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
               showAdvanced && 'rotate-180'
             )} />
             {activeFilterCount > 0 && (
-              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs bg-[#A47864]">
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 text-xs bg-[primary-500]">
                 {activeFilterCount}
               </Badge>
             )}
@@ -209,7 +209,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                 onClick={() => toggleFilter(filter.key, filter.value)}
                 className={cn(
                   'h-8 text-xs',
-                  isActive && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                  isActive && 'bg-[primary-500] hover:bg-[primary-600]'
                 )}
                 title={filter.description}
               >
@@ -223,7 +223,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
 
       {/* Advanced Filters Panel */}
       {showAdvanced && (
-        <Card className="p-4 border-[#A47864]/20">
+        <Card className="p-4 border-[primary-500]/20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Status Filter */}
             <div className="space-y-2">
@@ -235,7 +235,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                   onClick={() => toggleFilter('isActive', true)}
                   className={cn(
                     'text-xs',
-                    localFilters.isActive === true && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                    localFilters.isActive === true && 'bg-[primary-500] hover:bg-[primary-600]'
                   )}
                 >
                   合作中
@@ -246,7 +246,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                   onClick={() => toggleFilter('isActive', false)}
                   className={cn(
                     'text-xs',
-                    localFilters.isActive === false && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                    localFilters.isActive === false && 'bg-[primary-500] hover:bg-[primary-600]'
                   )}
                 >
                   暫停中
@@ -271,7 +271,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                     onClick={() => toggleFilter('performanceLevel', level.value)}
                     className={cn(
                       'text-xs',
-                      localFilters.performanceLevel === level.value && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                      localFilters.performanceLevel === level.value && 'bg-[primary-500] hover:bg-[primary-600]'
                     )}
                     title={`履約率 ≥ ${level.min}%`}
                   >
@@ -293,7 +293,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                     onClick={() => toggleFilter('productCountMin', count)}
                     className={cn(
                       'text-xs',
-                      localFilters.productCountMin === count && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                      localFilters.productCountMin === count && 'bg-[primary-500] hover:bg-[primary-600]'
                     )}
                   >
                     {count}+
@@ -328,7 +328,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                         }}
                         className={cn(
                           'text-xs',
-                          isSelected && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                          isSelected && 'bg-[primary-500] hover:bg-[primary-600]'
                         )}
                       >
                         {zone}
@@ -351,7 +351,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
                 onClick={() => toggleFilter('hasRecentOrders', !localFilters.hasRecentOrders)}
                 className={cn(
                   'w-full text-xs',
-                  localFilters.hasRecentOrders && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                  localFilters.hasRecentOrders && 'bg-[primary-500] hover:bg-[primary-600]'
                 )}
               >
                 僅顯示近期有訂單
@@ -363,7 +363,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
 
       {/* Active Filters Summary */}
       {activeFilterCount > 0 && (
-        <div className="flex items-center justify-between text-sm text-gray-600 bg-[#A47864]/5 rounded-lg p-3">
+        <div className="flex items-center justify-between text-sm text-gray-600 bg-[primary-500]/5 rounded-lg p-3">
           <span>
             已套用 {activeFilterCount} 個篩選條件
             {totalSuppliers > 0 && ` · 找到 ${totalSuppliers} 個供應商`}
@@ -372,7 +372,7 @@ const SupplierFilters = React.forwardRef<HTMLDivElement, SupplierFiltersProps>((
             variant="ghost"
             size="sm"
             onClick={clearFilters}
-            className="text-[#A47864] hover:text-[#8B6B4F] h-6 px-2"
+            className="text-[primary-500] hover:text-[primary-600] h-6 px-2"
           >
             <X className="h-3 w-3 mr-1" />
             清除全部

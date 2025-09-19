@@ -262,7 +262,7 @@ export function LoadingDialog({
       closeOnEscape={false}
     >
       <div className="flex items-center space-x-4">
-        <div className="animate-spin h-8 w-8 border-4 border-[#A47864] border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full" />
         <p className="text-gray-600">{message}</p>
       </div>
     </AccessibleModal>

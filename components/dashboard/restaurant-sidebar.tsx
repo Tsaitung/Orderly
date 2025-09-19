@@ -128,7 +128,7 @@ export default function RestaurantSidebar() {
         {/* 品牌標題 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-7 h-7 bg-[#A47864] rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">O</span>
             </div>
             <div>
@@ -172,9 +172,9 @@ export default function RestaurantSidebar() {
                 className={cn(
                   'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium',
                   'transition-colors duration-200',
-                  'focus:outline-none focus:ring-2 focus:ring-[#A47864] focus:ring-offset-2',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
                   'hover:bg-gray-100',
-                  isActive ? 'bg-[#A47864] text-white hover:bg-[#8B6B4F]' : 'text-gray-700'
+                  isActive ? 'bg-primary-500 text-white hover:bg-primary-600' : 'text-gray-700'
                 )}
               >
                 <item.icon className={cn(
@@ -193,7 +193,7 @@ export default function RestaurantSidebar() {
         {/* 使用者資訊 */}
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-200">
           <div className="flex items-center space-x-2 p-2 rounded-lg bg-gray-50">
-            <div className="w-7 h-7 bg-[#A47864] rounded-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-medium">張</span>
             </div>
             <div className="flex-1 min-w-0">

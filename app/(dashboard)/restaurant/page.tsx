@@ -12,15 +12,17 @@ export const metadata: Metadata = {
 
 export default function RestaurantDashboardPage() {
   return (
-    <div className="spacing-tight theme-restaurant">
-      {/* 頁面標題 */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          儀表板總覽
-        </h1>
-        <p className="text-gray-600">
-          查看餐廳營運狀況、訂單處理進度和重要業務指標
-        </p>
+    <div className="dashboard-content-spacing">
+      {/* 頁面標題區塊 */}
+      <div className="compact-spacing">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            儀表板總覽
+          </h1>
+          <p className="text-gray-600 mt-2">
+            查看餐廳營運狀況、訂單處理進度和重要業務指標
+          </p>
+        </div>
       </div>
 
       {/* 核心指標卡片 */}
@@ -29,7 +31,8 @@ export default function RestaurantDashboardPage() {
       {/* 快速操作 */}
       <QuickActions />
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* 主要內容網格 */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
         {/* 對帳狀態 (佔 2/3 寬度) */}
         <div className="xl:col-span-2">
           <ReconciliationStatus />

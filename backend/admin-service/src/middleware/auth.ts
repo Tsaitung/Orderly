@@ -45,11 +45,11 @@ export const authenticateAdmin = (
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as any;
     
-    // Check if user has admin role
-    if (decoded.role !== 'admin') {
+    // Check if user has admin or platform_admin role
+    if (decoded.role !== 'admin' && decoded.role !== 'platform_admin') {
       res.status(403).json({
         success: false,
-        error: 'Admin access required',
+        error: 'Platform admin access required',
         service: 'admin-service',
       });
       return;
@@ -95,7 +95,7 @@ export const requirePermission = (permission: string) => {
 
     const userPermissions = req.user.permissions || [];
     
-    if (!userPermissions.includes(permission) && req.user.role !== 'admin') {
+    if (!userPermissions.includes(permission) && req.user.role !== 'admin' && req.user.role !== 'platform_admin') {
       res.status(403).json({
         success: false,
         error: `Permission required: ${permission}`,

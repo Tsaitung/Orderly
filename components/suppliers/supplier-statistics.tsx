@@ -154,7 +154,7 @@ const SupplierStatistics = React.forwardRef<HTMLDivElement, SupplierStatisticsPr
       icon: DollarSign,
       trend: trends.gmvGrowth,
       description: '本月總金額',
-      color: 'bg-[#A47864]'
+      color: 'bg-primary-500'
     },
     {
       title: '平均履約率',
@@ -265,7 +265,7 @@ const SupplierStatistics = React.forwardRef<HTMLDivElement, SupplierStatisticsPr
                   <div className="text-sm text-gray-600">{card.description}</div>
                   <div className="text-xs text-gray-500 mt-1">{card.title}</div>
                 </div>
-                <Icon className="h-8 w-8 text-[#A47864]" />
+                <Icon className="h-8 w-8 text-primary-500" />
               </div>
             </Card>
           )
@@ -286,7 +286,7 @@ const SupplierStatistics = React.forwardRef<HTMLDivElement, SupplierStatisticsPr
                     variant={index === 0 ? 'default' : 'outline'}
                     className={cn(
                       'w-6 h-6 p-0 flex items-center justify-center text-xs',
-                      index === 0 && 'bg-[#A47864]'
+                      index === 0 && 'bg-primary-500'
                     )}
                   >
                     {index + 1}

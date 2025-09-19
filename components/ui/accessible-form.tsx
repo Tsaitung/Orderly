@@ -194,7 +194,7 @@ export function AccessibleSelect({
         aria-invalid={error ? 'true' : 'false'}
         className={cn(
           'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
-          'focus:outline-none focus:ring-2 focus:ring-[#A47864] focus:border-[#A47864]',
+          'focus:outline-none focus:ring-2 focus:ring-[primary-500] focus:border-[primary-500]',
           'disabled:bg-gray-100 disabled:cursor-not-allowed',
           error && 'border-red-500 focus:ring-red-500 focus:border-red-500'
         )}
@@ -324,7 +324,7 @@ export function AccessibleTextarea({
         aria-invalid={error ? 'true' : 'false'}
         className={cn(
           'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
-          'focus:outline-none focus:ring-2 focus:ring-[#A47864] focus:border-[#A47864]',
+          'focus:outline-none focus:ring-2 focus:ring-[primary-500] focus:border-[primary-500]',
           'disabled:bg-gray-100 disabled:cursor-not-allowed',
           'resize-vertical',
           error && 'border-red-500 focus:ring-red-500 focus:border-red-500'
@@ -419,8 +419,8 @@ export function AccessibleCheckbox({
           aria-describedby={describedBy}
           aria-invalid={error ? 'true' : 'false'}
           className={cn(
-            'mt-0.5 h-4 w-4 text-[#A47864] border-gray-300 rounded',
-            'focus:ring-2 focus:ring-[#A47864] focus:ring-offset-2',
+            'mt-0.5 h-4 w-4 text-[primary-500] border-gray-300 rounded',
+            'focus:ring-2 focus:ring-[primary-500] focus:ring-offset-2',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             error && 'border-red-500'
           )}
@@ -552,8 +552,8 @@ export function AccessibleRadioGroup({
                 required={required}
                 disabled={disabled || option.disabled}
                 className={cn(
-                  'h-4 w-4 text-[#A47864] border-gray-300',
-                  'focus:ring-2 focus:ring-[#A47864] focus:ring-offset-2',
+                  'h-4 w-4 text-[primary-500] border-gray-300',
+                  'focus:ring-2 focus:ring-[primary-500] focus:ring-offset-2',
                   'disabled:opacity-50 disabled:cursor-not-allowed',
                   error && 'border-red-500'
                 )}

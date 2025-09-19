@@ -21,8 +21,8 @@ transports.push(new winston.transports.Console({
 // Only add file transports in development (Cloud Run is stateless)
 if (process.env.NODE_ENV !== 'production') {
   transports.push(
-    new winston.transports.File({ filename: '/app/logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: '/app/logs/combined.log' })
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
   );
 }
 

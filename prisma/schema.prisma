@@ -50,6 +50,42 @@ model User {
   lastLoginAt    DateTime?
   metadata       Json      @default("{}")
   tokenVersion   Int       @default(0)
+  
+  // Authentication fields
+  isSuperUser         Boolean   @default(false)
+  superUserExpiresAt  DateTime?
+  superUserReason     String?
+  
+  // Email verification
+  emailVerified       Boolean   @default(false)
+  emailVerifiedAt     DateTime?
+  emailVerificationToken String?
+  
+  // Phone verification  
+  phone               String?
+  phoneVerified       Boolean   @default(false)
+  phoneVerifiedAt     DateTime?
+  
+  // Business verification
+  businessVerified    Boolean   @default(false)
+  businessVerifiedAt  DateTime?
+  businessDocuments   Json      @default("[]")
+  
+  // MFA fields
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String?   // TOTP secret
+  mfaBackupCodes      Json      @default("[]")
+  mfaMethod           MFAMethod @default(none)
+  
+  // Security fields
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastPasswordChange  DateTime?
+  passwordHistory     Json      @default("[]") // Hash of last 5 passwords
+  
+  // Session tracking
+  maxSessions         Int       @default(5)
+  
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -60,6 +96,10 @@ model User {
   approvedRecons      Reconciliation[]  @relation("ReconciliationApprover")
   auditLogs           AuditLog[]
   notifications       Notification[]
+  sessions            Session[]
+  mfaVerifications    MFAVerification[]
+  passwordResetTokens PasswordResetToken[]
+  superUserRequests   SuperUserRequest[]
 
   @@map("users")
 }
@@ -71,6 +111,114 @@ enum UserRole {
   supplier_admin
   supplier_manager
   platform_admin
+}
+
+enum MFAMethod {
+  none
+  totp     // Google Authenticator, Authy, etc.
+  sms      // SMS verification
+  email    // Email OTP
+}
+
+// ============================================================================
+// Authentication & Session Models
+// ============================================================================
+
+model Session {
+  id            String    @id @default(cuid())
+  userId        String
+  token         String    @unique
+  refreshToken  String?   @unique
+  deviceInfo    Json      @default("{}")
+  ipAddress     String?
+  userAgent     String?
+  location      Json?     // Geo-location data
+  isTrusted     Boolean   @default(false)
+  lastActivity  DateTime  @default(now())
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model MFAVerification {
+  id          String       @id @default(cuid())
+  userId      String
+  method      MFAMethod
+  code        String       // OTP code
+  attempts    Int          @default(0)
+  maxAttempts Int          @default(3)
+  expiresAt   DateTime
+  verified    Boolean      @default(false)
+  verifiedAt  DateTime?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime     @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@index([expiresAt])
+  @@map("mfa_verifications")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model SuperUserRequest {
+  id              String                @id @default(cuid())
+  userId          String
+  reason          String
+  duration        Int                   // Duration in hours
+  status          SuperUserRequestStatus @default(pending)
+  requestedAt     DateTime              @default(now())
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  expiresAt       DateTime?
+  approvedBy      String?
+  rejectedBy      String?
+  metadata        Json                  @default("{}")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestedAt])
+  @@map("super_user_requests")
+}
+
+enum SuperUserRequestStatus {
+  pending
+  approved
+  rejected
+  expired
+  revoked
 }
 
 // ============================================================================

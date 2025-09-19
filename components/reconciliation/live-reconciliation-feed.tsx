@@ -249,7 +249,7 @@ export default function LiveReconciliationFeed() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center space-x-2">
-            <Activity className={cn('h-5 w-5 text-[#A47864]', isLive && 'animate-pulse')} />
+            <Activity className={cn('h-5 w-5 text-primary-500', isLive && 'animate-pulse')} />
             <span>即時活動饋送</span>
           </CardTitle>
           <div className="flex items-center space-x-2">
@@ -391,7 +391,7 @@ export default function LiveReconciliationFeed() {
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium text-gray-900 truncate">
                           {event.orderNumber && (
-                            <span className="text-[#A47864]">{event.orderNumber}</span>
+                            <span className="text-primary-500">{event.orderNumber}</span>
                           )}
                           {event.supplier && (
                             <span className="text-gray-600 ml-2">{event.supplier}</span>

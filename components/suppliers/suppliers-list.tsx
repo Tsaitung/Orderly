@@ -149,7 +149,7 @@ const SuppliersList = React.forwardRef<HTMLDivElement, SuppliersListProps>(({
       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
       <h3 className="text-lg font-semibold text-gray-900 mb-2">尚無供應商</h3>
       <p className="text-gray-600 mb-4">您還沒有與任何供應商建立合作關係</p>
-      <Button className="bg-[#A47864] hover:bg-[#8B6B4F]">
+      <Button className="bg-[primary-500] hover:bg-[primary-600]">
         <Plus className="h-4 w-4 mr-2" />
         尋找供應商
       </Button>
@@ -164,7 +164,7 @@ const SuppliersList = React.forwardRef<HTMLDivElement, SuppliersListProps>(({
       onClick={() => handleSort(field)}
       className={cn(
         'h-8 text-xs',
-        sortField === field && 'bg-[#A47864]/10 text-[#A47864]'
+        sortField === field && 'bg-[primary-500]/10 text-[primary-500]'
       )}
     >
       {children}
@@ -212,7 +212,7 @@ const SuppliersList = React.forwardRef<HTMLDivElement, SuppliersListProps>(({
               onClick={() => setViewMode('grid')}
               className={cn(
                 'h-7 px-2',
-                viewMode === 'grid' && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                viewMode === 'grid' && 'bg-[primary-500] hover:bg-[primary-600]'
               )}
             >
               <Grid className="h-3 w-3" />
@@ -223,7 +223,7 @@ const SuppliersList = React.forwardRef<HTMLDivElement, SuppliersListProps>(({
               onClick={() => setViewMode('list')}
               className={cn(
                 'h-7 px-2',
-                viewMode === 'list' && 'bg-[#A47864] hover:bg-[#8B6B4F]'
+                viewMode === 'list' && 'bg-[primary-500] hover:bg-[primary-600]'
               )}
             >
               <List className="h-3 w-3" />

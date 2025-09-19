@@ -45,7 +45,7 @@ function QuickAction({
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
-        return 'border-blue-300 bg-blue-600 text-white hover:bg-blue-700'
+        return 'border-supplier-300 bg-supplier-500 text-white hover:bg-supplier-600'
       case 'success':
         return 'border-green-200 bg-green-50 text-green-800 hover:bg-green-100'
       case 'warning':

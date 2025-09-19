@@ -37,7 +37,7 @@ function QuickAction({
   const getVariantStyles = () => {
     switch (variant) {
       case 'primary':
-        return 'border-[#A47864] bg-[#A47864] text-white hover:bg-[#8B6B4F]'
+        return 'border-primary-500 bg-primary-500 text-white hover:bg-primary-600'
       case 'warning':
         return 'border-yellow-200 bg-yellow-50 text-yellow-800 hover:bg-yellow-100'
       default:
@@ -160,7 +160,7 @@ export default function QuickActions() {
         <CardHeader>
           <CardTitle id="quick-actions-title" className="flex items-center space-x-2">
             <span>快速操作</span>
-            <div className="h-2 w-2 bg-[#A47864] rounded-full" aria-hidden="true" />
+            <div className="h-2 w-2 bg-primary-500 rounded-full" aria-hidden="true" />
           </CardTitle>
         </CardHeader>
         <CardContent>
