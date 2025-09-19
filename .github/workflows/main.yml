@@ -136,7 +136,7 @@ jobs:
             --cpu 1 \
             --max-instances 10 \
             --min-instances 0 \
-            --port 3000 \
+            --port 8000 \
             --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL
 
           API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
@@ -235,7 +235,7 @@ jobs:
             --cpu 2 \
             --max-instances 100 \
             --min-instances 1 \
-            --port 3000 \
+            --port 8000 \
             --set-env-vars NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET_PROD }},USER_SERVICE_URL=$USER_SERVICE_URL
 
           API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
