@@ -77,7 +77,7 @@ jobs:
     
     strategy:
       matrix:
-        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
+        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
       fail-fast: false
 
     steps:
@@ -156,7 +156,7 @@ jobs:
     
     strategy:
       matrix:
-        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
+        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
       fail-fast: false
       max-parallel: 3  # Deploy services in batches to avoid overwhelming the infrastructure
 
@@ -280,7 +280,7 @@ jobs:
         run: |
           # Get all service URLs
           declare -A service_urls
-          for service in user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
@@ -324,7 +324,7 @@ jobs:
         run: |
           # Health check all deployed services
           failed_services=()
-          for service in api-gateway user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
@@ -376,7 +376,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Service URLs:" >> $GITHUB_STEP_SUMMARY
           
-          for service in api-gateway user-service order-service product-service acceptance-service billing-service notification-service admin-service; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "Not deployed")
