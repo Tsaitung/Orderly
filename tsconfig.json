@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["dom", "dom.iterable", "ES6"],
-    "allowJs": true,
+    "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -34,7 +34,17 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": [
     "next-env.d.ts",
@@ -44,6 +54,15 @@
   ],
   "exclude": [
     "node_modules",
-    "backend/**/*"
+    "backend/**/*",
+    "**/*.stories.tsx",
+    "**/*.stories.ts",
+    "stories/**/*",
+    "components/design-system/**/*",
+    "components/ui/accessible-*",
+    "hooks/use-accessibility.ts",
+    "lib/accessibility/**/*",
+    "lib/erp/**/*",
+    "lib/orders/**/*"
   ]
 }

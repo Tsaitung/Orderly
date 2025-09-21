@@ -49,17 +49,13 @@
 
 ### 💾 資料庫部署
 
-#### Prisma 資料庫設置
+#### 資料庫設置（SQLAlchemy/Alembic）
 - [ ] **Schema 部署**
   ```bash
-  # 執行資料庫遷移
-  npx prisma migrate deploy
-  
-  # 生成 Prisma Client
-  npx prisma generate
-  
-  # 驗證連接
-  npx prisma db seed
+  # 執行 Alembic 資料庫遷移（每個 FastAPI 服務）
+  cd backend/user-service-fastapi && alembic upgrade head && cd -
+  cd backend/order-service-fastapi && alembic upgrade head && cd -
+  cd backend/product-service-fastapi && alembic upgrade head && cd -
   ```
 
 - [ ] **測試數據準備**
@@ -82,26 +78,20 @@
 #### Docker 映像建構
 - [ ] **所有服務映像建構**
   ```bash
-  # API Gateway
-  docker build -f backend/api-gateway/Dockerfile.cloudrun -t orderly-api-gateway .
-  
-  # User Service
-  docker build -f backend/user-service/Dockerfile.cloudrun -t orderly-user-service .
-  
-  # Order Service  
-  docker build -f backend/order-service/Dockerfile.cloudrun -t orderly-order-service .
-  
-  # Product Service
-  docker build -f backend/product-service/Dockerfile.cloudrun -t orderly-product-service .
-  
-  # Billing Service
-  docker build -f backend/billing-service/Dockerfile.cloudrun -t orderly-billing-service .
-  
-  # Notification Service
-  docker build -f backend/notification-service/Dockerfile.cloudrun -t orderly-notification-service .
-  
-  # Frontend
-  docker build -f Dockerfile.cloudrun -t orderly-frontend .
+  # API Gateway (FastAPI)
+  docker build -f backend/api-gateway-fastapi/Dockerfile -t orderly-api-gateway-fastapi ./backend/api-gateway-fastapi
+
+  # FastAPI services
+  docker build -f backend/user-service-fastapi/Dockerfile -t orderly-user-service-fastapi ./backend/user-service-fastapi
+  docker build -f backend/order-service-fastapi/Dockerfile -t orderly-order-service-fastapi ./backend/order-service-fastapi
+  docker build -f backend/product-service-fastapi/Dockerfile -t orderly-product-service-fastapi ./backend/product-service-fastapi
+  docker build -f backend/acceptance-service-fastapi/Dockerfile -t orderly-acceptance-service-fastapi ./backend/acceptance-service-fastapi
+  docker build -f backend/billing-service-fastapi/Dockerfile -t orderly-billing-service-fastapi ./backend/billing-service-fastapi
+  docker build -f backend/notification-service-fastapi/Dockerfile -t orderly-notification-service-fastapi ./backend/notification-service-fastapi
+  docker build -f backend/customer-hierarchy-service-fastapi/Dockerfile -t orderly-customer-hierarchy-service-fastapi ./backend/customer-hierarchy-service-fastapi
+
+  # Frontend (Next.js standalone)
+  docker build -f Dockerfile.frontend -t orderly-frontend .
   ```
 
 - [ ] **映像推送到 GCR**
@@ -473,7 +463,7 @@ gcloud run services update-traffic SERVICE_NAME --to-revisions=PREVIOUS_REVISION
 gcloud sql backups restore BACKUP_ID --restore-instance=INSTANCE_NAME
 
 # 檢查資料完整性
-npx prisma db seed --preview-feature
+# 驗證 Alembic 遷移後的資料表與索引，並執行服務層健康檢查
 ```
 
 ---

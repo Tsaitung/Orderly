@@ -88,13 +88,13 @@ gantt
 
 - [x] **T1.1.2** 資料庫設計與初始化 ✅ **90%完成**
   - [x] 設計核心資料表結構 (users, companies, orders, products)
-  - [x] 配置 Prisma ORM
+  - [x] 配置 SQLAlchemy ORM + Alembic
   - [x] 建立資料庫遷移腳本
   - [ ] 設置開發/測試環境資料庫 ⚠️ **遷移未執行**
   - **負責人**: 後端開發
   - **預計工時**: 16小時 | **實際工時**: 18小時
   - **驗收標準**: 資料庫結構完整，遷移腳本可正常執行 ⚠️
-  - **待辦**: 執行Prisma遷移，連接真實資料庫
+  - **待辦**: 執行 Alembic 遷移，連接真實資料庫
 
 - [x] **T1.1.3** 開發環境配置 ✅ **100%完成**
   - [x] Docker 容器化配置
@@ -149,7 +149,7 @@ gantt
 
 ##### 安全檢查清單 (60%完成)
 - [ ] 密碼強度驗證 ❌
-- [x] SQL 注入防護 ✅ (Prisma ORM)
+- [x] SQL 注入防護 ✅ (SQLAlchemy ORM)
 - [x] XSS 攻擊防護 ✅ (Helmet.js)
 - [ ] CSRF token 驗證 ❌
 - [x] 速率限制實現 ✅ (express-rate-limit)

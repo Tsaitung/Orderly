@@ -56,7 +56,7 @@
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │                   Data Access Layer                     │  │
-│  │  • Prisma ORM • Query Optimization • Connection Pool    │  │
+│  │  • SQLAlchemy ORM + Alembic • Query Optimization • Pool │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └────────────┬─────────────────────┬──────────────────────────────┘
              │                     │
@@ -79,7 +79,7 @@
 | **Styling** | TailwindCSS + CSS Modules | Utility-first with component-level isolation |
 | **State Management** | Zustand + React Query | Lightweight state with powerful server state management |
 | **Database** | PostgreSQL 15+ | ACID compliance, JSON support, excellent performance |
-| **ORM** | Prisma 5+ | Type-safe database access, migration management |
+| **ORM** | SQLAlchemy 2.x + Alembic | Pythonic ORM, explicit migrations |
 | **Cache** | Redis 7+ | High-performance caching, session management |
 | **Queue** | BullMQ | Reliable reconciliation job processing |
 | **File Storage** | Google Cloud Storage | Scalable document/image storage |
@@ -446,7 +446,7 @@ slo:
 
 ### Phase 1: Foundation (Weeks 1-2)
 - [ ] Next.js application setup with module structure
-- [ ] Prisma database layer with PostgreSQL
+- [ ] Database layer (SQLAlchemy + Alembic) with PostgreSQL
 - [ ] Authentication & authorization system  
 - [ ] Redis cache infrastructure
 
@@ -503,3 +503,6 @@ slo:
 - Principle of least privilege access
 
 This technical architecture provides a solid foundation for the 井然 Orderly platform, balancing simplicity with enterprise requirements while ensuring scalability, maintainability, and performance to support the critical automated reconciliation and ERP integration capabilities.
+# Technical Architecture Summary
+
+Note: The repository has migrated from a legacy Node ORM to SQLAlchemy + Alembic on FastAPI services. Any prior legacy ORM references are deprecated and will be updated progressively.

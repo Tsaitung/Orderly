@@ -81,14 +81,14 @@
 #### Day 1-2: 緊急基礎設施修復
 **負責人**: 後端團隊 + DevOps
 
-- [ ] **執行 Prisma 資料庫遷移**
+- [ ] **執行 Alembic 資料庫遷移**
   - 建立所有核心資料表
   - 配置開發/測試環境資料庫
   - 建立種子數據腳本
 
 - [ ] **移除 mock 數據依賴**
   - 重構所有 simpleController
-  - 實現真實的 Prisma CRUD 操作
+  - 實現真實的 SQLAlchemy CRUD 操作
   - 連接 Redis 快取層
 
 - [ ] **服務健康檢查**

@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "hooks/use-accessibility.ts",
+    "lib/accessibility/**/*.ts",
+    "lib/orders/order-service.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "**/*.stories.tsx",
+    "**/*.stories.ts",
+    "stories/**/*",
+    "components/design-system/**/*",
+    "lib/erp/**/*",
+    "lib/reconciliation/**/*",
+    "lib/redis.ts",
+    "lib/services/**/*",
+    "lib/erp/**/*",
+    "backend/**/*",
+    "components/**/*",
+    "app/**/*",
+    "contexts/**/*",
+    "node_modules"
+  ]
+}

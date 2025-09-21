@@ -59,22 +59,22 @@ app/
 Port: 3000 | Health: /api/health
 ```
 
-### ⚡ 後端微服務 (Node.js + Express)
+### ⚡ 後端微服務（FastAPI + SQLAlchemy）
 ```
 backend/
-├── api-gateway/            # API 閘道 (Port 8000)
-├── user-service/           # 用戶管理 (Port 3001)
-├── order-service/          # 訂單管理 (Port 3002)
-├── product-service/        # 商品目錄 (Port 3003)
-├── acceptance-service/     # 驗收管理 (Port 3004)
-├── billing-service/        # 帳務結算 (Port 3005)
-└── notification-service/   # 通知服務 (Port 3006)
+├── api-gateway/                 # API 閘道 (Port 8000)
+├── user-service-fastapi/            # 用戶管理（FastAPI + SQLAlchemy, Port 3001）
+├── order-service-fastapi/           # 訂單管理（FastAPI + SQLAlchemy, Port 3002）
+├── product-service-fastapi/         # 商品目錄（FastAPI + SQLAlchemy, Port 3003）
+├── acceptance-service-fastapi/      # 驗收管理（FastAPI, Port 3004）
+├── billing-service-fastapi/         # 帳務結算（FastAPI, Port 3005）
+└── notification-service-fastapi/    # 通知服務（FastAPI, Port 3006）
 
 所有服務健康檢查: /{service}/health
 ```
 
 ### 🗄️ 資料存儲
-- **PostgreSQL**: 主要資料庫 (Prisma ORM)
+- **PostgreSQL**: 主要資料庫（SQLAlchemy ORM + Alembic 遷移）
 - **Redis**: 快取和會話管理
 - **Google Cloud Storage**: 檔案存儲
 
@@ -109,19 +109,15 @@ npm install
 cp .env.example .env.local
 ```
 
-#### 2. 資料庫設置
+#### 2. 資料庫設置（SQLAlchemy + Alembic）
 ```bash
-# 啟動本地資料庫
+# 啟動本地資料庫與 Redis（若尚未啟動）
 docker-compose up -d postgres redis
 
-# 執行資料庫遷移
-npx prisma migrate dev
-
-# 生成 Prisma 客戶端
-npx prisma generate
-
-# 載入種子數據
-npx prisma db seed
+# 執行資料庫遷移（各 FastAPI 服務）
+cd backend/user-service-fastapi && alembic upgrade head && cd -
+cd backend/order-service-fastapi && alembic upgrade head && cd -
+cd backend/product-service-fastapi && alembic upgrade head && cd -
 ```
 
 #### 3. 啟動開發服務
@@ -295,9 +291,10 @@ npm run dev:restart
 # 檢查資料庫狀態
 docker-compose exec postgres psql -U postgres -c "\\l"
 
-# 重建資料庫
-npx prisma migrate reset
-npx prisma db seed
+# 重新執行資料庫遷移（FastAPI 服務）
+cd backend/user-service-fastapi && alembic upgrade head && cd -
+cd backend/order-service-fastapi && alembic upgrade head && cd -
+cd backend/product-service-fastapi && alembic upgrade head && cd -
 ```
 
 #### 🔴 建構/部署錯誤

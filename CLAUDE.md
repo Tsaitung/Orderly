@@ -12,15 +12,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Microservices Architecture
 - **Frontend**: Next.js + TypeScript + TailwindCSS (port 3000)
-- **Backend**: Node.js microservices architecture with API Gateway pattern
-  - API Gateway (port 8000) - Routes to all services
+- **Backend**: FastAPI microservices architecture with API Gateway pattern
+  - API Gateway (port 8000) - Routes to all services (FastAPI)
   - User Service (port 3001) - Authentication and user management  
   - Order Service (port 3002) - Order processing
   - Product Service (port 3003) - Product catalog
   - Acceptance Service (port 3004) - Receipt verification
   - Billing Service (port 3005) - Invoicing and payments
   - Notification Service (port 3006) - Real-time notifications
-- **Database**: PostgreSQL (port 5432) with Prisma ORM
+- **Database**: PostgreSQL (port 5432) with SQLAlchemy ORM + Alembic
 - **Cache**: Redis (port 6379)
 - **Infrastructure**: Multi-region Terraform on Google Cloud Platform
 
@@ -35,16 +35,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Guidelines
 
 ### Project Structure
-- `frontend/`: Vite + React + TypeScript app.
-- `backend/`: TypeScript microservices (e.g., `api-gateway/`, `user-service/` with Prisma).
+- `app/`: Next.js App Router + TypeScript frontend application.
+- `backend/`: Microservices (API Gateway and core domain services in FastAPI + SQLAlchemy).
 - `shared/types/`: Reusable TS types as `@orderly/types`.
 - `infrastructure/`, `scripts/`, `docker-compose.yml`: IaC, automation, local orchestration.
 
 ### Build, Test, and Develop
 - Install deps (root): `npm install`.
-- Dev all: `npm run dev`; per workspace: `npm run dev -w backend/api-gateway` or `-w frontend`.
-- Build all/one: `npm run build` / `npm run build -w backend/user-service`.
-- Start built service: `npm start -w backend/api-gateway`; frontend preview: `npm run preview -w frontend`.
+- Dev all: `npm run dev` (frontend) and `docker-compose up -d` (backend services).
+- Build all/one: `npm run build` (frontend) or Docker builds per service.
+- Start API Gateway: `docker compose up -d api-gateway` (FastAPI).
 - Tests: `npm test` (all) or `npm test -w <workspace>`; watch: `npm run test:watch -w backend/user-service`.
 - Lint/format: `npm run lint`, `npm run format`.
 
@@ -55,8 +55,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Files: components `PascalCase.tsx`, modules `kebab-case.ts`, tests `*.test.ts(x)`.
 
 ### Testing
-- Frontend: Vitest; Backend: Jest (+ ts-jest). Prefer co-located unit tests.
-- Target ≥80% unit coverage; add integration tests for routes and Prisma flows.
+- Frontend: Jest + React Testing Library; Backend: Jest (+ ts-jest). Prefer co-located unit tests.
+- Target ≥80% unit coverage; add integration tests for FastAPI routes and DB flows.
 - Run fast locally with watch; run full suite in CI.
 
 ### Commits & PRs
@@ -143,15 +143,15 @@ git push origin main
 
 ### Service-Specific Commands
 ```bash
-# Generate Prisma client (user-service)
+# Generate SQLAlchemy client (user-service)
 cd backend/user-service
-npx prisma generate
+alembic upgrade head # per FastAPI service
 
 # Run database migrations
-npx prisma migrate dev
+alembic upgrade head
 
 # Reset database
-npx prisma migrate reset
+# use backups + alembic downgrade if needed
 ```
 
 ## CI/CD System
@@ -249,7 +249,7 @@ Refer to `docs/INDEX.md` for the up-to-date documentation map. Key entries:
 - Each microservice follows the same structure: src/controllers/, src/services/, src/routes/, src/middleware/
 - Shared TypeScript types in `shared/types/` workspace
 - Environment-specific configuration through environment variables
-- Database access through Prisma ORM with migration-driven schema management
+- Database access through SQLAlchemy ORM with migration-driven schema management
 
 ### Service Communication
 - API Gateway handles external requests and routes to internal services

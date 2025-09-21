@@ -11,7 +11,7 @@ const nextConfig = {
   // Enable experimental features
   experimental: {
     // Server Components
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma', 'ioredis', 'redis'],
+    serverComponentsExternalPackages: ['ioredis', 'redis'],
     
     // Optimize CSS - Disable critters to avoid issues
     optimizeCss: false,
@@ -56,21 +56,16 @@ const nextConfig = {
   // API routes configuration
   async rewrites() {
     return [
-      {
-        source: '/api/v1/:path*',
-        destination: '/api/:path*',
-      },
-      // Proxy backend API calls to API Gateway
-      {
-        source: '/api/backend/:path*',
-        destination: 'http://localhost:8000/api/:path*',
-      },
+      // Keep legacy alias for internal use
+      { source: '/api/v1/:path*', destination: '/api/:path*' },
+      // Prefer BFF proxy (handled by app/api/bff)
+      // No direct rewrite to gateway required
     ];
   },
   
   // Environment variables
   env: {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api',
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
   },
   
   // Output configuration for standalone builds

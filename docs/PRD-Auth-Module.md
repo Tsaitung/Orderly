@@ -663,7 +663,7 @@ All flows must pass the following criteria:
 ## 14. Dependencies
 
 ### 14.1 Technical Dependencies
-- PostgreSQL database with Prisma ORM
+- PostgreSQL database with SQLAlchemy ORM + Alembic
 - Redis for session storage
 - API Gateway for routing
 - Notification service for emails/SMS

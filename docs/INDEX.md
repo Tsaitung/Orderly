@@ -6,6 +6,8 @@
 
 ## 🎯 權威文檔（Canonical）
 - 產品需求（PRD）：`docs/PRD-Complete.md`
+- 使用者 Onboarding 流程：`docs/PRD-Onboarding-Process.md`
+- 雙向推薦系統：`docs/PRD-Referral-System.md`
 - 設計系統：`docs/design-system.md`
 - 技術架構：`docs/Technical-Architecture-Summary.md`
 - API（精要）：`docs/API-Endpoints-Essential.md`
@@ -17,6 +19,8 @@
 
 ## 🧭 使用指引（Which doc to use?）
 - 規劃/驗收：讀 `PRD-Complete.md`（唯一需求事實來源）
+- 使用者引導：讀 `PRD-Onboarding-Process.md`（新用戶註冊流程設計）
+- 推薦系統：讀 `PRD-Referral-System.md`（雙向邀請機制設計）
 - 設計/組件：讀 `design-system.md`（UI/UX、樣式、語意色）
 - 架構決策：讀 `Technical-Architecture-Summary.md`（實作就緒視圖）
 - API 開發：

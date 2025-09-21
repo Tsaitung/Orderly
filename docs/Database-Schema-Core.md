@@ -8,7 +8,7 @@
 
 ## Schema Overview
 
-井然 Orderly 数据库采用 **PostgreSQL 15+** 与 **Prisma ORM**，专为多租户餐饮供应链对账场景设计。核心设计原则：
+井然 Orderly 数据库采用 **PostgreSQL 15+** 与 **SQLAlchemy ORM**，专为多租户餐饮供应链对账场景设计。核心设计原则：
 
 - **多租户隔离**: 组织级数据隔离，支持行级安全策略 (RLS)
 - **对账优化**: 为30分钟内完成对账流程优化的表结构和索引
@@ -651,7 +651,7 @@ $$ LANGUAGE plpgsql;
 ### Connection Pool Configuration
 
 ```typescript
-// Prisma connection configuration
+// SQLAlchemy connection configuration
 const prisma = new PrismaClient({
   datasources: {
     db: { url: DATABASE_URL }

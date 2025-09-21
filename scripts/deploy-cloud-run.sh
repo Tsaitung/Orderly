@@ -28,14 +28,29 @@ REDIS_INSTANCE_NAME="orderly-cache"
 # Service Configuration
 declare -A SERVICES=(
     ["api-gateway"]="8000"
-    ["user-service"]="8001"
-    ["order-service"]="8002"
-    ["product-service"]="8003"
-    ["acceptance-service"]="8004"
-    ["billing-service"]="8005"
-    ["notification-service"]="8006"
-    ["admin-service"]="8008"
+    ["user-service"]="3001"
+    ["order-service"]="3002"
+    ["product-service"]="3003"
+    ["acceptance-service"]="3004"
+    ["billing-service"]="3005"
+    ["notification-service"]="3006"
+    ["customer-hierarchy-service"]="3007"
 )
+
+# Map Cloud Run service names to local directories
+resolve_service_path() {
+  case "$1" in
+    api-gateway) echo "$PROJECT_ROOT/backend/api-gateway-fastapi" ;;
+    user-service) echo "$PROJECT_ROOT/backend/user-service-fastapi" ;;
+    order-service) echo "$PROJECT_ROOT/backend/order-service-fastapi" ;;
+    product-service) echo "$PROJECT_ROOT/backend/product-service-fastapi" ;;
+    acceptance-service) echo "$PROJECT_ROOT/backend/acceptance-service-fastapi" ;;
+    billing-service) echo "$PROJECT_ROOT/backend/billing-service-fastapi" ;;
+    notification-service) echo "$PROJECT_ROOT/backend/notification-service-fastapi" ;;
+    customer-hierarchy-service) echo "$PROJECT_ROOT/backend/customer-hierarchy-service-fastapi" ;;
+    *) echo "" ;;
+  esac
+}
 
 # Print functions
 print_status() { echo -e "${GREEN}[INFO]${NC} $1"; }
@@ -196,9 +211,10 @@ build_and_push_images() {
     print_header "Building and Pushing Docker Images"
     
     for service_name in "${!SERVICES[@]}"; do
-        local service_path="$PROJECT_ROOT/backend/$service_name"
+        local service_path
+        service_path=$(resolve_service_path "$service_name")
         
-        if [[ ! -d "$service_path" ]]; then
+        if [[ -z "$service_path" || ! -d "$service_path" ]]; then
             print_warning "Service directory $service_path not found, skipping..."
             continue
         fi
@@ -254,11 +270,11 @@ deploy_services() {
             --max-instances=10 \
             --concurrency=100 \
             --timeout=300 \
-            --set-env-vars="NODE_ENV=production,PORT=$service_port" \
-            --set-env-vars="REDIS_HOST=$redis_host,REDIS_PORT=6379" \
-            --set-env-vars="DATABASE_URL=postgresql://$DB_USER@/$DB_NAME?host=/cloudsql/$db_connection_name" \
+            --set-env-vars="ENVIRONMENT=production,PORT=$service_port" \
+            --set-env-vars="REDIS_URL=redis://$redis_host:6379" \
+            --set-env-vars="DATABASE_URL=postgresql+asyncpg://$DB_USER:$POSTGRES_PASSWORD@/$DB_NAME?host=/cloudsql/$db_connection_name" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
-            --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --set-secrets="JWT_SECRET_KEY=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
             --add-cloudsql-instances="$db_connection_name" \
             --project="$PROJECT_ID"
@@ -288,14 +304,14 @@ configure_service_mesh() {
     if [[ -n "${service_urls[api-gateway]}" ]]; then
         print_status "Updating API Gateway configuration..."
         
-        local env_vars="NODE_ENV=production"
+        local env_vars="ENVIRONMENT=production,GATEWAY_ENFORCE_ROLES=true"
         env_vars+=",USER_SERVICE_URL=${service_urls[user-service]}"
         env_vars+=",ORDER_SERVICE_URL=${service_urls[order-service]}"
         env_vars+=",PRODUCT_SERVICE_URL=${service_urls[product-service]}"
         env_vars+=",ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service]}"
         env_vars+=",BILLING_SERVICE_URL=${service_urls[billing-service]}"
         env_vars+=",NOTIFICATION_SERVICE_URL=${service_urls[notification-service]}"
-        env_vars+=",ADMIN_SERVICE_URL=${service_urls[admin-service]}"
+        env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service]}/api/v2"
         
         gcloud run services update "orderly-api-gateway" \
             --region="$REGION" \
@@ -421,7 +437,8 @@ update_service() {
         
         print_status "Updating $service_name..."
         
-        local service_path="$PROJECT_ROOT/backend/$service_name"
+        local service_path
+        service_path=$(resolve_service_path "$service_name")
         
         # Build and push
         gcloud builds submit "$service_path" \

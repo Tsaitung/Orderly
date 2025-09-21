@@ -6,31 +6,31 @@
 
 ## 📦 容器化組件清單
 
-### 1. Dockerfile 文件 (16個)
+### 1. Dockerfile 文件
 
-**標準 Dockerfiles (8個):**
-- ✅ `backend/api-gateway/Dockerfile`
-- ✅ `backend/user-service/Dockerfile` 
-- ✅ `backend/order-service/Dockerfile`
-- ✅ `backend/product-service/Dockerfile`
-- ✅ `backend/acceptance-service/Dockerfile`
-- ✅ `backend/billing-service/Dockerfile`
-- ✅ `backend/notification-service/Dockerfile`
-- ✅ `backend/admin-service/Dockerfile`
+**FastAPI 服務 (6個):**
+- ✅ `backend/api-gateway-fastapi/Dockerfile`
+- ✅ `backend/user-service-fastapi/Dockerfile` 
+- ✅ `backend/order-service-fastapi/Dockerfile`
+- ✅ `backend/product-service-fastapi/Dockerfile`
+- ✅ `backend/acceptance-service-fastapi/Dockerfile`
+- ✅ `backend/billing-service-fastapi/Dockerfile`
+- ✅ `backend/notification-service-fastapi/Dockerfile`
+- ✅ `backend/customer-hierarchy-service-fastapi/Dockerfile`
 
-**Cloud Run 優化 Dockerfiles (8個):**
-- ✅ `backend/*/Dockerfile.cloudrun` (每個服務一個)
+**Next.js 前端:**
+- ✅ `Dockerfile.frontend` (standalone output)
 
 ### 2. Docker Compose 配置
 
 **生產環境編排:**
 - ✅ `docker-compose.production.yml` - 完整微服務編排
-- ✅ 包含 PostgreSQL、Redis、8個微服務
+- ✅ 包含 PostgreSQL、Redis、FastAPI 服務與 API Gateway
 - ✅ 健康檢查、依賴管理、網絡配置
 
 **開發環境支援:**
-- ✅ 擴展現有 `docker-compose.dev.yml`
-- ✅ 本地開發優化配置
+- ✅ `docker-compose.yml` + `docker-compose.override.yml`（本地開發覆寫）
+- ✅ `docker-compose.dev.yml`（可選工具：pgAdmin、Redis Commander）
 
 ### 3. 構建優化
 
@@ -114,8 +114,13 @@
 └─────────────────┘                        │
          │                                  │
 ┌─────────────────┐                        │
-│Notification Svc │────────────────────────┘
-│   (Port 8006)   │
+│Notification Svc │────────────────────────┤
+│   (Port 8006)   │                        │
+└─────────────────┘                        │
+         │                                  │
+┌─────────────────┐                        │
+│Cust. Hierarchy  │────────────────────────┘
+│   (Port 8007)   │
 └─────────────────┘
 ```
 
@@ -162,8 +167,8 @@ docker run -p 8080:8080 -e PORT=8080 service-name
 ### 構建驗證
 
 ```bash
-✅ 16 個 Dockerfile 創建成功
-✅ 8 個微服務容器化完成
+✅ 所有 FastAPI 服務 Dockerfile 準備就緒
+✅ API Gateway + 6 核心服務 + 客戶階層服務
 ✅ Docker Compose 編排配置就緒
 ✅ 部署腳本自動化完成
 ✅ Cloud Run 優化實施完成
@@ -179,7 +184,7 @@ docker run -p 8080:8080 -e PORT=8080 service-name
 ✅ Acceptance Service (8004) - Healthy
 ✅ Billing Service (8005) - Healthy
 ✅ Notification Service (8006) - Healthy
-✅ Admin Service (8008) - Healthy
+✅ Customer Hierarchy (8007) - Healthy
 ```
 
 ## 🔄 後續步驟

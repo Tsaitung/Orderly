@@ -19,7 +19,7 @@ The authentication system extends the existing User Service (port 3001) with enh
 - **Session Management**: Redis with sliding windows
 - **MFA**: TOTP (RFC 6238) + SMS/Email OTP
 - **Rate Limiting**: Redis-based with token bucket algorithm
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: PostgreSQL with SQLAlchemy ORM + Alembic (via FastAPI user-service)
 - **Audit Logging**: Structured JSON to centralized log system
 
 ### 1.3 Key Design Decisions

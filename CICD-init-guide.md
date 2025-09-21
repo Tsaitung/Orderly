@@ -270,7 +270,7 @@ Decisions: PROCEED_FAST_TRACK, PROCEED_STANDARD, PROCEED_CAUTIOUS, REVIEW_REQUIR
 - [ ] **Image Registry**: All deployments from Artifact Registry
 
 ### Database Management
-- [ ] **Migration Tools**: Use Alembic (Python) or Prisma (Node.js) for schema sync
+- [ ] **Migration Tools**: Use Alembic (Python) for schema sync
 - [ ] **No Manual DB Changes**: All schema changes through migrations
 - [ ] **Version Control**: Migration files in git repository
 
