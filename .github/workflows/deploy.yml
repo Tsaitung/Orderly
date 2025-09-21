@@ -119,25 +119,26 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
-          # Build and push Docker image using gcloud builds submit
+          # Build and tag Docker image locally
           cd backend/${{ matrix.service }}
-          gcloud builds submit . \
-            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:latest" \
-            --config=- <<EOF
-          steps:
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['build', '-f', 'Dockerfile.cloudrun', '-t', '\$_IMAGE_NAME:latest', '.']
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['tag', '\$_IMAGE_NAME:latest', '\$_IMAGE_NAME:$IMAGE_TAG']
-          - name: 'gcr.io/cloud-builders/docker'
-            args: ['tag', '\$_IMAGE_NAME:latest', '\$_IMAGE_NAME:$ENVIRONMENT']
-          images:
-          - '\$_IMAGE_NAME:latest'
-          - '\$_IMAGE_NAME:$IMAGE_TAG'
-          - '\$_IMAGE_NAME:$ENVIRONMENT'
-          substitutions:
-            _IMAGE_NAME: '$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}'
-          EOF
+          
+          # Define image names
+          IMAGE_BASE="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}"
+          IMAGE_LATEST="${IMAGE_BASE}:latest"
+          IMAGE_SHA="${IMAGE_BASE}:$IMAGE_TAG"
+          IMAGE_ENV="${IMAGE_BASE}:$ENVIRONMENT"
+          
+          # Build image
+          docker build -f Dockerfile.cloudrun -t "$IMAGE_LATEST" .
+          
+          # Tag with SHA and environment
+          docker tag "$IMAGE_LATEST" "$IMAGE_SHA"
+          docker tag "$IMAGE_LATEST" "$IMAGE_ENV"
+          
+          # Push all tags
+          docker push "$IMAGE_LATEST"
+          docker push "$IMAGE_SHA"
+          docker push "$IMAGE_ENV"
 
   deploy-infrastructure:
     name: Deploy Infrastructure
