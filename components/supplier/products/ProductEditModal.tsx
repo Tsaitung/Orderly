@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -172,14 +172,7 @@ export default function ProductEditModal({
   if (!product) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Package className="h-5 w-5" />
-            <span>編輯產品 - {product.name}</span>
-          </DialogTitle>
-        </DialogHeader>
+    <AccessibleModal isOpen={isOpen} onClose={handleClose} title={`編輯產品 - ${product.name}`} size="xl" className="max-h-[90vh] overflow-y-auto">
 
         {/* Product Summary */}
         <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
@@ -506,7 +499,6 @@ export default function ProductEditModal({
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+    </AccessibleModal>
   );
 }

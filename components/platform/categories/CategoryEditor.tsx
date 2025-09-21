@@ -5,14 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import {
   Select,
   SelectContent,
@@ -143,12 +136,8 @@ export function CategoryEditor({
       : '建立新的產品類別'
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{dialogTitle}</DialogTitle>
-          <DialogDescription>{dialogDescription}</DialogDescription>
-        </DialogHeader>
+    <AccessibleModal isOpen={open} onClose={() => onOpenChange(false)} title={dialogTitle} size="md" className="sm:max-w-[500px]">
+      <div className="text-sm text-gray-600 mb-2">{dialogDescription}</div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -255,7 +244,7 @@ export function CategoryEditor({
             <Label htmlFor="isActive">啟用此類別</Label>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -267,9 +256,8 @@ export function CategoryEditor({
             <Button type="submit" disabled={loading}>
               {loading ? '儲存中...' : isEditing ? '更新' : '建立'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+    </AccessibleModal>
   )
 }

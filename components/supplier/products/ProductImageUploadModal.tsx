@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Product, ImageUploadRequest, ImageUploadResponse } from '@/lib/api/product-types'
@@ -174,16 +174,8 @@ export default function ProductImageUploadModal({
   if (!product) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <ImageIcon className="h-5 w-5" />
-            <span>產品圖片管理 - {product.name}</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <AccessibleModal isOpen={isOpen} onClose={handleClose} title={`產品圖片管理 - ${product.name}`} size="xl" className="max-h-[90vh] overflow-y-auto">
+      <div className="space-y-6">
           {/* Current Images */}
           <div>
             <h3 className="font-medium text-gray-900 mb-3">
@@ -425,8 +417,7 @@ export default function ProductImageUploadModal({
               {uploading ? '上傳中...' : '關閉'}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }
