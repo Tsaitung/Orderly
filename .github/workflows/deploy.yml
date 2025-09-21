@@ -7,7 +7,7 @@ permissions:
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ staging, develop, main ]
   workflow_dispatch:
     inputs:
       environment:
