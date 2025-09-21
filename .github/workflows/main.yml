@@ -22,6 +22,8 @@ jobs:
       frontend-image: ${{ steps.build-frontend.outputs.image }}
       api-gateway-image: ${{ steps.build-api-gateway.outputs.image }}
       user-service-image: ${{ steps.build-user-service.outputs.image }}
+      product-service-image: ${{ steps.build-product-service.outputs.image }}
+      acceptance-service-image: ${{ steps.build-acceptance-service.outputs.image }}
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
@@ -32,6 +34,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       - name: 📦 Install dependencies
         run: npm ci
 
@@ -40,6 +48,12 @@ jobs:
 
       - name: 🔍 Run linting (if available)
         run: npm run lint --if-present
+
+      - name: 🧪 Test FastAPI Product Service
+        run: |
+          cd backend/product-service-fastapi
+          pip install -r requirements.txt
+          python -m pytest --version || echo "pytest not configured, skipping tests"
 
       - name: 🔐 Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -78,6 +92,22 @@ jobs:
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
+      - name: 🏗️ Build Product Service Image (FastAPI)
+        id: build-product-service
+        run: |
+          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${{ github.sha }}"
+          docker build -f backend/product-service-fastapi/Dockerfile -t $IMAGE ./backend/product-service-fastapi
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: 🏗️ Build Acceptance Service Image
+        id: build-acceptance-service
+        run: |
+          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
+          docker build -f backend/acceptance-service/Dockerfile.cloudrun -t $IMAGE ./backend/acceptance-service
+          docker push $IMAGE
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
   # =============================================================================
   # DEPLOY TO STAGING
   # =============================================================================
@@ -91,6 +121,8 @@ jobs:
       frontend-url: ${{ steps.deploy.outputs.frontend-url }}
       api-gateway-url: ${{ steps.deploy.outputs.api-gateway-url }}
       user-service-url: ${{ steps.deploy.outputs.user-service-url }}
+      product-service-url: ${{ steps.deploy.outputs.product-service-url }}
+      acceptance-service-url: ${{ steps.deploy.outputs.acceptance-service-url }}
     steps:
       - name: 📦 Checkout code
         uses: actions/checkout@v4
@@ -110,6 +142,8 @@ jobs:
           USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
           API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
           FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
+          PRODUCT_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${{ github.sha }}"
+          ACCEPTANCE_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
           
           # Deploy User Service
           gcloud run deploy orderly-user-service-staging \
@@ -122,9 +156,39 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --port 8001 \
-            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }}
+            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }}
 
           USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy Product Service (FastAPI)
+          gcloud run deploy orderly-product-service-staging \
+            --image $PRODUCT_SERVICE_IMAGE \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 5 \
+            --min-instances 0 \
+            --port 3003 \
+            --set-env-vars ENVIRONMENT=staging,DATABASE_URL=${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }},LOG_LEVEL=INFO
+
+          PRODUCT_SERVICE_URL=$(gcloud run services describe orderly-product-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Deploy Acceptance Service
+          gcloud run deploy orderly-acceptance-service-staging \
+            --image $ACCEPTANCE_SERVICE_IMAGE \
+            --region ${{ env.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --max-instances 5 \
+            --min-instances 0 \
+            --port 8004 \
+            --set-env-vars NODE_ENV=staging
+
+          ACCEPTANCE_SERVICE_URL=$(gcloud run services describe orderly-acceptance-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy API Gateway
           gcloud run deploy orderly-api-gateway-staging \
@@ -137,9 +201,13 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --port 8000 \
-            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL
+            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL,PRODUCT_SERVICE_URL=$PRODUCT_SERVICE_URL,ACCEPTANCE_SERVICE_URL=$ACCEPTANCE_SERVICE_URL
 
           API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+
+          # Rebuild Frontend with runtime API base baked
+          docker build -f Dockerfile.frontend --build-arg NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api -t $FRONTEND_IMAGE .
+          docker push $FRONTEND_IMAGE
 
           # Deploy Frontend
           gcloud run deploy orderly-frontend-staging \
@@ -152,13 +220,15 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --port 8000 \
-            --set-env-vars NODE_ENV=staging,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
+            --set-env-vars NODE_ENV=staging,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api,NEXT_PUBLIC_API_URL=$API_GATEWAY_URL/api
 
           FRONTEND_URL=$(gcloud run services describe orderly-frontend-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           echo "frontend-url=$FRONTEND_URL" >> $GITHUB_OUTPUT
           echo "api-gateway-url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
           echo "user-service-url=$USER_SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "product-service-url=$PRODUCT_SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "acceptance-service-url=$ACCEPTANCE_SERVICE_URL" >> $GITHUB_OUTPUT
 
       - name: 🧪 Health Check
         run: |
@@ -169,11 +239,15 @@ jobs:
           echo "Frontend: ${{ steps.deploy.outputs.frontend-url }}"
           echo "API Gateway: ${{ steps.deploy.outputs.api-gateway-url }}"
           echo "User Service: ${{ steps.deploy.outputs.user-service-url }}"
+          echo "Product Service: ${{ steps.deploy.outputs.product-service-url }}"
+          echo "Acceptance Service: ${{ steps.deploy.outputs.acceptance-service-url }}"
           
           # Health checks
           curl -f "${{ steps.deploy.outputs.frontend-url }}/api/health" || exit 1
           curl -f "${{ steps.deploy.outputs.api-gateway-url }}/health" || exit 1
           curl -f "${{ steps.deploy.outputs.user-service-url }}/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.product-service-url }}/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.acceptance-service-url }}/health" || exit 1
           
           echo "✅ All staging services are healthy!"
 

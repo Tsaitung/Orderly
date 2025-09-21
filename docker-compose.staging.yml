@@ -8,11 +8,8 @@ services:
       POSTGRES_DB: orderly
       POSTGRES_USER: orderly
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U orderly -d orderly"]
       interval: 30s
@@ -25,8 +22,6 @@ services:
   # Redis Cache
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -47,7 +42,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - USER_SERVICE_URL=http://user-service:3001
       - ORDER_SERVICE_URL=http://order-service:3002
       - PRODUCT_SERVICE_URL=http://product-service:3003
@@ -55,15 +50,26 @@ services:
       - BILLING_SERVICE_URL=http://billing-service:3005
       - NOTIFICATION_SERVICE_URL=http://notification-service:3006
       - CUSTOMER_HIERARCHY_SERVICE_URL=http://customer-hierarchy-service:3007/api/v2
-      - CORS_ORIGINS=http://localhost:3000
+      - CORS_ORIGINS=${CORS_ORIGINS}
     depends_on:
-      - user-service
-      - order-service
-      - product-service
-      - customer-hierarchy-service
-      - acceptance-service
-      - billing-service
-      - notification-service
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      acceptance-service:
+        condition: service_started
+      billing-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      customer-hierarchy-service:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -74,14 +80,13 @@ services:
     networks:
       - orderly-network
 
-  # User Service (FastAPI)
+  # FastAPI services (internal-only; no host port mapping)
   user-service:
     build:
       context: ./backend/user-service-fastapi
       dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
     depends_on:
       postgres:
@@ -96,14 +101,11 @@ services:
     networks:
       - orderly-network
 
-  # Order Service (FastAPI)
   order-service:
     build:
       context: ./backend/order-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -121,17 +123,13 @@ services:
     networks:
       - orderly-network
 
-  # Product Service (FastAPI)
   product-service:
-    build: 
+    build:
       context: ./backend/product-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
-      - LOG_LEVEL=INFO
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,14 +145,11 @@ services:
     networks:
       - orderly-network
 
-  # Acceptance Service (FastAPI)
   acceptance-service:
     build:
       context: ./backend/acceptance-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
     depends_on:
       postgres:
@@ -169,14 +164,11 @@ services:
     networks:
       - orderly-network
 
-  # Billing Service (FastAPI)
   billing-service:
     build:
       context: ./backend/billing-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
     depends_on:
       postgres:
@@ -191,14 +183,11 @@ services:
     networks:
       - orderly-network
 
-  # Notification Service (FastAPI)
   notification-service:
     build:
       context: ./backend/notification-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -216,14 +205,11 @@ services:
     networks:
       - orderly-network
 
-  # Customer Hierarchy Service (FastAPI)
   customer-hierarchy-service:
     build:
       context: ./backend/customer-hierarchy-service-fastapi
-      dockerfile: Dockerfile
-    # No host port exposure in production; use gateway
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=staging
       - DATABASE_URL=postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -241,13 +227,6 @@ services:
     networks:
       - orderly-network
 
-  # Admin Service — removed (no FastAPI replacement yet). Frontend admin pages remain.
-  # admin-service:
-  #   build: 
-  #     context: ./backend/admin-service-fastapi
-  #     dockerfile: Dockerfile
-  #   ...
-
 volumes:
   postgres_data:
     driver: local
@@ -257,6 +236,3 @@ volumes:
 networks:
   orderly-network:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16

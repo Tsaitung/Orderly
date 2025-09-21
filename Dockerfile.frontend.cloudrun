@@ -4,37 +4,28 @@ FROM node:20-alpine AS base
 WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
 
-# Install dependencies (root project)
 FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# Build the Next.js app (standalone output)
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# No ORM client generation required (moved to FastAPI + SQLAlchemy)
-# Accept API base at build time for client bundle
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
-# Build Next.js (standalone)
 RUN npm run build
 
-# Production image, copy standalone server
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy the standalone server and static assets
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-# Copy public folder from source (not builder) since standalone doesn't include it
 COPY public ./public
 
-# Cloud Run provides PORT; default to 8000
-ENV PORT=8000
-EXPOSE 8000
-
+# Cloud Run will inject PORT; expose 8080 for convention
+EXPOSE 8080
 CMD ["node", "server.js"]
+

@@ -59,7 +59,7 @@ jobs:
             order-service:
               - 'backend/order-service/**'
             product-service:
-              - 'backend/product-service/**'
+              - 'backend/product-service-fastapi/**'
             acceptance-service:
               - 'backend/acceptance-service/**'
             billing-service:
@@ -105,14 +105,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Generate Prisma clients
-        run: |
-          npx prisma generate --schema=backend/user-service/prisma/schema.prisma
-          npx prisma generate --schema=backend/order-service/prisma/schema.prisma
-          npx prisma generate --schema=backend/product-service/prisma/schema.prisma
-          npx prisma generate --schema=backend/acceptance-service/prisma/schema.prisma
-          npx prisma generate --schema=backend/billing-service/prisma/schema.prisma
-          npx prisma generate --schema=backend/notification-service/prisma/schema.prisma
+      # Legacy ORM removed: no ORM client generation required
       
       - name: TypeScript compile check
         run: npm run build
@@ -172,21 +165,9 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Generate Prisma client for service
-        if: steps.check-service.outputs.exists == 'true'
-        run: |
-          if [ -f "backend/${{ matrix.service }}/prisma/schema.prisma" ]; then
-            npx prisma generate --schema=backend/${{ matrix.service }}/prisma/schema.prisma
-          fi
+      # Legacy ORM removed: skip client generation per service
       
-      - name: Run database migrations
-        if: steps.check-service.outputs.exists == 'true'
-        env:
-          DATABASE_URL: postgresql://orderly:orderly_test@localhost:5432/orderly_test
-        run: |
-          if [ -f "backend/${{ matrix.service }}/prisma/schema.prisma" ]; then
-            npx prisma migrate deploy --schema=backend/${{ matrix.service }}/prisma/schema.prisma
-          fi
+      # Legacy ORM removed: skip JS ORM migrations in CI
       
       - name: Run tests for ${{ matrix.service }}
         if: steps.check-service.outputs.exists == 'true'
@@ -258,16 +239,57 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Generate Prisma client
-        if: steps.check-service.outputs.exists == 'true'
-        run: |
-          if [ -f "backend/${{ matrix.service }}/prisma/schema.prisma" ]; then
-            npx prisma generate --schema=backend/${{ matrix.service }}/prisma/schema.prisma
-          fi
+      # Legacy ORM removed: no client generation per service
       
       - name: Build ${{ matrix.service }}
         if: steps.check-service.outputs.exists == 'true'
         run: npm run build -w backend/${{ matrix.service }}
+
+  fastapi-migrations:
+    name: FastAPI DB Migrations + Smoke
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: orderly
+          POSTGRES_PASSWORD: orderly_test
+          POSTGRES_DB: orderly
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install, migrate, and run smoke tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://orderly:orderly_test@localhost:5432/orderly
+        run: |
+          set -e
+          pip install pytest pytest-asyncio httpx
+          for svc in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi; do
+            if [ -d "backend/$svc" ]; then
+              echo "===> $svc";
+              pip install -r backend/$svc/requirements.txt
+              if [ -f backend/$svc/alembic.ini ]; then
+                cd backend/$svc && alembic upgrade head && cd -
+              if [ -d backend/$svc/tests ]; then
+                echo "Running tests for $svc";
+                python -m pytest -q backend/$svc/tests
+              fi
+            fi
+          done
+      - name: Basic health checks
+        run: |
+          echo "Health checks will run in integration-test job when services start"
 
   build-frontend:
     name: Build Frontend
@@ -361,17 +383,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Setup test environment
-        env:
-          DATABASE_URL: postgresql://orderly:orderly_test@localhost:5432/orderly_test
-        run: |
-          # Generate Prisma clients for all services
-          for service in backend/*/; do
-            if [ -f "${service}prisma/schema.prisma" ]; then
-              npx prisma generate --schema="${service}prisma/schema.prisma"
-              npx prisma migrate deploy --schema="${service}prisma/schema.prisma"
-            fi
-          done
+      # Legacy ORM removed: no setup step needed for JS ORM clients
       
       - name: Start services for integration testing
         env:
@@ -433,3 +445,28 @@ jobs:
           echo "| Integration Tests | ${{ needs.integration-test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Ready for deployment: ${{ needs.integration-test.result == 'success' && 'true' || 'false' }}" >> $GITHUB_STEP_SUMMARY
+
+  fastapi-tests:
+    name: FastAPI Unit Smoke
+    runs-on: ubuntu-latest
+    needs: fastapi-migrations
+    if: needs.detect-changes.outputs.backend == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run FastAPI tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://orderly:orderly_test@localhost:5432/orderly
+        run: |
+          set -e
+          pip install pytest pytest-asyncio httpx
+          for svc in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi; do
+            if [ -d "backend/$svc" ]; then
+              pip install -r backend/$svc/requirements.txt
+              if [ -d backend/$svc/tests ]; then
+                python -m pytest -q backend/$svc/tests
+              fi
+            fi
+          done

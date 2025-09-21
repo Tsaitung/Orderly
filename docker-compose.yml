@@ -78,10 +78,9 @@ services:
   # User Service (FastAPI)
   user-service:
     build:
-      context: ./backend/user-service
+      context: ./backend/user-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8001:8001"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
@@ -99,24 +98,23 @@ services:
     networks:
       - orderly-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Order Service (FastAPI)  
+  # Order Service (FastAPI)
   order-service:
     build:
-      context: ./backend/order-service
+      context: ./backend/order-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8002:8002"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
-      - USER_SERVICE_URL=http://user-service:8001
-      - PRODUCT_SERVICE_URL=http://product-service:8003
+      - USER_SERVICE_URL=http://user-service:3001
+      - PRODUCT_SERVICE_URL=http://product-service:3003
     depends_on:
       postgres:
         condition: service_healthy
@@ -130,16 +128,16 @@ services:
   # Product Service (FastAPI)
   product-service:
     build:
-      context: ./backend/product-service
+      context: ./backend/product-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8003:8003"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - USER_SERVICE_URL=http://user-service:8001
+      - USER_SERVICE_URL=http://user-service:3001
+      - LOG_LEVEL=DEBUG
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,24 +145,26 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
-      user-service:
-        condition: service_healthy
     networks:
       - orderly-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Acceptance Service (FastAPI)
   acceptance-service:
     build:
-      context: ./backend/acceptance-service
+      context: ./backend/acceptance-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8004:8004"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
-      - USER_SERVICE_URL=http://user-service:8001
-      - ORDER_SERVICE_URL=http://order-service:8002
+      - USER_SERVICE_URL=http://user-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
@@ -181,16 +181,15 @@ services:
   # Billing Service (FastAPI)
   billing-service:
     build:
-      context: ./backend/billing-service
+      context: ./backend/billing-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8005:8005"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
-      - USER_SERVICE_URL=http://user-service:8001
-      - ORDER_SERVICE_URL=http://order-service:8002
+      - USER_SERVICE_URL=http://user-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
       - EINVOICE_APP_ID=${EINVOICE_APP_ID}
       - EINVOICE_API_KEY=${EINVOICE_API_KEY}
     depends_on:
@@ -206,15 +205,14 @@ services:
   # Notification Service (FastAPI)
   notification-service:
     build:
-      context: ./backend/notification-service
+      context: ./backend/notification-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8006:8006"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
-      - USER_SERVICE_URL=http://user-service:8001
+      - USER_SERVICE_URL=http://user-service:3001
     depends_on:
       postgres:
         condition: service_healthy
@@ -225,19 +223,24 @@ services:
     networks:
       - orderly-network
 
-  # Analytics Service (FastAPI)
-  analytics-service:
+  # Customer Hierarchy Service (FastAPI)
+  customer-hierarchy-service:
     build:
-      context: ./backend/analytics-service
+      context: ./backend/customer-hierarchy-service-fastapi
       dockerfile: Dockerfile
-    ports:
-      - "8007:8007"
+    # Internal communication only - no external port exposure
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=postgresql+asyncpg://orderly:orderly_dev_password@postgres:5432/orderly
       - REDIS_URL=redis://redis:6379
+      - USER_SERVICE_URL=http://user-service:3001
       - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - USER_SERVICE_URL=http://user-service:8001
+      - LOG_LEVEL=DEBUG
+      # Customer hierarchy specific settings
+      - MAX_HIERARCHY_DEPTH=4
+      - CACHE_TTL=300
+      - BULK_OPERATION_LIMIT=1000
+      - ENABLE_AUDIT_LOG=true
     depends_on:
       postgres:
         condition: service_healthy
@@ -249,24 +252,30 @@ services:
         condition: service_healthy
     networks:
       - orderly-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # API Gateway (Node.js/Express)
+  # API Gateway (FastAPI) - Single API entry point
   api-gateway:
-    build: 
-      context: ./backend/api-gateway
+    build:
+      context: ./backend/api-gateway-fastapi
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "8000:8000"
     environment:
-      - NODE_ENV=development
+      - ENVIRONMENT=development
       - JWT_SECRET=dev-jwt-secret-change-in-production
-      - USER_SERVICE_URL=http://user-service:8001
-      - ORDER_SERVICE_URL=http://order-service:8002
-      - PRODUCT_SERVICE_URL=http://product-service:8003
-      - ACCEPTANCE_SERVICE_URL=http://acceptance-service:8004
-      - BILLING_SERVICE_URL=http://billing-service:8005
-      - NOTIFICATION_SERVICE_URL=http://notification-service:8006
-      - ANALYTICS_SERVICE_URL=http://analytics-service:8007
+      - USER_SERVICE_URL=http://user-service:3001
+      - ORDER_SERVICE_URL=http://order-service:3002
+      - PRODUCT_SERVICE_URL=http://product-service:3003
+      - ACCEPTANCE_SERVICE_URL=http://acceptance-service:3004
+      - BILLING_SERVICE_URL=http://billing-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+      - CUSTOMER_HIERARCHY_SERVICE_URL=http://customer-hierarchy-service:3007/api/v2
+      - CORS_ORIGINS=http://localhost:3000
       - REDIS_URL=redis://redis:6379
     depends_on:
       postgres:
@@ -275,26 +284,29 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
+      customer-hierarchy-service:
+        condition: service_healthy
     networks:
       - orderly-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Next.js Frontend
+  # Next.js Frontend - Main user interface
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.frontend
     ports:
-      - "8000:8000"
+      - "3000:8000"
     environment:
       - NODE_ENV=development
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
+      - NEXT_PUBLIC_API_BASE_URL=/api/bff
+      - NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL=/api/bff/v2
       - NEXTAUTH_SECRET=dev-nextauth-secret-change-in-production
-      - NEXTAUTH_URL=http://localhost:8000
+      - NEXTAUTH_URL=http://localhost:3000
     depends_on:
       api-gateway:
         condition: service_healthy

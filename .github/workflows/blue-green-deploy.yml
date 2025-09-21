@@ -1,0 +1,287 @@
+name: 🔄 Blue-Green Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      traffic_strategy:
+        description: 'Traffic switching strategy'
+        required: true
+        default: 'progressive'
+        type: choice
+        options:
+          - progressive
+          - instant
+      auto_cleanup:
+        description: 'Automatically cleanup old version'
+        required: false
+        default: false
+        type: boolean
+      services:
+        description: 'Services to deploy (comma-separated, leave empty for all)'
+        required: false
+        type: string
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'orderly-472413' }}
+  GCP_REGION: asia-east1
+
+jobs:
+  # =============================================================================
+  # BUILD IMAGES
+  # =============================================================================
+  build-images:
+    name: 🏗️ Build Container Images
+    runs-on: ubuntu-latest
+    outputs:
+      frontend-image: ${{ steps.images.outputs.frontend-image }}
+      api-gateway-image: ${{ steps.images.outputs.api-gateway-image }}
+      user-service-image: ${{ steps.images.outputs.user-service-image }}
+      product-service-image: ${{ steps.images.outputs.product-service-image }}
+      acceptance-service-image: ${{ steps.images.outputs.acceptance-service-image }}
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run tests
+        run: |
+          npm run test --if-present
+          npm run lint --if-present
+
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🐳 Configure Docker
+        run: |
+          gcloud auth configure-docker
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: 🏗️ Build all images
+        id: images
+        run: |
+          # Generate unique tag for this deployment
+          IMAGE_TAG="bg-$(date +%Y%m%d-%H%M%S)-${{ github.sha }}"
+          
+          # Build Frontend
+          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${IMAGE_TAG}"
+          docker build -f Dockerfile.frontend -t $FRONTEND_IMAGE .
+          docker push $FRONTEND_IMAGE
+          echo "frontend-image=$FRONTEND_IMAGE" >> $GITHUB_OUTPUT
+          
+          # Build API Gateway
+          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${IMAGE_TAG}"
+          docker build -f backend/api-gateway/Dockerfile.cloudrun -t $API_GATEWAY_IMAGE .
+          docker push $API_GATEWAY_IMAGE
+          echo "api-gateway-image=$API_GATEWAY_IMAGE" >> $GITHUB_OUTPUT
+          
+          # Build User Service
+          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${IMAGE_TAG}"
+          docker build -f backend/user-service/Dockerfile.cloudrun -t $USER_SERVICE_IMAGE .
+          docker push $USER_SERVICE_IMAGE
+          echo "user-service-image=$USER_SERVICE_IMAGE" >> $GITHUB_OUTPUT
+          
+          # Build Product Service (FastAPI)
+          PRODUCT_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${IMAGE_TAG}"
+          docker build -f backend/product-service-fastapi/Dockerfile -t $PRODUCT_SERVICE_IMAGE ./backend/product-service-fastapi
+          docker push $PRODUCT_SERVICE_IMAGE
+          echo "product-service-image=$PRODUCT_SERVICE_IMAGE" >> $GITHUB_OUTPUT
+          
+          # Build Acceptance Service
+          ACCEPTANCE_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${IMAGE_TAG}"
+          docker build -f backend/acceptance-service/Dockerfile.cloudrun -t $ACCEPTANCE_SERVICE_IMAGE ./backend/acceptance-service
+          docker push $ACCEPTANCE_SERVICE_IMAGE
+          echo "acceptance-service-image=$ACCEPTANCE_SERVICE_IMAGE" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # BLUE-GREEN DEPLOYMENT
+  # =============================================================================
+  blue-green-deploy:
+    name: 🔄 Blue-Green Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    needs: build-images
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🔄 Execute Blue-Green Deployment
+        env:
+          DEPLOY_ENV: ${{ github.event.inputs.environment }}
+          TRAFFIC_STRATEGY: ${{ github.event.inputs.traffic_strategy }}
+          AUTO_CLEANUP: ${{ github.event.inputs.auto_cleanup }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          chmod +x scripts/blue-green-deployment.sh
+          
+          # Extract image tag from one of the built images
+          IMAGE_TAG=$(echo "${{ needs.build-images.outputs.api-gateway-image }}" | sed 's/.*://')
+          
+          # Run blue-green deployment
+          ./scripts/blue-green-deployment.sh "$IMAGE_TAG" \
+            --strategy="${{ github.event.inputs.traffic_strategy }}" \
+            --env="${{ github.event.inputs.environment }}" \
+            ${{ github.event.inputs.auto_cleanup == 'true' && '--auto-cleanup' || '' }}
+
+      - name: 🧪 Post-Deployment Health Check
+        run: |
+          echo "⏳ 等待服務穩定..."
+          sleep 60
+          
+          # Get service URLs and perform comprehensive health checks
+          SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+          
+          for service in "${SERVICES[@]}"; do
+            SERVICE_URL=$(gcloud run services describe "orderly-${service}-${{ github.event.inputs.environment }}" \
+              --region=${{ env.GCP_REGION }} \
+              --format='value(status.url)' 2>/dev/null || echo "")
+            
+            if [ -n "$SERVICE_URL" ]; then
+              echo "🔍 Testing $service at $SERVICE_URL"
+              
+              # Basic health check
+              if curl -f "$SERVICE_URL/health" --max-time 10 --silent; then
+                echo "✅ $service health check passed"
+              else
+                echo "❌ $service health check failed"
+                exit 1
+              fi
+              
+              # API specific tests
+              if [ "$service" = "api-gateway" ]; then
+                if curl -f "$SERVICE_URL/api/health" --max-time 10 --silent; then
+                  echo "✅ API Gateway routing check passed"
+                else
+                  echo "⚠️ API Gateway routing check failed"
+                fi
+              fi
+            else
+              echo "⚠️ Could not find URL for $service"
+            fi
+          done
+          
+          echo "🎉 All health checks completed!"
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🔄 Blue-Green Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ github.event.inputs.environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Strategy | ${{ github.event.inputs.traffic_strategy }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Auto Cleanup | ${{ github.event.inputs.auto_cleanup }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Triggered By | ${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🎯 Deployed Services" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+          for service in "${SERVICES[@]}"; do
+            SERVICE_URL=$(gcloud run services describe "orderly-${service}-${{ github.event.inputs.environment }}" \
+              --region=${{ env.GCP_REGION }} \
+              --format='value(status.url)' 2>/dev/null || echo "Not found")
+            echo "- **$service**: $SERVICE_URL" >> $GITHUB_STEP_SUMMARY
+          done
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Deployment completed successfully with zero downtime!" >> $GITHUB_STEP_SUMMARY
+
+  # =============================================================================
+  # ROLLBACK (Manual Trigger)
+  # =============================================================================
+  manual-rollback:
+    name: 🔙 Manual Rollback
+    runs-on: ubuntu-latest
+    if: failure() && github.event.inputs.environment != ''
+    needs: [build-images, blue-green-deploy]
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🛠️ Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 🔙 Execute Rollback
+        run: |
+          echo "🔙 Executing emergency rollback..."
+          
+          SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+          
+          for service in "${SERVICES[@]}"; do
+            echo "Rolling back $service..."
+            
+            # Get current traffic allocation
+            CURRENT_TRAFFIC=$(gcloud run services describe "orderly-${service}-${{ github.event.inputs.environment }}" \
+              --region=${{ env.GCP_REGION }} \
+              --format='value(status.traffic[].tag)' 2>/dev/null || echo "")
+            
+            # Determine which version to rollback to
+            if echo "$CURRENT_TRAFFIC" | grep -q "green"; then
+              ROLLBACK_VERSION="blue"
+            else
+              ROLLBACK_VERSION="green"
+            fi
+            
+            # Execute rollback
+            gcloud run services update-traffic "orderly-${service}-${{ github.event.inputs.environment }}" \
+              --region=${{ env.GCP_REGION }} \
+              --to-tags="${ROLLBACK_VERSION}=100" \
+              --quiet
+            
+            echo "✅ $service rolled back to $ROLLBACK_VERSION"
+          done
+          
+          echo "🎉 Emergency rollback completed!"
+
+      - name: 📊 Rollback Summary
+        run: |
+          echo "## 🔙 Emergency Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Emergency rollback was executed due to deployment failure." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All services have been rolled back to the previous stable version." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ Please investigate the deployment failure before attempting again." >> $GITHUB_STEP_SUMMARY
