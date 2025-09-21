@@ -223,7 +223,7 @@ async def _proxy(request: Request, full_path: str) -> Response:
         if not auth or not auth.lower().startswith("bearer "):
             raise HTTPException(status_code=401, detail="Missing bearer token")
         # Optional: validate JWT if secret set
-        secret = os.getenv("JWT_SECRET_KEY")
+        secret = os.getenv("JWT_SECRET")
         if secret:
             token = auth.split(" ", 1)[1].strip()
             try:

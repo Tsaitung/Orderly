@@ -32,9 +32,9 @@ declare -A SERVICES=(
     ["order-service"]="3002"
     ["product-service"]="3003"
     ["acceptance-service"]="3004"
-    ["billing-service"]="3005"
     ["notification-service"]="3006"
     ["customer-hierarchy-service"]="3007"
+    ["supplier-service"]="3008"
 )
 
 # Map Cloud Run service names to local directories
@@ -45,9 +45,9 @@ resolve_service_path() {
     order-service) echo "$PROJECT_ROOT/backend/order-service-fastapi" ;;
     product-service) echo "$PROJECT_ROOT/backend/product-service-fastapi" ;;
     acceptance-service) echo "$PROJECT_ROOT/backend/acceptance-service-fastapi" ;;
-    billing-service) echo "$PROJECT_ROOT/backend/billing-service-fastapi" ;;
     notification-service) echo "$PROJECT_ROOT/backend/notification-service-fastapi" ;;
     customer-hierarchy-service) echo "$PROJECT_ROOT/backend/customer-hierarchy-service-fastapi" ;;
+    supplier-service) echo "$PROJECT_ROOT/backend/supplier-service-fastapi" ;;
     *) echo "" ;;
   esac
 }

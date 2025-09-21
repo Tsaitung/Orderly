@@ -1,11 +1,13 @@
-import os
+import os, sys
 from pydantic import BaseModel
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
+from orderly_fastapi_core.settings import AppSettings
 
 
-class Settings(BaseModel):
+class Settings(AppSettings):
     app_name: str = os.getenv("APP_NAME", "Orderly Supplier Service (FastAPI)")
     app_version: str = os.getenv("APP_VERSION", "0.1.0")
-    port: int = int(os.getenv("PORT", "3007"))
+    port: int = int(os.getenv("PORT", "3008"))
     debug: bool = os.getenv("ENVIRONMENT", "development").lower() != "production"
 
     # Database URLs (async for app, sync for Alembic)

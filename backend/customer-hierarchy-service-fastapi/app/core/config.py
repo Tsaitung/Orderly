@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     
     # Server
     HOST: str = "0.0.0.0"
-    PORT: int = 3007
+    PORT: int = int(os.getenv("PORT", "3007"))
     WORKERS: int = 4
     
     # Database
