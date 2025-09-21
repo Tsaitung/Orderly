@@ -1,57 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuthService, LoginCredentials } from '@/lib/auth'
-import { z } from 'zod'
 
-const loginSchema = z.object({
-  email: z.string().email('請輸入有效的電子郵件地址'),
-  password: z.string().min(6, '密碼至少需要 6 個字符')
-})
-
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    
-    // 驗證請求數據
-    const validationResult = loginSchema.safeParse(body)
-    if (!validationResult.success) {
-      return NextResponse.json({
-        success: false,
-        error: '請求數據格式錯誤',
-        details: validationResult.error.errors
-      }, { status: 400 })
+    const body = await req.json()
+    const { email, password, rememberMe } = body || {}
+    if (!email || !password) {
+      return NextResponse.json({ success: false, message: 'Missing credentials' }, { status: 400 })
     }
 
-    const credentials: LoginCredentials = validationResult.data
-
-    // 執行登入
-    const result = await AuthService.login(credentials)
-
-    if (!result.success) {
-      return NextResponse.json({
-        success: false,
-        error: result.error
-      }, { status: 401 })
-    }
-
-    // 創建響應並設置 cookie
-    const response = NextResponse.json({
-      success: true,
-      user: result.user,
-      message: '登入成功'
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+    const res = await fetch(`${base}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, rememberMe: !!rememberMe })
     })
+    const data = await res.json().catch(() => ({}))
 
-    // 設置 JWT cookie
-    if (result.token) {
-      await AuthService.setSessionCookie(response, result.token)
+    if (!res.ok || !data?.success) {
+      return NextResponse.json({ success: false, message: data?.message || 'Login failed' }, { status: 401 })
     }
 
-    return response
+    const accessToken: string | undefined = data.token || data.access_token
+    const refreshToken: string | undefined = data.refresh_token
 
-  } catch (error) {
-    console.error('Login API error:', error)
-    return NextResponse.json({
-      success: false,
-      error: '服務器錯誤，請稍後再試'
-    }, { status: 500 })
+    const resp = NextResponse.json({ success: true, user: data.user })
+
+    if (accessToken) {
+      const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7 // 30d or 7d
+      resp.cookies.set('orderly_session', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge,
+      })
+    }
+    if (refreshToken) {
+      const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 14 // optionally longer
+      resp.cookies.set('orderly_refresh', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge,
+      })
+    }
+
+    return resp
+  } catch (e) {
+    return NextResponse.json({ success: false, message: 'Unexpected error' }, { status: 500 })
   }
 }

@@ -81,11 +81,13 @@ export function useScreenReaderAnnouncer() {
   }, [])
 
   const announceUrgent = useCallback((message: string) => {
-    announcerRef.current?.announceUrgent(message)
+    const inst = announcerRef.current
+    if (inst) inst.announceUrgent(message)
   }, [])
 
   const announcePolite = useCallback((message: string) => {
-    announcerRef.current?.announcePolite(message)
+    const inst = announcerRef.current
+    if (inst) inst.announcePolite(message)
   }, [])
 
   const announceFormError = useCallback((fieldName: string, errorMessage: string) => {
@@ -162,13 +164,15 @@ export function useKeyboardNavigation<T extends HTMLElement>(
     }
 
     event.preventDefault()
-    elements[nextIndex].focus()
+    const el = elements[nextIndex]
+    if (el) el.focus()
     setCurrentIndex(nextIndex)
   }, [elements, orientation, loop])
 
   const focusElement = useCallback((index: number) => {
     if (index >= 0 && index < elements.length) {
-      elements[index].focus()
+      const el = elements[index]
+      if (el) el.focus()
       setCurrentIndex(index)
     }
   }, [elements])
@@ -271,8 +275,8 @@ export function useKeyboardEvents() {
  * 模態框無障礙管理 Hook
  */
 export function useModalAccessibility(isOpen: boolean) {
-  const modalRef = useRef<HTMLElement>(null)
-  const triggerRef = useRef<HTMLElement>(null)
+  const modalRef = useRef<HTMLElement | null>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
   const { initializeFocusTrap, restoreFocus } = useFocusManagement()
   const { announcePolite } = useScreenReaderAnnouncer()
   const focusControllerRef = useRef<{ destroy: () => void } | null>(null)
@@ -287,7 +291,7 @@ export function useModalAccessibility(isOpen: boolean) {
     if (isOpen && modalRef.current) {
       // 模態框開啟
       announcePolite('對話框已開啟')
-      focusControllerRef.current = initializeFocusTrap(modalRef.current, triggerRef.current || undefined)
+      focusControllerRef.current = initializeFocusTrap(modalRef.current, triggerRef.current || undefined) || null
       
       // 阻止背景滾動
       document.body.style.overflow = 'hidden'

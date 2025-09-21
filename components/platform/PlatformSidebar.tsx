@@ -10,13 +10,15 @@ import {
   Package,
   TrendingUp,
   FolderTree,
-  Shield,
   Settings,
-  Activity,
-  AlertTriangle,
-  Bell,
-  FileText,
-  Database
+  Database,
+  DollarSign,
+  Percent,
+  Calculator,
+  Users,
+  Shield,
+  Grid3x3,
+  LayoutTemplate
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -56,22 +58,46 @@ const sidebarItems = [
     icon: Package,
     children: [
       {
-        title: '產品目錄',
+        title: '類別管理',
+        href: '/platform/categories',
+        icon: FolderTree,
+        description: '產品分類標準化'
+      },
+      {
+        title: 'SKU管理',
         href: '/platform/products',
         icon: Package,
-        description: '產品與價格管理'
+        description: 'SKU變體與多供應商管理'
       },
       {
         title: '需求品項',
         href: '/platform/demand-items',
         icon: TrendingUp,
         description: '需求分析與預測'
+      }
+    ]
+  },
+  {
+    title: '計費管理',
+    icon: DollarSign,
+    children: [
+      {
+        title: '計費總覽',
+        href: '/platform/billing',
+        icon: BarChart3,
+        description: '計費機制與系統健康度'
       },
       {
-        title: '類別管理',
-        href: '/platform/categories',
-        icon: FolderTree,
-        description: '產品分類標準化'
+        title: '費率管理',
+        href: '/platform/billing/rates',
+        icon: Percent,
+        description: '分級費率與評級折扣'
+      },
+      {
+        title: '供應商計費',
+        href: '/platform/billing/suppliers',
+        icon: Calculator,
+        description: '供應商計費總覽與分析'
       }
     ]
   },
@@ -80,48 +106,36 @@ const sidebarItems = [
     icon: Settings,
     children: [
       {
-        title: '系統監控',
-        href: '/platform/system/health',
-        icon: Activity,
-        description: '服務狀態監控'
+        title: '使用者管理',
+        href: '/platform/users',
+        icon: Users,
+        description: '使用者帳號與權限管理'
       },
       {
-        title: '警報管理',
-        href: '/platform/system/alerts',
-        icon: AlertTriangle,
-        description: '系統警報管理'
-      },
-      {
-        title: '通知中心',
-        href: '/platform/system/notifications',
-        icon: Bell,
-        description: '用戶通知管理'
-      }
-    ]
-  },
-  {
-    title: '合規安全',
-    icon: Shield,
-    children: [
-      {
-        title: '審計日誌',
-        href: '/platform/compliance/audit',
-        icon: FileText,
-        description: '系統審計追蹤'
-      },
-      {
-        title: '安全監控',
-        href: '/platform/compliance/security',
+        title: '角色管理',
+        href: '/platform/roles',
         icon: Shield,
-        description: '安全事件監控'
+        description: '角色權限配置與管理'
+      },
+      {
+        title: '權限矩陣',
+        href: '/platform/roles/matrix',
+        icon: Grid3x3,
+        description: '權限對應關係總覽'
+      },
+      {
+        title: '角色模板',
+        href: '/platform/roles/templates',
+        icon: LayoutTemplate,
+        description: '預設角色模板庫'
+      },
+      {
+        title: '資料管理',
+        href: '/platform/data',
+        icon: Database,
+        description: '資料備份與管理'
       }
     ]
-  },
-  {
-    title: '資料管理',
-    href: '/platform/data',
-    icon: Database,
-    description: '資料備份與管理'
   }
 ]
 

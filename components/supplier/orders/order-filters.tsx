@@ -97,16 +97,16 @@ export default function OrderFilters({ searchParams }: OrderFiltersProps) {
     let dateTo: string
 
     if (days === 'month') {
-      dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
-      dateTo = today.toISOString().split('T')[0]
+      dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]!
+      dateTo = today.toISOString().split('T')[0]!
     } else if (days === 'lastMonth') {
       const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
       const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0)
-      dateFrom = lastMonth.toISOString().split('T')[0]
-      dateTo = lastMonthEnd.toISOString().split('T')[0]
+      dateFrom = lastMonth.toISOString().split('T')[0]!
+      dateTo = lastMonthEnd.toISOString().split('T')[0]!
     } else {
-      dateFrom = new Date(today.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      dateTo = today.toISOString().split('T')[0]
+      dateFrom = new Date(today.getTime() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!
+      dateTo = today.toISOString().split('T')[0]!
     }
 
     updateSearchParams('dateFrom', dateFrom)

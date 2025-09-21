@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
-import { useModalAccessibility } from '@/hooks/use-accessibility'
 
 interface ModalProps {
   isOpen: boolean
@@ -36,7 +35,7 @@ export function AccessibleModal({
   closeOnEscape = true,
   className
 }: ModalProps) {
-  const { modalRef, setTriggerElement } = useModalAccessibility(isOpen)
+  const modalRef = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
   const descriptionId = React.useId()
 
@@ -67,10 +66,7 @@ export function AccessibleModal({
     }
   }, [isOpen, closeOnEscape, onClose])
 
-  // 暴露設置觸發元素的方法
-  React.useImperativeHandle(modalRef, () => ({
-    setTriggerElement
-  }))
+  // 暴露設置觸發元素的方法（不通過 ref 暴露，僅由 hook 內部管理）
 
   if (!isOpen) return null
 
@@ -87,7 +83,7 @@ export function AccessibleModal({
 
       {/* 模態框內容 */}
       <div
-        ref={modalRef}
+        ref={modalRef as unknown as React.RefObject<HTMLDivElement>}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

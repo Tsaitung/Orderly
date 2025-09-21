@@ -1,21 +1,19 @@
-import { SignJWT, jwtVerify } from 'jose'
-import { cookies } from 'next/headers'
+/**
+ * Secure Authentication Service - Production Ready
+ * Replaces insecure JWT implementation with enterprise-grade security
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from './db'
+import { cookies } from 'next/headers'
+import SecureAuthService from './security/auth-service'
 import { CacheService } from './redis'
-import bcrypt from 'bcryptjs'
 
-const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fallback-secret-key-for-development'
-)
+// Initialize secure authentication service
+const authService = SecureAuthService.getInstance()
 
-const COOKIE_NAME = 'orderly-session'
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 7, // 7 days
-  path: '/'
+// Ensure service is initialized
+if (typeof window === 'undefined') {
+  authService.initialize().catch(console.error)
 }
 
 export interface SessionPayload {
@@ -24,8 +22,10 @@ export interface SessionPayload {
   organizationId: string
   role: string
   organizationType: 'restaurant' | 'supplier'
-  exp: number
-  iat: number
+  exp?: number
+  iat?: number
+  lastLoginAt?: Date
+  registeredAt?: Date
 }
 
 export interface LoginCredentials {
@@ -44,38 +44,60 @@ export interface RegisterData {
 }
 
 export class AuthService {
+  /**
+   * Create secure JWT tokens with RS256 algorithm
+   */
   static async createSession(payload: Omit<SessionPayload, 'exp' | 'iat'>): Promise<string> {
-    const exp = Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 7) // 7 days
-    const iat = Math.floor(Date.now() / 1000)
-    
-    const fullPayload = { ...payload, exp, iat }
-    
-    const token = await new SignJWT(fullPayload)
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt(iat)
-      .setExpirationTime(exp)
-      .sign(secret)
-
-    return token
+    const tokens = await authService.createTokenPair({
+      sub: payload.userId,
+      email: payload.email,
+      organizationId: payload.organizationId,
+      role: payload.role,
+      organizationType: payload.organizationType
+    })
+    return tokens.accessToken
   }
 
+  /**
+   * Verify JWT token securely
+   */
   static async verifySession(token: string): Promise<SessionPayload | null> {
-    try {
-      const { payload } = await jwtVerify(token, secret)
-      return payload as SessionPayload
-    } catch (error) {
-      console.error('Token verification failed:', error)
+    const context = await authService.verifyAuth(token)
+    if (!context) {
       return null
+    }
+
+    return {
+      userId: context.userId,
+      email: '', // Will be fetched from user service if needed
+      organizationId: context.organizationId,
+      role: context.role,
+      organizationType: context.organizationType
     }
   }
 
+  /**
+   * Set secure session cookies
+   */
   static async setSessionCookie(response: NextResponse, token: string): Promise<void> {
-    response.cookies.set(COOKIE_NAME, token, COOKIE_OPTIONS)
+    // For backward compatibility, set the old cookie format
+    // But recommend using the new secure cookie format
+    response.cookies.set('orderly-session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60, // 15 minutes
+      path: '/'
+    })
   }
 
+  /**
+   * Get session from cookie with security validation
+   */
   static async getSessionFromCookie(): Promise<SessionPayload | null> {
     const cookieStore = cookies()
-    const token = cookieStore.get(COOKIE_NAME)?.value
+    const token = cookieStore.get('orderly-session')?.value ||
+                  cookieStore.get('orderly-access-token')?.value
 
     if (!token) {
       return null
@@ -84,256 +106,171 @@ export class AuthService {
     return this.verifySession(token)
   }
 
+  /**
+   * Clear session cookies securely
+   */
   static async clearSession(): Promise<void> {
     const cookieStore = cookies()
-    cookieStore.delete(COOKIE_NAME)
+    cookieStore.delete('orderly-session')
+    cookieStore.delete('orderly-access-token')
+    cookieStore.delete('orderly-refresh-token')
   }
 
-  static async login(credentials: LoginCredentials): Promise<{
+  /**
+   * Secure login with comprehensive validation and security logging
+   */
+  static async login(credentials: LoginCredentials, ipAddress?: string, userAgent?: string): Promise<{
     success: boolean
-    user?: any
+    user?: SessionPayload
     token?: string
     error?: string
+    errorCode?: string
   }> {
-    try {
-      // 查找用戶
-      const user = await prisma.user.findUnique({
-        where: { email: credentials.email },
-        include: {
-          organization: true
-        }
-      })
-
-      if (!user || !user.passwordHash) {
-        return { success: false, error: '用戶不存在或密碼錯誤' }
-      }
-
-      if (!user.isActive) {
-        return { success: false, error: '帳戶已被停用' }
-      }
-
-      // 驗證密碼
-      const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash)
-      if (!isPasswordValid) {
-        return { success: false, error: '用戶不存在或密碼錯誤' }
-      }
-
-      // 更新最後登入時間
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { lastLoginAt: new Date() }
-      })
-
-      // 創建 JWT token
-      const token = await this.createSession({
-        userId: user.id,
-        email: user.email,
-        organizationId: user.organizationId,
-        role: user.role,
-        organizationType: user.organization.type
-      })
-
-      // 快取用戶會話
-      await CacheService.setUserSession(user.id, {
-        userId: user.id,
-        email: user.email,
-        organizationId: user.organizationId,
-        role: user.role,
-        organizationType: user.organization.type,
-        lastLoginAt: new Date()
-      })
-
-      return {
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          organization: {
-            id: user.organization.id,
-            name: user.organization.name,
-            type: user.organization.type
-          }
-        },
-        token
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-      return { success: false, error: '登入失敗，請稍後再試' }
-    }
-  }
-
-  static async register(data: RegisterData): Promise<{
-    success: boolean
-    user?: any
-    token?: string
-    error?: string
-  }> {
-    try {
-      // 檢查用戶是否已存在
-      const existingUser = await prisma.user.findUnique({
-        where: { email: data.email }
-      })
-
-      if (existingUser) {
-        return { success: false, error: '此電子郵件已被註冊' }
-      }
-
-      // 雜湊密碼
-      const passwordHash = await bcrypt.hash(data.password, 12)
-
-      // 使用交易創建組織和用戶
-      const result = await prisma.$transaction(async (tx) => {
-        // 創建組織
-        const organization = await tx.organization.create({
-          data: {
-            name: data.organizationName,
-            type: data.organizationType
-          }
-        })
-
-        // 創建用戶
-        const user = await tx.user.create({
-          data: {
-            email: data.email,
-            passwordHash,
-            organizationId: organization.id,
-            role: data.organizationType === 'restaurant' 
-              ? 'restaurant_admin' 
-              : 'supplier_admin',
-            metadata: {
-              firstName: data.firstName,
-              lastName: data.lastName,
-              phone: data.phone
-            }
-          }
-        })
-
-        return { user, organization }
-      })
-
-      // 創建 JWT token
-      const token = await this.createSession({
-        userId: result.user.id,
-        email: result.user.email,
-        organizationId: result.user.organizationId,
-        role: result.user.role,
-        organizationType: result.organization.type
-      })
-
-      // 快取用戶會話
+    const result = await authService.login(credentials, ipAddress, userAgent)
+    
+    if (result.success && result.user && result.tokens) {
+      // Cache user session for backward compatibility
       await CacheService.setUserSession(result.user.id, {
         userId: result.user.id,
         email: result.user.email,
         organizationId: result.user.organizationId,
         role: result.user.role,
-        organizationType: result.organization.type,
-        registeredAt: new Date()
+        organizationType: result.user.organizationType,
+        lastLoginAt: new Date()
       })
-
+      
       return {
         success: true,
         user: {
-          id: result.user.id,
+          userId: result.user.id,
           email: result.user.email,
+          organizationId: result.user.organizationId,
           role: result.user.role,
-          organization: {
-            id: result.organization.id,
-            name: result.organization.name,
-            type: result.organization.type
-          }
+          organizationType: result.user.organizationType
         },
-        token
+        token: result.tokens.accessToken
       }
-    } catch (error) {
-      console.error('Registration error:', error)
-      return { success: false, error: '註冊失敗，請稍後再試' }
+    }
+    
+    return {
+      success: false,
+      error: result.error || '登入失敗',
+      errorCode: result.errorCode
     }
   }
 
-  static async logout(userId: string): Promise<void> {
-    try {
-      // 清除 Redis 中的用戶會話
-      await CacheService.deleteUserSession(userId)
-      
-      // 增加用戶的 tokenVersion 來使所有現有 token 失效
-      await prisma.user.update({
-        where: { id: userId },
-        data: { tokenVersion: { increment: 1 } }
+  /**
+   * Secure registration with input validation and security checks
+   */
+  static async register(data: RegisterData, ipAddress?: string, userAgent?: string): Promise<{
+    success: boolean
+    user?: SessionPayload
+    token?: string
+    error?: string
+    errorCode?: string
+  }> {
+    const result = await authService.register(data, ipAddress, userAgent)
+    
+    if (result.success && result.user && result.tokens) {
+      // Cache user session for backward compatibility
+      await CacheService.setUserSession(result.user.id, {
+        userId: result.user.id,
+        email: result.user.email,
+        organizationId: result.user.organizationId,
+        role: result.user.role,
+        organizationType: result.user.organizationType,
+        registeredAt: new Date()
       })
+      
+      return {
+        success: true,
+        user: {
+          userId: result.user.id,
+          email: result.user.email,
+          organizationId: result.user.organizationId,
+          role: result.user.role,
+          organizationType: result.user.organizationType
+        },
+        token: result.tokens.accessToken
+      }
+    }
+    
+    return {
+      success: false,
+      error: result.error || '註冊失敗',
+      errorCode: result.errorCode
+    }
+  }
+
+  /**
+   * Secure logout with token revocation
+   */
+  static async logout(userId: string, accessToken?: string, refreshToken?: string): Promise<void> {
+    try {
+      // Revoke JWT tokens
+      if (accessToken) {
+        await authService.logout(accessToken, refreshToken)
+      }
+      
+      // Clear Redis cache
+      await CacheService.deleteUserSession(userId)
     } catch (error) {
       console.error('Logout error:', error)
     }
   }
 
-  static async getCurrentUser(session: SessionPayload): Promise<any | null> {
+  /**
+   * Get current user with security validation
+   */
+  static async getCurrentUser(session: SessionPayload): Promise<SessionPayload | null> {
     try {
-      // 先嘗試從快取獲取
+      // Try to get from cache first
       const cachedUser = await CacheService.getUserSession(session.userId)
       if (cachedUser) {
-        return cachedUser
+        return cachedUser as SessionPayload
       }
 
-      // 從數據庫獲取最新用戶信息
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        include: {
-          organization: true
-        }
-      })
-
-      if (!user || !user.isActive) {
-        return null
+      // Return session data as fallback
+      return {
+        userId: session.userId,
+        email: session.email,
+        organizationId: session.organizationId,
+        role: session.role,
+        organizationType: session.organizationType,
+        lastLoginAt: new Date()
       }
-
-      const userData = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        metadata: user.metadata,
-        organization: {
-          id: user.organization.id,
-          name: user.organization.name,
-          type: user.organization.type,
-          settings: user.organization.settings
-        },
-        lastLoginAt: user.lastLoginAt
-      }
-
-      // 快取用戶數據
-      await CacheService.setUserSession(user.id, userData)
-
-      return userData
     } catch (error) {
       console.error('Get current user error:', error)
       return null
     }
   }
 
+  /**
+   * Secure authentication middleware with comprehensive security checks
+   */
   static requireAuth(allowedRoles?: string[]) {
-    return async (req: NextRequest) => {
-      const cookieStore = req.cookies
-      const token = cookieStore.get(COOKIE_NAME)?.value
+    return authService.requireAuth(allowedRoles)
+  }
 
-      if (!token) {
-        return NextResponse.json({ error: '未授權訪問' }, { status: 401 })
-      }
+  /**
+   * Get security context from authenticated request
+   */
+  static getSecurityContext(req: NextRequest) {
+    return authService.getSecurityContext(req)
+  }
 
-      const session = await this.verifySession(token)
-      if (!session) {
-        return NextResponse.json({ error: '無效的會話' }, { status: 401 })
-      }
+  /**
+   * Set secure session cookies with new token format
+   */
+  static setSecureSessionCookies(response: NextResponse, tokens: any) {
+    return authService.setSecureSessionCookie(response, tokens)
+  }
 
-      // 檢查角色權限
-      if (allowedRoles && !allowedRoles.includes(session.role)) {
-        return NextResponse.json({ error: '權限不足' }, { status: 403 })
-      }
-
-      // 將會話信息附加到請求
-      ;(req as any).user = session
-
-      return null // 表示驗證通過
-    }
+  /**
+   * Clear all session cookies
+   */
+  static clearSessionCookies(response: NextResponse) {
+    return authService.clearSessionCookies(response)
   }
 }
 

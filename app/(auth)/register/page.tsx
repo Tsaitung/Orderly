@@ -35,6 +35,7 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const stepDef = (STEPS[currentStep - 1] ?? STEPS[0])!;
   
   const [formData, setFormData] = useState<RegistrationData>({
     email: '',
@@ -100,7 +101,7 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/auth/register', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -313,9 +314,7 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           註冊井然平台
         </h1>
-        <p className="text-gray-600">
-          {STEPS[currentStep - 1].description}
-        </p>
+        <p className="text-gray-600">{stepDef.description}</p>
       </div>
 
       {/* Step Indicator */}
@@ -323,9 +322,7 @@ export default function RegisterPage() {
 
       {/* Form */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h2 className="text-lg font-semibold mb-6">
-          第 {currentStep} 步：{STEPS[currentStep - 1].title}
-        </h2>
+        <h2 className="text-lg font-semibold mb-6">第 {currentStep} 步：{stepDef.title}</h2>
 
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}

@@ -4,6 +4,7 @@ import { HeroSection } from '@/components/HeroSection'
 import { ReconciliationDemo } from '@/components/ReconciliationDemo'
 import { NavigationHeader } from '@/components/NavigationHeader'
 import { RoleSelector } from '@/components/RoleSelector'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // 使用 dynamic import 載入 SystemStatus，禁用 SSR
 const SystemStatus = dynamic(
@@ -35,7 +36,9 @@ export default function HomePage() {
       <NavigationHeader />
       
       {/* Hero Section */}
-      <HeroSection />
+      <ErrorBoundary>
+        <HeroSection />
+      </ErrorBoundary>
       
       {/* Role Selector - Choose Restaurant or Supplier */}
       <RoleSelector />

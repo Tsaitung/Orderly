@@ -524,7 +524,7 @@ export default function DeliveryList({ searchParams }: DeliveryListProps) {
                         <div className="bg-white p-3 rounded border max-h-48 overflow-y-auto">
                           <div className="text-sm font-medium text-gray-700 mb-2">配送歷程</div>
                           <div className="space-y-2">
-                            {delivery.tracking.map((track, index) => (
+                            {(delivery.tracking || []).map((track, index) => (
                               <div key={index} className="flex items-start space-x-3">
                                 <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
                                 <div className="flex-1">
@@ -544,7 +544,7 @@ export default function DeliveryList({ searchParams }: DeliveryListProps) {
                   {/* 快速操作 */}
                   <div className="flex items-center justify-between mt-6 pt-4 border-t">
                     <div className="text-sm text-gray-500">
-                      最後更新: {delivery.tracking?.length > 0 ? formatDate(delivery.tracking[delivery.tracking.length - 1].time) : '無資料'}
+                      最後更新: {delivery.tracking && delivery.tracking.length > 0 ? formatDate(delivery.tracking[delivery.tracking.length - 1]!.time) : '無資料'}
                     </div>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">

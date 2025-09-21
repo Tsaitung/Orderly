@@ -4,94 +4,152 @@ import React from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
+import { useSupplierOrders } from '@/lib/api/supplier-hooks'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   ShoppingCart,
   Clock,
   CheckCircle,
   TrendingUp,
   AlertTriangle,
-  Truck
+  Truck,
+  Loader
 } from 'lucide-react'
 
-// 模擬統計數據
-const statsData = {
-  totalOrders: 156,
-  pendingOrders: 12,
-  processingOrders: 8,
-  todayRevenue: 45690,
-  monthlyRevenue: 1234567,
-  averageOrderValue: 5480,
-  onTimeDeliveryRate: 98.5,
-  customerSatisfaction: 4.8,
-  urgentOrders: 3,
-  deliveredToday: 15
+interface OrderStatsProps {
+  organizationId?: string;
 }
 
-const statCards = [
-  {
-    title: '待處理訂單',
-    value: statsData.pendingOrders,
-    icon: Clock,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-200',
-    badge: { text: '需要處理', variant: 'warning' as const },
-    trend: { value: '+2', isPositive: false },
-    description: '等待確認的新訂單'
-  },
-  {
-    title: '處理中訂單',
-    value: statsData.processingOrders,
-    icon: ShoppingCart,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-    badge: { text: '進行中', variant: 'info' as const },
-    trend: { value: '+5', isPositive: true },
-    description: '正在備貨或配送中'
-  },
-  {
-    title: '今日營收',
-    value: formatCurrency(statsData.todayRevenue),
-    icon: TrendingUp,
-    color: 'text-green-600',
-    bgColor: 'bg-green-50',
-    borderColor: 'border-green-200',
-    badge: { text: '↑ 12%', variant: 'success' as const },
-    trend: { value: '+8.2%', isPositive: true },
-    description: '相較昨日成長'
-  },
-  {
-    title: '準時配送率',
-    value: `${statsData.onTimeDeliveryRate}%`,
-    icon: Truck,
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-200',
-    badge: { text: '優秀', variant: 'success' as const },
-    trend: { value: '+0.3%', isPositive: true },
-    description: '本月配送表現'
-  }
-]
+export default function OrderStats({ organizationId }: OrderStatsProps) {
+  const { user } = useAuth();
+  const effectiveOrgId = organizationId || user?.organizationId;
+  
+  const { 
+    stats, 
+    quickStats, 
+    loading, 
+    statsLoading, 
+    error,
+    refetchStats 
+  } = useSupplierOrders(effectiveOrgId);
 
-const urgentAlerts = [
-  {
-    id: 1,
-    type: 'urgent_order',
-    message: `${statsData.urgentOrders} 筆緊急訂單需要優先處理`,
-    action: '立即處理',
-    severity: 'high'
-  },
-  {
-    id: 2,
-    type: 'delivery_delay',
-    message: '2 筆訂單可能延遲配送',
-    action: '查看詳情',
-    severity: 'medium'
+  // Show loading state
+  if (loading || statsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <Card key={index} className="p-6">
+              <div className="flex items-center justify-center h-24">
+                <Loader className="h-6 w-6 animate-spin text-gray-400" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
-]
 
-export default function OrderStats() {
+  // Show error state
+  if (error) {
+    return (
+      <Card className="p-6 border-red-200 bg-red-50">
+        <div className="flex items-center space-x-3">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
+          <div>
+            <h3 className="font-medium text-red-900">無法載入統計資料</h3>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
+            <button 
+              onClick={refetchStats}
+              className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+            >
+              重新載入
+            </button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  // Prepare stat cards with real data
+  const statCards = [
+    {
+      title: '待處理訂單',
+      value: quickStats?.pending || 0,
+      icon: Clock,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      badge: { text: '需要處理', variant: 'warning' as const },
+      description: '等待確認的新訂單'
+    },
+    {
+      title: '處理中訂單',
+      value: (quickStats?.confirmed || 0) + (quickStats?.preparing || 0),
+      icon: ShoppingCart,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      badge: { text: '進行中', variant: 'info' as const },
+      description: '正在備貨或配送中'
+    },
+    {
+      title: '今日營收',
+      value: formatCurrency(stats?.today_revenue_ntd || 0),
+      icon: TrendingUp,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      badge: { 
+        text: stats?.revenue_growth_percentage ? `${stats.revenue_growth_percentage > 0 ? '↑' : '↓'} ${Math.abs(stats.revenue_growth_percentage)}%` : '--', 
+        variant: (stats?.revenue_growth_percentage || 0) >= 0 ? 'success' as const : 'destructive' as const 
+      },
+      description: '相較昨日'
+    },
+    {
+      title: '準時配送率',
+      value: `${stats?.on_time_delivery_rate || 0}%`,
+      icon: Truck,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-200',
+      badge: { 
+        text: (stats?.on_time_delivery_rate || 0) >= 95 ? '優秀' : (stats?.on_time_delivery_rate || 0) >= 80 ? '良好' : '需改善', 
+        variant: (stats?.on_time_delivery_rate || 0) >= 95 ? 'success' as const : (stats?.on_time_delivery_rate || 0) >= 80 ? 'warning' as const : 'destructive' as const 
+      },
+      description: '本月配送表現'
+    }
+  ];
+
+  // Prepare urgent alerts with real data  
+  const urgentAlerts = [];
+  if ((quickStats?.pending || 0) > 10) {
+    urgentAlerts.push({
+      id: 1,
+      type: 'urgent_order',
+      message: `${quickStats?.pending} 筆待處理訂單需要處理`,
+      action: '立即處理',
+      severity: 'high'
+    });
+  }
+  if ((quickStats?.disputed || 0) > 0) {
+    urgentAlerts.push({
+      id: 2,
+      type: 'dispute',
+      message: `${quickStats?.disputed} 筆訂單有爭議`,
+      action: '查看詳情',
+      severity: 'high'
+    });
+  }
+  if ((stats?.on_time_delivery_rate || 100) < 80) {
+    urgentAlerts.push({
+      id: 3,
+      type: 'delivery_performance',
+      message: '準時配送率低於標準，請檢查物流狀況',
+      action: '查看詳情',
+      severity: 'medium'
+    });
+  }
   return (
     <div className="space-y-6">
       {/* 主要統計卡片 */}
@@ -114,13 +172,6 @@ export default function OrderStats() {
                     <span className="text-2xl font-bold text-gray-900">
                       {stat.value}
                     </span>
-                    {stat.trend && (
-                      <span className={`text-sm font-medium ${
-                        stat.trend.isPositive ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {stat.trend.value}
-                      </span>
-                    )}
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -169,18 +220,18 @@ export default function OrderStats() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">總訂單數</span>
-              <span className="font-medium">{statsData.totalOrders}</span>
+              <span className="font-medium">{stats?.total_orders || 0}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">月營收</span>
               <span className="font-medium text-green-600">
-                {formatCurrency(statsData.monthlyRevenue)}
+                {formatCurrency(stats?.monthly_revenue_ntd || 0)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">平均訂單金額</span>
               <span className="font-medium">
-                {formatCurrency(statsData.averageOrderValue)}
+                {formatCurrency(stats?.average_order_value_ntd || 0)}
               </span>
             </div>
           </div>
@@ -191,21 +242,36 @@ export default function OrderStats() {
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold text-yellow-500">
-                {statsData.customerSatisfaction}
+                {stats?.customer_satisfaction_rating || '--'}
               </span>
-              <div className="flex text-yellow-400">
-                {[...Array(5)].map((_, i) => (
-                  <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
+              {stats?.customer_satisfaction_rating && (
+                <div className="flex text-yellow-400">
+                  {[...Array(5)].map((_, i) => (
+                    <svg 
+                      key={i} 
+                      className={`w-4 h-4 ${i < Math.floor(stats.customer_satisfaction_rating) ? 'fill-current' : 'fill-gray-200'}`} 
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+              )}
             </div>
             <p className="text-sm text-gray-600">
-              基於 {statsData.totalOrders} 筆訂單評價
+              基於 {stats?.total_orders || 0} 筆訂單評價
             </p>
-            <Badge variant="success" size="sm">
-              優秀服務
+            <Badge 
+              variant={
+                (stats?.customer_satisfaction_rating || 0) >= 4.5 ? 'success' : 
+                (stats?.customer_satisfaction_rating || 0) >= 3.5 ? 'warning' : 
+                'destructive'
+              } 
+              size="sm"
+            >
+              {(stats?.customer_satisfaction_rating || 0) >= 4.5 ? '優秀服務' : 
+               (stats?.customer_satisfaction_rating || 0) >= 3.5 ? '良好服務' : 
+               '需要改善'}
             </Badge>
           </div>
         </Card>
@@ -215,18 +281,20 @@ export default function OrderStats() {
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold text-blue-600">
-                {statsData.deliveredToday}
+                {quickStats?.delivered || 0}
               </span>
               <span className="text-sm text-gray-600">筆已完成</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div 
                 className="bg-blue-600 h-2 rounded-full" 
-                style={{ width: `${(statsData.deliveredToday / 20) * 100}%` }}
+                style={{ 
+                  width: `${Math.min(((quickStats?.delivered || 0) / (stats?.daily_target || 20)) * 100, 100)}%` 
+                }}
               ></div>
             </div>
             <p className="text-xs text-gray-600">
-              目標: 20筆 (達成率: {((statsData.deliveredToday / 20) * 100).toFixed(1)}%)
+              目標: {stats?.daily_target || 20}筆 (達成率: {(((quickStats?.delivered || 0) / (stats?.daily_target || 20)) * 100).toFixed(1)}%)
             </p>
           </div>
         </Card>

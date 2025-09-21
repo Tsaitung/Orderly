@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { AuthValidation, type LoginFormData } from '@/lib/validation/auth-schemas';
+import { SecureStorage } from '@/lib/secure-storage';
 
-interface LoginForm {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+// Using typed form data from validation schema
+type LoginForm = LoginFormData;
 
 interface MFAForm {
   code: string;
@@ -20,6 +21,8 @@ interface MFAForm {
 }
 
 export default function LoginPage() {
+  const { login } = useAuth()
+  const router = useRouter()
   const [step, setStep] = useState<'login' | 'mfa'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,15 +57,15 @@ export default function LoginPage() {
   };
 
   const validateLogin = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!loginForm.email) newErrors.email = '請輸入電子信箱';
-    else if (!/\S+@\S+\.\S+/.test(loginForm.email)) newErrors.email = '請輸入有效的電子信箱';
+    const validation = AuthValidation.validateLogin(loginForm)
     
-    if (!loginForm.password) newErrors.password = '請輸入密碼';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (!validation.success) {
+      setErrors(validation.errors)
+      return false
+    }
+    
+    setErrors({})
+    return true
   };
 
   const validateMFA = (): boolean => {
@@ -81,34 +84,24 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: loginForm.email,
-          password: loginForm.password,
-          rememberMe: loginForm.rememberMe,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.requiresMFA) {
-          // MFA required, show MFA step
-          setMFAMethod(data.mfaMethod);
-          setMFAForm(prev => ({ ...prev, mfaSessionId: data.mfaSessionId }));
-          setStep('mfa');
-        } else {
-          // Login successful, redirect to dashboard
-          localStorage.setItem('accessToken', data.data.accessToken);
-          localStorage.setItem('refreshToken', data.data.refreshToken);
-          window.location.href = '/dashboard';
+      const result = await login(loginForm)
+      
+      if (result.success) {
+        // Login successful, redirect based on user role
+        const storedData = SecureStorage.getTokens()
+        if (storedData) {
+          let redirectPath = '/dashboard';
+          if (storedData.role === 'platform_admin') {
+            redirectPath = '/platform';
+          } else if (storedData.role.startsWith('supplier_')) {
+            redirectPath = '/supplier';
+          } else if (storedData.role.startsWith('restaurant_')) {
+            redirectPath = '/restaurant';
+          }
+          router.push(redirectPath);
         }
       } else {
-        setErrors({ submit: data.message || '登入失敗，請檢查您的帳號密碼' });
+        setErrors({ submit: result.error || '登入失敗，請檢查您的帳號密碼' });
       }
     } catch (error) {
       setErrors({ submit: '網路錯誤，請重試' });
@@ -123,7 +116,7 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/auth/verify-mfa', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/verify-mfa`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -161,10 +154,11 @@ export default function LoginPage() {
           id="email"
           type="email"
           value={loginForm.email}
-          onChange={(e) => updateLoginForm('email', e.target.value)}
+          onChange={(e) => updateLoginForm('email', AuthValidation.sanitizeString(e.target.value))}
           placeholder="your.email@company.com"
           className={errors.email ? 'border-red-500' : ''}
           disabled={isLoading}
+          autoComplete="email"
         />
         {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
       </div>
@@ -180,6 +174,7 @@ export default function LoginPage() {
             placeholder="輸入您的密碼"
             className={errors.password ? 'border-red-500 pr-12' : 'pr-12'}
             disabled={isLoading}
+            autoComplete="current-password"
           />
           <button
             type="button"

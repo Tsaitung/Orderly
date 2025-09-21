@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+// TODO: Replace data access with Order Service FastAPI client
 import { CacheService } from '@/lib/redis'
 
 export interface OrderLineItem {

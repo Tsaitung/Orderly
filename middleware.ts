@@ -33,14 +33,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 對於受保護的路由，暫時重定向到首頁
+  // 檢查 httpOnly cookie 是否存在（由 /api/auth/login 設置）
+  const sessionCookie = request.cookies.get('orderly_session')
+
+  // 對於受保護的路由，若無 session 則重定向到首頁
   if (pathname.startsWith('/dashboard') || 
       pathname.startsWith('/admin') ||
-      pathname.startsWith('/settings')) {
-    
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
+      pathname.startsWith('/settings') ||
+      pathname.startsWith('/platform')) {
+    if (!sessionCookie) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
   }
 
   return NextResponse.next()

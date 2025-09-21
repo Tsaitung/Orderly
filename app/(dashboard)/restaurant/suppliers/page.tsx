@@ -133,7 +133,7 @@ export default function SuppliersPage() {
     setStatsError(null)
 
     try {
-      const response = await fetch('/api/v2/suppliers/statistics')
+      const response = await fetch('/api/bff/v2/suppliers/statistics')
       const data: StatisticsResponse = await response.json()
 
       if (data.success) {

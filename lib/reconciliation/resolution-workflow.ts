@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+// TODO: Replace data access with Order Service FastAPI client
 import { CacheService } from '@/lib/redis'
 import type { MatchResult, Discrepancy } from './matching-algorithm'
 
@@ -579,7 +579,7 @@ export class DiscrepancyResolutionEngine {
    */
   private async saveWorkflow(workflow: ResolutionWorkflow, actions: ResolutionAction[]): Promise<void> {
     // 這裡可以實現將工作流儲存到資料庫的邏輯
-    // 由於 Prisma schema 中沒有專門的工作流表，可以儲存在 WorkflowTask 中
+    // 由於原始資料庫 schema 中沒有專門的工作流表，可以儲存在 WorkflowTask 中
     try {
       await prisma.workflowTask.create({
         data: {

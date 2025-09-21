@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+// TODO: Replace data access with Order Service FastAPI client
 import { CacheService } from '@/lib/redis'
 import type { MatchResult, OrderLineItem, DeliveryItem, InvoiceItem, Discrepancy } from './matching-algorithm'
 
@@ -99,7 +99,8 @@ export class AdvancedConfidenceScoring {
       const sixMonthsAgo = new Date()
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
-      const orderStats = await prisma.order.aggregate({
+      // Replace with API aggregation via order-service
+      /* const orderStats = await prisma.order.aggregate({
         where: {
           supplierId,
           createdAt: {
@@ -107,9 +108,9 @@ export class AdvancedConfidenceScoring {
           }
         },
         _count: true
-      })
+      }) */
 
-      const reconciliationStats = await prisma.reconciliation.aggregate({
+      /* const reconciliationStats = await prisma.reconciliation.aggregate({
         where: {
           supplierId,
           createdAt: {
@@ -122,9 +123,9 @@ export class AdvancedConfidenceScoring {
         _avg: {
           confidenceScore: true
         }
-      })
+      }) */
 
-      const disputedReconciliations = await prisma.reconciliation.count({
+      /* const disputedReconciliations = await prisma.reconciliation.count({
         where: {
           supplierId,
           status: 'disputed',
@@ -132,7 +133,7 @@ export class AdvancedConfidenceScoring {
             gte: sixMonthsAgo
           }
         }
-      })
+      }) */
 
       // 計算可靠度分數
       let reliabilityScore = 0.5 // 基礎分數
@@ -179,7 +180,7 @@ export class AdvancedConfidenceScoring {
       const threeMonthsAgo = new Date()
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
 
-      const productOrders = await prisma.orderItem.findMany({
+      /* const productOrders = await prisma.orderItem.findMany({
         where: {
           productCode,
           order: {
@@ -192,7 +193,7 @@ export class AdvancedConfidenceScoring {
         include: {
           order: true
         }
-      })
+      }) */
 
       if (productOrders.length === 0) {
         return 0.3 // 新產品，較低信心
@@ -319,7 +320,7 @@ export class AdvancedConfidenceScoring {
       const threeMonthsAgo = new Date()
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
 
-      const customerStats = await prisma.order.aggregate({
+      /* const customerStats = await prisma.order.aggregate({
         where: {
           restaurantId,
           createdAt: {
@@ -330,7 +331,7 @@ export class AdvancedConfidenceScoring {
         _sum: {
           totalAmount: true
         }
-      })
+      }) */
 
       const totalOrders = customerStats._count
       const totalValue = Number(customerStats._sum.totalAmount || 0)

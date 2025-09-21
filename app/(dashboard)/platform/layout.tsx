@@ -27,7 +27,7 @@ export default function PlatformLayout({ children }: PlatformLayoutProps) {
           <PlatformSidebar />
           
           {/* Main Content */}
-          <main className="flex-1 lg:ml-64">
+          <main className="flex-1 lg:ml-64 pt-16">
             <div className="p-6 space-y-6">
               {children}
             </div>

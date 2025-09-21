@@ -14,7 +14,7 @@ export interface User extends BaseEntity {
   role: UserRole
   isActive: boolean
   lastLoginAt?: Date
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 export type UserRole = 
@@ -381,8 +381,8 @@ export interface Discrepancy {
   id: string
   type: DiscrepancyType
   description: string
-  expectedValue: any
-  actualValue: any
+  expectedValue: string | number
+  actualValue: string | number
   impact: 'low' | 'medium' | 'high'
   status: 'open' | 'investigating' | 'resolved'
   assignedTo?: string
@@ -634,8 +634,8 @@ export interface WorkflowTask {
   id: string
   type: string
   status: 'pending' | 'running' | 'completed' | 'failed'
-  data: Record<string, any>
-  result?: any
+  data: Record<string, unknown>
+  result?: Record<string, unknown>
   error?: string
   createdAt: Date
   startedAt?: Date
@@ -671,7 +671,7 @@ export interface SearchParams {
 export interface FilterOption {
   field: string
   operator: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'like'
-  value: any
+  value: string | number | boolean | Date | Array<string | number>
 }
 
 export interface SortOption {
@@ -683,10 +683,10 @@ export interface SortOption {
 // UI 組件相關類型
 // ============================================================================
 
-export interface TableColumn<T = any> {
+export interface TableColumn<T = Record<string, unknown>> {
   key: keyof T
   title: string
-  render?: (value: any, record: T) => React.ReactNode
+  render?: (value: T[keyof T], record: T) => React.ReactNode
   sortable?: boolean
   width?: string
   align?: 'left' | 'center' | 'right'
@@ -698,13 +698,13 @@ export interface FormField {
   type: 'text' | 'email' | 'password' | 'number' | 'select' | 'textarea' | 'checkbox' | 'radio' | 'date'
   required?: boolean
   placeholder?: string
-  options?: { label: string; value: any }[]
+  options?: { label: string; value: string | number }[]
   validation?: ValidationRule[]
 }
 
 export interface ValidationRule {
   type: 'required' | 'email' | 'min' | 'max' | 'pattern'
-  value?: any
+  value?: string | number
   message: string
 }
 

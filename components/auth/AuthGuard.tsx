@@ -36,6 +36,11 @@ export function AuthGuard({
       return false
     }
 
+    // Platform admin has unrestricted access to all areas
+    if (user.role === 'platform_admin') {
+      return true
+    }
+
     // For platform_admin with super user capabilities
     if (allowSuperUser && canViewAsOrganization()) {
       // If in view mode, check if viewing the correct role
@@ -61,8 +66,8 @@ export function AuthGuard({
     }
 
     // Standard role-based authorization
-    const hasDirectRole = user.role === requiredRole
-    const isAdmin = user.role === 'platform_admin' && requiredRole !== 'restaurant' && requiredRole !== 'supplier'
+    const hasDirectRole = (user.role as string) === requiredRole
+    const isAdmin = (user.role as string) === 'platform_admin' && requiredRole !== 'restaurant' && requiredRole !== 'supplier'
     
     // Special cases for role groups
     const hasRestaurantAccess = (

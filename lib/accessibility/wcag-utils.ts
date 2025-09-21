@@ -21,11 +21,14 @@ export class ColorContrastChecker {
     const rgb = this.hexToRgb(color)
     if (!rgb) return 0
 
-    const { r, g, b } = rgb
-    const [rs, gs, bs] = [r, g, b].map(c => {
-      c = c / 255
-      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-    })
+    const normalize = (c: number) => {
+      const v = c / 255
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
+    }
+
+    const rs = normalize(rgb.r)
+    const gs = normalize(rgb.g)
+    const bs = normalize(rgb.b)
 
     return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
   }
@@ -63,11 +66,12 @@ export class ColorContrastChecker {
    */
   private static hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : null
+    if (!result || result.length < 4) return null
+    return {
+      r: parseInt(result[1]!, 16),
+      g: parseInt(result[2]!, 16),
+      b: parseInt(result[3]!, 16)
+    }
   }
 
   /**
@@ -154,7 +158,8 @@ export class KeyboardNavigationManager {
     
     // 設置初始焦點
     if (this.focusableElements.length > 0) {
-      this.focusableElements[0].focus()
+      const first = this.focusableElements[0]
+      if (first) first.focus()
       this.currentIndex = 0
     }
   }
@@ -175,9 +180,10 @@ export class KeyboardNavigationManager {
   private updateFocusableElements(): void {
     if (!this.trapContainer) return
 
-    this.focusableElements = Array.from(
-      this.trapContainer.querySelectorAll(KeyboardNavigationManager.FOCUSABLE_SELECTORS)
-    ).filter(element => this.isVisible(element)) as HTMLElement[]
+    const nodes = Array.from(
+      this.trapContainer.querySelectorAll<HTMLElement>(KeyboardNavigationManager.FOCUSABLE_SELECTORS)
+    )
+    this.focusableElements = nodes.filter(el => this.isVisible(el))
   }
 
   /**
@@ -226,10 +232,10 @@ export class KeyboardNavigationManager {
     const firstElement = this.focusableElements[0]
     const lastElement = this.focusableElements[this.focusableElements.length - 1]
 
-    if (isShiftTab && document.activeElement === firstElement) {
+    if (isShiftTab && document.activeElement === firstElement && lastElement) {
       lastElement.focus()
       event.preventDefault()
-    } else if (!isShiftTab && document.activeElement === lastElement) {
+    } else if (!isShiftTab && document.activeElement === lastElement && firstElement) {
       firstElement.focus()
       event.preventDefault()
     }
@@ -251,7 +257,8 @@ export class KeyboardNavigationManager {
       nextIndex = currentIndex === 0 ? this.focusableElements.length - 1 : currentIndex - 1
     }
 
-    this.focusableElements[nextIndex].focus()
+    const next = this.focusableElements[nextIndex]
+    if (next) next.focus()
     event.preventDefault()
   }
 
@@ -270,7 +277,8 @@ export class KeyboardNavigationManager {
    */
   private focusFirst(): void {
     if (this.focusableElements.length > 0) {
-      this.focusableElements[0].focus()
+      const first = this.focusableElements[0]
+      if (first) first.focus()
       this.currentIndex = 0
     }
   }
@@ -281,7 +289,8 @@ export class KeyboardNavigationManager {
   private focusLast(): void {
     if (this.focusableElements.length > 0) {
       const lastIndex = this.focusableElements.length - 1
-      this.focusableElements[lastIndex].focus()
+      const last = this.focusableElements[lastIndex]
+      if (last) last.focus()
       this.currentIndex = lastIndex
     }
   }
@@ -510,7 +519,7 @@ export class AriaLabelGenerator {
     }
 
     const describedByIds: string[] = []
-    const attributes: any = {
+    const attributes: { 'aria-label': string; 'aria-describedby'?: string; 'aria-invalid'?: boolean; 'aria-required'?: boolean } = {
       'aria-label': ariaLabel
     }
 
@@ -583,7 +592,7 @@ export class AriaLabelGenerator {
         break
     }
 
-    return attributes
+    return attributes as any
   }
 
   /**
@@ -606,7 +615,7 @@ export class AriaLabelGenerator {
     'aria-haspopup'?: boolean
     'aria-expanded'?: boolean
   } {
-    const attributes: any = {
+    const attributes: { 'aria-label': string; 'aria-current'?: string; 'aria-haspopup'?: boolean; 'aria-expanded'?: boolean } = {
       'aria-label': linkText
     }
 
@@ -658,7 +667,7 @@ export class AccessibilityValidator {
     })
 
     // 檢查表單標籤
-    const inputs = document.querySelectorAll('input, select, textarea')
+    const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, select, textarea')
     inputs.forEach((input, index) => {
       const hasLabel = input.hasAttribute('aria-label') || 
                       input.hasAttribute('aria-labelledby') ||
@@ -705,10 +714,10 @@ export class AccessibilityValidator {
     const issues: any[] = []
     
     // 檢查所有文字元素的對比度
-    const textElements = document.querySelectorAll('p, span, div, a, button, h1, h2, h3, h4, h5, h6, label')
+    const textElements = document.querySelectorAll<HTMLElement>('p, span, div, a, button, h1, h2, h3, h4, h5, h6, label')
     
     textElements.forEach(element => {
-      const computed = window.getComputedStyle(element)
+      const computed = window.getComputedStyle(element as Element)
       const foreground = computed.color
       const background = computed.backgroundColor
       
@@ -724,7 +733,7 @@ export class AccessibilityValidator {
         
         if (ratio < required) {
           issues.push({
-            element: element as HTMLElement,
+            element,
             foreground,
             background,
             ratio: Math.round(ratio * 100) / 100,
@@ -745,9 +754,9 @@ export class AccessibilityValidator {
    */
   private static rgbToHex(rgb: string): string {
     const match = rgb.match(/\d+/g)
-    if (!match) return '#000000'
+    if (!match || match.length < 3) return '#000000'
     
-    const [r, g, b] = match.map(Number)
+    const [r, g, b] = match.map(Number) as unknown as [number, number, number]
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
   }
 }
@@ -788,7 +797,9 @@ export class AccessibilityEventHandler {
     orientation: 'horizontal' | 'vertical' = 'horizontal'
   ) {
     return (event: KeyboardEvent) => {
-      const currentIndex = elements.indexOf(event.target as HTMLElement)
+      const target = event.target as HTMLElement | null
+      if (!target) return
+      const currentIndex = elements.indexOf(target)
       if (currentIndex === -1) return
 
       let nextIndex = currentIndex
@@ -812,7 +823,8 @@ export class AccessibilityEventHandler {
       }
 
       event.preventDefault()
-      elements[nextIndex].focus()
+      const el = elements[nextIndex]
+      if (el) el.focus()
     }
   }
 }

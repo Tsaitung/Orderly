@@ -40,12 +40,12 @@ export function formatNumber(num: number, locale: string = 'zh-TW'): string {
 /**
  * 格式化日期
  * @param date 日期
- * @param options 格式選項
+ * @param options 格式選項（包含 relative 選項）
  * @param locale 地區設定
  */
 export function formatDate(
   date: Date | string,
-  options: Intl.DateTimeFormatOptions = {
+  options: Intl.DateTimeFormatOptions & { relative?: boolean } = {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -53,6 +53,22 @@ export function formatDate(
   locale: string = 'zh-TW'
 ): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date
+  
+  // 相對時間格式
+  if (options.relative) {
+    const now = new Date()
+    const diffMs = now.getTime() - dateObj.getTime()
+    const diffMins = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffMins < 1) return '剛剛'
+    if (diffMins < 60) return `${diffMins} 分鐘前`
+    if (diffHours < 24) return `${diffHours} 小時前`
+    if (diffDays < 7) return `${diffDays} 天前`
+    // 超過一週回歸一般格式
+  }
+  
   return new Intl.DateTimeFormat(locale, options).format(dateObj)
 }
 
@@ -106,10 +122,10 @@ export function deepClone<T>(obj: T): T {
   if (obj instanceof Date) {return new Date(obj.getTime()) as unknown as T}
   if (obj instanceof Array) {return obj.map(item => deepClone(item)) as unknown as T}
   if (typeof obj === 'object') {
-    const copy: any = {}
+    const copy: Record<string, unknown> = {}
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        copy[key] = deepClone(obj[key])
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        copy[key] = deepClone((obj as Record<string, unknown>)[key])
       }
     }
     return copy as T
@@ -122,14 +138,14 @@ export function deepClone<T>(obj: T): T {
  * @param func 要防抖的函數
  * @param delay 延遲時間（毫秒）
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: never[]) => unknown>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout
   return (...args: Parameters<T>) => {
     clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => func.apply(this, args), delay)
+    timeoutId = setTimeout(() => func(...args), delay)
   }
 }
 
@@ -138,16 +154,16 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param func 要節流的函數
  * @param delay 節流間隔（毫秒）
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: never[]) => unknown>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
-  let inThrottle: boolean
+  let inThrottle = false
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
-      func.apply(this, args)
+      func(...args)
       inThrottle = true
-      setTimeout(() => inThrottle = false, delay)
+      setTimeout(() => { inThrottle = false }, delay)
     }
   }
 }

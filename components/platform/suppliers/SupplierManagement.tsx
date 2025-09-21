@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import { 
   Search,
   Filter,
@@ -19,7 +19,9 @@ import {
   Eye,
   Edit,
   Ban,
-  FileCheck
+  FileCheck,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -41,143 +43,44 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
-
-// Mock data - 稍後會連接到真實數據庫
-const mockSuppliers = [
-  {
-    id: 'supplier-1',
-    name: '新鮮食材有限公司',
-    contactPerson: '陳經理',
-    email: 'chen@freshfood.com',
-    phone: '02-2345-6789',
-    address: '台北市中山區民生東路123號',
-    status: 'active',
-    tier: 'premium',
-    rating: 4.8,
-    joinDate: '2023-03-15',
-    metrics: {
-      monthlyGMV: 1235680,
-      gmvGrowth: 23.5,
-      totalOrders: 892,
-      orderGrowth: 18.2,
-      avgOrderValue: 1385,
-      fulfillmentRate: 98.5,
-      onTimeRate: 96.8,
-      qualityScore: 4.7
-    },
-    categories: ['蔬菜', '水果', '肉類'],
-    lastOrderDate: '2025-09-18',
-    contractExpiry: '2025-12-31'
-  },
-  {
-    id: 'supplier-2',
-    name: '優質農產品供應',
-    contactPerson: '林總監',
-    email: 'lin@quality-agri.com',
-    phone: '04-2876-5432',
-    address: '台中市西屯區台灣大道456號',
-    status: 'active',
-    tier: 'gold',
-    rating: 4.6,
-    joinDate: '2023-05-22',
-    metrics: {
-      monthlyGMV: 987450,
-      gmvGrowth: 18.7,
-      totalOrders: 756,
-      orderGrowth: 15.3,
-      avgOrderValue: 1305,
-      fulfillmentRate: 97.2,
-      onTimeRate: 95.4,
-      qualityScore: 4.5
-    },
-    categories: ['有機蔬菜', '水果'],
-    lastOrderDate: '2025-09-17',
-    contractExpiry: '2025-11-30'
-  },
-  {
-    id: 'supplier-3',
-    name: '海鮮直送批發',
-    contactPerson: '王先生',
-    email: 'wang@seafresh.com',
-    phone: '07-3456-7890',
-    address: '高雄市前鎮區中山四路789號',
-    status: 'pending',
-    tier: 'silver',
-    rating: 4.3,
-    joinDate: '2023-08-10',
-    metrics: {
-      monthlyGMV: 854320,
-      gmvGrowth: 15.2,
-      totalOrders: 634,
-      orderGrowth: 12.8,
-      avgOrderValue: 1347,
-      fulfillmentRate: 94.8,
-      onTimeRate: 92.1,
-      qualityScore: 4.2
-    },
-    categories: ['海鮮', '冷凍食品'],
-    lastOrderDate: '2025-09-16',
-    contractExpiry: '2025-10-15'
-  },
-  {
-    id: 'supplier-4',
-    name: '有機蔬果農場',
-    contactPerson: '張董事長',
-    email: 'zhang@organic-farm.com',
-    phone: '03-4567-8901',
-    address: '桃園市中壢區環北路321號',
-    status: 'inactive',
-    tier: 'bronze',
-    rating: 4.1,
-    joinDate: '2022-12-01',
-    metrics: {
-      monthlyGMV: 743210,
-      gmvGrowth: 28.9,
-      totalOrders: 523,
-      orderGrowth: 25.6,
-      avgOrderValue: 1421,
-      fulfillmentRate: 96.3,
-      onTimeRate: 94.7,
-      qualityScore: 4.3
-    },
-    categories: ['有機蔬菜', '有機水果'],
-    lastOrderDate: '2025-08-28',
-    contractExpiry: '2025-12-01'
-  }
-]
+import { useSuppliers, useSupplierDetail } from '@/lib/hooks/use-platform-suppliers'
+import type { SupplierCard as SupplierCardType, SupplierFilterParams } from '@/lib/api/platform-supplier-service'
 
 interface SupplierCardProps {
-  supplier: typeof mockSuppliers[0]
+  supplier: SupplierCardType
+  onViewDetails?: (supplier: SupplierCardType) => void
+  onEdit?: (supplier: SupplierCardType) => void
+  onSuspend?: (supplier: SupplierCardType) => void
 }
 
-function SupplierCard({ supplier }: SupplierCardProps) {
+function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCardProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'VERIFIED':
         return <Badge className="bg-green-100 text-green-800">營運中</Badge>
-      case 'pending':
+      case 'PENDING':
         return <Badge className="bg-yellow-100 text-yellow-800">審核中</Badge>
-      case 'inactive':
-        return <Badge className="bg-gray-100 text-gray-800">暫停營運</Badge>
+      case 'SUSPENDED':
+        return <Badge className="bg-red-100 text-red-800">暫停營運</Badge>
+      case 'DEACTIVATED':
+        return <Badge className="bg-gray-100 text-gray-800">已停用</Badge>
       default:
-        return <Badge variant="outline">未知</Badge>
+        return <Badge variant="outline">{supplier.status_display}</Badge>
     }
   }
 
-  const getTierBadge = (tier: string) => {
+  const getActivityBadge = (level: string) => {
     const colors = {
-      premium: 'bg-purple-100 text-purple-800',
-      gold: 'bg-yellow-100 text-yellow-800',
-      silver: 'bg-gray-100 text-gray-800',
-      bronze: 'bg-orange-100 text-orange-800'
+      high: 'bg-green-100 text-green-800',
+      moderate: 'bg-yellow-100 text-yellow-800', 
+      low: 'bg-red-100 text-red-800'
     }
     const labels = {
-      premium: '白金',
-      gold: '金牌',
-      silver: '銀牌',
-      bronze: '銅牌'
+      high: '高活躍',
+      moderate: '中活躍',
+      low: '低活躍'
     }
-    return <Badge className={colors[tier as keyof typeof colors]}>{labels[tier as keyof typeof labels]}</Badge>
+    return <Badge className={colors[level as keyof typeof colors]}>{labels[level as keyof typeof labels] || level}</Badge>
   }
 
   return (
@@ -192,7 +95,7 @@ function SupplierCard({ supplier }: SupplierCardProps) {
               <CardTitle className="text-lg">{supplier.name}</CardTitle>
               <div className="flex items-center space-x-2 mt-1">
                 {getStatusBadge(supplier.status)}
-                {getTierBadge(supplier.tier)}
+                {getActivityBadge(supplier.activity_level)}
               </div>
             </div>
           </div>
@@ -203,16 +106,16 @@ function SupplierCard({ supplier }: SupplierCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewDetails?.(supplier)}>
                 <Eye className="mr-2 h-4 w-4" />
                 查看詳情
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit?.(supplier)}>
                 <Edit className="mr-2 h-4 w-4" />
                 編輯資料
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem className="text-red-600" onClick={() => onSuspend?.(supplier)}>
                 <Ban className="mr-2 h-4 w-4" />
                 暫停合作
               </DropdownMenuItem>
@@ -223,45 +126,63 @@ function SupplierCard({ supplier }: SupplierCardProps) {
       <CardContent className="space-y-4">
         {/* 聯絡資訊 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center space-x-2 text-gray-600">
-            <Phone className="h-4 w-4" />
-            <span>{supplier.phone}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600">
-            <Mail className="h-4 w-4" />
-            <span className="truncate">{supplier.email}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-gray-600 sm:col-span-2">
-            <MapPin className="h-4 w-4" />
-            <span className="truncate">{supplier.address}</span>
-          </div>
+          {supplier.contact_phone && (
+            <div className="flex items-center space-x-2 text-gray-600">
+              <Phone className="h-4 w-4" />
+              <span>{supplier.contact_phone}</span>
+            </div>
+          )}
+          {supplier.contact_email && (
+            <div className="flex items-center space-x-2 text-gray-600">
+              <Mail className="h-4 w-4" />
+              <span className="truncate">{supplier.contact_email}</span>
+            </div>
+          )}
+          {supplier.address && (
+            <div className="flex items-center space-x-2 text-gray-600 sm:col-span-2">
+              <MapPin className="h-4 w-4" />
+              <span className="truncate">{supplier.address}</span>
+            </div>
+          )}
         </div>
 
         {/* 關鍵指標 */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              NT$ {(supplier.metrics.monthlyGMV / 1000).toFixed(0)}K
+              NT$ {(supplier.monthly_gmv / 1000).toFixed(0)}K
             </div>
             <div className="text-xs text-gray-500">月 GMV</div>
-            <div className="flex items-center justify-center text-xs text-green-600">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +{supplier.metrics.gmvGrowth}%
+            <div className={cn(
+              "flex items-center justify-center text-xs",
+              supplier.gmv_growth_rate >= 0 ? "text-green-600" : "text-red-600"
+            )}>
+              {supplier.gmv_growth_rate >= 0 ? 
+                <TrendingUp className="h-3 w-3 mr-1" /> : 
+                <TrendingDown className="h-3 w-3 mr-1" />
+              }
+              {supplier.gmv_growth_rate >= 0 ? '+' : ''}{supplier.gmv_growth_rate}%
             </div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              {supplier.metrics.totalOrders}
+              {supplier.monthly_orders}
             </div>
             <div className="text-xs text-gray-500">月訂單</div>
-            <div className="flex items-center justify-center text-xs text-green-600">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              +{supplier.metrics.orderGrowth}%
+            <div className={cn(
+              "flex items-center justify-center text-xs",
+              supplier.orders_growth_rate >= 0 ? "text-green-600" : "text-red-600"
+            )}>
+              {supplier.orders_growth_rate >= 0 ? 
+                <TrendingUp className="h-3 w-3 mr-1" /> : 
+                <TrendingDown className="h-3 w-3 mr-1" />
+              }
+              {supplier.orders_growth_rate >= 0 ? '+' : ''}{supplier.orders_growth_rate}%
             </div>
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              {supplier.metrics.fulfillmentRate}%
+              {supplier.fulfillment_rate}%
             </div>
             <div className="text-xs text-gray-500">履約率</div>
             <div className="flex items-center justify-center">
@@ -271,7 +192,7 @@ function SupplierCard({ supplier }: SupplierCardProps) {
                     key={i} 
                     className={cn(
                       "h-3 w-3",
-                      i < Math.floor(supplier.rating) 
+                      i < Math.floor(supplier.quality_score) 
                         ? "text-yellow-400 fill-current" 
                         : "text-gray-300"
                     )} 
@@ -282,31 +203,42 @@ function SupplierCard({ supplier }: SupplierCardProps) {
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              {supplier.metrics.onTimeRate}%
+              NT$ {supplier.minimum_order_amount.toLocaleString()}
             </div>
-            <div className="text-xs text-gray-500">準時率</div>
+            <div className="text-xs text-gray-500">最小訂購</div>
             <div className="text-xs text-gray-600">
-              品質 {supplier.metrics.qualityScore}/5.0
+              {supplier.payment_terms_display}
             </div>
           </div>
         </div>
 
         {/* 產品類別 */}
-        <div>
-          <div className="text-sm font-medium text-gray-700 mb-2">主要類別</div>
-          <div className="flex flex-wrap gap-2">
-            {supplier.categories.map((category) => (
-              <Badge key={category} variant="outline" className="text-xs">
-                {category}
-              </Badge>
-            ))}
+        {supplier.product_categories && supplier.product_categories.length > 0 && (
+          <div>
+            <div className="text-sm font-medium text-gray-700 mb-2">主要類別</div>
+            <div className="flex flex-wrap gap-2">
+              {supplier.product_categories.slice(0, 4).map((category) => (
+                <Badge key={category} variant="outline" className="text-xs">
+                  {category}
+                </Badge>
+              ))}
+              {supplier.product_categories.length > 4 && (
+                <Badge variant="outline" className="text-xs">
+                  +{supplier.product_categories.length - 4} 更多
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 底部資訊 */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-          <span>加入日期: {new Date(supplier.joinDate).toLocaleDateString('zh-TW')}</span>
-          <span>合約到期: {new Date(supplier.contractExpiry).toLocaleDateString('zh-TW')}</span>
+          <span>加入日期: {new Date(supplier.join_date).toLocaleDateString('zh-TW')}</span>
+          {supplier.last_order_date ? (
+            <span>最後訂單: {new Date(supplier.last_order_date).toLocaleDateString('zh-TW')}</span>
+          ) : (
+            <span>尚無訂單</span>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -314,24 +246,85 @@ function SupplierCard({ supplier }: SupplierCardProps) {
 }
 
 export function SupplierManagement() {
-  const [searchTerm, setSearchTerm] = React.useState('')
-  const [statusFilter, setStatusFilter] = React.useState('all')
-  const [tierFilter, setTierFilter] = React.useState('all')
-  const [viewMode, setViewMode] = React.useState<'cards' | 'table'>('cards')
+  // Use the real API hooks
+  const {
+    suppliers,
+    total,
+    page,
+    totalPages,
+    stats,
+    loading,
+    error,
+    refetch,
+    updateFilters,
+    resetFilters,
+    filters
+  } = useSuppliers()
 
-  const filteredSuppliers = mockSuppliers.filter(supplier => {
-    const matchesSearch = supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         supplier.contactPerson.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || supplier.status === statusFilter
-    const matchesTier = tierFilter === 'all' || supplier.tier === tierFilter
-    return matchesSearch && matchesStatus && matchesTier
-  })
+  // Local state for UI
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierCardType | null>(null)
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
 
-  const totalSuppliers = mockSuppliers.length
-  const activeSuppliers = mockSuppliers.filter(s => s.status === 'active').length
-  const pendingSuppliers = mockSuppliers.filter(s => s.status === 'pending').length
-  const totalGMV = mockSuppliers.reduce((sum, s) => sum + s.metrics.monthlyGMV, 0)
-  const avgRating = mockSuppliers.reduce((sum, s) => sum + s.rating, 0) / mockSuppliers.length
+  // Handle search with debouncing
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value)
+    updateFilters({ search: value || undefined })
+  }, [updateFilters])
+
+  // Handle filter changes
+  const handleStatusFilter = useCallback((status: string) => {
+    updateFilters({ 
+      status: status === 'all' ? undefined : status 
+    })
+  }, [updateFilters])
+
+  const handleActivityFilter = useCallback((activity: string) => {
+    updateFilters({ 
+      activity_level: activity === 'all' ? undefined : activity 
+    })
+  }, [updateFilters])
+
+  // Handle pagination
+  const handlePageChange = useCallback((newPage: number) => {
+    updateFilters({ page: newPage })
+  }, [updateFilters])
+
+  // Card actions
+  const handleViewDetails = useCallback((supplier: SupplierCardType) => {
+    setSelectedSupplier(supplier)
+    // Could open a modal or navigate to detail page
+    console.log('View details for:', supplier.name)
+  }, [])
+
+  const handleEdit = useCallback((supplier: SupplierCardType) => {
+    // Navigate to edit page or open edit modal
+    console.log('Edit supplier:', supplier.name)
+  }, [])
+
+  const handleSuspend = useCallback((supplier: SupplierCardType) => {
+    // Show confirmation and suspend supplier
+    console.log('Suspend supplier:', supplier.name)
+  }, [])
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">載入失敗</h3>
+            <p className="text-gray-500 mb-4">{error}</p>
+            <Button onClick={refetch} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              重新載入
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -342,7 +335,14 @@ export function SupplierManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">總供應商</p>
-                <p className="text-2xl font-bold text-gray-900">{totalSuppliers}</p>
+                {loading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span className="text-gray-400">載入中...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">{stats?.total_suppliers || 0}</p>
+                )}
               </div>
               <Building2 className="h-8 w-8 text-primary-600" />
             </div>
@@ -354,7 +354,14 @@ export function SupplierManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">營運中</p>
-                <p className="text-2xl font-bold text-green-600">{activeSuppliers}</p>
+                {loading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span className="text-gray-400">載入中...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-green-600">{stats?.active_suppliers || 0}</p>
+                )}
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
@@ -366,7 +373,14 @@ export function SupplierManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">審核中</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingSuppliers}</p>
+                {loading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span className="text-gray-400">載入中...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-yellow-600">{stats?.pending_suppliers || 0}</p>
+                )}
               </div>
               <Clock className="h-8 w-8 text-yellow-600" />
             </div>
@@ -378,9 +392,16 @@ export function SupplierManagement() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">總 GMV</p>
-                <p className="text-2xl font-bold text-primary-600">
-                  NT$ {(totalGMV / 1000000).toFixed(1)}M
-                </p>
+                {loading ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    <span className="text-gray-400">載入中...</span>
+                  </div>
+                ) : (
+                  <p className="text-2xl font-bold text-primary-600">
+                    NT$ {((stats?.total_gmv || 0) / 1000000).toFixed(1)}M
+                  </p>
+                )}
               </div>
               <TrendingUp className="h-8 w-8 text-primary-600" />
             </div>
@@ -398,33 +419,41 @@ export function SupplierManagement() {
                 <Input
                   placeholder="搜尋供應商名稱或聯絡人..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <div className="flex space-x-2">
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={filters.status || 'all'}
+                onChange={(e) => handleStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="all">所有狀態</option>
-                <option value="active">營運中</option>
-                <option value="pending">審核中</option>
-                <option value="inactive">暫停</option>
+                <option value="VERIFIED">營運中</option>
+                <option value="PENDING">審核中</option>
+                <option value="SUSPENDED">暫停營運</option>
+                <option value="DEACTIVATED">已停用</option>
               </select>
               <select
-                value={tierFilter}
-                onChange={(e) => setTierFilter(e.target.value)}
+                value={filters.activity_level || 'all'}
+                onChange={(e) => handleActivityFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md text-sm"
               >
-                <option value="all">所有等級</option>
-                <option value="premium">白金</option>
-                <option value="gold">金牌</option>
-                <option value="silver">銀牌</option>
-                <option value="bronze">銅牌</option>
+                <option value="all">所有活躍度</option>
+                <option value="high">高活躍</option>
+                <option value="moderate">中活躍</option>
+                <option value="low">低活躍</option>
               </select>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={resetFilters}
+                className="px-3"
+              >
+                重設
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -434,26 +463,103 @@ export function SupplierManagement() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">
-            供應商列表 ({filteredSuppliers.length})
+            供應商列表 ({total.toLocaleString()})
           </h3>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              disabled={loading}
+            >
+              <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
+              重新載入
+            </Button>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredSuppliers.map((supplier) => (
-            <SupplierCard key={supplier.id} supplier={supplier} />
-          ))}
-        </div>
-
-        {filteredSuppliers.length === 0 && (
+        {loading && suppliers.length === 0 ? (
+          // Initial loading state
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-20 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : suppliers.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {suppliers.map((supplier) => (
+                <SupplierCard 
+                  key={supplier.id} 
+                  supplier={supplier}
+                  onViewDetails={handleViewDetails}
+                  onEdit={handleEdit}
+                  onSuspend={handleSuspend}
+                />
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-700">
+                  顯示第 {((page - 1) * filters.page_size!) + 1} - {Math.min(page * filters.page_size!, total)} 項，
+                  共 {total.toLocaleString()} 項
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page <= 1 || loading}
+                  >
+                    上一頁
+                  </Button>
+                  <span className="text-sm text-gray-600">
+                    第 {page} 頁，共 {totalPages} 頁
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page >= totalPages || loading}
+                  >
+                    下一頁
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          // Empty state
           <Card>
             <CardContent className="p-8 text-center">
               <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                找不到符合條件的供應商
+                {filters.search || filters.status || filters.activity_level 
+                  ? "找不到符合條件的供應商" 
+                  : "尚無供應商"}
               </h3>
               <p className="text-gray-500">
-                請調整搜尋條件或篩選器重新查詢
+                {filters.search || filters.status || filters.activity_level 
+                  ? "請調整搜尋條件或篩選器重新查詢"
+                  : "目前還沒有供應商加入平台"}
               </p>
+              {(filters.search || filters.status || filters.activity_level) && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={resetFilters}
+                >
+                  清除篩選條件
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}

@@ -12,7 +12,11 @@ const buttonVariants = cva(
         solid: '',
         outline: 'bg-transparent border-2',
         ghost: 'bg-transparent',
-        link: 'bg-transparent underline-offset-4 hover:underline p-0 h-auto'
+        link: 'bg-transparent underline-offset-4 hover:underline p-0 h-auto',
+        // Backward-compat aliases used across codebase
+        default: '', // alias of solid + primary
+        brand: '', // alias for storybook/demo usage
+        destructive: 'bg-red-500 text-white hover:bg-red-600 focus-visible:ring-red-500'
       },
       // Chakra UI v2 風格 colorScheme (色彩主題)
       colorScheme: {

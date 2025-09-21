@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/utils'
+import { useSupplierProducts } from '@/lib/api/supplier-hooks'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   Edit,
   Copy,
@@ -15,11 +17,13 @@ import {
   AlertTriangle,
   Star,
   ShoppingCart,
-  Package
+  Package,
+  Loader
 } from 'lucide-react'
 
 interface ProductListProps {
-  searchParams: { [key: string]: string | string[] | undefined }
+  searchParams: { [key: string]: string | string[] | undefined };
+  organizationId?: string;
 }
 
 // 模擬產品數據
@@ -154,9 +158,62 @@ const mockProducts = [
   }
 ]
 
-export default function ProductList({ searchParams }: ProductListProps) {
+export default function ProductList({ searchParams, organizationId }: ProductListProps) {
+  const { user } = useAuth();
+  const effectiveOrgId = organizationId || user?.organizationId;
+  
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
+
+  // Use the product hook (currently placeholder)
+  const { 
+    products, 
+    loading, 
+    error, 
+    refetch,
+    addProduct,
+    updateProduct,
+    removeProduct,
+    isAdding,
+    isUpdating,
+    isRemoving
+  } = useSupplierProducts(effectiveOrgId);
+
+  // For now, use mock data as fallback since product service isn't implemented
+  const displayProducts = products.length > 0 ? products : mockProducts;
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <Loader className="h-8 w-8 animate-spin text-gray-400" />
+          <span className="ml-2 text-gray-600">載入產品資料中...</span>
+        </div>
+      </Card>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <Card className="p-6 border-red-200 bg-red-50">
+        <div className="flex items-center space-x-3">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
+          <div>
+            <h3 className="font-medium text-red-900">無法載入產品資料</h3>
+            <p className="text-sm text-red-700 mt-1">{error}</p>
+            <button 
+              onClick={refetch}
+              className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+            >
+              重新載入
+            </button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   const getStockStatus = (stock: any) => {
     if (stock.current === 0) {
@@ -181,7 +238,7 @@ export default function ProductList({ searchParams }: ProductListProps) {
   }
 
   const selectAllProducts = () => {
-    setSelectedProducts(mockProducts.map(p => p.id))
+    setSelectedProducts(displayProducts.map(p => p.id))
   }
 
   const clearSelection = () => {
@@ -194,7 +251,10 @@ export default function ProductList({ searchParams }: ProductListProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-semibold text-gray-900">產品列表</h2>
-          <Badge variant="outline">共 {mockProducts.length} 項產品</Badge>
+          <Badge variant="outline">共 {displayProducts.length} 項產品</Badge>
+          {products.length === 0 && (
+            <Badge variant="warning" size="sm">使用測試資料</Badge>
+          )}
         </div>
 
         {selectedProducts.length > 0 && (
@@ -220,20 +280,20 @@ export default function ProductList({ searchParams }: ProductListProps) {
         <label className="flex items-center space-x-2 cursor-pointer">
           <input
             type="checkbox"
-            checked={selectedProducts.length === mockProducts.length}
-            onChange={selectedProducts.length === mockProducts.length ? clearSelection : selectAllProducts}
+            checked={selectedProducts.length === displayProducts.length}
+            onChange={selectedProducts.length === displayProducts.length ? clearSelection : selectAllProducts}
             className="rounded text-blue-600"
           />
           <span className="text-sm text-gray-700">全選</span>
         </label>
         <span className="text-sm text-gray-500">
-          顯示 1-{mockProducts.length} 項，共 1,247 項產品
+          顯示 1-{displayProducts.length} 項{products.length === 0 ? '（測試資料）' : ''}
         </span>
       </div>
 
       {/* 產品列表 */}
       <div className="space-y-4">
-        {mockProducts.map((product) => {
+        {displayProducts.map((product) => {
           const stockStatus = getStockStatus(product.stock)
           const isExpanded = expandedProduct === product.id
           const isSelected = selectedProducts.includes(product.id)
@@ -443,16 +503,21 @@ export default function ProductList({ searchParams }: ProductListProps) {
       {/* 分頁控制 */}
       <div className="flex items-center justify-between mt-6 pt-4 border-t">
         <div className="text-sm text-gray-500">
-          顯示第 1-4 項，共 1,247 項產品
+          顯示第 1-{displayProducts.length} 項{products.length === 0 ? '（測試資料）' : ''}
         </div>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm" disabled>
             上一頁
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" disabled={products.length === 0}>
             下一頁
           </Button>
         </div>
+        {products.length === 0 && (
+          <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+            產品服務開發中，目前顯示測試資料
+          </div>
+        )}
       </div>
     </Card>
   )

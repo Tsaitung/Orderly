@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/auth/forgot-password', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8001/auth/reset-password', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

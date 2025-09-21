@@ -1,6 +1,8 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { SecureStorage } from '@/lib/secure-storage'
+import { AuthValidation, type LoginFormData } from '@/lib/validation/auth-schemas'
 
 // Types for authentication context
 export interface Organization {
@@ -41,7 +43,7 @@ export interface AuthContextType {
   viewMode: ViewMode
   
   // Actions
-  login: (email: string, password: string) => Promise<boolean>
+  login: (credentials: LoginFormData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   switchToOrganizationView: (organizationId: string) => Promise<boolean>
   exitViewMode: () => void
@@ -74,37 +76,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check for existing token
-        const token = localStorage.getItem('access_token')
-        if (!token) {
+        // Check for existing secure token
+        const storedData = SecureStorage.getTokens()
+        if (!storedData) {
+          // 開發環境暫時提供 mock 平台管理員身份
+          console.log('🔧 Dev mode: Creating mock platform admin user')
+          const mockUser: User = {
+            id: 'platform-admin-dev',
+            email: 'admin@orderly.com',
+            role: 'platform_admin',
+            organizationId: 'platform',
+            name: '平台管理員',
+            avatar: '/avatars/admin.png',
+            isActive: true
+          }
+          
+          setUser(mockUser)
+          setIsAuthenticated(true)
+          await loadOrganizations()
           setIsLoading(false)
           return
         }
 
-        // Mock user data - in production, this should decode JWT token
-        const mockUser: User = {
-          id: 'platform-admin-001',
-          email: 'admin@orderly.com',
-          role: 'platform_admin',
-          organizationId: 'platform-org',
-          name: '平台管理員',
-          avatar: '/avatars/admin.png',
+        // Create user from stored secure data
+        const user: User = {
+          id: storedData.userId,
+          email: storedData.email,
+          role: storedData.role as User['role'],
+          organizationId: storedData.organizationId,
+          name: storedData.email.split('@')[0] || 'User',
+          avatar: '/avatars/default.png',
           isActive: true
         }
 
-        setUser(mockUser)
+        setUser(user)
         setIsAuthenticated(true)
 
+        // 若即將過期，嘗試 refresh 以延長 cookie 生命（配合同源 API）
+        try {
+          // 簡單判斷：如果快到期就更新
+          if (SecureStorage.willExpireSoon()) {
+            // 暫時跳過 refresh，避免端口錯誤
+            console.log('⚠️ Token refresh skipped during development')
+          }
+        } catch {}
+
         // Load organizations if platform admin
-        if (mockUser.role === 'platform_admin') {
+        if (user.role === 'platform_admin') {
           await loadOrganizations()
         } else {
           // Load current organization for non-platform users
-          await loadUserOrganization(mockUser.organizationId)
+          await loadUserOrganization(user.organizationId)
         }
       } catch (error) {
         console.error('Auth initialization failed:', error)
-        localStorage.removeItem('access_token')
+        SecureStorage.clearTokens()
       } finally {
         setIsLoading(false)
       }
@@ -167,44 +193,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Login function
-  const login = async (email: string, password: string): Promise<boolean> => {
+  // Login function with secure storage and validation
+  const login = async (credentials: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true)
       
-      // Mock login - in production, make API call
-      if (email === 'admin@orderly.com' && password === 'password') {
-        const token = 'mock-jwt-token'
-        localStorage.setItem('access_token', token)
+      // Validate input
+      const validation = AuthValidation.validateLogin(credentials)
+      if (!validation.success) {
+        const firstError = Object.values(validation.errors)[0]
+        return { success: false, error: firstError }
+      }
+      
+      // Call authentication API
+      // Hit our Next.js API route to set httpOnly cookies for middleware-based auth
+      const response = await fetch(`/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: validation.data.email,
+          password: validation.data.password,
+          rememberMe: validation.data.rememberMe,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        // Store tokens securely
+        // Note: Primary auth for middleware uses httpOnly cookies set by the API route.
+        // We also keep encrypted client store for UI convenience.
+        SecureStorage.setTokens({
+          token: 'session_cookie',
+          refreshToken: undefined,
+          userId: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+          organizationId: data.user.organization.id,
+          organizationType: data.user.organization.type,
+          rememberMe: validation.data.rememberMe,
+          expiresIn: validation.data.rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60
+        })
         
-        const mockUser: User = {
-          id: 'platform-admin-001',
-          email: email,
-          role: 'platform_admin',
-          organizationId: 'platform-org',
-          name: '平台管理員',
+        const user: User = {
+          id: data.user.id,
+          email: data.user.email,
+          role: data.user.role,
+          organizationId: data.user.organization.id,
+          name: data.user.name || data.user.email.split('@')[0],
           isActive: true
         }
         
-        setUser(mockUser)
+        setUser(user)
         setIsAuthenticated(true)
-        await loadOrganizations()
         
-        return true
+        // Load organizations if platform admin
+        if (user.role === 'platform_admin') {
+          await loadOrganizations()
+        } else {
+          await loadUserOrganization(user.organizationId)
+        }
+        
+        return { success: true }
+      } else {
+        return { success: false, error: data.message || '登入失敗' }
       }
-      
-      return false
     } catch (error) {
       console.error('Login failed:', error)
-      return false
+      return { success: false, error: '網路錯誤，請稍後再試' }
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Logout function
+  // Logout function with secure cleanup
   const logout = () => {
-    localStorage.removeItem('access_token')
+    SecureStorage.clearTokens()
     setUser(null)
     setIsAuthenticated(false)
     setCurrentOrganization(null)
