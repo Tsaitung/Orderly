@@ -24,7 +24,7 @@ on:
         type: string
 
 env:
-  GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+  GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || secrets.GOOGLE_CLOUD_PROJECT || 'orderly-472413' }}
   GOOGLE_CLOUD_REGION: asia-east1
   REGISTRY: asia-east1-docker.pkg.dev
 
@@ -75,15 +75,42 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+  setup-registry:
+    name: Setup Artifact Registry
+    runs-on: ubuntu-latest
+    needs: [determine-environment]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Create Artifact Registry repository
+        run: |
+          # Create repository if it doesn't exist (single job to avoid race condition)
+          gcloud artifacts repositories describe orderly \
+            --location=asia-east1 \
+            --format="value(name)" || \
+          gcloud artifacts repositories create orderly \
+            --repository-format=docker \
+            --location=asia-east1 \
+            --description="Orderly microservices container registry"
+          
+          echo "✅ Artifact Registry repository ready"
+
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
-    needs: [determine-environment]
+    needs: [determine-environment, setup-registry]
     if: needs.determine-environment.outputs.deploy == 'true'
     
     strategy:
       matrix:
-        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
+        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, billing-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
       fail-fast: false
 
     steps:
@@ -92,11 +119,15 @@ jobs:
       - name: Check if service exists
         id: check-service
         run: |
-          if [ -d "backend/${{ matrix.service }}" ] && [ -f "backend/${{ matrix.service }}/Dockerfile.cloudrun" ]; then
+          SERVICE_DIR="backend/${{ matrix.service }}"
+          if [ -d "$SERVICE_DIR" ] && [ -f "$SERVICE_DIR/Dockerfile.cloudrun" ]; then
+            echo "✅ Found service at $SERVICE_DIR"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
+            echo "❌ Service not found at $SERVICE_DIR"
             echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Service ${{ matrix.service }} or its Dockerfile.cloudrun not found"
+            echo "Debug: Listing actual FastAPI services:"
+            ls -la backend/ | grep fastapi || echo "No FastAPI services found"
           fi
       
       - name: Authenticate to Google Cloud
@@ -112,18 +143,6 @@ jobs:
       - name: Configure Docker to use gcloud as credential helper
         if: steps.check-service.outputs.exists == 'true'
         run: gcloud auth configure-docker asia-east1-docker.pkg.dev
-      
-      - name: Create Artifact Registry repository if not exists
-        if: steps.check-service.outputs.exists == 'true'
-        run: |
-          # Create repository if it doesn't exist
-          gcloud artifacts repositories describe orderly \
-            --location=asia-east1 \
-            --format="value(name)" || \
-          gcloud artifacts repositories create orderly \
-            --repository-format=docker \
-            --location=asia-east1 \
-            --description="Orderly microservices container registry"
       
       - name: Build and push Docker image
         if: steps.check-service.outputs.exists == 'true'
@@ -188,7 +207,7 @@ jobs:
     
     strategy:
       matrix:
-        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
+        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, billing-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
       fail-fast: false
       max-parallel: 3  # Deploy services in batches to avoid overwhelming the infrastructure
 
@@ -240,9 +259,10 @@ jobs:
             "order-service-fastapi") PORT=3002 ;;
             "product-service-fastapi") PORT=3003 ;;
             "acceptance-service-fastapi") PORT=3004 ;;
+            "billing-service-fastapi") PORT=3005 ;;
             "notification-service-fastapi") PORT=3006 ;;
             "customer-hierarchy-service-fastapi") PORT=3007 ;;
-            "supplier-service-fastapi") PORT=3007 ;;
+            "supplier-service-fastapi") PORT=3008 ;;
             *) echo "Unknown service: ${{ matrix.service }}"; exit 1 ;;
           esac
           
@@ -315,7 +335,7 @@ jobs:
         run: |
           # Get all service URLs
           declare -A service_urls
-          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
@@ -359,7 +379,7 @@ jobs:
         run: |
           # Health check all deployed services
           failed_services=()
-          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
@@ -411,7 +431,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Service URLs:" >> $GITHUB_STEP_SUMMARY
           
-          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
             url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "Not deployed")
