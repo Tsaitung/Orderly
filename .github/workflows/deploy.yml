@@ -113,6 +113,18 @@ jobs:
         if: steps.check-service.outputs.exists == 'true'
         run: gcloud auth configure-docker asia-east1-docker.pkg.dev
       
+      - name: Create Artifact Registry repository if not exists
+        if: steps.check-service.outputs.exists == 'true'
+        run: |
+          # Create repository if it doesn't exist
+          gcloud artifacts repositories describe orderly \
+            --location=asia-east1 \
+            --format="value(name)" || \
+          gcloud artifacts repositories create orderly \
+            --repository-format=docker \
+            --location=asia-east1 \
+            --description="Orderly microservices container registry"
+      
       - name: Build and push Docker image
         if: steps.check-service.outputs.exists == 'true'
         env:
