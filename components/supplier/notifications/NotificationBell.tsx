@@ -6,7 +6,26 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatDate } from '@/lib/utils'
-import { Notification } from './NotificationCenter'
+// Local notification type (inlined from NotificationCenter to remove dependency)
+export interface Notification {
+  id: string;
+  type: 'order_status' | 'payment' | 'system' | 'customer' | 'product';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  title: string;
+  message: string;
+  order_id?: string;
+  customer_id?: string;
+  created_at: string;
+  read: boolean;
+  archived: boolean;
+  metadata?: {
+    order_number?: string;
+    customer_name?: string;
+    old_status?: string;
+    new_status?: string;
+    amount?: number;
+  };
+}
 import {
   Bell,
   Package,

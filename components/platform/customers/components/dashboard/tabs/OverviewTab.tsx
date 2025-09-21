@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatDateOnly } from '@/lib/date';
 import {
   TrendingUp,
   TrendingDown,
@@ -68,7 +69,7 @@ const generateMockHeatmapData = (): ActivityHeatmapData[] => {
     const value = Math.min(100, Math.max(0, baseActivity + randomVariation));
     
     data.push({
-      date: date.toISOString().split('T')[0],
+      date: formatDateOnly(date),
       value: Math.round(value),
       orders: Math.round(value / 10),
       revenue: Math.round(value * 1000 + Math.random() * 50000)

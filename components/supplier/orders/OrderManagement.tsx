@@ -16,76 +16,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { OrderStatus, OrderFilterParams } from '@/lib/api/supplier-types'
 import { useOrderWebSocket } from '@/lib/websocket/order-websocket'
 import { useNotifications, createOrderStatusNotification } from '@/lib/hooks/useNotifications'
-import {
-  Search,
-  Filter,
-  Calendar,
-  Eye,
-  CheckCircle,
-  Clock,
-  Truck,
-  Package,
-  AlertTriangle,
-  MoreVertical,
-  Download,
-  RefreshCw,
-  Loader
-} from 'lucide-react'
+import { Search, Filter, Calendar, Eye, MoreVertical, Download, RefreshCw, Loader } from 'lucide-react'
+import { getOrderStatusMeta, SUPPLIER_ORDER_STATUSES } from '@/lib/status'
 
 interface OrderManagementProps {
   organizationId?: string;
 }
 
-const STATUS_CONFIG = {
-  pending: { 
-    label: '待處理', 
-    variant: 'warning' as const, 
-    icon: Clock, 
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200' 
-  },
-  confirmed: { 
-    label: '已確認', 
-    variant: 'info' as const, 
-    icon: CheckCircle, 
-    color: 'text-blue-600 bg-blue-50 border-blue-200' 
-  },
-  preparing: { 
-    label: '備貨中', 
-    variant: 'info' as const, 
-    icon: Package, 
-    color: 'text-indigo-600 bg-indigo-50 border-indigo-200' 
-  },
-  ready_for_pickup: { 
-    label: '待取貨', 
-    variant: 'success' as const, 
-    icon: Package, 
-    color: 'text-green-600 bg-green-50 border-green-200' 
-  },
-  in_transit: { 
-    label: '配送中', 
-    variant: 'info' as const, 
-    icon: Truck, 
-    color: 'text-purple-600 bg-purple-50 border-purple-200' 
-  },
-  delivered: { 
-    label: '已送達', 
-    variant: 'success' as const, 
-    icon: CheckCircle, 
-    color: 'text-green-600 bg-green-50 border-green-200' 
-  },
-  cancelled: { 
-    label: '已取消', 
-    variant: 'destructive' as const, 
-    icon: AlertTriangle, 
-    color: 'text-red-600 bg-red-50 border-red-200' 
-  },
-  disputed: { 
-    label: '有爭議', 
-    variant: 'destructive' as const, 
-    icon: AlertTriangle, 
-    color: 'text-red-600 bg-red-50 border-red-200' 
-  }
-};
+// 狀態樣式與文案統一由 '@/lib/status' 提供
 
 const PRIORITY_CONFIG = {
   low: { label: '低', variant: 'outline' as const },
@@ -370,9 +308,12 @@ export default function OrderManagement({ organizationId }: OrderManagementProps
             className="px-3 py-2 border border-gray-300 rounded-md text-sm"
           >
             <option value="">所有狀態</option>
-            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
-              <option key={key} value={key}>{config.label}</option>
-            ))}
+            {SUPPLIER_ORDER_STATUSES.map((key) => {
+              const meta = getOrderStatusMeta(key)
+              return (
+                <option key={key} value={key}>{meta.label}</option>
+              )
+            })}
           </select>
           
           <select
@@ -461,9 +402,9 @@ export default function OrderManagement({ organizationId }: OrderManagementProps
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.map((order) => {
-                const statusConfig = STATUS_CONFIG[order.status];
+                const meta = getOrderStatusMeta(order.status as string);
                 const priorityConfig = PRIORITY_CONFIG[order.priority || 'normal'];
-                const StatusIcon = statusConfig.icon;
+                const StatusIcon = meta.Icon;
                 
                 return (
                   <tr 
@@ -495,9 +436,9 @@ export default function OrderManagement({ organizationId }: OrderManagementProps
                     
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <StatusIcon className="h-4 w-4 text-gray-600" />
-                        <Badge variant={statusConfig.variant}>
-                          {statusConfig.label}
+                        {StatusIcon && <StatusIcon className="h-4 w-4 text-gray-600" />}
+                        <Badge variant={meta.variant}>
+                          {meta.label}
                         </Badge>
                       </div>
                     </td>

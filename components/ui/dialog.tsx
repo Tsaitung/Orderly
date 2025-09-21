@@ -1,4 +1,9 @@
 "use client"
+/**
+ * DEPRECATED: Prefer AccessibleModal API from '@/components/ui/accessible-modal'.
+ * This Radix-based wrapper remains for backward compatibility and will be
+ * gradually replaced to unify modal behavior and accessibility.
+ */
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"

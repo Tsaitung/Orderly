@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { useSupplierOrder } from '@/lib/api/supplier-hooks'
 import { OrderStatus } from '@/lib/api/supplier-types'
+import { getOrderStatusMeta } from '@/lib/status'
 import {
   Clock,
   CheckCircle,
@@ -45,48 +46,7 @@ const STATUS_TRANSITIONS = {
   disputed: ['resolved']
 };
 
-const STATUS_CONFIG = {
-  pending: { 
-    label: '待處理', 
-    icon: Clock, 
-    color: 'text-yellow-600 bg-yellow-50 border-yellow-200' 
-  },
-  confirmed: { 
-    label: '已確認', 
-    icon: CheckCircle, 
-    color: 'text-blue-600 bg-blue-50 border-blue-200' 
-  },
-  preparing: { 
-    label: '備貨中', 
-    icon: Package, 
-    color: 'text-indigo-600 bg-indigo-50 border-indigo-200' 
-  },
-  ready_for_pickup: { 
-    label: '待取貨', 
-    icon: Package, 
-    color: 'text-green-600 bg-green-50 border-green-200' 
-  },
-  in_transit: { 
-    label: '配送中', 
-    icon: Truck, 
-    color: 'text-purple-600 bg-purple-50 border-purple-200' 
-  },
-  delivered: { 
-    label: '已送達', 
-    icon: CheckCircle, 
-    color: 'text-green-600 bg-green-50 border-green-200' 
-  },
-  cancelled: { 
-    label: '已取消', 
-    icon: AlertTriangle, 
-    color: 'text-red-600 bg-red-50 border-red-200' 
-  },
-  disputed: { 
-    label: '有爭議', 
-    icon: AlertTriangle, 
-    color: 'text-red-600 bg-red-50 border-red-200' 
-  }
-};
+// 狀態文案與樣式改由 '@/lib/status' 集中提供
 
 export default function OrderDetailModal({ 
   orderId, 
@@ -129,74 +89,62 @@ export default function OrderDetailModal({
 
   if (loading) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center justify-center py-8">
-            <Loader className="h-8 w-8 animate-spin text-gray-400" />
-            <span className="ml-3 text-gray-600">載入訂單詳情中...</span>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AccessibleModal isOpen={isOpen} onClose={onClose} title="載入訂單詳情" size="xl" className="max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-center py-8">
+          <Loader className="h-8 w-8 animate-spin text-gray-400" />
+          <span className="ml-3 text-gray-600">載入訂單詳情中...</span>
+        </div>
+      </AccessibleModal>
     );
   }
 
   if (error || !order) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="flex items-center space-x-3 py-8">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
-            <div>
-              <h3 className="font-medium text-red-900">無法載入訂單詳情</h3>
-              <p className="text-sm text-red-700">{error || '訂單不存在'}</p>
-            </div>
+      <AccessibleModal isOpen={isOpen} onClose={onClose} title="無法載入訂單詳情" size="xl" className="max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center space-x-3 py-8">
+          <AlertTriangle className="h-6 w-6 text-red-600" />
+          <div>
+            <h3 className="font-medium text-red-900">無法載入訂單詳情</h3>
+            <p className="text-sm text-red-700">{error || '訂單不存在'}</p>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </AccessibleModal>
     );
   }
 
-  const currentStatusConfig = STATUS_CONFIG[order.status];
-  const StatusIcon = currentStatusConfig.icon;
+  const currentMeta = getOrderStatusMeta(order.status)
+  const StatusIcon = currentMeta.Icon;
   const availableTransitions = getAvailableStatusTransitions(order.status);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span>訂單詳情 - {order.order_number}</span>
-              <div className="flex items-center space-x-2">
-                <StatusIcon className="h-5 w-5" />
-                <Badge variant="outline" className={currentStatusConfig.color}>
-                  {currentStatusConfig.label}
-                </Badge>
-              </div>
-            </div>
-            
-            {availableTransitions.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditing(!isEditing)}
-                disabled={isUpdating}
-              >
-                {isEditing ? (
-                  <>
-                    <X className="h-4 w-4 mr-2" />
-                    取消
-                  </>
-                ) : (
-                  <>
-                    <Edit className="h-4 w-4 mr-2" />
-                    更新狀態
-                  </>
-                )}
-              </Button>
-            )}
-          </DialogTitle>
-        </DialogHeader>
+    <AccessibleModal isOpen={isOpen} onClose={onClose} title={`訂單詳情 - ${order.order_number}`} size="xl" className="max-h-[90vh] overflow-y-auto">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <StatusIcon className="h-5 w-5" />
+            <Badge variant={currentMeta.variant}>{currentMeta.label}</Badge>
+          </div>
+          {availableTransitions.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(!isEditing)}
+              disabled={isUpdating}
+            >
+              {isEditing ? (
+                <>
+                  <X className="h-4 w-4 mr-2" />
+                  取消
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  更新狀態
+                </>
+              )}
+            </Button>
+          )}
+        </div>
 
         <div className="space-y-6">
           {/* Order Summary */}
@@ -261,11 +209,14 @@ export default function OrderDetailModal({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
                     <option value="">選擇新狀態</option>
-                    {availableTransitions.map(status => (
-                      <option key={status} value={status}>
-                        {STATUS_CONFIG[status].label}
-                      </option>
-                    ))}
+                    {availableTransitions.map(status => {
+                      const meta = getOrderStatusMeta(status)
+                      return (
+                        <option key={status} value={status}>
+                          {meta.label}
+                        </option>
+                      )
+                    })}
                   </select>
                 </div>
                 
@@ -415,15 +366,15 @@ export default function OrderDetailModal({
               <h3 className="font-medium mb-3">狀態歷史</h3>
               <div className="space-y-3">
                 {order.status_history.map((entry, index) => {
-                  const statusConfig = STATUS_CONFIG[entry.status];
-                  const StatusIcon = statusConfig.icon;
+                  const meta = getOrderStatusMeta(entry.status)
+                  const StatusIcon = meta.Icon;
                   
                   return (
                     <div key={index} className="flex items-start space-x-3 p-3 border rounded-md">
                       <StatusIcon className="h-5 w-5 mt-0.5" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-medium">{statusConfig.label}</span>
+                          <span className="font-medium">{meta.label}</span>
                           <span className="text-sm text-gray-500">
                             {formatDate(new Date(entry.timestamp))}
                           </span>
@@ -444,7 +395,7 @@ export default function OrderDetailModal({
             </Card>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }

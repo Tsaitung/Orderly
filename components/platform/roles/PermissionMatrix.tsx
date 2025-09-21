@@ -31,7 +31,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Switch } from '@/components/ui/switch'
-import { Tooltip } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface Permission {
   id: string
@@ -532,14 +532,21 @@ export function PermissionMatrix() {
                                   key={permission.id}
                                   className="flex flex-col items-center space-y-1 min-w-[80px]"
                                 >
-                                  <Tooltip content={permission.description}>
-                                    <div className={`text-xs text-center px-2 py-1 rounded ${getRiskLevelColor(permission.riskLevel)} bg-white border`}>
-                                      {permission.name}
-                                      {permission.isSystemPermission && (
-                                        <Lock className="h-3 w-3 inline ml-1" />
-                                      )}
-                                    </div>
-                                  </Tooltip>
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className={`text-xs text-center px-2 py-1 rounded ${getRiskLevelColor(permission.riskLevel)} bg-white border cursor-pointer`}>
+                                          {permission.name}
+                                          {permission.isSystemPermission && (
+                                            <Lock className="h-3 w-3 inline ml-1" />
+                                          )}
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{permission.description}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
                                 </div>
                               ))}
                             </div>

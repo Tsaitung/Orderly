@@ -80,7 +80,7 @@ jobs:
         id: build-api-gateway
         run: |
           IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
-          docker build -f backend/api-gateway/Dockerfile.cloudrun -t $IMAGE .
+          docker build -f backend/api-gateway-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/api-gateway-fastapi
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
@@ -88,7 +88,7 @@ jobs:
         id: build-user-service
         run: |
           IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
-          docker build -f backend/user-service/Dockerfile.cloudrun -t $IMAGE .
+          docker build -f backend/user-service-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/user-service-fastapi
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
@@ -104,7 +104,7 @@ jobs:
         id: build-acceptance-service
         run: |
           IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
-          docker build -f backend/acceptance-service/Dockerfile.cloudrun -t $IMAGE ./backend/acceptance-service
+          docker build -f backend/acceptance-service-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/acceptance-service-fastapi
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
@@ -201,7 +201,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --port 8000 \
-            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL,PRODUCT_SERVICE_URL=$PRODUCT_SERVICE_URL,ACCEPTANCE_SERVICE_URL=$ACCEPTANCE_SERVICE_URL
+            --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL,PRODUCT_SERVICE_URL=$PRODUCT_SERVICE_URL,ACCEPTANCE_SERVICE_URL=$ACCEPTANCE_SERVICE_URL/acceptance
 
           API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
@@ -247,7 +247,7 @@ jobs:
           curl -f "${{ steps.deploy.outputs.api-gateway-url }}/health" || exit 1
           curl -f "${{ steps.deploy.outputs.user-service-url }}/health" || exit 1
           curl -f "${{ steps.deploy.outputs.product-service-url }}/health" || exit 1
-          curl -f "${{ steps.deploy.outputs.acceptance-service-url }}/health" || exit 1
+          curl -f "${{ steps.deploy.outputs.acceptance-service-url }}/acceptance/health" || exit 1
           
           echo "✅ All staging services are healthy!"
 

@@ -1,21 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { OrderStatus } from '@/lib/api/supplier-types'
-import {
-  CheckCircle,
-  Clock,
-  Package,
-  Truck,
-  AlertTriangle,
-  Save,
-  X,
-  Loader
-} from 'lucide-react'
+import { AlertTriangle, Save, X, Loader } from 'lucide-react'
+import { getOrderStatusMeta } from '@/lib/status'
 
 interface BulkActionModalProps {
   isOpen: boolean;
@@ -25,44 +17,17 @@ interface BulkActionModalProps {
   isUpdating: boolean;
 }
 
-const STATUS_CONFIG = {
-  confirmed: { 
-    label: '批量確認', 
-    icon: CheckCircle, 
-    color: 'text-blue-600',
-    description: '確認所選訂單，進入備貨流程'
-  },
-  preparing: { 
-    label: '批量備貨', 
-    icon: Package, 
-    color: 'text-indigo-600',
-    description: '將所選訂單標記為備貨中'
-  },
-  ready_for_pickup: { 
-    label: '批量待取貨', 
-    icon: Package, 
-    color: 'text-green-600',
-    description: '所選訂單已備妥，等待取貨'
-  },
-  in_transit: { 
-    label: '批量配送', 
-    icon: Truck, 
-    color: 'text-purple-600',
-    description: '所選訂單已發出配送'
-  },
-  delivered: { 
-    label: '批量完成', 
-    icon: CheckCircle, 
-    color: 'text-green-600',
-    description: '將所選訂單標記為已送達'
-  },
-  cancelled: { 
-    label: '批量取消', 
-    icon: AlertTriangle, 
-    color: 'text-red-600',
-    description: '取消所選訂單'
-  }
-};
+// 使用集中化狀態配置，維持現有描述文案
+const BULK_ACTIONS: Record<Exclude<OrderStatus,
+  'pending' | 'ready' | 'shipped' | 'accepted' | 'completed' | 'resolved'>, { label: string; description: string }>
+ = {
+  confirmed: { label: '批量確認', description: '確認所選訂單，進入備貨流程' },
+  preparing: { label: '批量備貨', description: '將所選訂單標記為備貨中' },
+  ready_for_pickup: { label: '批量待取貨', description: '所選訂單已備妥，等待取貨' },
+  in_transit: { label: '批量配送', description: '所選訂單已發出配送' },
+  delivered: { label: '批量完成', description: '將所選訂單標記為已送達' },
+  cancelled: { label: '批量取消', description: '取消所選訂單' }
+}
 
 export default function BulkActionModal({
   isOpen,
@@ -96,13 +61,8 @@ export default function BulkActionModal({
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>批量操作訂單</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <AccessibleModal isOpen={isOpen} onClose={handleClose} title="批量操作訂單" size="lg">
+      <div className="space-y-6">
           {/* Selection Summary */}
           <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
             <div className="flex items-center justify-between">
@@ -124,8 +84,9 @@ export default function BulkActionModal({
               選擇要執行的操作
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {Object.entries(STATUS_CONFIG).map(([status, config]) => {
-                const Icon = config.icon;
+              {Object.entries(BULK_ACTIONS).map(([status, config]) => {
+                const meta = getOrderStatusMeta(status)
+                const Icon = meta.Icon
                 const isSelected = selectedStatus === status;
                 
                 return (
@@ -139,7 +100,7 @@ export default function BulkActionModal({
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      <Icon className={`h-5 w-5 mt-0.5 ${config.color}`} />
+                      {Icon && <Icon className="h-5 w-5 mt-0.5 text-gray-700" />}
                       <div>
                         <h4 className={`font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
                           {config.label}
@@ -181,7 +142,7 @@ export default function BulkActionModal({
                   <h4 className="font-medium text-yellow-900">確認批量操作</h4>
                   <p className="text-sm text-yellow-800 mt-1">
                     您即將對 {selectedOrderIds.length} 筆訂單執行「
-                    <span className="font-medium">{STATUS_CONFIG[selectedStatus].label}</span>
+                    <span className="font-medium">{BULK_ACTIONS[selectedStatus! as keyof typeof BULK_ACTIONS].label}</span>
                     」操作。此操作執行後無法復原，請確認操作無誤。
                   </p>
                 </div>
@@ -215,8 +176,7 @@ export default function BulkActionModal({
               )}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }

@@ -22,16 +22,14 @@ ENVIRONMENT = os.getenv("NODE_ENV", os.getenv("ENVIRONMENT", "development"))
 
 # Service targets (default to docker-compose names/ports)
 SERVICE_URLS = {
-    "users": os.getenv("USER_SERVICE_URL", "http://user-service:3001"),
-    "orders": os.getenv("ORDER_SERVICE_URL", "http://order-service:3002"),
+    "users": os.getenv("USER_SERVICE_URL", "http://localhost:3001"),
+    "orders": os.getenv("ORDER_SERVICE_URL", "http://localhost:3002"),
     # Product service mounts under /api/products, keep original prefix when proxying
-    "products": os.getenv("PRODUCT_SERVICE_URL", "http://product-service:3003"),
+    "products": os.getenv("PRODUCT_SERVICE_URL", "http://localhost:3003"),
     # Acceptance service mounts under /acceptance (no /api prefix in service)
-    "acceptance": os.getenv("ACCEPTANCE_SERVICE_URL", "http://acceptance-service:3004/acceptance"),
-    # Billing service exposes /api/billing/* endpoints
-    "billing": os.getenv("BILLING_SERVICE_URL", "http://localhost:3005"),
+    "acceptance": os.getenv("ACCEPTANCE_SERVICE_URL", "http://localhost:3004/acceptance"),
     # Notification service exposes /notifications at root (no /api prefix in service)
-    "notifications": os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:3006"),
+    "notifications": os.getenv("NOTIFICATION_SERVICE_URL", "http://localhost:3006"),
     # Customer Hierarchy service exposes '/api/v2/*'
     "customer_hierarchy_v2": os.getenv("CUSTOMER_HIERARCHY_SERVICE_URL", "http://localhost:3007"),
 }
@@ -134,7 +132,6 @@ async def ready(request: Request):
         "user-service": f"{SERVICE_URLS['users']}/health",
         "order-service": f"{SERVICE_URLS['orders']}/health", 
         "product-service": f"{SERVICE_URLS['products']}/health",
-        "billing-service": f"{SERVICE_URLS['billing']}/health",
     }
     
     client = await get_client(request)
@@ -181,6 +178,8 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
     if len(segments) < 2 or segments[0] != "api":
         return None
     key = segments[1]
+    
+    
     # Support '/api/v2/*' path for Customer Hierarchy service
     if key == "v2":
         base = SERVICE_URLS["customer_hierarchy_v2"]
@@ -201,8 +200,6 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
         "products": ("products", SERVICE_URLS["products"], 0),
         # '/api/acceptance/*' -> acceptance-service '/acceptance/*'
         "acceptance": ("acceptance", SERVICE_URLS["acceptance"], 2),
-        # '/api/billing/*' -> billing-service '/api/billing/*' (keep prefix)
-        "billing": ("billing", SERVICE_URLS["billing"], 0),
         # '/api/notifications/*' -> notification-service '/*'
         "notifications": ("notifications", SERVICE_URLS["notifications"], 2),
     }
@@ -217,7 +214,7 @@ async def _proxy(request: Request, full_path: str) -> Response:
     # Basic protection: require Authorization for protected areas
     def _is_protected(p: str) -> bool:
         return any(p.startswith(prefix) for prefix in [
-            "/api/orders", "/api/acceptance", "/api/billing", "/api/notifications", "/api/users"
+            "/api/orders", "/api/acceptance", "/api/notifications", "/api/users"
         ])
 
     claims = None

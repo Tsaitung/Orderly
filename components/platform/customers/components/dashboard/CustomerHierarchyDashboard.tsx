@@ -31,7 +31,7 @@ import {
 // Import existing context and hooks
 import { CustomerHierarchyProvider } from '../../context/CustomerHierarchyContext';
 import { useCustomerHierarchy } from '../../hooks/useCustomerHierarchy';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 
 // Import types
 import type { 

@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
+import { formatDateOnly } from '@/lib/date'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { OrderFilterParams, OrderStatus } from '@/lib/api/supplier-types'
 import {
   Search,
@@ -263,11 +264,11 @@ export default function AdvancedSearchBuilder({
         case 'delivery_date':
           if (operator === 'after' || operator === 'equals') {
             if (field === 'created_at') {
-              filters.date_from = value instanceof Date ? value.toISOString().split('T')[0] : value as string;
+              filters.date_from = value instanceof Date ? formatDateOnly(value) : value as string;
             }
           } else if (operator === 'before') {
             if (field === 'created_at') {
-              filters.date_to = value instanceof Date ? value.toISOString().split('T')[0] : value as string;
+              filters.date_to = value instanceof Date ? formatDateOnly(value) : value as string;
             }
           }
           break;
@@ -348,7 +349,7 @@ export default function AdvancedSearchBuilder({
           ) : fieldConfig.type === 'date' ? (
             <input
               type="date"
-              value={condition.value instanceof Date ? condition.value.toISOString().split('T')[0] : condition.value as string}
+              value={condition.value instanceof Date ? formatDateOnly(condition.value) : condition.value as string}
               onChange={(e) => updateCondition(condition.id, { value: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
             />
@@ -389,16 +390,12 @@ export default function AdvancedSearchBuilder({
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-3">
-            <Search className="h-6 w-6" />
-            <span>高級搜索建構器</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <AccessibleModal isOpen={isOpen} onClose={onClose} title={"高級搜索建構器"} size="xl" className="max-h-[90vh] overflow-y-auto">
+      <div className="space-y-6">
+        <div className="flex items-center space-x-3">
+          <Search className="h-6 w-6" />
+          <span className="text-lg font-semibold">高級搜索建構器</span>
+        </div>
           {/* Preset Filters */}
           <div>
             <h3 className="font-medium mb-3">預設篩選條件</h3>
@@ -505,8 +502,7 @@ export default function AdvancedSearchBuilder({
               套用搜索條件
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }

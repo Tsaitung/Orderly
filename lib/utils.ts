@@ -138,35 +138,7 @@ export function deepClone<T>(obj: T): T {
  * @param func 要防抖的函數
  * @param delay 延遲時間（毫秒）
  */
-export function debounce<T extends (...args: never[]) => unknown>(
-  func: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let timeoutId: NodeJS.Timeout
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => func(...args), delay)
-  }
-}
-
-/**
- * 節流函數
- * @param func 要節流的函數
- * @param delay 節流間隔（毫秒）
- */
-export function throttle<T extends (...args: never[]) => unknown>(
-  func: T,
-  delay: number
-): (...args: Parameters<T>) => void {
-  let inThrottle = false
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args)
-      inThrottle = true
-      setTimeout(() => { inThrottle = false }, delay)
-    }
-  }
-}
+// 已移除未使用的 debounce/throttle 實作以減少重複與死碼
 
 /**
  * 計算信心分數的顏色和標籤

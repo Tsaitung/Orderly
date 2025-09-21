@@ -112,12 +112,6 @@ const sidebarItems = [
         description: '用戶通知管理'
       }
     ]
-  },
-  {
-    title: '資料管理',
-    href: '/admin/data',
-    icon: Database,
-    description: '資料備份與管理'
   }
 ]
 

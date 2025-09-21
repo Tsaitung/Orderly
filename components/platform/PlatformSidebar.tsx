@@ -17,6 +17,7 @@ import {
   Calculator,
   Users,
   Shield,
+  Store,
   Grid3x3,
   LayoutTemplate
 } from 'lucide-react'
@@ -45,12 +46,6 @@ const sidebarItems = [
         icon: Users2,
         description: '餐廳客戶分析'
       },
-      {
-        title: '交易管理',
-        href: '/platform/transactions',
-        icon: CreditCard,
-        description: '交易監控與對帳'
-      }
     ]
   },
   {
@@ -68,12 +63,6 @@ const sidebarItems = [
         href: '/platform/products',
         icon: Package,
         description: 'SKU變體與多供應商管理'
-      },
-      {
-        title: '需求品項',
-        href: '/platform/demand-items',
-        icon: TrendingUp,
-        description: '需求分析與預測'
       }
     ]
   },
@@ -83,21 +72,29 @@ const sidebarItems = [
     children: [
       {
         title: '計費總覽',
-        href: '/platform/billing',
+        href: '/platform/billing/overview',
         icon: BarChart3,
-        description: '計費機制與系統健康度'
+        description: '收入統計與系統健康度'
       },
       {
-        title: '費率管理',
-        href: '/platform/billing/rates',
-        icon: Percent,
-        description: '分級費率與評級折扣'
+        title: '供應商合約',
+        href: '/platform/billing/supplier-contracts',
+        icon: Building2,
+        description: '🔵 供應商交易費率與合約管理',
+        badge: '供應商'
       },
       {
-        title: '供應商計費',
-        href: '/platform/billing/suppliers',
+        title: '餐廳方案',
+        href: '/platform/billing/restaurant-contracts',
+        icon: Store,
+        description: '🟢 餐廳訂閱方案與功能管理',
+        badge: '餐廳'
+      },
+      {
+        title: '對帳管理',
+        href: '/platform/billing/reconciliation',
         icon: Calculator,
-        description: '供應商計費總覽與分析'
+        description: '自動對帳與異常處理'
       }
     ]
   },
@@ -123,18 +120,6 @@ const sidebarItems = [
         icon: Grid3x3,
         description: '權限對應關係總覽'
       },
-      {
-        title: '角色模板',
-        href: '/platform/roles/templates',
-        icon: LayoutTemplate,
-        description: '預設角色模板庫'
-      },
-      {
-        title: '資料管理',
-        href: '/platform/data',
-        icon: Database,
-        description: '資料備份與管理'
-      }
     ]
   }
 ]

@@ -31,6 +31,7 @@ import { AccessibleSelect } from '@/components/ui/accessible-form'
 import { FormDialog } from '@/components/ui/accessible-modal'
 import { useScreenReaderAnnouncer } from '@/hooks/use-accessibility'
 import { cn } from '@/lib/utils'
+import { getOrderStatusMeta, RESTAURANT_ORDER_STATUSES } from '@/lib/status'
 
 interface OrderItem {
   id: string
@@ -225,44 +226,7 @@ export default function RestaurantOrderManagement() {
     announcePolite(`查看訂單 ${order.orderNumber} 詳細資訊`)
   }, [announcePolite])
 
-  const getStatusIcon = (status: RestaurantOrder['status']) => {
-    switch (status) {
-      case 'draft': return <Edit className="h-4 w-4 text-gray-600" />
-      case 'pending': return <Clock className="h-4 w-4 text-yellow-600" />
-      case 'confirmed': return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'preparing': return <Package className="h-4 w-4 text-blue-600" />
-      case 'shipped': return <Truck className="h-4 w-4 text-purple-600" />
-      case 'delivered': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'accepted': return <CheckCircle className="h-4 w-4 text-green-700" />
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-800" />
-      case 'cancelled': return <AlertTriangle className="h-4 w-4 text-red-600" />
-    }
-  }
-
-  const getStatusText = (status: RestaurantOrder['status']) => {
-    switch (status) {
-      case 'draft': return '草稿'
-      case 'pending': return '待確認'
-      case 'confirmed': return '已確認'
-      case 'preparing': return '準備中'
-      case 'shipped': return '已出貨'
-      case 'delivered': return '已送達'
-      case 'accepted': return '已驗收'
-      case 'completed': return '已完成'
-      case 'cancelled': return '已取消'
-    }
-  }
-
-  const getStatusVariant = (status: RestaurantOrder['status']) => {
-    switch (status) {
-      case 'draft': return 'secondary'
-      case 'pending': return 'warning'
-      case 'confirmed': case 'accepted': case 'completed': return 'success'
-      case 'preparing': case 'shipped': case 'delivered': return 'info'
-      case 'cancelled': return 'destructive'
-      default: return 'secondary'
-    }
-  }
+  // 狀態文案與樣式改由 '@/lib/status' 集中提供
 
   const getPriorityColor = (priority: RestaurantOrder['priority']) => {
     switch (priority) {
@@ -311,15 +275,7 @@ export default function RestaurantOrderManagement() {
 
   const statusOptions = [
     { value: 'all', label: '所有狀態' },
-    { value: 'draft', label: '草稿' },
-    { value: 'pending', label: '待確認' },
-    { value: 'confirmed', label: '已確認' },
-    { value: 'preparing', label: '準備中' },
-    { value: 'shipped', label: '已出貨' },
-    { value: 'delivered', label: '已送達' },
-    { value: 'accepted', label: '已驗收' },
-    { value: 'completed', label: '已完成' },
-    { value: 'cancelled', label: '已取消' }
+    ...RESTAURANT_ORDER_STATUSES.map((key) => ({ value: key, label: getOrderStatusMeta(key).label }))
   ]
 
   const priorityOptions = [
@@ -480,13 +436,19 @@ export default function RestaurantOrderManagement() {
                         <div className="font-bold text-primary-600">
                           {order.orderNumber}
                         </div>
-                        <Badge 
-                          variant={getStatusVariant(order.status)}
-                          className="flex items-center space-x-1"
-                        >
-                          {getStatusIcon(order.status)}
-                          <span>{getStatusText(order.status)}</span>
-                        </Badge>
+                        {(() => {
+                          const meta = getOrderStatusMeta(order.status)
+                          const Icon = meta.Icon
+                          return (
+                            <Badge 
+                              variant={meta.variant}
+                              className="flex items-center space-x-1"
+                            >
+                              {Icon && <Icon className="h-4 w-4" />}
+                              <span>{meta.label}</span>
+                            </Badge>
+                          )
+                        })()}
                         <Badge variant="outline" size="sm">
                           {getPriorityText(order.priority)}
                         </Badge>

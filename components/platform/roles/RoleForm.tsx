@@ -46,25 +46,13 @@ interface RoleFormData {
 interface RoleFormProps {
   mode: 'create' | 'edit'
   roleId?: string
-  templateId?: string
 }
 
-interface RoleTemplate {
-  id: string
-  name: string
-  description: string
-  type: 'platform' | 'restaurant' | 'supplier'
-  permissions: string[]
-  tags: string[]
-  isBuiltIn: boolean
-}
-
-export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
+export function RoleForm({ mode, roleId }: RoleFormProps) {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
-  const [selectedTemplate, setSelectedTemplate] = React.useState<string>('')
   const [showAdvanced, setShowAdvanced] = React.useState(false)
   
   const [formData, setFormData] = React.useState<RoleFormData>({
@@ -80,7 +68,6 @@ export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
     dataScope: 'own_organization',
   })
 
-  const [templates, setTemplates] = React.useState<RoleTemplate[]>([])
   const [newTag, setNewTag] = React.useState('')
   const [newIpRestriction, setNewIpRestriction] = React.useState('')
 
@@ -88,11 +75,7 @@ export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
     if (mode === 'edit' && roleId) {
       loadRoleData(roleId)
     }
-    if (templateId) {
-      loadTemplate(templateId)
-    }
-    loadTemplates()
-  }, [mode, roleId, templateId])
+  }, [mode, roleId])
 
   const loadRoleData = async (id: string) => {
     try {
@@ -126,53 +109,6 @@ export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
     }
   }
 
-  const loadTemplate = async (templateId: string) => {
-    try {
-      // 模擬載入模板資料
-      const template = templates.find(t => t.id === templateId)
-      if (template) {
-        setFormData(prev => ({
-          ...prev,
-          name: template.name,
-          description: template.description,
-          type: template.type,
-          permissions: [...template.permissions],
-          tags: [...template.tags]
-        }))
-      }
-    } catch (err) {
-      console.error('載入模板失敗:', err)
-    }
-  }
-
-  const loadTemplates = async () => {
-    try {
-      // 模擬載入角色模板
-      const mockTemplates: RoleTemplate[] = [
-        {
-          id: '1',
-          name: '餐廳基礎管理員',
-          description: '包含基本的餐廳管理權限',
-          type: 'restaurant',
-          permissions: ['order:read', 'order:create', 'product:read'],
-          tags: ['基礎', '管理員'],
-          isBuiltIn: true
-        },
-        {
-          id: '2', 
-          name: '供應商客服',
-          description: '處理客戶服務相關工作',
-          type: 'supplier',
-          permissions: ['order:read', 'customer:read', 'support:create'],
-          tags: ['客服', '支援'],
-          isBuiltIn: true
-        }
-      ]
-      setTemplates(mockTemplates)
-    } catch (err) {
-      console.error('載入模板失敗:', err)
-    }
-  }
 
   const handleInputChange = (field: keyof RoleFormData, value: any) => {
     setFormData(prev => ({
@@ -294,20 +230,6 @@ export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
     }))
   }
 
-  const applyTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId)
-    if (template) {
-      setFormData(prev => ({
-        ...prev,
-        name: template.name,
-        description: template.description,
-        type: template.type,
-        permissions: [...template.permissions],
-        tags: [...template.tags]
-      }))
-      setSelectedTemplate('')
-    }
-  }
 
   const generateCode = () => {
     if (formData.name) {
@@ -329,41 +251,6 @@ export function RoleForm({ mode, roleId, templateId }: RoleFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 模板選擇區域 */}
-      {mode === 'create' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Copy className="h-5 w-5 mr-2" />
-              使用模板創建
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-4">
-              <select
-                value={selectedTemplate}
-                onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-white"
-              >
-                <option value="">選擇角色模板 (可選)</option>
-                {templates.map(template => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} - {template.description}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!selectedTemplate}
-                onClick={() => applyTemplate(selectedTemplate)}
-              >
-                套用模板
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* 基本資訊 */}
       <Card>

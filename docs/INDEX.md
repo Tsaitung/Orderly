@@ -5,6 +5,7 @@
 ---
 
 ## 🎯 權威文檔（Canonical）
+- 開發助手指南：`CLAUDE.md`（唯一開發助理/代理使用與協作指引）
 - 產品需求（PRD）：`docs/PRD-Complete.md`
 - 使用者 Onboarding 流程：`docs/PRD-Onboarding-Process.md`
 - 雙向推薦系統：`docs/PRD-Referral-System.md`

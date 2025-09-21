@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -216,16 +216,8 @@ export default function ProductCreateModal({
   // Calculate profit margin
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Package className="h-5 w-5" />
-            <span>新增產品</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <AccessibleModal isOpen={isOpen} onClose={handleClose} title="新增產品" size="xl" className="max-h-[90vh] overflow-y-auto">
+      <div className="space-y-6">
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -621,8 +613,7 @@ export default function ProductCreateModal({
               )}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
@@ -162,16 +162,12 @@ export default function ExportOptionsModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Download className="h-5 w-5" />
-            <span>匯出訂單資料</span>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <AccessibleModal isOpen={isOpen} onClose={handleClose} title="匯出訂單資料" size="xl" className="max-h-[90vh] overflow-y-auto">
+      <div className="space-y-6">
+        <div className="flex items-center space-x-2">
+          <Download className="h-5 w-5" />
+          <span className="text-lg font-semibold">匯出訂單資料</span>
+        </div>
           {/* Export Format Selection */}
           <div>
             <h3 className="font-medium mb-3">選擇匯出格式</h3>
@@ -417,8 +413,7 @@ export default function ExportOptionsModal({
               )}
             </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </AccessibleModal>
   );
 }
