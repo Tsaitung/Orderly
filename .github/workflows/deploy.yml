@@ -119,12 +119,25 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
-          # Build image with both latest and SHA tags
-          gcloud builds submit backend/${{ matrix.service }} \
+          # Build and push Docker image using gcloud builds submit
+          cd backend/${{ matrix.service }}
+          gcloud builds submit . \
             --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:latest" \
-            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$IMAGE_TAG" \
-            --tag="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$ENVIRONMENT" \
-            --dockerfile="Dockerfile.cloudrun"
+            --config=- <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '-f', 'Dockerfile.cloudrun', '-t', '\$_IMAGE_NAME:latest', '.']
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['tag', '\$_IMAGE_NAME:latest', '\$_IMAGE_NAME:$IMAGE_TAG']
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['tag', '\$_IMAGE_NAME:latest', '\$_IMAGE_NAME:$ENVIRONMENT']
+          images:
+          - '\$_IMAGE_NAME:latest'
+          - '\$_IMAGE_NAME:$IMAGE_TAG'
+          - '\$_IMAGE_NAME:$ENVIRONMENT'
+          substitutions:
+            _IMAGE_NAME: '$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}'
+          EOF
 
   deploy-infrastructure:
     name: Deploy Infrastructure
@@ -188,12 +201,15 @@ jobs:
             fi
           fi
       
+      - name: Authenticate to Google Cloud
+        if: steps.check-deploy.outputs.deploy == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
         if: steps.check-deploy.outputs.deploy == 'true'
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+        uses: google-github-actions/setup-gcloud@v2
       
       - name: Deploy ${{ matrix.service }}
         if: steps.check-deploy.outputs.deploy == 'true'
@@ -206,14 +222,14 @@ jobs:
         run: |
           # Get service port mapping
           case "${{ matrix.service }}" in
-            "api-gateway") PORT=8000 ;;
-            "user-service") PORT=8001 ;;
-            "order-service") PORT=8002 ;;
-            "product-service") PORT=8003 ;;
-            "acceptance-service") PORT=8004 ;;
-            "billing-service") PORT=8005 ;;
-            "notification-service") PORT=8006 ;;
-            "admin-service") PORT=8008 ;;
+            "api-gateway-fastapi") PORT=8000 ;;
+            "user-service-fastapi") PORT=3001 ;;
+            "order-service-fastapi") PORT=3002 ;;
+            "product-service-fastapi") PORT=3003 ;;
+            "acceptance-service-fastapi") PORT=3004 ;;
+            "notification-service-fastapi") PORT=3006 ;;
+            "customer-hierarchy-service-fastapi") PORT=3007 ;;
+            "supplier-service-fastapi") PORT=3007 ;;
             *) echo "Unknown service: ${{ matrix.service }}"; exit 1 ;;
           esac
           
