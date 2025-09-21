@@ -26,7 +26,7 @@ on:
 env:
   GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
   GOOGLE_CLOUD_REGION: asia-east1
-  REGISTRY: gcr.io
+  REGISTRY: asia-east1-docker.pkg.dev
 
 jobs:
   determine-environment:
@@ -111,7 +111,7 @@ jobs:
       
       - name: Configure Docker to use gcloud as credential helper
         if: steps.check-service.outputs.exists == 'true'
-        run: gcloud auth configure-docker
+        run: gcloud auth configure-docker asia-east1-docker.pkg.dev
       
       - name: Build and push Docker image
         if: steps.check-service.outputs.exists == 'true'
@@ -122,8 +122,8 @@ jobs:
           # Build and tag Docker image locally
           cd backend/${{ matrix.service }}
           
-          # Define image names
-          IMAGE_BASE="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}"
+          # Define image names  
+          IMAGE_BASE="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}"
           IMAGE_LATEST="${IMAGE_BASE}:latest"
           IMAGE_SHA="${IMAGE_BASE}:$IMAGE_TAG"
           IMAGE_ENV="${IMAGE_BASE}:$ENVIRONMENT"
@@ -259,7 +259,7 @@ jobs:
           
           # Deploy to Cloud Run
           gcloud run deploy "orderly-${{ matrix.service }}-$ENVIRONMENT" \
-            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-${{ matrix.service }}:$IMAGE_TAG" \
+            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG" \
             --platform=managed \
             --region="$GOOGLE_CLOUD_REGION" \
             --allow-unauthenticated \
