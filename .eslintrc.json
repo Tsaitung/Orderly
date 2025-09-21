@@ -28,7 +28,14 @@
     "no-script-url": "error",
     "prefer-arrow-callback": "error",
     "arrow-spacing": "error",
-    "no-duplicate-imports": "error"
+    "no-duplicate-imports": "error",
+    "no-restricted-syntax": [
+      "error,
+      {
+        "selector": "CallExpression[callee.name='useCustomerHierarchyStore'][arguments.length=0]",
+        "message": "Always use a selector with useCustomerHierarchyStore, e.g. useCustomerHierarchyStore(s => s.loadTree)"
+      }
+    ]
   },
   "env": {
     "browser": true,

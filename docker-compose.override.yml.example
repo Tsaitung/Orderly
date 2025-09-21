@@ -1,0 +1,55 @@
+# docker-compose.override.yml.example
+# Copy this file to docker-compose.override.yml to enable debugging ports for specific services
+# WARNING: This exposes internal services to localhost - only use during development!
+
+version: '3.8'
+
+services:
+  # Uncomment services below to expose their ports for debugging
+  
+  # User Service - Debugging Access
+  # user-service:
+  #   ports:
+  #     - "3001:3001"  # Expose User Service for direct debugging
+  
+  # Order Service - Debugging Access
+  # order-service:
+  #   ports:
+  #     - "3002:3002"  # Expose Order Service for direct debugging
+  
+  # Product Service - Debugging Access
+  # product-service:
+  #   ports:
+  #     - "3003:3003"  # Expose Product Service for direct debugging
+  
+  # Acceptance Service - Debugging Access
+  # acceptance-service:
+  #   ports:
+  #     - "3004:3004"  # Expose Acceptance Service for direct debugging
+  
+  # Billing Service - Debugging Access
+  # billing-service:
+  #   ports:
+  #     - "3005:3005"  # Expose Billing Service for direct debugging
+  
+  # Notification Service - Debugging Access  
+  # notification-service:
+  #   ports:
+  #     - "3006:3006"  # Expose Notification Service for direct debugging
+  
+  # Admin Service - Debugging Access
+  # admin-service:
+  #   ports:
+  #     - "3008:3008"  # Expose Admin Service for direct debugging
+
+# Usage Instructions:
+# 1. Copy this file: cp docker-compose.override.yml.example docker-compose.override.yml
+# 2. Uncomment the services you want to debug
+# 3. Run: docker-compose up -d
+# 4. Access services directly at http://localhost:300X/health
+# 5. Remember to remove docker-compose.override.yml when done debugging
+
+# Security Note:
+# - Only use override files in development environments
+# - Never commit docker-compose.override.yml to version control
+# - The override file is already added to .gitignore

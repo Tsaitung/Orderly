@@ -29,7 +29,7 @@ SERVICE_URLS = {
     # Acceptance service mounts under /acceptance (no /api prefix in service)
     "acceptance": os.getenv("ACCEPTANCE_SERVICE_URL", "http://acceptance-service:3004/acceptance"),
     # Billing service exposes /api/billing/* endpoints
-    "billing": os.getenv("BILLING_SERVICE_URL", "http://billing-service:3005"),
+    "billing": os.getenv("BILLING_SERVICE_URL", "http://localhost:3005"),
     # Notification service exposes /notifications at root (no /api prefix in service)
     "notifications": os.getenv("NOTIFICATION_SERVICE_URL", "http://notification-service:3006"),
     # Customer Hierarchy service exposes '/api/v2/*'
