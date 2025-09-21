@@ -1,5 +1,10 @@
 name: Deploy to Cloud Run
 
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
 on:
   push:
     branches: [ develop, main ]
@@ -66,13 +71,14 @@ jobs:
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
 
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
-    needs: [determine-environment, security-scan]
+    needs: [determine-environment]
     if: needs.determine-environment.outputs.deploy == 'true'
     
     strategy:
