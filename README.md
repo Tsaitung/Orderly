@@ -38,7 +38,7 @@
 
 ### 📖 技術文檔
 - **[計劃與任務追蹤](docs/Plan-and-Tasks.md)** - 詳細開發計劃和進度
-- **[技術架構文檔](docs/technical-architecture.md)** - 系統架構設計
+- **[技術架構文檔](docs/Technical-Architecture-Summary.md)** - 系統架構設計
 - **[API 規格文檔](docs/api-specification.yaml)** - RESTful API 定義
 - **[資料庫架構](docs/Database-Schema-Core.md)** - 完整資料庫設計
 
