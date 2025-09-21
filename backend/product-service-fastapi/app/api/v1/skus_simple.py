@@ -57,22 +57,29 @@ async def search_skus(
         result = await db.execute(query)
         skus = result.scalars().all()
         
-        # Transform to frontend format
+        # Transform to frontend format with sharing mechanism
         sku_data = []
         for sku in skus:
+            # 計算供應商數量 (如果是共享型 SKU)
+            supplier_count = 1
+            if hasattr(sku, 'type') and sku.type == 'public':
+                # TODO: 從 supplier_product_sku_participations 查詢實際數量
+                supplier_count = 3  # Mock data for now
+            
             sku_item = {
                 "id": sku.id,
                 "code": sku.sku_code,
                 "name": sku.name,
                 "nameEn": sku.name,  # Using same name for English
                 "isActive": sku.is_active,
-                "isPublic": True,  # Default to public
-                "stockQuantity": sku.stock_quantity,
-                "minStock": sku.min_stock,
-                "maxStock": sku.max_stock,
                 "weight": sku.weight,
                 "packageType": sku.package_type,
                 "variant": sku.variant or {},
+                # 新增共享機制相關欄位
+                "type": getattr(sku, 'type', 'private'),
+                "creatorType": getattr(sku, 'creator_type', 'supplier'),
+                "approvalStatus": getattr(sku, 'approval_status', 'approved'),
+                "supplierCount": supplier_count,
                 "product": {
                     "id": sku.product.id if sku.product else None,
                     "name": sku.product.name if sku.product else "Unknown Product",
@@ -124,15 +131,8 @@ async def get_sku_stats(
         active_result = await db.execute(active_query)
         active_skus = active_result.scalar()
         
-        # Get low stock count (where stock_quantity <= min_stock)
-        low_stock_query = select(func.count()).select_from(ProductSKU).where(
-            and_(
-                ProductSKU.is_active == True,
-                ProductSKU.stock_quantity <= ProductSKU.min_stock
-            )
-        )
-        low_stock_result = await db.execute(low_stock_query)
-        low_stock_count = low_stock_result.scalar()
+        # Set low stock count to 0 (inventory removed)
+        low_stock_count = 0
         
         # Calculate simple stats
         return {
@@ -182,9 +182,6 @@ async def get_sku_by_id(
                 "name": sku.name,
                 "nameEn": sku.name,
                 "isActive": sku.is_active,
-                "stockQuantity": sku.stock_quantity,
-                "minStock": sku.min_stock,
-                "maxStock": sku.max_stock,
                 "weight": sku.weight,
                 "packageType": sku.package_type,
                 "variant": sku.variant or {},

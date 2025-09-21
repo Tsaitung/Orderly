@@ -152,9 +152,6 @@ class SKUUploadItem(BaseModel):
     product_name = Column(String(500), nullable=False)
     category_name = Column(String(255), nullable=False)
     variant = Column(JSONB, nullable=True)
-    stock_quantity = Column(Integer, nullable=False)
-    min_stock = Column(Integer, nullable=False)
-    max_stock = Column(Integer, nullable=True)
     weight = Column(Float, nullable=True)
     package_type = Column(String(100), nullable=True)
     shelf_life_days = Column(Integer, nullable=True)
@@ -185,9 +182,6 @@ class SKUUploadItem(BaseModel):
     
     # Constraints
     __table_args__ = (
-        CheckConstraint('stock_quantity >= 0', name='sku_upload_items_stock_positive'),
-        CheckConstraint('min_stock >= 0', name='sku_upload_items_min_stock_positive'),
-        CheckConstraint('max_stock IS NULL OR max_stock >= min_stock', name='sku_upload_items_max_stock_valid'),
         CheckConstraint('weight IS NULL OR weight > 0', name='sku_upload_items_weight_positive'),
         CheckConstraint('shelf_life_days IS NULL OR shelf_life_days > 0', name='sku_upload_items_shelf_life_positive'),
         CheckConstraint('ai_duplicate_score IS NULL OR (ai_duplicate_score >= 0 AND ai_duplicate_score <= 1)', name='sku_upload_items_duplicate_score_range'),

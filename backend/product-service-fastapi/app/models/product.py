@@ -19,6 +19,12 @@ class TaxStatus(enum.Enum):
     tax_exempt = "tax_exempt"  # 免稅
 
 
+class PricingMethod(enum.Enum):
+    """計價方式枚舉"""
+    BY_WEIGHT = "BY_WEIGHT"   # 重量計價（蔬菜、肉品等）
+    BY_ITEM = "BY_ITEM"       # 個數計價（罐裝、瓶裝等）
+
+
 class Product(BaseModel):
     """
     Product model with comprehensive field support
@@ -48,6 +54,7 @@ class Product(BaseModel):
     # 規格與定價
     base_unit = Column("baseUnit", String, nullable=False)  # 基本單位 (kg, 個, 包)
     pricing_unit = Column("pricingUnit", String, nullable=False)  # 定價單位
+    pricing_method = Column("pricingMethod", Enum(PricingMethod), default=PricingMethod.BY_ITEM, nullable=False)  # 計價方式
     specifications = Column(JSON, default={}, nullable=False)
     
     # 產品狀態

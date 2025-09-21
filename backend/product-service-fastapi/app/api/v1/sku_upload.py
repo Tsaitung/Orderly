@@ -53,9 +53,6 @@ def generate_csv_template() -> str:
             'variant_size': 'Large',
             'variant_type': 'Organic',
             'variant_grade': 'A',
-            'stock_quantity': '100',
-            'min_stock': '10',
-            'max_stock': '500',
             'weight': '1.5',
             'package_type': 'Box',
             'shelf_life_days': '365',
@@ -66,7 +63,7 @@ def generate_csv_template() -> str:
     output = io.StringIO()
     fieldnames = [
         'product_name', 'category_name', 'variant_size', 'variant_type', 'variant_grade',
-        'stock_quantity', 'min_stock', 'max_stock', 'weight', 'package_type',
+        'weight', 'package_type',
         'shelf_life_days', 'storage_conditions'
     ]
     
@@ -101,7 +98,7 @@ def validate_csv_structure(content: str) -> UploadValidationResult:
             errors.append(f"CSV file exceeds maximum {MAX_UPLOAD_ROWS} rows (found {len(rows)} rows)")
         
         # Check required fields
-        required_fields = ['product_name', 'category_name', 'stock_quantity', 'min_stock']
+        required_fields = ['product_name', 'category_name']
         fieldnames = csv_reader.fieldnames or []
         
         missing_fields = [field for field in required_fields if field not in fieldnames]
@@ -119,29 +116,7 @@ def validate_csv_structure(content: str) -> UploadValidationResult:
             if not row.get('category_name', '').strip():
                 row_errors.append("category_name is required")
             
-            # Numeric field validation
-            try:
-                stock_qty = int(row.get('stock_quantity', 0))
-                if stock_qty < 0:
-                    row_errors.append("stock_quantity must be non-negative")
-            except ValueError:
-                row_errors.append("stock_quantity must be a valid number")
-            
-            try:
-                min_stock = int(row.get('min_stock', 0))
-                if min_stock < 0:
-                    row_errors.append("min_stock must be non-negative")
-            except ValueError:
-                row_errors.append("min_stock must be a valid number")
-            
             # Optional numeric fields
-            if row.get('max_stock'):
-                try:
-                    max_stock = int(row['max_stock'])
-                    if max_stock < min_stock:
-                        row_errors.append("max_stock must be greater than or equal to min_stock")
-                except ValueError:
-                    row_errors.append("max_stock must be a valid number")
             
             if row.get('weight'):
                 try:
@@ -220,9 +195,6 @@ async def process_upload_with_ai(
                 'product_name': row['product_name'].strip(),
                 'category_name': row['category_name'].strip(),
                 'variant': variant,
-                'stock_quantity': int(row.get('stock_quantity', 0)),
-                'min_stock': int(row.get('min_stock', 0)),
-                'max_stock': int(row['max_stock']) if row.get('max_stock') else None,
                 'weight': float(row['weight']) if row.get('weight') else None,
                 'package_type': row.get('package_type', '').strip() or None,
                 'shelf_life_days': int(row['shelf_life_days']) if row.get('shelf_life_days') else None,
@@ -271,9 +243,6 @@ async def process_upload_with_ai(
                 product_name=item_data['product_name'],
                 category_name=item_data['category_name'],
                 variant=item_data['variant'],
-                stock_quantity=item_data['stock_quantity'],
-                min_stock=item_data['min_stock'],
-                max_stock=item_data['max_stock'],
                 weight=item_data['weight'],
                 package_type=item_data['package_type'],
                 shelf_life_days=item_data['shelf_life_days'],

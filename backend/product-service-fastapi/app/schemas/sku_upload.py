@@ -95,9 +95,6 @@ class SKUUploadItemResponse(BaseModel):
     product_name: str
     category_name: str
     variant: Dict[str, Any] = {}
-    stock_quantity: int
-    min_stock: int
-    max_stock: Optional[int]
     weight: Optional[float]
     package_type: Optional[str]
     shelf_life_days: Optional[int]
