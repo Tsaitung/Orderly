@@ -225,7 +225,7 @@ jobs:
         id: check-service
         run: |
           SERVICE_DIR="backend/${{ matrix.service }}"
-          if [ -d "$SERVICE_DIR" ] && [ -f "$SERVICE_DIR/Dockerfile.cloudrun" ]; then
+          if [ -d "$SERVICE_DIR" ] && [ -f "$SERVICE_DIR/Dockerfile" ]; then
             echo "✅ Found service at $SERVICE_DIR"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
