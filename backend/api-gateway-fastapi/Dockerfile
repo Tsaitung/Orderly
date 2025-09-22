@@ -34,12 +34,10 @@ COPY --from=deps /root/.local /root/.local
 
 # 複製應用程式
 COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 
-# 動態端口配置 - 核心設計 (��設8000)
+# 動態端口配置 - 核心設計 (��設8000)
 ARG DEFAULT_PORT=8000
 ENV PORT=${PORT:-${DEFAULT_PORT}}
 EXPOSE ${PORT}
@@ -49,4 +47,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # 啟動命令 - 支援動態端口
-CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
