@@ -101,7 +101,7 @@ jobs:
           echo "api-gateway-image=$API_GATEWAY_IMAGE" >> $GITHUB_OUTPUT
           
           # Build User Service
-          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${IMAGE_TAG}"
+          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service-fastapi:${IMAGE_TAG}"
           docker build -f backend/user-service/Dockerfile.cloudrun -t $USER_SERVICE_IMAGE .
           docker push $USER_SERVICE_IMAGE
           echo "user-service-image=$USER_SERVICE_IMAGE" >> $GITHUB_OUTPUT

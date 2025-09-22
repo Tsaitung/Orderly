@@ -146,7 +146,7 @@ jobs:
           ACCEPTANCE_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
           
           # Deploy User Service
-          gcloud run deploy orderly-user-service-staging \
+          gcloud run deploy orderly-user-service-fastapi-staging \
             --image $USER_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -158,7 +158,7 @@ jobs:
             --port 8001 \
             --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},DATABASE_URL=${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }}
 
-          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-fastapi-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy Product Service (FastAPI)
           gcloud run deploy orderly-product-service-staging \

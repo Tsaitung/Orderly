@@ -109,7 +109,7 @@ git push origin develop
 
 - 📱 **前端**: https://orderly-frontend-staging-xxxxxx.run.app
 - 🚪 **API Gateway**: https://orderly-api-gateway-staging-xxxxxx.run.app
-- 👤 **用戶服務**: https://orderly-user-service-staging-xxxxxx.run.app
+- 👤 **用戶服務**: https://orderly-user-service-fastapi-staging-xxxxxx.run.app
 
 **測試步驟**：
 
@@ -117,7 +117,7 @@ git push origin develop
 # 替換為您的實際 URL
 curl https://orderly-frontend-staging-xxxxxx.run.app/api/health
 curl https://orderly-api-gateway-staging-xxxxxx.run.app/health
-curl https://orderly-user-service-staging-xxxxxx.run.app/health
+curl https://orderly-user-service-fastapi-staging-xxxxxx.run.app/health
 ```
 
 ---

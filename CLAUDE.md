@@ -328,13 +328,13 @@ services:
 
 ```bash
 # 本地測試統一Dockerfile
-docker build -t orderly-user-service backend/user-service-fastapi/
+docker build -t orderly-user-service-fastapi backend/user-service-fastapi/
 
 # 模擬Cloud Run環境測試
-docker run -e PORT=8080 -p 8080:8080 orderly-user-service
+docker run -e PORT=8080 -p 8080:8080 orderly-user-service-fastapi
 
 # 本地開發環境測試
-docker run -e PORT=3001 -p 3001:3001 orderly-user-service
+docker run -e PORT=3001 -p 3001:3001 orderly-user-service-fastapi
 
 # 批量構建所有服務
 for service in api-gateway user-service order-service product-service acceptance-service notification-service customer-hierarchy-service supplier-service; do
