@@ -124,8 +124,12 @@ jobs:
           
           # Check for frontend changes
           frontend_changed=false
-          if echo "$changed_files" | grep -E "(app/|components/|lib/|shared/types/|package\.json|Dockerfile\.frontend)" > /dev/null; then
+          echo "🔍 Testing frontend pattern match..."
+          if echo "$changed_files" | grep -E "(app/|components/|lib/|shared/types/|package\.json|Dockerfile\.frontend)"; then
             frontend_changed=true
+            echo "✅ Frontend changes detected!"
+          else
+            echo "❌ No frontend changes detected"
           fi
           echo "frontend=$frontend_changed" >> $GITHUB_OUTPUT
           
