@@ -4,7 +4,7 @@ Handles data validation and serialization for supplier invitation operations
 """
 from typing import Optional, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from enum import Enum
 
 
@@ -32,7 +32,8 @@ class InvitationSendRequest(BaseModel):
     invitation_message: Optional[str] = Field(None, max_length=500, description="邀請訊息")
     expires_in_days: int = Field(default=30, ge=1, le=90, description="邀請有效期(天)")
     
-    @validator('invitee_phone')
+    @field_validator('invitee_phone')
+    @classmethod
     def validate_phone(cls, v):
         if v and not v.replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '').isdigit():
             raise ValueError('電話號碼格式不正確')
@@ -43,7 +44,8 @@ class InvitationVerifyRequest(BaseModel):
     """Verify invitation code request"""
     code: str = Field(..., min_length=8, max_length=8, description="邀請代碼")
     
-    @validator('code')
+    @field_validator('code')
+    @classmethod
     def validate_code(cls, v):
         if not v.isalnum():
             raise ValueError('邀請代碼必須為英數字組合')
@@ -74,25 +76,28 @@ class SupplierOnboardingRequest(BaseModel):
     contact_email: EmailStr = Field(..., description="聯絡信箱")
     address: Optional[str] = Field(None, max_length=200, description="營業地址")
     
-    @validator('tax_id')
-    def validate_tax_id(cls, v, values):
-        if values.get('business_type') == BusinessType.COMPANY:
+    @field_validator('tax_id')
+    @classmethod
+    def validate_tax_id(cls, v, info):
+        if info.data.get('business_type') == BusinessType.COMPANY:
             if not v:
                 raise ValueError('公司類型必須提供統一編號')
             if len(v) != 8 or not v.isdigit():
                 raise ValueError('統一編號必須為8位數字')
         return v
     
-    @validator('personal_id')
-    def validate_personal_id(cls, v, values):
-        if values.get('business_type') == BusinessType.INDIVIDUAL:
+    @field_validator('personal_id')
+    @classmethod
+    def validate_personal_id(cls, v, info):
+        if info.data.get('business_type') == BusinessType.INDIVIDUAL:
             if not v:
                 raise ValueError('個人商號必須提供身分證字號')
             if len(v) != 10 or not v[0].isalpha():
                 raise ValueError('身分證字號格式不正確')
         return v
     
-    @validator('invitation_code')
+    @field_validator('invitation_code')
+    @classmethod
     def validate_invitation_code(cls, v):
         return v.upper()
 
