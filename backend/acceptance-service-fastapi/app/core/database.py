@@ -9,7 +9,7 @@ from orderly_fastapi_core import (
 
 
 async_engine, sync_engine, AsyncSessionLocal, SessionLocal = create_db_engines(
-    settings.database_url, debug=settings.debug
+    settings.get_database_url_async(), debug=settings.debug
 )
 
 

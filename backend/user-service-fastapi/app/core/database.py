@@ -9,7 +9,7 @@ from .config import settings
 
 # Async engine for application
 async_engine = create_async_engine(
-    settings.database_url,
+    settings.get_database_url_async(),
     echo=settings.debug,
     pool_size=20,
     max_overflow=40,
@@ -19,7 +19,7 @@ async_engine = create_async_engine(
 
 # Sync engine for Alembic
 sync_engine = create_engine(
-    settings.database_url.replace("+asyncpg", ""),
+    settings.get_database_url_sync(),
     echo=settings.debug,
 )
 

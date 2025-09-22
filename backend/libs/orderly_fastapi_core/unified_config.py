@@ -270,6 +270,10 @@ class UnifiedSettings(BaseSettings):
         if self.database_url and "postgresql+asyncpg://" in self.database_url:
             return self.database_url
         
+        # 如果是普通 postgresql URL，轉換為 asyncpg
+        if self.database_url and self.database_url.startswith("postgresql://"):
+            return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
+        
         # 構建異步 URL
         password = os.getenv("POSTGRES_PASSWORD", "orderly_dev_password")
         if self.database_host.startswith("/cloudsql/"):
