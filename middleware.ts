@@ -34,13 +34,18 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/platform')
+    (pathname.startsWith('/platform') && process.env.NODE_ENV === 'production')
   ) {
     if (!sessionCookie) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)
     }
+  }
+
+  // STAGING: 暫時允許在非生產環境訪問平台管理
+  if (pathname.startsWith('/platform') && process.env.NODE_ENV !== 'production') {
+    return NextResponse.next()
   }
 
   return NextResponse.next()
