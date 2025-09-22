@@ -32,19 +32,22 @@ RUN apt-get update && apt-get install -y \
 # 複製依賴
 COPY --from=deps /root/.local /root/.local
 
+# 複製共享庫
+COPY ../libs ./libs
+
 # 複製應用程式
 COPY app ./app
 
 ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app/libs:$PYTHONPATH
 
 # 動態端口配置 - 核心設計 (��設8000)
-ARG DEFAULT_PORT=8000
-ENV PORT=${PORT:-${DEFAULT_PORT}}
-EXPOSE ${PORT}
+ARG DEFAULT_PORT=8080
+EXPOSE 8080
 
 # 健康檢查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # 啟動命令 - 支援動態端口
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]

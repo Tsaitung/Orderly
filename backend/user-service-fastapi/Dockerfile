@@ -32,12 +32,16 @@ RUN apt-get update && apt-get install -y \
 # 複製依賴
 COPY --from=deps /root/.local /root/.local
 
+# 複製共享庫
+COPY ../libs ./libs
+
 # 複製應用程式
 COPY app ./app
 COPY alembic.ini ./alembic.ini
 COPY alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app/libs:$PYTHONPATH
 
 # 動態端口配置 - Cloud Run 兼容 (預設8080)
 ARG DEFAULT_PORT=8080
