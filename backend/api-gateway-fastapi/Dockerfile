@@ -33,13 +33,13 @@ RUN apt-get update && apt-get install -y \
 COPY --from=deps /root/.local /root/.local
 
 # 複製共享庫
-COPY ../libs ./libs
+COPY libs ./libs
 
 # 複製應用程式
-COPY app ./app
+COPY api-gateway-fastapi/app ./app
 
 ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/app/libs:$PYTHONPATH
+ENV PYTHONPATH=/app/libs
 
 # 動態端口配置 - 核心設計 (��設8000)
 ARG DEFAULT_PORT=8080

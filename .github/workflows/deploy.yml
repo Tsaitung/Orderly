@@ -256,7 +256,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         with:
-          context: backend/${{ matrix.service }}
+          context: backend
           file: backend/${{ matrix.service }}/Dockerfile
           push: true
           platforms: linux/amd64  # Specify platform for consistency

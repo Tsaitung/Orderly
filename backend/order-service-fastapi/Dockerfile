@@ -33,15 +33,15 @@ RUN apt-get update && apt-get install -y \
 COPY --from=deps /root/.local /root/.local
 
 # 複製共享庫
-COPY ../libs ./libs
+COPY libs ./libs
 
 # 複製應用程式
-COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
+COPY order-service-fastapi/app ./app
+COPY order-service-fastapi/alembic.ini ./alembic.ini
+COPY order-service-fastapi/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/app/libs:$PYTHONPATH
+ENV PYTHONPATH=/app/libs
 
 # 動態端口配置 - Cloud Run 兼容 (預設8080)
 ARG DEFAULT_PORT=8080
