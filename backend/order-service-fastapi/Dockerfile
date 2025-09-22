@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY order-service-fastapi/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
