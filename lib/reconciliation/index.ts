@@ -3,9 +3,9 @@
  * 導出對帳相關的核心功能
  */
 
-import { matchingAlgorithm } from './matching-algorithm'
-import { confidenceScoring } from './confidence-scoring'
-import { resolutionWorkflow } from './resolution-workflow'
+import FuzzyMatchingEngine from './matching-algorithm'
+import AdvancedConfidenceScoring from './confidence-scoring'
+import DiscrepancyResolutionEngine from './resolution-workflow'
 
 export interface ReconciliationResult {
   id: string
@@ -25,6 +25,12 @@ export interface ReconciliationResult {
   }>
   createdAt: Date
   processedAt?: Date
+}
+
+export interface ReconciliationInput {
+  orders: any[]
+  deliveries: any[]
+  invoices: any[]
 }
 
 export interface ReconciliationEngine {
@@ -47,8 +53,14 @@ export const reconciliationEngine: ReconciliationEngine = {
     const { orders, deliveries, invoices } = data
 
     // 模擬處理邏輯
-    const matches = await matchingAlgorithm.findMatches(orders, deliveries, invoices)
-    const confidence = confidenceScoring.calculateConfidence(matches)
+    const matchingEngine = new FuzzyMatchingEngine()
+    const matches = await matchingEngine.performMatching(orders, deliveries, invoices)
+    
+    // Calculate confidence from matches
+    let confidence = 0.5
+    if (matches.length > 0) {
+      confidence = matches.reduce((sum, match) => sum + match.confidenceScore, 0) / matches.length
+    }
 
     const result: ReconciliationResult = {
       id: `reconciliation_${Date.now()}`,
@@ -100,6 +112,6 @@ export const reconciliationEngine: ReconciliationEngine = {
 }
 
 // 導出其他模組
-export { matchingAlgorithm } from './matching-algorithm'
-export { confidenceScoring } from './confidence-scoring'
-export { resolutionWorkflow } from './resolution-workflow'
+export { default as FuzzyMatchingEngine } from './matching-algorithm'
+export { default as AdvancedConfidenceScoring } from './confidence-scoring'
+export { default as DiscrepancyResolutionEngine } from './resolution-workflow'

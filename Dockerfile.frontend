@@ -33,7 +33,9 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy public folder from source (not builder) since standalone doesn't include it
 COPY public ./public
 
-# Cloud Run provides PORT automatically; EXPOSE for local development
-EXPOSE 8000
+# Cloud Run provides PORT automatically; listen on dynamic port
+ENV PORT=8080
+EXPOSE $PORT
 
-CMD ["node", "server.js"]
+# Next.js standalone server with dynamic port support
+CMD ["sh", "-c", "node server.js"]

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -68,7 +68,7 @@ interface OnboardingFormData {
   address: string
 }
 
-export default function SupplierOnboardingPage() {
+function SupplierOnboardingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationCode = searchParams.get('code')
@@ -694,5 +694,20 @@ export default function SupplierOnboardingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SupplierOnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+          <p className="text-gray-600">載入中...</p>
+        </div>
+      </div>
+    }>
+      <SupplierOnboardingPageContent />
+    </Suspense>
   )
 }

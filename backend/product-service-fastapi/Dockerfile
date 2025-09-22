@@ -39,14 +39,13 @@ COPY alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 
-# 動態端口配置 - 核心設計 (product-service預設3003)
-ARG DEFAULT_PORT=3003
-ENV PORT=${PORT:-${DEFAULT_PORT}}
-EXPOSE ${PORT}
+# 動態端口配置 - Cloud Run 兼容 (預設8080)
+ARG DEFAULT_PORT=8080
+EXPOSE 8080
 
-# 健康檢查
+# 健康檢查 - 使用動態端口
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 # 啟動命令 - 支援動態端口
-CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]
+CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]
