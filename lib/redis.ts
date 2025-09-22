@@ -7,18 +7,20 @@ declare global {
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
 
-export const redis = globalThis.redis || new Redis(redisUrl, {
-  // Redis 連接配置
-  maxRetriesPerRequest: 3,
-  retryDelayOnFailover: 100,
-  connectTimeout: 10000,
-  lazyConnect: true,
-  // 開發環境設置
-  ...(process.env.NODE_ENV === 'development' && {
-    enableReadyCheck: false,
-    maxRetriesPerRequest: null
+export const redis =
+  globalThis.redis ||
+  new Redis(redisUrl, {
+    // Redis 連接配置
+    maxRetriesPerRequest: 3,
+    retryDelayOnFailover: 100,
+    connectTimeout: 10000,
+    lazyConnect: true,
+    // 開發環境設置
+    ...(process.env.NODE_ENV === 'development' && {
+      enableReadyCheck: false,
+      maxRetriesPerRequest: null,
+    }),
   })
-})
 
 if (process.env.NODE_ENV !== 'production') {
   globalThis.redis = redis
@@ -30,7 +32,7 @@ export class CacheService {
     SHORT: 300, // 5 分鐘
     MEDIUM: 1800, // 30 分鐘
     LONG: 3600, // 1 小時
-    DAY: 86400 // 24 小時
+    DAY: 86400, // 24 小時
   }
 
   static async get<T = any>(key: string): Promise<T | null> {
@@ -75,7 +77,11 @@ export class CacheService {
   }
 
   // 用戶會話管理
-  static async setUserSession(userId: string, sessionData: any, ttl: number = this.TTL.DAY): Promise<boolean> {
+  static async setUserSession(
+    userId: string,
+    sessionData: any,
+    ttl: number = this.TTL.DAY
+  ): Promise<boolean> {
     const key = `session:user:${userId}`
     return this.set(key, sessionData, ttl)
   }
@@ -91,7 +97,11 @@ export class CacheService {
   }
 
   // 對帳數據緩存
-  static async cacheReconciliationResult(reconciliationId: string, result: any, ttl: number = this.TTL.LONG): Promise<boolean> {
+  static async cacheReconciliationResult(
+    reconciliationId: string,
+    result: any,
+    ttl: number = this.TTL.LONG
+  ): Promise<boolean> {
     const key = `reconciliation:result:${reconciliationId}`
     return this.set(key, result, ttl)
   }
@@ -102,7 +112,11 @@ export class CacheService {
   }
 
   // 組織數據緩存
-  static async cacheOrganizationData(organizationId: string, data: any, ttl: number = this.TTL.LONG): Promise<boolean> {
+  static async cacheOrganizationData(
+    organizationId: string,
+    data: any,
+    ttl: number = this.TTL.LONG
+  ): Promise<boolean> {
     const key = `organization:${organizationId}`
     return this.set(key, data, ttl)
   }
@@ -113,7 +127,11 @@ export class CacheService {
   }
 
   // 產品目錄緩存
-  static async cacheProductCatalog(supplierId: string, products: any[], ttl: number = this.TTL.MEDIUM): Promise<boolean> {
+  static async cacheProductCatalog(
+    supplierId: string,
+    products: any[],
+    ttl: number = this.TTL.MEDIUM
+  ): Promise<boolean> {
     const key = `products:supplier:${supplierId}`
     return this.set(key, products, ttl)
   }
@@ -130,7 +148,7 @@ export class CacheService {
       if (keys.length === 0) {
         return 0
       }
-      
+
       const result = await redis.del(...keys)
       return result
     } catch (error) {

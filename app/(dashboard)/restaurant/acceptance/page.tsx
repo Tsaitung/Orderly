@@ -3,7 +3,7 @@ import RestaurantAcceptanceManagement from '@/components/restaurant/restaurant-a
 
 export const metadata: Metadata = {
   title: '驗收管理 - 餐廳管理儀表板',
-  description: '處理供應商送貨驗收，包含拍照記錄、品質檢查、數量確認等功能'
+  description: '處理供應商送貨驗收，包含拍照記錄、品質檢查、數量確認等功能',
 }
 
 export default function RestaurantAcceptancePage() {
@@ -11,12 +11,8 @@ export default function RestaurantAcceptancePage() {
     <div className="space-y-6">
       {/* 頁面標題 */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          驗收管理
-        </h1>
-        <p className="text-gray-600">
-          處理供應商送貨驗收，確保商品品質與數量符合訂單要求
-        </p>
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">驗收管理</h1>
+        <p className="text-gray-600">處理供應商送貨驗收，確保商品品質與數量符合訂單要求</p>
       </div>
 
       {/* 驗收管理組件 */}

@@ -1,51 +1,52 @@
-# Multi-stage build for FastAPI Product Service
+# 多階段構建 - FastAPI服務標準模板
 FROM python:3.11-slim AS base
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    curl \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Dependencies stage
+# 依賴安裝階段
 FROM base AS deps
-WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# Production stage
-FROM base AS runner
-WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --user --no-warn-script-location -r requirements.txt
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash app && \
-    chown -R app:app /app
+# 運行階段
+FROM base AS runtime
 
-# Copy installed packages from deps stage
-COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=deps /usr/local/bin /usr/local/bin
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy application code
-COPY --chown=app:app . .
+# 複製依賴
+COPY --from=deps /root/.local /root/.local
 
-# Switch to non-root user
-USER app
+# 複製應用程式
+COPY app ./app
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 
-# Expose port
-EXPOSE 3003
+ENV PATH=/root/.local/bin:$PATH
 
-# Health check
+# 動態端口配置 - 核心設計 (product-service預設3003)
+ARG DEFAULT_PORT=3003
+ENV PORT=${PORT:-${DEFAULT_PORT}}
+EXPOSE ${PORT}
+
+# 健康檢查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3003/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Run the application
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 3003 --workers 1"]
+# 啟動命令 - 支援動態端口
+CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers 1"]

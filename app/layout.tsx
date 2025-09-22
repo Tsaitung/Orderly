@@ -27,17 +27,9 @@ export const metadata: Metadata = {
     template: '%s | 井然 Orderly',
     default: '井然 Orderly - 餐飲供應鏈自動化對帳平台',
   },
-  description: '井然 Orderly 是一個以自動化對帳為核心的餐飲供應鏈數位解決方案，專注解決行業最大痛點——繁瑣易錯的對帳流程。',
-  keywords: [
-    '餐飲',
-    '供應鏈',
-    '自動化對帳',
-    'ERP整合',
-    '數位平台',
-    '訂單管理',
-    '驗收',
-    '結算'
-  ],
+  description:
+    '井然 Orderly 是一個以自動化對帳為核心的餐飲供應鏈數位解決方案，專注解決行業最大痛點——繁瑣易錯的對帳流程。',
+  keywords: ['餐飲', '供應鏈', '自動化對帳', 'ERP整合', '數位平台', '訂單管理', '驗收', '結算'],
   authors: [{ name: 'Orderly Team' }],
   creator: 'Orderly Team',
   publisher: 'Orderly Platform',
@@ -55,7 +47,8 @@ export const metadata: Metadata = {
     locale: 'zh_TW',
     url: '/',
     title: '井然 Orderly - 餐飲供應鏈自動化對帳平台',
-    description: '透過 ERP 整合和 API 優先架構，實現下單到結算全流程自動化，讓餐廳和供應商徹底告別手工對帳的時代。',
+    description:
+      '透過 ERP 整合和 API 優先架構，實現下單到結算全流程自動化，讓餐廳和供應商徹底告別手工對帳的時代。',
     siteName: '井然 Orderly',
   },
   twitter: {
@@ -80,20 +73,11 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html 
-      lang="zh-TW" 
-      className={cn(
-        inter.variable,
-        notoSansTC.variable,
-        jetbrainsMono.variable,
-        'scroll-smooth'
-      )}
+    <html
+      lang="zh-TW"
+      className={cn(inter.variable, notoSansTC.variable, jetbrainsMono.variable, 'scroll-smooth')}
       suppressHydrationWarning
     >
       <head>
@@ -139,7 +123,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body 
+      <body
         className={cn(
           'min-h-screen bg-background font-sans antialiased',
           'selection:bg-primary-100 selection:text-primary-900'
@@ -148,9 +132,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           <div className="relative flex min-h-screen flex-col">
-            <div className="flex-1">
-              {children}
-            </div>
+            <div className="flex-1">{children}</div>
           </div>
         </AuthProvider>
       </body>

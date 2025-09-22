@@ -2,15 +2,15 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { 
-  Eye, 
-  MoreHorizontal, 
-  CheckCircle, 
-  Clock, 
+import {
+  Eye,
+  MoreHorizontal,
+  CheckCircle,
+  Clock,
   AlertCircle,
   Package,
   Filter,
-  Search
+  Search,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,7 +44,7 @@ const mockOrders: Order[] = [
     reconciliationStatus: 'completed',
     createdAt: '2024-01-15',
     deliveryDate: '2024-01-16',
-    priority: 'medium'
+    priority: 'medium',
   },
   {
     id: '2',
@@ -56,7 +56,7 @@ const mockOrders: Order[] = [
     reconciliationStatus: 'processing',
     createdAt: '2024-01-15',
     deliveryDate: '2024-01-17',
-    priority: 'high'
+    priority: 'high',
   },
   {
     id: '3',
@@ -68,7 +68,7 @@ const mockOrders: Order[] = [
     reconciliationStatus: 'not_started',
     createdAt: '2024-01-14',
     deliveryDate: '2024-01-18',
-    priority: 'urgent'
+    priority: 'urgent',
   },
   {
     id: '4',
@@ -80,7 +80,7 @@ const mockOrders: Order[] = [
     reconciliationStatus: 'not_started',
     createdAt: '2024-01-14',
     deliveryDate: '2024-01-19',
-    priority: 'low'
+    priority: 'low',
   },
   {
     id: '5',
@@ -92,8 +92,8 @@ const mockOrders: Order[] = [
     reconciliationStatus: 'failed',
     createdAt: '2024-01-13',
     deliveryDate: '2024-01-16',
-    priority: 'medium'
-  }
+    priority: 'medium',
+  },
 ]
 
 export default function RecentOrders() {
@@ -105,13 +105,14 @@ export default function RecentOrders() {
 
   const filteredOrders = React.useMemo(() => {
     return orders.filter(order => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch =
+        searchTerm === '' ||
         order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.supplier.toLowerCase().includes(searchTerm.toLowerCase())
-      
+
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter
-      const matchesReconciliation = reconciliationFilter === 'all' || 
-        order.reconciliationStatus === reconciliationFilter
+      const matchesReconciliation =
+        reconciliationFilter === 'all' || order.reconciliationStatus === reconciliationFilter
 
       return matchesSearch && matchesStatus && matchesReconciliation
     })
@@ -119,71 +120,105 @@ export default function RecentOrders() {
 
   const getStatusIcon = (status: Order['status']) => {
     switch (status) {
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'delivered': return <Package className="h-4 w-4 text-blue-600" />
-      case 'shipped': return <Clock className="h-4 w-4 text-yellow-600" />
-      case 'confirmed': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'pending': return <Clock className="h-4 w-4 text-gray-500" />
-      case 'cancelled': return <AlertCircle className="h-4 w-4 text-red-600" />
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'delivered':
+        return <Package className="h-4 w-4 text-blue-600" />
+      case 'shipped':
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      case 'confirmed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'pending':
+        return <Clock className="h-4 w-4 text-gray-500" />
+      case 'cancelled':
+        return <AlertCircle className="h-4 w-4 text-red-600" />
     }
   }
 
   const getStatusText = (status: Order['status']) => {
     switch (status) {
-      case 'completed': return '已完成'
-      case 'delivered': return '已送達'
-      case 'shipped': return '已出貨'
-      case 'confirmed': return '已確認'
-      case 'pending': return '待確認'
-      case 'cancelled': return '已取消'
+      case 'completed':
+        return '已完成'
+      case 'delivered':
+        return '已送達'
+      case 'shipped':
+        return '已出貨'
+      case 'confirmed':
+        return '已確認'
+      case 'pending':
+        return '待確認'
+      case 'cancelled':
+        return '已取消'
     }
   }
 
   const getStatusVariant = (status: Order['status']) => {
     switch (status) {
-      case 'completed': return 'success'
-      case 'delivered': return 'info'
-      case 'shipped': return 'warning'
-      case 'confirmed': return 'success'
-      case 'pending': return 'secondary'
-      case 'cancelled': return 'destructive'
-      default: return 'secondary'
+      case 'completed':
+        return 'success'
+      case 'delivered':
+        return 'info'
+      case 'shipped':
+        return 'warning'
+      case 'confirmed':
+        return 'success'
+      case 'pending':
+        return 'secondary'
+      case 'cancelled':
+        return 'destructive'
+      default:
+        return 'secondary'
     }
   }
 
   const getReconciliationStatusText = (status: Order['reconciliationStatus']) => {
     switch (status) {
-      case 'completed': return '已對帳'
-      case 'processing': return '對帳中'
-      case 'failed': return '對帳失敗'
-      case 'not_started': return '未對帳'
+      case 'completed':
+        return '已對帳'
+      case 'processing':
+        return '對帳中'
+      case 'failed':
+        return '對帳失敗'
+      case 'not_started':
+        return '未對帳'
     }
   }
 
   const getReconciliationVariant = (status: Order['reconciliationStatus']) => {
     switch (status) {
-      case 'completed': return 'success'
-      case 'processing': return 'warning'
-      case 'failed': return 'destructive'
-      case 'not_started': return 'secondary'
+      case 'completed':
+        return 'success'
+      case 'processing':
+        return 'warning'
+      case 'failed':
+        return 'destructive'
+      case 'not_started':
+        return 'secondary'
     }
   }
 
   const getPriorityColor = (priority: Order['priority']) => {
     switch (priority) {
-      case 'urgent': return 'border-l-red-500'
-      case 'high': return 'border-l-orange-500'
-      case 'medium': return 'border-l-yellow-500'
-      case 'low': return 'border-l-green-500'
+      case 'urgent':
+        return 'border-l-red-500'
+      case 'high':
+        return 'border-l-orange-500'
+      case 'medium':
+        return 'border-l-yellow-500'
+      case 'low':
+        return 'border-l-green-500'
     }
   }
 
-  const handleSearch = React.useCallback((value: string) => {
-    setSearchTerm(value)
-    if (value) {
-      announcePolite(`搜尋結果：找到 ${filteredOrders.length} 筆訂單`)
-    }
-  }, [filteredOrders.length, announcePolite])
+  const handleSearch = React.useCallback(
+    (value: string) => {
+      setSearchTerm(value)
+      if (value) {
+        announcePolite(`搜尋結果：找到 ${filteredOrders.length} 筆訂單`)
+      }
+    },
+    [filteredOrders.length, announcePolite]
+  )
 
   const statusOptions = [
     { value: 'all', label: '所有狀態' },
@@ -192,7 +227,7 @@ export default function RecentOrders() {
     { value: 'shipped', label: '已出貨' },
     { value: 'delivered', label: '已送達' },
     { value: 'completed', label: '已完成' },
-    { value: 'cancelled', label: '已取消' }
+    { value: 'cancelled', label: '已取消' },
   ]
 
   const reconciliationOptions = [
@@ -200,7 +235,7 @@ export default function RecentOrders() {
     { value: 'not_started', label: '未對帳' },
     { value: 'processing', label: '對帳中' },
     { value: 'completed', label: '已對帳' },
-    { value: 'failed', label: '對帳失敗' }
+    { value: 'failed', label: '對帳失敗' },
   ]
 
   return (
@@ -212,9 +247,7 @@ export default function RecentOrders() {
               <Package className="h-5 w-5 text-primary-500" />
               <span>近期訂單</span>
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
-              最新的採購訂單和對帳狀態
-            </p>
+            <p className="mt-1 text-sm text-gray-600">最新的採購訂單和對帳狀態</p>
           </div>
           <Link href="/restaurant/orders">
             <Button variant="outline" size="sm">
@@ -223,22 +256,22 @@ export default function RecentOrders() {
           </Link>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         {/* 搜尋和篩選 */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋訂單編號或供應商..."
                 value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={e => handleSearch(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <AccessibleSelect
               label="訂單狀態"
@@ -248,7 +281,7 @@ export default function RecentOrders() {
               onChange={setStatusFilter}
               className="w-40"
             />
-            
+
             <AccessibleSelect
               label="對帳狀態"
               name="reconciliation-filter"
@@ -263,16 +296,16 @@ export default function RecentOrders() {
         {/* 訂單列表 */}
         <div className="space-y-3">
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="py-8 text-center text-gray-500">
+              <Package className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p>沒有找到符合條件的訂單</p>
             </div>
           ) : (
-            filteredOrders.map((order) => (
+            filteredOrders.map(order => (
               <div
                 key={order.id}
                 className={cn(
-                  'border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors',
+                  'rounded-lg border border-gray-200 p-4 transition-colors hover:bg-gray-50',
                   'border-l-4',
                   getPriorityColor(order.priority)
                 )}
@@ -281,10 +314,8 @@ export default function RecentOrders() {
                   {/* 左側：基本資訊 */}
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center space-x-3">
-                      <span className="font-medium text-gray-900">
-                        {order.orderNumber}
-                      </span>
-                      <Badge 
+                      <span className="font-medium text-gray-900">{order.orderNumber}</span>
+                      <Badge
                         variant={getStatusVariant(order.status)}
                         size="sm"
                         className="flex items-center space-x-1"
@@ -292,15 +323,15 @@ export default function RecentOrders() {
                         {getStatusIcon(order.status)}
                         <span>{getStatusText(order.status)}</span>
                       </Badge>
-                      <Badge 
+                      <Badge
                         variant={getReconciliationVariant(order.reconciliationStatus)}
                         size="sm"
                       >
                         {getReconciliationStatusText(order.reconciliationStatus)}
                       </Badge>
                     </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600 md:grid-cols-4">
                       <div>
                         <span className="font-medium">供應商：</span>
                         {order.supplier}
@@ -323,22 +354,13 @@ export default function RecentOrders() {
                   {/* 右側：操作按鈕 */}
                   <div className="flex items-center space-x-2">
                     <Link href={`/restaurant/orders/${order.id}`}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center space-x-1"
-                      >
+                      <Button variant="outline" size="sm" className="flex items-center space-x-1">
                         <Eye className="h-4 w-4" />
                         <span className="hidden md:inline">查看</span>
                       </Button>
                     </Link>
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="p-2"
-                      aria-label="更多操作"
-                    >
+
+                    <Button variant="ghost" size="sm" className="p-2" aria-label="更多操作">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </div>

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
+import {
   Calculator,
-  Plus, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
   Edit,
   Check,
   X,
@@ -21,7 +21,7 @@ import {
   DollarSign,
   Calendar,
   Eye,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -67,7 +67,7 @@ const mockReconciliations = [
     completed_date: new Date('2024-10-02'),
     line_items_count: 156,
     matched_items: 156,
-    unmatched_items: 0
+    unmatched_items: 0,
   },
   {
     id: 'recon_002',
@@ -82,7 +82,7 @@ const mockReconciliations = [
     created_date: new Date('2024-10-01'),
     line_items_count: 1,
     matched_items: 1,
-    unmatched_items: 0
+    unmatched_items: 0,
   },
   {
     id: 'recon_003',
@@ -97,7 +97,7 @@ const mockReconciliations = [
     created_date: new Date('2024-10-01'),
     line_items_count: 89,
     matched_items: 85,
-    unmatched_items: 4
+    unmatched_items: 4,
   },
   {
     id: 'recon_004',
@@ -113,8 +113,8 @@ const mockReconciliations = [
     completed_date: new Date('2024-10-01'),
     line_items_count: 1,
     matched_items: 1,
-    unmatched_items: 0
-  }
+    unmatched_items: 0,
+  },
 ]
 
 const mockMetrics = {
@@ -124,22 +124,22 @@ const mockMetrics = {
   auto_matched_rate: 0.847,
   average_completion_time: 1.2,
   total_amount_reconciled: 2456780,
-  disputed_amount: 45600
+  disputed_amount: 45600,
 }
 
 const reconciliationTypeLabels = {
   supplier: '供應商對帳',
-  restaurant: '餐廳對帳'
+  restaurant: '餐廳對帳',
 }
 
 const reconciliationTypeColors = {
   supplier: 'text-blue-600 bg-blue-50 border-blue-200',
-  restaurant: 'text-green-600 bg-green-50 border-green-200'
+  restaurant: 'text-green-600 bg-green-50 border-green-200',
 }
 
 const reconciliationTypeIcons = {
   supplier: Building2,
-  restaurant: Store
+  restaurant: Store,
 }
 
 const statusLabels = {
@@ -148,7 +148,7 @@ const statusLabels = {
   manual_review: '人工審核',
   completed: '已完成',
   disputed: '有爭議',
-  failed: '失敗'
+  failed: '失敗',
 }
 
 const statusColors = {
@@ -157,7 +157,7 @@ const statusColors = {
   manual_review: 'bg-orange-100 text-orange-800',
   completed: 'bg-green-100 text-green-800',
   disputed: 'bg-red-100 text-red-800',
-  failed: 'bg-red-100 text-red-800'
+  failed: 'bg-red-100 text-red-800',
 }
 
 const statusIcons = {
@@ -166,14 +166,14 @@ const statusIcons = {
   manual_review: Eye,
   completed: CheckCircle,
   disputed: AlertTriangle,
-  failed: X
+  failed: X,
 }
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('zh-TW', {
     style: 'currency',
     currency: 'TWD',
-    minimumFractionDigits: 0
+    minimumFractionDigits: 0,
   }).format(amount)
 }
 
@@ -194,11 +194,12 @@ export default function ReconciliationPage() {
   const [activeTab, setActiveTab] = useState('all')
 
   const filteredReconciliations = reconciliations.filter(recon => {
-    const matchesSearch = recon.entity_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         recon.id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch =
+      recon.entity_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      recon.id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesType = typeFilter === 'all' || recon.type === typeFilter
     const matchesStatus = statusFilter === 'all' || recon.status === statusFilter
-    
+
     return matchesSearch && matchesType && matchesStatus
   })
 
@@ -207,51 +208,55 @@ export default function ReconciliationPage() {
       {/* 頁面標題 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <div className="rounded-lg bg-purple-50 p-2">
               <Calculator className="h-8 w-8 text-purple-600" />
             </div>
             對帳管理
           </h1>
-          <p className="text-gray-600 mt-2">自動對帳與異常處理</p>
+          <p className="mt-2 text-gray-600">自動對帳與異常處理</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline">
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="mr-2 h-4 w-4" />
             上傳對帳文件
           </Button>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button className="bg-purple-600 text-white hover:bg-purple-700">
+            <Plus className="mr-2 h-4 w-4" />
             手動建立對帳
           </Button>
         </div>
       </div>
 
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card className="border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="rounded-lg bg-purple-50 p-2">
                 <Calculator className="h-5 w-5 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">總對帳數</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.total_reconciliations}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.total_reconciliations}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-yellow-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-50 rounded-lg">
+              <div className="rounded-lg bg-yellow-50 p-2">
                 <Clock className="h-5 w-5 text-yellow-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">待處理</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.pending_reconciliations}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.pending_reconciliations}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -260,12 +265,14 @@ export default function ReconciliationPage() {
         <Card className="border-red-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-red-50 rounded-lg">
+              <div className="rounded-lg bg-red-50 p-2">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">有爭議</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.disputed_reconciliations}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.disputed_reconciliations}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -274,12 +281,14 @@ export default function ReconciliationPage() {
         <Card className="border-blue-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-50 rounded-lg">
+              <div className="rounded-lg bg-blue-50 p-2">
                 <RefreshCw className="h-5 w-5 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">自動配對率</p>
-                <p className="text-2xl font-bold text-gray-900">{formatPercentage(mockMetrics.auto_matched_rate)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatPercentage(mockMetrics.auto_matched_rate)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -288,12 +297,14 @@ export default function ReconciliationPage() {
         <Card className="border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="rounded-lg bg-purple-50 p-2">
                 <DollarSign className="h-5 w-5 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">對帳金額</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockMetrics.total_amount_reconciled)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(mockMetrics.total_amount_reconciled)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -302,12 +313,14 @@ export default function ReconciliationPage() {
         <Card className="border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-2">
                 <Calendar className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">平均完成時間</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.average_completion_time} 天</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.average_completion_time} 天
+                </p>
               </div>
             </div>
           </CardContent>
@@ -317,14 +330,14 @@ export default function ReconciliationPage() {
       {/* 篩選與搜尋 */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder="搜尋對帳單號或實體名稱..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -359,8 +372,12 @@ export default function ReconciliationPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all">全部對帳</TabsTrigger>
-          <TabsTrigger value="supplier" className="text-blue-600">🔵 供應商對帳</TabsTrigger>
-          <TabsTrigger value="restaurant" className="text-green-600">🟢 餐廳對帳</TabsTrigger>
+          <TabsTrigger value="supplier" className="text-blue-600">
+            🔵 供應商對帳
+          </TabsTrigger>
+          <TabsTrigger value="restaurant" className="text-green-600">
+            🟢 餐廳對帳
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -368,14 +385,14 @@ export default function ReconciliationPage() {
         </TabsContent>
 
         <TabsContent value="supplier" className="space-y-4">
-          <ReconciliationTable 
-            reconciliations={filteredReconciliations.filter(r => r.type === 'supplier')} 
+          <ReconciliationTable
+            reconciliations={filteredReconciliations.filter(r => r.type === 'supplier')}
           />
         </TabsContent>
 
         <TabsContent value="restaurant" className="space-y-4">
-          <ReconciliationTable 
-            reconciliations={filteredReconciliations.filter(r => r.type === 'restaurant')} 
+          <ReconciliationTable
+            reconciliations={filteredReconciliations.filter(r => r.type === 'restaurant')}
           />
         </TabsContent>
       </Tabs>
@@ -408,10 +425,10 @@ function ReconciliationTable({ reconciliations }: { reconciliations: typeof mock
             </TableRow>
           </TableHeader>
           <TableBody>
-            {reconciliations.map((recon) => {
+            {reconciliations.map(recon => {
               const TypeIcon = reconciliationTypeIcons[recon.type]
               const StatusIcon = statusIcons[recon.status]
-              
+
               return (
                 <TableRow key={recon.id}>
                   <TableCell>
@@ -449,7 +466,9 @@ function ReconciliationTable({ reconciliations }: { reconciliations: typeof mock
                   </TableCell>
                   <TableCell>
                     <div className={cn('font-medium', getDifferenceColor(recon.difference))}>
-                      {recon.difference === 0 ? '無差異' : formatCurrency(Math.abs(recon.difference))}
+                      {recon.difference === 0
+                        ? '無差異'
+                        : formatCurrency(Math.abs(recon.difference))}
                       {recon.difference !== 0 && (
                         <div className="text-xs text-gray-500">
                           {recon.difference > 0 ? '平台多收' : '平台少收'}
@@ -463,7 +482,7 @@ function ReconciliationTable({ reconciliations }: { reconciliations: typeof mock
                       {recon.unmatched_items > 0 && (
                         <div className="text-red-600">{recon.unmatched_items} 未配對</div>
                       )}
-                      <div className="text-gray-500 text-xs">共 {recon.line_items_count} 項</div>
+                      <div className="text-xs text-gray-500">共 {recon.line_items_count} 項</div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -471,8 +490,12 @@ function ReconciliationTable({ reconciliations }: { reconciliations: typeof mock
                       {recon.completed_date ? (
                         <>
                           <div>{recon.completed_date.toLocaleDateString('zh-TW')}</div>
-                          <div className="text-gray-500 text-xs">
-                            {Math.ceil((recon.completed_date.getTime() - recon.created_date.getTime()) / (1000 * 60 * 60 * 24))} 天
+                          <div className="text-xs text-gray-500">
+                            {Math.ceil(
+                              (recon.completed_date.getTime() - recon.created_date.getTime()) /
+                                (1000 * 60 * 60 * 24)
+                            )}{' '}
+                            天
                           </div>
                         </>
                       ) : (

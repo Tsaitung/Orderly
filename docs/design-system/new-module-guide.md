@@ -34,7 +34,7 @@ export default function WarehouseLayout({ children }: WarehouseLayoutProps) {
       icon: ArrowUpCircle
     },
     {
-      title: '出庫管理', 
+      title: '出庫管理',
       href: '/warehouse/outbound',
       icon: ArrowDownCircle
     }
@@ -131,6 +131,7 @@ export default function WarehouseDashboardPage() {
 ### 1. 基礎組件
 
 #### MetricCard (數據卡片)
+
 ```typescript
 import { MetricCard } from '@/components/ui/metric-card'
 
@@ -146,6 +147,7 @@ import { MetricCard } from '@/components/ui/metric-card'
 ```
 
 #### DataTable (數據表格)
+
 ```typescript
 import { DataTable } from '@/components/ui/data-table'
 
@@ -160,6 +162,7 @@ import { DataTable } from '@/components/ui/data-table'
 ```
 
 #### QuickActions (快速操作)
+
 ```typescript
 import { QuickActions } from '@/components/ui/quick-actions'
 
@@ -184,6 +187,7 @@ const actions = [
 ### 2. 佈局組件
 
 #### SectionContainer (區塊容器)
+
 ```typescript
 <SectionContainer
   title="區塊標題"
@@ -195,6 +199,7 @@ const actions = [
 ```
 
 #### ContentGrid (內容網格)
+
 ```typescript
 <ContentGrid
   columns={{ default: 1, md: 2, lg: 3, xl: 4 }}
@@ -230,19 +235,19 @@ const actions = [
 // 主題色彩
 const themeColors = {
   primary: 'text-primary-600',
-  success: 'text-green-600', 
+  success: 'text-green-600',
   warning: 'text-yellow-600',
   danger: 'text-red-600',
-  neutral: 'text-gray-600'
+  neutral: 'text-gray-600',
 }
 
 // 背景色彩
 const backgroundColors = {
   primary: 'bg-primary-50',
   success: 'bg-green-50',
-  warning: 'bg-yellow-50', 
+  warning: 'bg-yellow-50',
   danger: 'bg-red-50',
-  neutral: 'bg-gray-50'
+  neutral: 'bg-gray-50',
 }
 ```
 
@@ -278,11 +283,11 @@ const backgroundColors = {
 // lib/theme/roles.ts
 export const roleThemes = {
   warehouse: {
-    primary: '#7C3AED',        // Purple 600
-    accent: '#6D28D9',         // Purple 700
-    background: '#F5F3FF',     // Purple 50
-    foreground: '#1F2937'      // Gray 800
-  }
+    primary: '#7C3AED', // Purple 600
+    accent: '#6D28D9', // Purple 700
+    background: '#F5F3FF', // Purple 50
+    foreground: '#1F2937', // Gray 800
+  },
 }
 ```
 
@@ -294,7 +299,7 @@ const ROLE_THEMES = {
   restaurant: restaurantTheme,
   supplier: supplierTheme,
   platform: platformTheme,
-  warehouse: warehouseTheme,    // 新增
+  warehouse: warehouseTheme, // 新增
 }
 ```
 
@@ -327,25 +332,25 @@ const navigationItems = [
     title: '總覽',
     href: '/warehouse',
     icon: Home,
-    active: pathname === '/warehouse'
+    active: pathname === '/warehouse',
   },
   {
     title: '入庫管理',
-    href: '/warehouse/inbound', 
+    href: '/warehouse/inbound',
     icon: ArrowUpCircle,
-    badge: inboundCount
+    badge: inboundCount,
   },
   {
     title: '出庫管理',
     href: '/warehouse/outbound',
     icon: ArrowDownCircle,
-    badge: outboundCount
+    badge: outboundCount,
   },
   {
     title: '設定',
     href: '/warehouse/settings',
-    icon: Settings
-  }
+    icon: Settings,
+  },
 ]
 ```
 
@@ -388,6 +393,7 @@ describe('Warehouse Module Accessibility', () => {
 ## 部署檢查清單
 
 ### 開發階段
+
 - [ ] 使用 `DashboardLayout` 組件
 - [ ] 遵循間距規範 (24px/16px/8px)
 - [ ] 確保響應式設計
@@ -395,12 +401,14 @@ describe('Warehouse Module Accessibility', () => {
 - [ ] 使用設計令牌，避免硬編碼
 
 ### 代碼審查
+
 - [ ] 組件命名符合規範
 - [ ] TypeScript 類型定義完整
 - [ ] ESLint 檢查通過
 - [ ] 無障礙測試通過
 
 ### 部署前
+
 - [ ] 視覺回歸測試通過
 - [ ] 性能測試符合標準
 - [ ] 跨瀏覽器兼容性驗證

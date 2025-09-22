@@ -1,18 +1,18 @@
 'use client'
 
 import React from 'react'
-import { 
-  Calendar, 
-  AlertTriangle, 
-  Clock, 
-  Package2, 
+import {
+  Calendar,
+  AlertTriangle,
+  Clock,
+  Package2,
   BarChart3,
   CheckCircle,
   XCircle,
   Eye,
   Download,
   Filter,
-  Search
+  Search,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -59,11 +59,11 @@ export function BatchExpiryManagement() {
     try {
       setLoading(true)
       setError(null)
-      
+
       // TODO: 替換為實際的 API 呼叫
       // const response = await fetch('/api/products/skus/batches')
       // const data = await response.json()
-      
+
       // 模擬資料
       const now = new Date()
       const mockBatches: BatchItem[] = [
@@ -85,7 +85,7 @@ export function BatchExpiryManagement() {
           days_until_expiry: 3,
           origin_country: '台灣',
           certifications: ['有機認證', 'HACCP'],
-          notes: '本批次品質優良'
+          notes: '本批次品質優良',
         },
         {
           id: 'batch-002',
@@ -104,7 +104,7 @@ export function BatchExpiryManagement() {
           status: 'fresh',
           days_until_expiry: 9,
           origin_country: '台灣',
-          certifications: ['HACCP']
+          certifications: ['HACCP'],
         },
         {
           id: 'batch-003',
@@ -122,12 +122,11 @@ export function BatchExpiryManagement() {
           quality_grade: 'B',
           status: 'expired',
           days_until_expiry: -1,
-          origin_country: '台灣'
-        }
+          origin_country: '台灣',
+        },
       ]
-      
+
       setBatches(mockBatches)
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入批次資料失敗')
     } finally {
@@ -142,71 +141,84 @@ export function BatchExpiryManagement() {
   // 計算警報統計
   const getExpiryAlerts = (): ExpiryAlert[] => {
     const alerts: ExpiryAlert[] = []
-    
+
     const expiredCount = batches.filter(b => b.status === 'expired').length
     const warningCount = batches.filter(b => b.status === 'warning').length
-    const soonExpiredCount = batches.filter(b => 
-      b.days_until_expiry > 0 && b.days_until_expiry <= alertThreshold
+    const soonExpiredCount = batches.filter(
+      b => b.days_until_expiry > 0 && b.days_until_expiry <= alertThreshold
     ).length
-    
+
     if (expiredCount > 0) {
       alerts.push({
         severity: 'high',
         count: expiredCount,
-        description: '已過期'
+        description: '已過期',
       })
     }
-    
+
     if (warningCount > 0) {
       alerts.push({
         severity: 'medium',
         count: warningCount,
-        description: '即將到期'
+        description: '即將到期',
       })
     }
-    
+
     if (soonExpiredCount > 0) {
       alerts.push({
         severity: 'low',
         count: soonExpiredCount,
-        description: `${alertThreshold}天內到期`
+        description: `${alertThreshold}天內到期`,
       })
     }
-    
+
     return alerts
   }
 
   // 篩選批次
   const getFilteredBatches = () => {
-    return batches.filter(batch => {
-      const matchesSearch = !searchTerm || 
-        batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        batch.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        batch.sku_code.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesStatus = !statusFilter || batch.status === statusFilter
-      
-      return matchesSearch && matchesStatus
-    }).sort((a, b) => a.days_until_expiry - b.days_until_expiry) // 即將到期的排在前面
+    return batches
+      .filter(batch => {
+        const matchesSearch =
+          !searchTerm ||
+          batch.batch_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          batch.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          batch.sku_code.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesStatus = !statusFilter || batch.status === statusFilter
+
+        return matchesSearch && matchesStatus
+      })
+      .sort((a, b) => a.days_until_expiry - b.days_until_expiry) // 即將到期的排在前面
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'expired': return 'bg-red-100 text-red-800'
-      case 'warning': return 'bg-orange-100 text-orange-800'
-      case 'fresh': return 'bg-green-100 text-green-800'
-      case 'recalled': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'expired':
+        return 'bg-red-100 text-red-800'
+      case 'warning':
+        return 'bg-orange-100 text-orange-800'
+      case 'fresh':
+        return 'bg-green-100 text-green-800'
+      case 'recalled':
+        return 'bg-gray-100 text-gray-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'expired': return '已過期'
-      case 'warning': return '即將到期'
-      case 'fresh': return '新鮮'
-      case 'recalled': return '已召回'
-      default: return '未知'
+      case 'expired':
+        return '已過期'
+      case 'warning':
+        return '即將到期'
+      case 'fresh':
+        return '新鮮'
+      case 'recalled':
+        return '已召回'
+      default:
+        return '未知'
     }
   }
 
@@ -214,7 +226,7 @@ export function BatchExpiryManagement() {
     return new Intl.DateTimeFormat('zh-TW', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
     }).format(date)
   }
 
@@ -226,7 +238,9 @@ export function BatchExpiryManagement() {
   }
 
   const handleExportExpiringSoon = () => {
-    const expiringSoon = batches.filter(b => b.days_until_expiry >= 0 && b.days_until_expiry <= alertThreshold)
+    const expiringSoon = batches.filter(
+      b => b.days_until_expiry >= 0 && b.days_until_expiry <= alertThreshold
+    )
     // TODO: 實作匯出功能
     console.log('匯出即將到期批次:', expiringSoon)
   }
@@ -245,9 +259,7 @@ export function BatchExpiryManagement() {
                 <Calendar className="h-5 w-5" />
                 <span>批次追蹤與到期管理</span>
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
-                管理所有 SKU 的批次資訊和到期日期
-              </p>
+              <p className="mt-1 text-sm text-gray-600">管理所有 SKU 的批次資訊和到期日期</p>
             </div>
             <div className="flex items-center space-x-2">
               <div className="flex items-center space-x-1 text-sm">
@@ -255,7 +267,7 @@ export function BatchExpiryManagement() {
                 <Input
                   type="number"
                   value={alertThreshold}
-                  onChange={(e) => setAlertThreshold(parseInt(e.target.value) || 7)}
+                  onChange={e => setAlertThreshold(parseInt(e.target.value) || 7)}
                   className="w-16 text-center"
                   min="1"
                   max="30"
@@ -286,13 +298,18 @@ export function BatchExpiryManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {alerts.map((alert, index) => (
                 <div key={index} className="text-center">
-                  <div className={`text-2xl font-bold ${
-                    alert.severity === 'high' ? 'text-red-600' :
-                    alert.severity === 'medium' ? 'text-orange-600' : 'text-yellow-600'
-                  }`}>
+                  <div
+                    className={`text-2xl font-bold ${
+                      alert.severity === 'high'
+                        ? 'text-red-600'
+                        : alert.severity === 'medium'
+                          ? 'text-orange-600'
+                          : 'text-yellow-600'
+                    }`}
+                  >
                     {alert.count}
                   </div>
                   <div className="text-sm text-gray-600">{alert.description}</div>
@@ -306,20 +323,20 @@ export function BatchExpiryManagement() {
       {/* 搜尋與篩選 */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4 md:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋批次號、產品名稱或 SKU 代碼..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={e => setStatusFilter(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">所有狀態</option>
               <option value="expired">已過期</option>
@@ -335,7 +352,7 @@ export function BatchExpiryManagement() {
       {loading && (
         <Card>
           <CardContent className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2" />
             <p className="text-gray-500">載入批次資料中...</p>
           </CardContent>
         </Card>
@@ -350,12 +367,7 @@ export function BatchExpiryManagement() {
               <div>
                 <p className="text-sm font-medium text-red-800">載入失敗</p>
                 <p className="text-sm text-red-600">{error}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={loadBatches}
-                  className="mt-2"
-                >
+                <Button variant="outline" size="sm" onClick={loadBatches} className="mt-2">
                   重新載入
                 </Button>
               </div>
@@ -370,22 +382,24 @@ export function BatchExpiryManagement() {
           {filteredBatches.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <Package2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <Package2 className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                 <p className="text-gray-500">沒有找到符合條件的批次</p>
               </CardContent>
             </Card>
           ) : (
-            filteredBatches.map((batch) => (
-              <Card 
-                key={batch.id} 
+            filteredBatches.map(batch => (
+              <Card
+                key={batch.id}
                 className={`${
-                  batch.status === 'expired' ? 'border-red-200 bg-red-50' :
-                  batch.status === 'warning' ? 'border-orange-200 bg-orange-50' :
-                  'border-gray-200'
+                  batch.status === 'expired'
+                    ? 'border-red-200 bg-red-50'
+                    : batch.status === 'warning'
+                      ? 'border-orange-200 bg-orange-50'
+                      : 'border-gray-200'
                 }`}
               >
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                     {/* 基本資訊 */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -394,11 +408,13 @@ export function BatchExpiryManagement() {
                           {getStatusText(batch.status)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-600 font-mono">{batch.sku_code}</p>
+                      <p className="font-mono text-sm text-gray-600">{batch.sku_code}</p>
                       <p className="text-sm text-gray-500">批次: {batch.batch_number}</p>
                       <div className="flex items-center space-x-2">
                         <span className="text-sm text-gray-600">數量:</span>
-                        <span className="text-sm font-medium">{batch.quantity} {batch.unit}</span>
+                        <span className="text-sm font-medium">
+                          {batch.quantity} {batch.unit}
+                        </span>
                       </div>
                     </div>
 
@@ -406,24 +422,36 @@ export function BatchExpiryManagement() {
                     <div className="space-y-2">
                       <div>
                         <p className="text-sm text-gray-600">製造日期</p>
-                        <p className="text-sm font-medium">{formatDate(batch.manufacturing_date)}</p>
+                        <p className="text-sm font-medium">
+                          {formatDate(batch.manufacturing_date)}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-gray-600">到期日期</p>
                         <div className="flex items-center space-x-2">
                           <p className="text-sm font-medium">{formatDate(batch.expiry_date)}</p>
                           {batch.days_until_expiry <= alertThreshold && (
-                            <Clock className={`h-4 w-4 ${
-                              batch.days_until_expiry < 0 ? 'text-red-500' :
-                              batch.days_until_expiry <= 3 ? 'text-orange-500' : 'text-yellow-500'
-                            }`} />
+                            <Clock
+                              className={`h-4 w-4 ${
+                                batch.days_until_expiry < 0
+                                  ? 'text-red-500'
+                                  : batch.days_until_expiry <= 3
+                                    ? 'text-orange-500'
+                                    : 'text-yellow-500'
+                              }`}
+                            />
                           )}
                         </div>
                       </div>
-                      <div className={`text-sm font-medium ${
-                        batch.days_until_expiry < 0 ? 'text-red-600' :
-                        batch.days_until_expiry <= 3 ? 'text-orange-600' : 'text-gray-600'
-                      }`}>
+                      <div
+                        className={`text-sm font-medium ${
+                          batch.days_until_expiry < 0
+                            ? 'text-red-600'
+                            : batch.days_until_expiry <= 3
+                              ? 'text-orange-600'
+                              : 'text-gray-600'
+                        }`}
+                      >
                         {getExpiryDaysDisplay(batch.days_until_expiry)}
                       </div>
                     </div>
@@ -452,9 +480,9 @@ export function BatchExpiryManagement() {
                       </div>
                       {batch.certifications && batch.certifications.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {batch.certifications.map((cert) => (
+                          {batch.certifications.map(cert => (
                             <Badge key={cert} variant="outline" className="text-xs">
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              <CheckCircle className="mr-1 h-3 w-3" />
                               {cert}
                             </Badge>
                           ))}
@@ -465,7 +493,7 @@ export function BatchExpiryManagement() {
                     {/* 操作按鈕 */}
                     <div className="space-y-2">
                       <Button variant="outline" size="sm" className="w-full">
-                        <Eye className="h-4 w-4 mr-1" />
+                        <Eye className="mr-1 h-4 w-4" />
                         查看詳情
                       </Button>
                       {batch.status === 'expired' && (
@@ -474,13 +502,17 @@ export function BatchExpiryManagement() {
                         </Button>
                       )}
                       {batch.status === 'warning' && (
-                        <Button variant="outline" size="sm" className="w-full border-orange-300 text-orange-700">
-                          <AlertTriangle className="h-4 w-4 mr-1" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-orange-300 text-orange-700"
+                        >
+                          <AlertTriangle className="mr-1 h-4 w-4" />
                           設置提醒
                         </Button>
                       )}
                       {batch.notes && (
-                        <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+                        <div className="rounded bg-gray-50 p-2 text-xs text-gray-500">
                           {batch.notes}
                         </div>
                       )}

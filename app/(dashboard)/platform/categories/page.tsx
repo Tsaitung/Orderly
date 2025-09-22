@@ -12,9 +12,7 @@ export default function CategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">類別管理</h1>
-          <p className="text-gray-600 mt-1">
-            管理產品類別階層，執行分類標準化和績效分析
-          </p>
+          <p className="mt-1 text-gray-600">管理產品類別階層，執行分類標準化和績效分析</p>
         </div>
       </div>
 

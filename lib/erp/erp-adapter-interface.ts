@@ -11,24 +11,28 @@ export const ERPOrderSchema = z.object({
   status: z.enum(['draft', 'confirmed', 'shipped', 'delivered', 'completed', 'cancelled']),
   totalAmount: z.number(),
   currency: z.string().default('TWD'),
-  items: z.array(z.object({
-    externalId: z.string(),
-    productCode: z.string(),
-    productName: z.string(),
-    quantity: z.number(),
-    unitPrice: z.number(),
-    lineTotal: z.number(),
-    unit: z.string().optional()
-  })),
-  deliveryAddress: z.object({
-    street: z.string(),
-    city: z.string().optional(),
-    postalCode: z.string().optional(),
-    contactPerson: z.string(),
-    phone: z.string()
-  }).optional(),
+  items: z.array(
+    z.object({
+      externalId: z.string(),
+      productCode: z.string(),
+      productName: z.string(),
+      quantity: z.number(),
+      unitPrice: z.number(),
+      lineTotal: z.number(),
+      unit: z.string().optional(),
+    })
+  ),
+  deliveryAddress: z
+    .object({
+      street: z.string(),
+      city: z.string().optional(),
+      postalCode: z.string().optional(),
+      contactPerson: z.string(),
+      phone: z.string(),
+    })
+    .optional(),
   notes: z.string().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
 })
 
 export const ERPProductSchema = z.object({
@@ -43,7 +47,7 @@ export const ERPProductSchema = z.object({
   isActive: z.boolean().default(true),
   specifications: z.record(z.any()).optional(),
   lastModified: z.string().datetime(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
 })
 
 export const ERPInventorySchema = z.object({
@@ -53,7 +57,7 @@ export const ERPInventorySchema = z.object({
   minimumStock: z.number().optional(),
   lastUpdated: z.string().datetime(),
   location: z.string().optional(),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
 })
 
 export const ERPCustomerSchema = z.object({
@@ -66,12 +70,12 @@ export const ERPCustomerSchema = z.object({
   address: z.object({
     street: z.string(),
     city: z.string().optional(),
-    postalCode: z.string().optional()
+    postalCode: z.string().optional(),
   }),
   paymentTerms: z.number().optional(), // 付款天數
   creditLimit: z.number().optional(),
   isActive: z.boolean().default(true),
-  metadata: z.record(z.any()).optional()
+  metadata: z.record(z.any()).optional(),
 })
 
 // TypeScript 類型定義
@@ -96,17 +100,17 @@ export interface ERPConnectionConfig {
     }
   }
   settings: {
-    timeout: number           // 請求超時時間(ms)
-    retryAttempts: number     // 重試次數
-    rateLimit: number         // 每秒請求限制
-    batchSize: number         // 批次處理大小
+    timeout: number // 請求超時時間(ms)
+    retryAttempts: number // 重試次數
+    rateLimit: number // 每秒請求限制
+    batchSize: number // 批次處理大小
   }
-  fieldMapping: Record<string, string>  // 欄位對應關係
+  fieldMapping: Record<string, string> // 欄位對應關係
   metadata: Record<string, any>
 }
 
 // ERP 系統類型
-export type ERPSystemType = 
+export type ERPSystemType =
   | 'sap_business_one'
   | 'oracle_netsuite'
   | 'microsoft_dynamics_365'
@@ -193,7 +197,10 @@ export abstract class ERPAdapterInterface {
   }): Promise<ERPApiResponse<ERPOrder[]>>
 
   abstract createOrder(order: ERPOrder): Promise<ERPApiResponse<ERPOrder>>
-  abstract updateOrder(externalId: string, updates: Partial<ERPOrder>): Promise<ERPApiResponse<ERPOrder>>
+  abstract updateOrder(
+    externalId: string,
+    updates: Partial<ERPOrder>
+  ): Promise<ERPApiResponse<ERPOrder>>
   abstract deleteOrder(externalId: string): Promise<ERPApiResponse<void>>
   abstract getOrderById(externalId: string): Promise<ERPApiResponse<ERPOrder>>
 
@@ -207,7 +214,10 @@ export abstract class ERPAdapterInterface {
   }): Promise<ERPApiResponse<ERPProduct[]>>
 
   abstract createProduct(product: ERPProduct): Promise<ERPApiResponse<ERPProduct>>
-  abstract updateProduct(externalId: string, updates: Partial<ERPProduct>): Promise<ERPApiResponse<ERPProduct>>
+  abstract updateProduct(
+    externalId: string,
+    updates: Partial<ERPProduct>
+  ): Promise<ERPApiResponse<ERPProduct>>
   abstract deleteProduct(externalId: string): Promise<ERPApiResponse<void>>
   abstract getProductById(externalId: string): Promise<ERPApiResponse<ERPProduct>>
 
@@ -229,7 +239,10 @@ export abstract class ERPAdapterInterface {
   }): Promise<ERPApiResponse<ERPCustomer[]>>
 
   abstract createCustomer(customer: ERPCustomer): Promise<ERPApiResponse<ERPCustomer>>
-  abstract updateCustomer(externalId: string, updates: Partial<ERPCustomer>): Promise<ERPApiResponse<ERPCustomer>>
+  abstract updateCustomer(
+    externalId: string,
+    updates: Partial<ERPCustomer>
+  ): Promise<ERPApiResponse<ERPCustomer>>
   abstract getCustomerById(externalId: string): Promise<ERPApiResponse<ERPCustomer>>
 
   // 同步操作
@@ -240,14 +253,23 @@ export abstract class ERPAdapterInterface {
 
   // 批次操作
   abstract batchCreateOrders(orders: ERPOrder[]): Promise<ERPApiResponse<ERPOrder[]>>
-  abstract batchUpdateOrders(updates: Array<{ externalId: string; data: Partial<ERPOrder> }>): Promise<ERPApiResponse<ERPOrder[]>>
+  abstract batchUpdateOrders(
+    updates: Array<{ externalId: string; data: Partial<ERPOrder> }>
+  ): Promise<ERPApiResponse<ERPOrder[]>>
   abstract batchCreateProducts(products: ERPProduct[]): Promise<ERPApiResponse<ERPProduct[]>>
-  abstract batchUpdateProducts(updates: Array<{ externalId: string; data: Partial<ERPProduct> }>): Promise<ERPApiResponse<ERPProduct[]>>
+  abstract batchUpdateProducts(
+    updates: Array<{ externalId: string; data: Partial<ERPProduct> }>
+  ): Promise<ERPApiResponse<ERPProduct[]>>
 
   // Webhook 支援
-  abstract registerWebhook?(url: string, events: string[]): Promise<ERPApiResponse<{ webhookId: string }>>
+  abstract registerWebhook?(
+    url: string,
+    events: string[]
+  ): Promise<ERPApiResponse<{ webhookId: string }>>
   abstract unregisterWebhook?(webhookId: string): Promise<ERPApiResponse<void>>
-  abstract listWebhooks?(): Promise<ERPApiResponse<Array<{ id: string; url: string; events: string[] }>>>
+  abstract listWebhooks?(): Promise<
+    ERPApiResponse<Array<{ id: string; url: string; events: string[] }>>
+  >
 
   // 實用方法
   protected mapFieldsFromERP(data: any, mapping: Record<string, string>): any {
@@ -309,7 +331,7 @@ export abstract class ERPAdapterInterface {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'Orderly-ERP-Adapter/2.0'
+      'User-Agent': 'Orderly-ERP-Adapter/2.0',
     }
 
     // 添加認證資訊
@@ -335,7 +357,7 @@ export abstract class ERPAdapterInterface {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {
@@ -352,19 +374,19 @@ export abstract class ERPAdapterInterface {
   // 輔助方法：創建分頁請求參數
   protected createPaginationParams(pageSize?: number, pageNumber?: number): Record<string, any> {
     const params: Record<string, any> = {}
-    
+
     if (pageSize) {
       params.limit = pageSize
       params.size = pageSize
       params.per_page = pageSize
     }
-    
+
     if (pageNumber) {
       params.offset = (pageNumber - 1) * (pageSize || 20)
       params.page = pageNumber
       params.skip = (pageNumber - 1) * (pageSize || 20)
     }
-    
+
     return params
   }
 
@@ -390,7 +412,7 @@ export abstract class ERPAdapterInterface {
         return await operation()
       } catch (error) {
         lastError = error instanceof Error ? error : new Error('Unknown error')
-        
+
         if (attempt === maxRetries) {
           break
         }
@@ -407,15 +429,21 @@ export abstract class ERPAdapterInterface {
 
 // ERP 適配器工廠
 export class ERPAdapterFactory {
-  private static adapters: Map<ERPSystemType, new (config: ERPConnectionConfig) => ERPAdapterInterface> = new Map()
+  private static adapters: Map<
+    ERPSystemType,
+    new (config: ERPConnectionConfig) => ERPAdapterInterface
+  > = new Map()
 
-  static registerAdapter(type: ERPSystemType, adapterClass: new (config: ERPConnectionConfig) => ERPAdapterInterface): void {
+  static registerAdapter(
+    type: ERPSystemType,
+    adapterClass: new (config: ERPConnectionConfig) => ERPAdapterInterface
+  ): void {
     this.adapters.set(type, adapterClass)
   }
 
   static createAdapter(config: ERPConnectionConfig): ERPAdapterInterface {
     const AdapterClass = this.adapters.get(config.type)
-    
+
     if (!AdapterClass) {
       throw new Error(`Unsupported ERP system type: ${config.type}`)
     }

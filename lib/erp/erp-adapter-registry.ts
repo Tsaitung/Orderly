@@ -6,7 +6,7 @@ import DigiwinAdapter from './adapters/digiwin-adapter'
 
 /**
  * ERP 適配器註冊中心
- * 
+ *
  * 負責註冊所有可用的 ERP 適配器，並提供統一的創建介面
  */
 
@@ -20,12 +20,7 @@ ERPAdapterFactory.registerAdapter('digiwin', DigiwinAdapter)
 export { ERPAdapterFactory }
 
 // 導出所有適配器類別
-export {
-  SAPBusinessOneAdapter,
-  OracleNetSuiteAdapter,
-  MicrosoftDynamics365Adapter,
-  DigiwinAdapter
-}
+export { SAPBusinessOneAdapter, OracleNetSuiteAdapter, MicrosoftDynamics365Adapter, DigiwinAdapter }
 
 // 導出常用的 ERP 系統配置模板
 export const ERPSystemConfigs = {
@@ -38,21 +33,21 @@ export const ERPSystemConfigs = {
       type: 'basic' as const,
       credentials: {
         username: process.env.SAP_B1_USERNAME || '',
-        password: process.env.SAP_B1_PASSWORD || ''
-      }
+        password: process.env.SAP_B1_PASSWORD || '',
+      },
     },
     settings: {
       timeout: 30000,
       retryAttempts: 3,
       rateLimit: 10,
       batchSize: 100,
-      companyDatabase: process.env.SAP_B1_COMPANY_DB || 'SBODEMOTW'
+      companyDatabase: process.env.SAP_B1_COMPANY_DB || 'SBODEMOTW',
     },
     fieldMapping: {},
     metadata: {
       version: '10.0',
-      serviceLayer: true
-    }
+      serviceLayer: true,
+    },
   },
 
   /**
@@ -64,20 +59,20 @@ export const ERPSystemConfigs = {
       type: 'oauth2' as const,
       credentials: {
         clientId: process.env.NETSUITE_CLIENT_ID || '',
-        clientSecret: process.env.NETSUITE_CLIENT_SECRET || ''
-      }
+        clientSecret: process.env.NETSUITE_CLIENT_SECRET || '',
+      },
     },
     settings: {
       timeout: 45000,
       retryAttempts: 3,
       rateLimit: 5,
-      batchSize: 50
+      batchSize: 50,
     },
     fieldMapping: {},
     metadata: {
       version: '2023.2',
-      datacenter: process.env.NETSUITE_DATACENTER || 'us-east-1'
-    }
+      datacenter: process.env.NETSUITE_DATACENTER || 'us-east-1',
+    },
   },
 
   /**
@@ -89,21 +84,21 @@ export const ERPSystemConfigs = {
       type: 'oauth2' as const,
       credentials: {
         clientId: process.env.D365_CLIENT_ID || '',
-        clientSecret: process.env.D365_CLIENT_SECRET || ''
-      }
+        clientSecret: process.env.D365_CLIENT_SECRET || '',
+      },
     },
     settings: {
       timeout: 30000,
       retryAttempts: 3,
       rateLimit: 10,
-      batchSize: 100
+      batchSize: 100,
     },
     fieldMapping: {},
     metadata: {
       version: '9.2',
       tenantId: process.env.D365_TENANT_ID || '',
-      environment: process.env.D365_ENVIRONMENT || 'production'
-    }
+      environment: process.env.D365_ENVIRONMENT || 'production',
+    },
   },
 
   /**
@@ -115,22 +110,22 @@ export const ERPSystemConfigs = {
       type: 'basic' as const,
       credentials: {
         username: process.env.DIGIWIN_USERNAME || '',
-        password: process.env.DIGIWIN_PASSWORD || ''
-      }
+        password: process.env.DIGIWIN_PASSWORD || '',
+      },
     },
     settings: {
       timeout: 30000,
       retryAttempts: 3,
       rateLimit: 10,
       batchSize: 50,
-      companyDatabase: process.env.DIGIWIN_COMPANY_DB || 'DEMO'
+      companyDatabase: process.env.DIGIWIN_COMPANY_DB || 'DEMO',
     },
     fieldMapping: {},
     metadata: {
       version: '12.0',
-      language: 'zh-TW'
-    }
-  }
+      language: 'zh-TW',
+    },
+  },
 }
 
 /**
@@ -138,14 +133,14 @@ export const ERPSystemConfigs = {
  */
 export function createERPAdapterFromEnv(systemType: ERPSystemType, baseUrl: string) {
   const configTemplate = getConfigTemplate(systemType)
-  
+
   if (!configTemplate) {
     throw new Error(`Unsupported ERP system type: ${systemType}`)
   }
 
   const config = {
     ...configTemplate,
-    baseUrl
+    baseUrl,
   }
 
   return ERPAdapterFactory.createAdapter(config)
@@ -180,33 +175,37 @@ export function validateERPConfig(systemType: ERPSystemType): {
   const result = {
     valid: true,
     missingVars: [] as string[],
-    recommendations: [] as string[]
+    recommendations: [] as string[],
   }
 
   switch (systemType) {
     case 'sap_business_one':
       if (!process.env.SAP_B1_USERNAME) result.missingVars.push('SAP_B1_USERNAME')
       if (!process.env.SAP_B1_PASSWORD) result.missingVars.push('SAP_B1_PASSWORD')
-      if (!process.env.SAP_B1_COMPANY_DB) result.recommendations.push('SAP_B1_COMPANY_DB (預設: SBODEMOTW)')
+      if (!process.env.SAP_B1_COMPANY_DB)
+        result.recommendations.push('SAP_B1_COMPANY_DB (預設: SBODEMOTW)')
       break
 
     case 'oracle_netsuite':
       if (!process.env.NETSUITE_CLIENT_ID) result.missingVars.push('NETSUITE_CLIENT_ID')
       if (!process.env.NETSUITE_CLIENT_SECRET) result.missingVars.push('NETSUITE_CLIENT_SECRET')
-      if (!process.env.NETSUITE_DATACENTER) result.recommendations.push('NETSUITE_DATACENTER (預設: us-east-1)')
+      if (!process.env.NETSUITE_DATACENTER)
+        result.recommendations.push('NETSUITE_DATACENTER (預設: us-east-1)')
       break
 
     case 'microsoft_dynamics_365':
       if (!process.env.D365_CLIENT_ID) result.missingVars.push('D365_CLIENT_ID')
       if (!process.env.D365_CLIENT_SECRET) result.missingVars.push('D365_CLIENT_SECRET')
       if (!process.env.D365_TENANT_ID) result.missingVars.push('D365_TENANT_ID')
-      if (!process.env.D365_ENVIRONMENT) result.recommendations.push('D365_ENVIRONMENT (預設: production)')
+      if (!process.env.D365_ENVIRONMENT)
+        result.recommendations.push('D365_ENVIRONMENT (預設: production)')
       break
 
     case 'digiwin':
       if (!process.env.DIGIWIN_USERNAME) result.missingVars.push('DIGIWIN_USERNAME')
       if (!process.env.DIGIWIN_PASSWORD) result.missingVars.push('DIGIWIN_PASSWORD')
-      if (!process.env.DIGIWIN_COMPANY_DB) result.recommendations.push('DIGIWIN_COMPANY_DB (預設: DEMO)')
+      if (!process.env.DIGIWIN_COMPANY_DB)
+        result.recommendations.push('DIGIWIN_COMPANY_DB (預設: DEMO)')
       break
   }
 
@@ -225,7 +224,7 @@ export function getSupportedERPSystems() {
       description: '德國 SAP 公司的中小企業 ERP 解決方案',
       authentication: 'Session-based',
       apiType: 'Service Layer API',
-      popularity: 'High'
+      popularity: 'High',
     },
     {
       type: 'oracle_netsuite',
@@ -233,7 +232,7 @@ export function getSupportedERPSystems() {
       description: '雲端 ERP/CRM 平台，適合中大型企業',
       authentication: 'OAuth 2.0',
       apiType: 'RESTlets/SuiteScript',
-      popularity: 'High'
+      popularity: 'High',
     },
     {
       type: 'microsoft_dynamics_365',
@@ -241,7 +240,7 @@ export function getSupportedERPSystems() {
       description: '微軟雲端 ERP/CRM 解決方案',
       authentication: 'Azure AD OAuth 2.0',
       apiType: 'Web API (OData v4)',
-      popularity: 'High'
+      popularity: 'High',
     },
     {
       type: 'digiwin',
@@ -249,8 +248,8 @@ export function getSupportedERPSystems() {
       description: '台灣本土 ERP 解決方案，在台灣市場佔有率高',
       authentication: 'Session Token',
       apiType: 'DigiCenter API',
-      popularity: 'High (Taiwan)'
-    }
+      popularity: 'High (Taiwan)',
+    },
   ]
 }
 
@@ -259,5 +258,5 @@ export default {
   ERPSystemConfigs,
   createERPAdapterFromEnv,
   validateERPConfig,
-  getSupportedERPSystems
+  getSupportedERPSystems,
 }

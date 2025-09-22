@@ -1,18 +1,18 @@
 'use client'
 
 import React from 'react'
-import { 
-  Building2, 
-  Star, 
-  Clock, 
-  Package, 
-  TrendingDown, 
+import {
+  Building2,
+  Star,
+  Clock,
+  Package,
+  TrendingDown,
   TrendingUp,
   Award,
   CheckCircle,
   AlertCircle,
   Calculator,
-  Filter
+  Filter,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -83,11 +83,11 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
     try {
       setLoading(true)
       setError(null)
-      
+
       // TODO: 替換為實際的 API 呼叫
       // const response = await fetch(`/api/products/skus/${skuId}/suppliers/pricing-analysis?quantity=${quantity}`)
       // const data = await response.json()
-      
+
       // 模擬資料
       const mockData: PricingAnalysis = {
         summary: {
@@ -97,13 +97,13 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
           price_range: 15.0,
           best_total_cost: 4500.0,
           max_savings: 800.0,
-          quantity_analyzed: quantity
+          quantity_analyzed: quantity,
         },
         suppliers: [
           {
-            supplier_id: "supplier-001",
-            supplier_sku_code: "SUP001-VEG-A",
-            supplier_name_for_product: "優質農產 A級蔬菜",
+            supplier_id: 'supplier-001',
+            supplier_sku_code: 'SUP001-VEG-A',
+            supplier_name_for_product: '優質農產 A級蔬菜',
             base_price: 50.0,
             effective_price: 45.0,
             total_cost: 4500.0,
@@ -113,19 +113,19 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
             minimum_order_quantity: 50,
             overall_score: 4.5,
             is_preferred: true,
-            availability_status: "available",
+            availability_status: 'available',
             savings: 500.0,
             cost_rank: 1,
-            comparison_badges: ["優先供應商", "當日出貨", "高品質", "有認證"],
+            comparison_badges: ['優先供應商', '當日出貨', '高品質', '有認證'],
             quality_score: 4.8,
             delivery_score: 4.5,
             service_score: 4.2,
-            certifications: ["有機認證", "HACCP", "ISO22000"]
+            certifications: ['有機認證', 'HACCP', 'ISO22000'],
           },
           {
-            supplier_id: "supplier-002", 
-            supplier_sku_code: "SUP002-VEG-B",
-            supplier_name_for_product: "經濟農產 B級蔬菜",
+            supplier_id: 'supplier-002',
+            supplier_sku_code: 'SUP002-VEG-B',
+            supplier_name_for_product: '經濟農產 B級蔬菜',
             base_price: 48.0,
             effective_price: 48.0,
             total_cost: 4800.0,
@@ -134,19 +134,19 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
             minimum_order_quantity: 100,
             overall_score: 4.0,
             is_preferred: false,
-            availability_status: "available",
+            availability_status: 'available',
             savings: 0,
             cost_rank: 2,
-            comparison_badges: ["快速出貨"],
+            comparison_badges: ['快速出貨'],
             quality_score: 4.0,
             delivery_score: 4.2,
             service_score: 3.8,
-            certifications: ["HACCP"]
+            certifications: ['HACCP'],
           },
           {
-            supplier_id: "supplier-003",
-            supplier_sku_code: "SUP003-VEG-C", 
-            supplier_name_for_product: "標準農產 標準級蔬菜",
+            supplier_id: 'supplier-003',
+            supplier_sku_code: 'SUP003-VEG-C',
+            supplier_name_for_product: '標準農產 標準級蔬菜',
             base_price: 60.0,
             effective_price: 55.0,
             total_cost: 5500.0,
@@ -156,20 +156,19 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
             minimum_order_quantity: 80,
             overall_score: 3.5,
             is_preferred: false,
-            availability_status: "limited",
+            availability_status: 'limited',
             savings: 500.0,
             cost_rank: 3,
             comparison_badges: [],
             quality_score: 3.5,
             delivery_score: 3.8,
             service_score: 3.2,
-            certifications: []
-          }
-        ]
+            certifications: [],
+          },
+        ],
       }
-      
+
       setAnalysisData(mockData)
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : '載入供應商資料失敗')
     } finally {
@@ -188,29 +187,33 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
   }
 
   const formatPrice = (price: number) => `NT$ ${price.toFixed(2)}`
-  const formatSavings = (savings: number) => savings > 0 ? `省 NT$ ${savings.toFixed(0)}` : '-'
+  const formatSavings = (savings: number) => (savings > 0 ? `省 NT$ ${savings.toFixed(0)}` : '-')
 
   const getBadgeColor = (badge: string) => {
     switch (badge) {
-      case '優先供應商': return 'bg-purple-100 text-purple-800'
-      case '當日出貨': return 'bg-green-100 text-green-800'
-      case '快速出貨': return 'bg-blue-100 text-blue-800'
-      case '高品質': return 'bg-yellow-100 text-yellow-800'
-      case '有認證': return 'bg-indigo-100 text-indigo-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case '優先供應商':
+        return 'bg-purple-100 text-purple-800'
+      case '當日出貨':
+        return 'bg-green-100 text-green-800'
+      case '快速出貨':
+        return 'bg-blue-100 text-blue-800'
+      case '高品質':
+        return 'bg-yellow-100 text-yellow-800'
+      case '有認證':
+        return 'bg-indigo-100 text-indigo-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   const renderScoreBar = (score: number, maxScore: number = 5) => {
     const percentage = (score / maxScore) * 100
-    const colorClass = percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-    
+    const colorClass =
+      percentage >= 80 ? 'bg-green-500' : percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+
     return (
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div 
-          className={`h-2 rounded-full ${colorClass}`}
-          style={{ width: `${percentage}%` }}
-        />
+      <div className="h-2 w-full rounded-full bg-gray-200">
+        <div className={`h-2 rounded-full ${colorClass}`} style={{ width: `${percentage}%` }} />
       </div>
     )
   }
@@ -219,7 +222,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
           <p className="text-gray-500">請選擇 SKU 以查看供應商比較</p>
         </CardContent>
       </Card>
@@ -237,7 +240,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                 <Building2 className="h-5 w-5" />
                 <span>供應商價格比較</span>
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="mt-1 text-sm text-gray-600">
                 {productName} - {skuCode}
               </p>
             </div>
@@ -248,7 +251,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                 <Input
                   type="number"
                   value={quantity}
-                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
+                  onChange={e => handleQuantityChange(parseInt(e.target.value) || 0)}
                   className="w-20 text-center"
                   min="1"
                 />
@@ -272,7 +275,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
       {loading && (
         <Card>
           <CardContent className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <div className="border-primary mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-b-2" />
             <p className="text-gray-500">載入供應商資料中...</p>
           </CardContent>
         </Card>
@@ -287,12 +290,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
               <div>
                 <p className="text-sm font-medium text-red-800">載入失敗</p>
                 <p className="text-sm text-red-600">{error}</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={loadPricingAnalysis}
-                  className="mt-2"
-                >
+                <Button variant="outline" size="sm" onClick={loadPricingAnalysis} className="mt-2">
                   重新載入
                 </Button>
               </div>
@@ -309,7 +307,7 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
               <CardTitle className="text-lg">價格分析摘要</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">
                     {formatPrice(analysisData.summary.best_price)}
@@ -341,29 +339,34 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
           {/* 供應商比較列表 */}
           <div className="space-y-4">
             {analysisData.suppliers.map((supplier, index) => (
-              <Card key={supplier.supplier_id} className={`${index === 0 ? 'ring-2 ring-green-200' : ''}`}>
+              <Card
+                key={supplier.supplier_id}
+                className={`${index === 0 ? 'ring-2 ring-green-200' : ''}`}
+              >
                 <CardContent className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* 基本資訊 */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="font-semibold flex items-center space-x-2">
+                        <h3 className="flex items-center space-x-2 font-semibold">
                           {index === 0 && <Award className="h-4 w-4 text-green-600" />}
                           <span>供應商 {supplier.supplier_id.slice(-3)}</span>
                           {supplier.is_preferred && (
-                            <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                            <Star className="h-4 w-4 fill-current text-yellow-500" />
                           )}
                         </h3>
                         <Badge variant="outline" className="text-xs">
                           排名 #{supplier.cost_rank}
                         </Badge>
                       </div>
-                      
+
                       <p className="text-sm text-gray-600">{supplier.supplier_name_for_product}</p>
-                      <p className="text-xs text-gray-500 font-mono">{supplier.supplier_sku_code}</p>
-                      
+                      <p className="font-mono text-xs text-gray-500">
+                        {supplier.supplier_sku_code}
+                      </p>
+
                       <div className="flex flex-wrap gap-1">
-                        {supplier.comparison_badges.map((badge) => (
+                        {supplier.comparison_badges.map(badge => (
                           <Badge key={badge} className={`text-xs ${getBadgeColor(badge)}`}>
                             {badge}
                           </Badge>
@@ -393,21 +396,23 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                           )}
                         </div>
                       </div>
-                      
+
                       <div>
                         <p className="text-sm text-gray-600">總價 ({quantity}kg)</p>
                         <p className="text-xl font-bold">{formatPrice(supplier.total_cost)}</p>
                       </div>
-                      
+
                       {supplier.savings > 0 && (
                         <div className="flex items-center space-x-1 text-green-600">
                           <TrendingDown className="h-4 w-4" />
-                          <span className="text-sm font-medium">{formatSavings(supplier.savings)}</span>
+                          <span className="text-sm font-medium">
+                            {formatSavings(supplier.savings)}
+                          </span>
                         </div>
                       )}
-                      
+
                       {supplier.applied_tier && (
-                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                        <div className="rounded bg-blue-50 p-2 text-xs text-blue-600">
                           批量優惠: {supplier.applied_tier.min_qty}kg以上
                         </div>
                       )}
@@ -422,23 +427,27 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                           <span className="text-sm font-medium">{supplier.lead_time_days} 天</span>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">最小訂購</span>
-                        <span className="text-sm font-medium">{supplier.minimum_order_quantity} kg</span>
+                        <span className="text-sm font-medium">
+                          {supplier.minimum_order_quantity} kg
+                        </span>
                       </div>
-                      
+
                       <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="mb-1 flex items-center justify-between">
                           <span className="text-sm text-gray-600">綜合評分</span>
-                          <span className="text-sm font-medium">{supplier.overall_score.toFixed(1)}/5.0</span>
+                          <span className="text-sm font-medium">
+                            {supplier.overall_score.toFixed(1)}/5.0
+                          </span>
                         </div>
                         {renderScoreBar(supplier.overall_score)}
                       </div>
-                      
+
                       {showAdvanced && (
                         <>
-                          <div className="text-xs space-y-2 pt-2 border-t">
+                          <div className="space-y-2 border-t pt-2 text-xs">
                             <div className="flex justify-between">
                               <span>品質:</span>
                               <span>{supplier.quality_score?.toFixed(1) || 'N/A'}</span>
@@ -452,14 +461,14 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                               <span>{supplier.service_score?.toFixed(1) || 'N/A'}</span>
                             </div>
                           </div>
-                          
+
                           {supplier.certifications && supplier.certifications.length > 0 && (
                             <div className="text-xs">
-                              <p className="text-gray-600 mb-1">認證:</p>
+                              <p className="mb-1 text-gray-600">認證:</p>
                               <div className="flex flex-wrap gap-1">
-                                {supplier.certifications.map((cert) => (
+                                {supplier.certifications.map(cert => (
                                   <Badge key={cert} variant="outline" className="text-xs">
-                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    <CheckCircle className="mr-1 h-3 w-3" />
                                     {cert}
                                   </Badge>
                                 ))}
@@ -470,12 +479,15 @@ export function SupplierComparison({ skuId, skuCode, productName }: SupplierComp
                       )}
                     </div>
                   </div>
-                  
-                  <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+
+                  <div className="mt-4 flex justify-end space-x-2 border-t pt-4">
                     <Button variant="outline" size="sm">
                       查看詳情
                     </Button>
-                    <Button size="sm" className={index === 0 ? 'bg-green-600 hover:bg-green-700' : ''}>
+                    <Button
+                      size="sm"
+                      className={index === 0 ? 'bg-green-600 hover:bg-green-700' : ''}
+                    >
                       選擇供應商
                     </Button>
                   </div>

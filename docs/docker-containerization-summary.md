@@ -9,8 +9,9 @@
 ### 1. Dockerfile 文件
 
 **FastAPI 服務 (6個):**
+
 - ✅ `backend/api-gateway-fastapi/Dockerfile`
-- ✅ `backend/user-service-fastapi/Dockerfile` 
+- ✅ `backend/user-service-fastapi/Dockerfile`
 - ✅ `backend/order-service-fastapi/Dockerfile`
 - ✅ `backend/product-service-fastapi/Dockerfile`
 - ✅ `backend/acceptance-service-fastapi/Dockerfile`
@@ -19,38 +20,45 @@
 - ✅ `backend/customer-hierarchy-service-fastapi/Dockerfile`
 
 **Next.js 前端:**
+
 - ✅ `Dockerfile.frontend` (standalone output)
 
 ### 2. Docker Compose 配置
 
 **生產環境編排:**
+
 - ✅ `docker-compose.production.yml` - 完整微服務編排
 - ✅ 包含 PostgreSQL、Redis、FastAPI 服務與 API Gateway
 - ✅ 健康檢查、依賴管理、網絡配置
 
 **開發環境支援:**
+
 - ✅ `docker-compose.yml` + `docker-compose.override.yml`（本地開發覆寫）
 - ✅ `docker-compose.dev.yml`（可選工具：pgAdmin、Redis Commander）
 
 ### 3. 構建優化
 
 **Docker 忽略文件 (9個):**
+
 - ✅ 主目錄 `.dockerignore`
 - ✅ 每個服務目錄的 `.dockerignore`
 
 **多階段構建特性:**
+
 - ✅ 依賴階段 (deps)
-- ✅ 構建階段 (builder)  
+- ✅ 構建階段 (builder)
 - ✅ 生產階段 (runner)
 - ✅ 最小化映像大小
 
 ### 4. 部署自動化
 
 **部署腳本:**
+
 - ✅ `scripts/docker-deploy.sh` - 統一部署管理
 - ✅ `scripts/create-cloud-run-dockerfiles.sh` - Cloud Run 優化
 
 **支援功能:**
+
 - ✅ 構建所有/單個服務
 - ✅ 開發/生產環境部署
 - ✅ 健康檢查和日誌查看
@@ -59,6 +67,7 @@
 ### 5. 配置管理
 
 **環境變數:**
+
 - ✅ `.env.docker.example` - 完整配置模板
 - ✅ 服務間通信配置
 - ✅ 資料庫和緩存配置
@@ -178,7 +187,7 @@ docker run -p 8080:8080 -e PORT=8080 service-name
 
 ```bash
 ✅ API Gateway (8000) - Healthy
-✅ User Service (8001) - Healthy  
+✅ User Service (8001) - Healthy
 ✅ Order Service (8002) - Healthy
 ✅ Product Service (8003) - Healthy
 ✅ Acceptance Service (8004) - Healthy

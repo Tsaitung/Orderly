@@ -11,12 +11,12 @@ import {
   ERPOrderSchema,
   ERPProductSchema,
   ERPInventorySchema,
-  ERPCustomerSchema
+  ERPCustomerSchema,
 } from '../erp-adapter-interface'
 
 /**
  * Digiwin ERP 適配器 (鼎新電腦)
- * 
+ *
  * 支援功能:
  * - DigiCenter API 集成
  * - 訂單同步 (銷售訂單/採購訂單)
@@ -33,46 +33,46 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   // Digiwin 特定配置
   private readonly defaultFieldMapping = {
     // 訂單欄位對應
-    'orderNumber': 'TC001', // 單據編號
-    'externalId': 'ROWID',  // 內部序號
-    'customerCode': 'TC004', // 客戶代號
-    'orderDate': 'TC002',   // 單據日期
-    'deliveryDate': 'TC014', // 預定交貨日
-    'totalAmount': 'TC030',  // 總金額
-    'status': 'TC027',      // 單據狀態
-    'notes': 'TC031',       // 備註
-    
+    orderNumber: 'TC001', // 單據編號
+    externalId: 'ROWID', // 內部序號
+    customerCode: 'TC004', // 客戶代號
+    orderDate: 'TC002', // 單據日期
+    deliveryDate: 'TC014', // 預定交貨日
+    totalAmount: 'TC030', // 總金額
+    status: 'TC027', // 單據狀態
+    notes: 'TC031', // 備註
+
     // 產品欄位對應
-    'code': 'MB001',        // 品號
-    'name': 'MB002',        // 品名
-    'basePrice': 'MB047',   // 標準售價
-    'unit': 'MB004',        // 庫存單位
-    'isActive': 'MB051',    // 有效無效
-    'category': 'MB003',    // 品號類別
-    'description': 'MB003', // 規格說明
-    
+    code: 'MB001', // 品號
+    name: 'MB002', // 品名
+    basePrice: 'MB047', // 標準售價
+    unit: 'MB004', // 庫存單位
+    isActive: 'MB051', // 有效無效
+    category: 'MB003', // 品號類別
+    description: 'MB003', // 規格說明
+
     // 庫存欄位對應
-    'productCode': 'MD001', // 品號
-    'availableQuantity': 'MD032', // 現有庫存量
-    'reservedQuantity': 'MD026',  // 已分配量
-    'location': 'MD002',    // 倉庫別
-    
+    productCode: 'MD001', // 品號
+    availableQuantity: 'MD032', // 現有庫存量
+    reservedQuantity: 'MD026', // 已分配量
+    location: 'MD002', // 倉庫別
+
     // 客戶欄位對應
-    'code': 'MA001',        // 客戶代號
-    'name': 'MA002',        // 客戶名稱
-    'contactPerson': 'MA009', // 聯絡人
-    'email': 'MA021',       // 電子郵件
-    'phone': 'MA010',       // 電話
-    'isActive': 'MA025'     // 有效無效
+    code: 'MA001', // 客戶代號
+    name: 'MA002', // 客戶名稱
+    contactPerson: 'MA009', // 聯絡人
+    email: 'MA021', // 電子郵件
+    phone: 'MA010', // 電話
+    isActive: 'MA025', // 有效無效
   }
 
   constructor(config: ERPConnectionConfig) {
     super(config)
-    
+
     // 合併欄位對應
     this.config.fieldMapping = {
       ...this.defaultFieldMapping,
-      ...this.config.fieldMapping
+      ...this.config.fieldMapping,
     }
   }
 
@@ -82,11 +82,11 @@ export class DigiwinAdapter extends ERPAdapterInterface {
         compdb: this.config.settings.companyDatabase || 'DEMO',
         account: this.config.authentication.credentials.username,
         password: this.config.authentication.credentials.password,
-        language: 'zh-TW'
+        language: 'zh-TW',
       }
 
       const response = await this.makeRequest('POST', '/api/v1/auth/login', loginData)
-      
+
       if (response.success && response.data?.token) {
         this.sessionToken = response.data.token
         this.sessionExpiry = new Date(Date.now() + 8 * 60 * 60 * 1000) // 8小時有效期
@@ -110,11 +110,11 @@ export class DigiwinAdapter extends ERPAdapterInterface {
       } catch (error) {
         console.error('Logout error:', error)
       }
-      
+
       this.sessionToken = undefined
       this.sessionExpiry = undefined
     }
-    
+
     this.isConnected = false
   }
 
@@ -136,7 +136,7 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   getConnectionStatus(): { connected: boolean; lastError?: string } {
     return {
       connected: this.isConnected && !!this.sessionToken && !this.isSessionExpired(),
-      lastError: this.lastError
+      lastError: this.lastError,
     }
   }
 
@@ -171,15 +171,16 @@ export class DigiwinAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       const queryData = {
         ...filters,
-        ...pagination
+        ...pagination,
       }
 
       const response = await this.makeRequest('POST', '/api/v1/documents/COPTC/query', queryData)
-      
-      const orders: ERPOrder[] = response.data?.map((dwOrder: any) => this.mapDigiwinOrderToStandard(dwOrder)) || []
+
+      const orders: ERPOrder[] =
+        response.data?.map((dwOrder: any) => this.mapDigiwinOrderToStandard(dwOrder)) || []
 
       return {
         success: true,
@@ -188,13 +189,13 @@ export class DigiwinAdapter extends ERPAdapterInterface {
           totalCount: response.totalCount,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get orders'
+        error: error instanceof Error ? error.message : 'Failed to get orders',
       }
     }
   }
@@ -202,41 +203,48 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async createOrder(order: ERPOrder): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const dwOrder = this.mapStandardOrderToDigiwin(order)
       const response = await this.makeRequest('POST', '/api/v1/documents/COPTC/create', dwOrder)
-      
+
       const createdOrder = this.mapDigiwinOrderToStandard(response.data)
-      
+
       return {
         success: true,
-        data: createdOrder
+        data: createdOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create order'
+        error: error instanceof Error ? error.message : 'Failed to create order',
       }
     }
   }
 
-  async updateOrder(externalId: string, updates: Partial<ERPOrder>): Promise<ERPApiResponse<ERPOrder>> {
+  async updateOrder(
+    externalId: string,
+    updates: Partial<ERPOrder>
+  ): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const dwUpdates = this.mapStandardOrderToDigiwin(updates as ERPOrder)
-      const response = await this.makeRequest('PUT', `/api/v1/documents/COPTC/${externalId}`, dwUpdates)
-      
+      const response = await this.makeRequest(
+        'PUT',
+        `/api/v1/documents/COPTC/${externalId}`,
+        dwUpdates
+      )
+
       const updatedOrder = this.mapDigiwinOrderToStandard(response.data)
-      
+
       return {
         success: true,
-        data: updatedOrder
+        data: updatedOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update order'
+        error: error instanceof Error ? error.message : 'Failed to update order',
       }
     }
   }
@@ -244,14 +252,14 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async deleteOrder(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       await this.makeRequest('DELETE', `/api/v1/documents/COPTC/${externalId}`)
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete order'
+        error: error instanceof Error ? error.message : 'Failed to delete order',
       }
     }
   }
@@ -259,18 +267,18 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async getOrderById(externalId: string): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/v1/documents/COPTC/${externalId}`)
       const order = this.mapDigiwinOrderToStandard(response.data)
-      
+
       return {
         success: true,
-        data: order
+        data: order,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get order'
+        error: error instanceof Error ? error.message : 'Failed to get order',
       }
     }
   }
@@ -301,15 +309,16 @@ export class DigiwinAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       const queryData = {
         ...filters,
-        ...pagination
+        ...pagination,
       }
 
       const response = await this.makeRequest('POST', '/api/v1/masterdata/INVMB/query', queryData)
-      
-      const products: ERPProduct[] = response.data?.map((dwProduct: any) => this.mapDigiwinProductToStandard(dwProduct)) || []
+
+      const products: ERPProduct[] =
+        response.data?.map((dwProduct: any) => this.mapDigiwinProductToStandard(dwProduct)) || []
 
       return {
         success: true,
@@ -318,13 +327,13 @@ export class DigiwinAdapter extends ERPAdapterInterface {
           totalCount: response.totalCount,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get products'
+        error: error instanceof Error ? error.message : 'Failed to get products',
       }
     }
   }
@@ -332,41 +341,48 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async createProduct(product: ERPProduct): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const dwProduct = this.mapStandardProductToDigiwin(product)
       const response = await this.makeRequest('POST', '/api/v1/masterdata/INVMB/create', dwProduct)
-      
+
       const createdProduct = this.mapDigiwinProductToStandard(response.data)
-      
+
       return {
         success: true,
-        data: createdProduct
+        data: createdProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create product'
+        error: error instanceof Error ? error.message : 'Failed to create product',
       }
     }
   }
 
-  async updateProduct(externalId: string, updates: Partial<ERPProduct>): Promise<ERPApiResponse<ERPProduct>> {
+  async updateProduct(
+    externalId: string,
+    updates: Partial<ERPProduct>
+  ): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const dwUpdates = this.mapStandardProductToDigiwin(updates as ERPProduct)
-      const response = await this.makeRequest('PUT', `/api/v1/masterdata/INVMB/${externalId}`, dwUpdates)
-      
+      const response = await this.makeRequest(
+        'PUT',
+        `/api/v1/masterdata/INVMB/${externalId}`,
+        dwUpdates
+      )
+
       const updatedProduct = this.mapDigiwinProductToStandard(response.data)
-      
+
       return {
         success: true,
-        data: updatedProduct
+        data: updatedProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update product'
+        error: error instanceof Error ? error.message : 'Failed to update product',
       }
     }
   }
@@ -374,17 +390,17 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async deleteProduct(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // Digiwin 標記為無效
       await this.makeRequest('PUT', `/api/v1/masterdata/INVMB/${externalId}`, {
-        MB051: 'N'
+        MB051: 'N',
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete product'
+        error: error instanceof Error ? error.message : 'Failed to delete product',
       }
     }
   }
@@ -392,18 +408,18 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async getProductById(externalId: string): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/v1/masterdata/INVMB/${externalId}`)
       const product = this.mapDigiwinProductToStandard(response.data)
-      
+
       return {
         success: true,
-        data: product
+        data: product,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get product'
+        error: error instanceof Error ? error.message : 'Failed to get product',
       }
     }
   }
@@ -428,17 +444,19 @@ export class DigiwinAdapter extends ERPAdapterInterface {
       }
 
       const response = await this.makeRequest('POST', '/api/v1/reports/INVMD/query', filters)
-      
-      const inventory: ERPInventory[] = response.data?.map((dwInventory: any) => this.mapDigiwinInventoryToStandard(dwInventory)) || []
+
+      const inventory: ERPInventory[] =
+        response.data?.map((dwInventory: any) => this.mapDigiwinInventoryToStandard(dwInventory)) ||
+        []
 
       return {
         success: true,
-        data: inventory
+        data: inventory,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get inventory'
+        error: error instanceof Error ? error.message : 'Failed to get inventory',
       }
     }
   }
@@ -446,27 +464,31 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async updateInventory(updates: ERPInventory[]): Promise<ERPApiResponse<ERPInventory[]>> {
     try {
       await this.ensureConnected()
-      
+
       const results: ERPInventory[] = []
-      
+
       for (const update of updates) {
         try {
           const dwUpdate = this.mapStandardInventoryToDigiwin(update)
-          const response = await this.makeRequest('POST', '/api/v1/documents/INVTG/create', dwUpdate)
+          const response = await this.makeRequest(
+            'POST',
+            '/api/v1/documents/INVTG/create',
+            dwUpdate
+          )
           results.push(this.mapDigiwinInventoryToStandard(response.data))
         } catch (error) {
           console.error(`Failed to update inventory for ${update.productCode}:`, error)
         }
       }
-      
+
       return {
         success: true,
-        data: results
+        data: results,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update inventory'
+        error: error instanceof Error ? error.message : 'Failed to update inventory',
       }
     }
   }
@@ -492,15 +514,16 @@ export class DigiwinAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       const queryData = {
         ...filters,
-        ...pagination
+        ...pagination,
       }
 
       const response = await this.makeRequest('POST', '/api/v1/masterdata/COPMA/query', queryData)
-      
-      const customers: ERPCustomer[] = response.data?.map((dwCustomer: any) => this.mapDigiwinCustomerToStandard(dwCustomer)) || []
+
+      const customers: ERPCustomer[] =
+        response.data?.map((dwCustomer: any) => this.mapDigiwinCustomerToStandard(dwCustomer)) || []
 
       return {
         success: true,
@@ -509,13 +532,13 @@ export class DigiwinAdapter extends ERPAdapterInterface {
           totalCount: response.totalCount,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customers'
+        error: error instanceof Error ? error.message : 'Failed to get customers',
       }
     }
   }
@@ -523,41 +546,48 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async createCustomer(customer: ERPCustomer): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const dwCustomer = this.mapStandardCustomerToDigiwin(customer)
       const response = await this.makeRequest('POST', '/api/v1/masterdata/COPMA/create', dwCustomer)
-      
+
       const createdCustomer = this.mapDigiwinCustomerToStandard(response.data)
-      
+
       return {
         success: true,
-        data: createdCustomer
+        data: createdCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create customer'
+        error: error instanceof Error ? error.message : 'Failed to create customer',
       }
     }
   }
 
-  async updateCustomer(externalId: string, updates: Partial<ERPCustomer>): Promise<ERPApiResponse<ERPCustomer>> {
+  async updateCustomer(
+    externalId: string,
+    updates: Partial<ERPCustomer>
+  ): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const dwUpdates = this.mapStandardCustomerToDigiwin(updates as ERPCustomer)
-      const response = await this.makeRequest('PUT', `/api/v1/masterdata/COPMA/${externalId}`, dwUpdates)
-      
+      const response = await this.makeRequest(
+        'PUT',
+        `/api/v1/masterdata/COPMA/${externalId}`,
+        dwUpdates
+      )
+
       const updatedCustomer = this.mapDigiwinCustomerToStandard(response.data)
-      
+
       return {
         success: true,
-        data: updatedCustomer
+        data: updatedCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update customer'
+        error: error instanceof Error ? error.message : 'Failed to update customer',
       }
     }
   }
@@ -565,18 +595,18 @@ export class DigiwinAdapter extends ERPAdapterInterface {
   async getCustomerById(externalId: string): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/v1/masterdata/COPMA/${externalId}`)
       const customer = this.mapDigiwinCustomerToStandard(response.data)
-      
+
       return {
         success: true,
-        data: customer
+        data: customer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customer'
+        error: error instanceof Error ? error.message : 'Failed to get customer',
       }
     }
   }
@@ -597,8 +627,8 @@ export class DigiwinAdapter extends ERPAdapterInterface {
         endTime: new Date(),
         duration: 0,
         syncDirection: options.syncDirection,
-        batchSize: options.batchSize
-      }
+        batchSize: options.batchSize,
+      },
     }
 
     try {
@@ -607,13 +637,13 @@ export class DigiwinAdapter extends ERPAdapterInterface {
     } catch (error) {
       result.errors.push({
         recordId: 'sync',
-        error: error instanceof Error ? error.message : 'Sync failed'
+        error: error instanceof Error ? error.message : 'Sync failed',
       })
     }
 
     result.metadata.endTime = new Date()
     result.metadata.duration = result.metadata.endTime.getTime() - startTime.getTime()
-    
+
     return result
   }
 
@@ -641,7 +671,9 @@ export class DigiwinAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateOrders(updates: Array<{ externalId: string; data: Partial<ERPOrder> }>): Promise<ERPApiResponse<ERPOrder[]>> {
+  async batchUpdateOrders(
+    updates: Array<{ externalId: string; data: Partial<ERPOrder> }>
+  ): Promise<ERPApiResponse<ERPOrder[]>> {
     const results: ERPOrder[] = []
     for (const update of updates) {
       const result = await this.updateOrder(update.externalId, update.data)
@@ -663,7 +695,9 @@ export class DigiwinAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateProducts(updates: Array<{ externalId: string; data: Partial<ERPProduct> }>): Promise<ERPApiResponse<ERPProduct[]>> {
+  async batchUpdateProducts(
+    updates: Array<{ externalId: string; data: Partial<ERPProduct> }>
+  ): Promise<ERPApiResponse<ERPProduct[]>> {
     const results: ERPProduct[] = []
     for (const update of updates) {
       const result = await this.updateProduct(update.externalId, update.data)
@@ -690,12 +724,12 @@ export class DigiwinAdapter extends ERPAdapterInterface {
 
   private mapOrderStatusToDigiwin(orderlyStatus: string): string {
     const statusMap: Record<string, string> = {
-      'draft': 'N',       // 未確認
-      'confirmed': 'Y',   // 已確認
-      'shipped': 'Y',     // 已確認
-      'delivered': 'Y',   // 已確認
-      'completed': 'Y',   // 已確認
-      'cancelled': 'V'    // 作廢
+      draft: 'N', // 未確認
+      confirmed: 'Y', // 已確認
+      shipped: 'Y', // 已確認
+      delivered: 'Y', // 已確認
+      completed: 'Y', // 已確認
+      cancelled: 'V', // 作廢
     }
     return statusMap[orderlyStatus] || 'N'
   }
@@ -737,12 +771,16 @@ export class DigiwinAdapter extends ERPAdapterInterface {
     return this.mapFieldsToERP(customer, this.config.fieldMapping)
   }
 
-  protected async makeRequest(method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', endpoint: string, data?: any): Promise<any> {
+  protected async makeRequest(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    endpoint: string,
+    data?: any
+  ): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'User-Agent': 'Orderly-Digiwin-Adapter/2.0',
-      'Accept': 'application/json'
+      Accept: 'application/json',
     }
 
     // 添加 Session Token
@@ -755,7 +793,7 @@ export class DigiwinAdapter extends ERPAdapterInterface {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {

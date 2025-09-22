@@ -5,9 +5,10 @@
 
 import { z } from 'zod'
 // Use conditional import for DOMPurify to avoid SSR issues
-const DOMPurify = typeof window !== 'undefined' 
-  ? require('isomorphic-dompurify') 
-  : { sanitize: (input: string) => input } // Fallback for server-side
+const DOMPurify =
+  typeof window !== 'undefined'
+    ? require('isomorphic-dompurify')
+    : { sanitize: (input: string) => input } // Fallback for server-side
 import { NextRequest, NextResponse } from 'next/server'
 import { SecurityLogger } from './security-logger'
 
@@ -26,7 +27,7 @@ const SQL_INJECTION_PATTERNS = [
   /(\b(OR|AND)\s+\d+\s*=\s*\d+)/i,
   /([\'\"](\s*|\s*\w+\s*)(OR|AND)(\s*|\s*\w+\s*)[\'\"])/i,
   /(-{2}|\/\*|\*\/)/,
-  /(;|\||\&)/
+  /(;|\||\&)/,
 ]
 
 // XSS patterns to detect
@@ -35,20 +36,28 @@ const XSS_PATTERNS = [
   /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
   /javascript:/gi,
   /on\w+\s*=/gi,
-  /<[^>]*\son\w+\s*=[^>]*>/gi
+  /<[^>]*\son\w+\s*=[^>]*>/gi,
 ]
 
 // Define validation schemas for different endpoints
 export const OrderSchemas = {
   orderQuery: z.object({
-    status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).optional(),
+    status: z
+      .enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
+      .optional(),
     dateFrom: z.string().datetime().optional(),
     dateTo: z.string().datetime().optional(),
     search: z.string().max(100).optional(),
-    page: z.string().transform(val => val ? parseInt(val, 10) : 1).pipe(z.number().min(1).max(1000)),
-    limit: z.string().transform(val => val ? parseInt(val, 10) : 20).pipe(z.number().min(1).max(100)),
+    page: z
+      .string()
+      .transform(val => (val ? parseInt(val, 10) : 1))
+      .pipe(z.number().min(1).max(1000)),
+    limit: z
+      .string()
+      .transform(val => (val ? parseInt(val, 10) : 20))
+      .pipe(z.number().min(1).max(100)),
     sortBy: z.enum(['createdAt', 'updatedAt', 'totalAmount', 'status']).optional(),
-    sortOrder: z.enum(['asc', 'desc']).optional()
+    sortOrder: z.enum(['asc', 'desc']).optional(),
   }),
 
   createOrder: z.object({
@@ -60,45 +69,54 @@ export const OrderSchemas = {
       city: z.string().min(1).max(100),
       state: z.string().min(1).max(100),
       zipCode: z.string().min(1).max(20),
-      country: z.string().min(1).max(100)
+      country: z.string().min(1).max(100),
     }),
-    items: z.array(z.object({
-      productId: z.string().uuid('Invalid product ID'),
-      quantity: z.number().min(1).max(10000),
-      unitPrice: z.number().min(0).max(999999.99),
-      notes: z.string().max(500).optional()
-    })).min(1, 'At least one item is required'),
+    items: z
+      .array(
+        z.object({
+          productId: z.string().uuid('Invalid product ID'),
+          quantity: z.number().min(1).max(10000),
+          unitPrice: z.number().min(0).max(999999.99),
+          notes: z.string().max(500).optional(),
+        })
+      )
+      .min(1, 'At least one item is required'),
     notes: z.string().max(1000).optional(),
-    metadata: z.record(z.string()).optional()
+    metadata: z.record(z.string()).optional(),
   }),
 
   updateOrder: z.object({
-    status: z.enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']).optional(),
+    status: z
+      .enum(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
+      .optional(),
     deliveryDate: z.string().datetime().optional(),
     notes: z.string().max(1000).optional(),
-    metadata: z.record(z.string()).optional()
-  })
+    metadata: z.record(z.string()).optional(),
+  }),
 }
 
 export const AuthSchemas = {
   login: z.object({
     email: z.string().email('Invalid email format').max(255),
-    password: z.string().min(8, 'Password must be at least 8 characters').max(128)
+    password: z.string().min(8, 'Password must be at least 8 characters').max(128),
   }),
 
   register: z.object({
     email: z.string().email('Invalid email format').max(255),
-    password: z.string()
+    password: z
+      .string()
       .min(8, 'Password must be at least 8 characters')
       .max(128)
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-             'Password must contain uppercase, lowercase, number and special character'),
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        'Password must contain uppercase, lowercase, number and special character'
+      ),
     organizationName: z.string().min(1).max(100),
     organizationType: z.enum(['restaurant', 'supplier']),
     firstName: z.string().min(1).max(50),
     lastName: z.string().min(1).max(50),
-    phone: z.string().regex(PHONE_REGEX, 'Invalid phone number').optional()
-  })
+    phone: z.string().regex(PHONE_REGEX, 'Invalid phone number').optional(),
+  }),
 }
 
 export class ValidationMiddleware {
@@ -114,9 +132,9 @@ export class ValidationMiddleware {
     let sanitized = input.replace(/[\x00-\x1F\x7F]/g, '')
 
     // HTML encode using DOMPurify
-    sanitized = DOMPurify.sanitize(sanitized, { 
-      ALLOWED_TAGS: [], 
-      ALLOWED_ATTR: [] 
+    sanitized = DOMPurify.sanitize(sanitized, {
+      ALLOWED_TAGS: [],
+      ALLOWED_ATTR: [],
     })
 
     // Additional encoding for SQL injection prevention
@@ -176,16 +194,16 @@ export class ValidationMiddleware {
   ): Promise<{ success: true; data: T } | { success: false; error: string; errors?: z.ZodError }> {
     try {
       const { maxSize = 1024 * 1024, allowEmpty = false } = options // 1MB default
-      
+
       // Get raw body
       const bodyText = await request.text()
-      
+
       // Check body size
       if (bodyText.length > maxSize) {
         logger.logApiSecurityEvent('invalid_request', request.url, {
           reason: 'Request body too large',
           size: bodyText.length,
-          maxSize
+          maxSize,
         })
         return { success: false, error: 'Request body too large' }
       }
@@ -205,7 +223,7 @@ export class ValidationMiddleware {
         parsedBody = JSON.parse(bodyText)
       } catch (error) {
         logger.logApiSecurityEvent('invalid_request', request.url, {
-          reason: 'Invalid JSON format'
+          reason: 'Invalid JSON format',
         })
         return { success: false, error: 'Invalid JSON format' }
       }
@@ -217,14 +235,14 @@ export class ValidationMiddleware {
       const bodyString = JSON.stringify(sanitizedBody)
       if (this.detectSQLInjection(bodyString)) {
         logger.logApiSecurityEvent('sql_injection_attempt', request.url, {
-          suspiciousContent: bodyString.substring(0, 200)
+          suspiciousContent: bodyString.substring(0, 200),
         })
         return { success: false, error: 'Invalid request format' }
       }
 
       if (this.detectXSS(bodyString)) {
         logger.logApiSecurityEvent('xss_attempt', request.url, {
-          suspiciousContent: bodyString.substring(0, 200)
+          suspiciousContent: bodyString.substring(0, 200),
         })
         return { success: false, error: 'Invalid request format' }
       }
@@ -234,21 +252,20 @@ export class ValidationMiddleware {
       if (!result.success) {
         logger.logApiSecurityEvent('invalid_request', request.url, {
           reason: 'Schema validation failed',
-          errors: result.error.errors
+          errors: result.error.errors,
         })
-        return { 
-          success: false, 
-          error: 'Validation failed', 
-          errors: result.error 
+        return {
+          success: false,
+          error: 'Validation failed',
+          errors: result.error,
         }
       }
 
       return { success: true, data: result.data }
-
     } catch (error) {
       logger.error('validation_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        url: request.url
+        url: request.url,
       })
       return { success: false, error: 'Validation error' }
     }
@@ -275,7 +292,7 @@ export class ValidationMiddleware {
       const queryString = JSON.stringify(sanitizedQuery)
       if (this.detectSQLInjection(queryString)) {
         logger.logApiSecurityEvent('sql_injection_attempt', 'query_params', {
-          suspiciousContent: queryString.substring(0, 200)
+          suspiciousContent: queryString.substring(0, 200),
         })
         return { success: false, error: 'Invalid query parameters' }
       }
@@ -283,18 +300,17 @@ export class ValidationMiddleware {
       // Validate with Zod schema
       const result = schema.safeParse(sanitizedQuery)
       if (!result.success) {
-        return { 
-          success: false, 
-          error: 'Invalid query parameters', 
-          errors: result.error 
+        return {
+          success: false,
+          error: 'Invalid query parameters',
+          errors: result.error,
         }
       }
 
       return { success: true, data: result.data }
-
     } catch (error) {
       logger.error('query_validation_error', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
       return { success: false, error: 'Query validation error' }
     }
@@ -311,16 +327,16 @@ export class ValidationMiddleware {
   ): Promise<boolean> {
     // This is a simplified implementation
     // In production, use Redis or a proper rate limiting service
-    
+
     const key = `rate_limit:${identifier}:${Math.floor(Date.now() / windowMs)}`
-    
+
     // For now, we'll just log rate limiting attempts
     // In production, implement with Redis counters
     logger.info('rate_limit_check', {
       identifier,
       key,
       maxRequests,
-      windowMs
+      windowMs,
     })
 
     return true // Allow all requests for now
@@ -330,13 +346,12 @@ export class ValidationMiddleware {
    * CSRF token validation
    */
   public static validateCSRFToken(request: NextRequest, expectedToken: string): boolean {
-    const token = request.headers.get('x-csrf-token') || 
-                  request.headers.get('x-xsrf-token')
+    const token = request.headers.get('x-csrf-token') || request.headers.get('x-xsrf-token')
 
     if (!token || token !== expectedToken) {
       logger.logApiSecurityEvent('csrf_attempt', request.url, {
         providedToken: token ? 'present' : 'missing',
-        expectedToken: 'present'
+        expectedToken: 'present',
       })
       return false
     }
@@ -347,14 +362,17 @@ export class ValidationMiddleware {
   /**
    * Content-Type validation
    */
-  public static validateContentType(request: NextRequest, expectedType: string = 'application/json'): boolean {
+  public static validateContentType(
+    request: NextRequest,
+    expectedType: string = 'application/json'
+  ): boolean {
     const contentType = request.headers.get('content-type')
-    
+
     if (!contentType || !contentType.includes(expectedType)) {
       logger.logApiSecurityEvent('invalid_request', request.url, {
         reason: 'Invalid content-type',
         provided: contentType,
-        expected: expectedType
+        expected: expectedType,
       })
       return false
     }
@@ -370,12 +388,15 @@ export class ValidationMiddleware {
     details?: any,
     statusCode: number = 400
   ): NextResponse {
-    return NextResponse.json({
-      success: false,
-      error,
-      errorCode: 'VALIDATION_ERROR',
-      details
-    }, { status: statusCode })
+    return NextResponse.json(
+      {
+        success: false,
+        error,
+        errorCode: 'VALIDATION_ERROR',
+        details,
+      },
+      { status: statusCode }
+    )
   }
 
   /**
@@ -385,11 +406,14 @@ export class ValidationMiddleware {
     error: string = 'Security validation failed',
     statusCode: number = 400
   ): NextResponse {
-    return NextResponse.json({
-      success: false,
-      error,
-      errorCode: 'SECURITY_ERROR'
-    }, { status: statusCode })
+    return NextResponse.json(
+      {
+        success: false,
+        error,
+        errorCode: 'SECURITY_ERROR',
+      },
+      { status: statusCode }
+    )
   }
 }
 

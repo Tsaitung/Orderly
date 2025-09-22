@@ -4,32 +4,34 @@ import { useState, useEffect, useCallback } from 'react'
 import { Notification } from '@/components/supplier/notifications/NotificationCenter'
 
 interface NotificationHookResult {
-  notifications: Notification[];
-  unreadCount: number;
-  loading: boolean;
-  error: string | null;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  archiveNotification: (notificationId: string) => Promise<void>;
-  deleteNotification: (notificationId: string) => Promise<void>;
-  refetch: () => Promise<void>;
-  createNotification: (notification: Omit<Notification, 'id' | 'created_at' | 'read' | 'archived'>) => Promise<void>;
+  notifications: Notification[]
+  unreadCount: number
+  loading: boolean
+  error: string | null
+  markAsRead: (notificationId: string) => Promise<void>
+  markAllAsRead: () => Promise<void>
+  archiveNotification: (notificationId: string) => Promise<void>
+  deleteNotification: (notificationId: string) => Promise<void>
+  refetch: () => Promise<void>
+  createNotification: (
+    notification: Omit<Notification, 'id' | 'created_at' | 'read' | 'archived'>
+  ) => Promise<void>
 }
 
 interface UseNotificationsOptions {
-  organizationId?: string;
-  autoRefresh?: boolean;
-  refreshInterval?: number;
+  organizationId?: string
+  autoRefresh?: boolean
+  refreshInterval?: number
   filter?: {
-    type?: string;
-    priority?: string;
-    read?: boolean;
-    archived?: boolean;
-  };
+    type?: string
+    priority?: string
+    read?: boolean
+    archived?: boolean
+  }
 }
 
 // Mock API functions - replace with real API calls
-const mockApiDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
+const mockApiDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms))
 
 const generateMockNotifications = (): Notification[] => [
   {
@@ -46,8 +48,8 @@ const generateMockNotifications = (): Notification[] => [
       order_number: 'ORD-2024-001',
       customer_name: '星巴克咖啡',
       old_status: 'pending',
-      new_status: 'confirmed'
-    }
+      new_status: 'confirmed',
+    },
   },
   {
     id: '2',
@@ -63,8 +65,8 @@ const generateMockNotifications = (): Notification[] => [
     metadata: {
       order_number: 'ORD-2024-002',
       customer_name: '星巴克咖啡',
-      amount: 15000
-    }
+      amount: 15000,
+    },
   },
   {
     id: '3',
@@ -74,7 +76,7 @@ const generateMockNotifications = (): Notification[] => [
     message: '系統將於今晚 23:00-24:00 進行例行維護',
     created_at: new Date(Date.now() - 7200000).toISOString(),
     read: false,
-    archived: false
+    archived: false,
   },
   {
     id: '4',
@@ -89,8 +91,8 @@ const generateMockNotifications = (): Notification[] => [
     archived: false,
     metadata: {
       order_number: 'ORD-2024-003',
-      customer_name: '鼎泰豐'
-    }
+      customer_name: '鼎泰豐',
+    },
   },
   {
     id: '5',
@@ -103,192 +105,183 @@ const generateMockNotifications = (): Notification[] => [
     archived: false,
     metadata: {
       product_name: '台灣茶葉禮盒',
-      stock_level: 5
-    }
-  }
-];
+      stock_level: 5,
+    },
+  },
+]
 
 export function useNotifications(options: UseNotificationsOptions = {}): NotificationHookResult {
   const {
     organizationId,
     autoRefresh = true,
     refreshInterval = 30000, // 30 seconds
-    filter = {}
-  } = options;
+    filter = {},
+  } = options
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
-      setError(null);
-      
+      setError(null)
+
       // Mock API call - replace with real API
-      await mockApiDelay(300);
-      
+      await mockApiDelay(300)
+
       // In real implementation, this would be:
       // const response = await fetch(`/api/v2/notifications?org=${organizationId}`);
       // const data = await response.json();
-      
-      const mockData = generateMockNotifications();
-      
+
+      const mockData = generateMockNotifications()
+
       // Apply filters
-      let filteredData = mockData;
+      let filteredData = mockData
       if (filter.type) {
-        filteredData = filteredData.filter(n => n.type === filter.type);
+        filteredData = filteredData.filter(n => n.type === filter.type)
       }
       if (filter.priority) {
-        filteredData = filteredData.filter(n => n.priority === filter.priority);
+        filteredData = filteredData.filter(n => n.priority === filter.priority)
       }
       if (typeof filter.read === 'boolean') {
-        filteredData = filteredData.filter(n => n.read === filter.read);
+        filteredData = filteredData.filter(n => n.read === filter.read)
       }
       if (typeof filter.archived === 'boolean') {
-        filteredData = filteredData.filter(n => n.archived === filter.archived);
+        filteredData = filteredData.filter(n => n.archived === filter.archived)
       }
-      
-      setNotifications(filteredData);
+
+      setNotifications(filteredData)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '載入通知失敗');
-      console.error('Failed to fetch notifications:', err);
+      setError(err instanceof Error ? err.message : '載入通知失敗')
+      console.error('Failed to fetch notifications:', err)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [organizationId, filter]);
+  }, [organizationId, filter])
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       // Mock API call - replace with real API
-      await mockApiDelay(200);
-      
+      await mockApiDelay(200)
+
       // In real implementation:
       // await fetch(`/api/v2/notifications/${notificationId}/read`, { method: 'POST' });
-      
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId ? { ...n, read: true } : n
-        )
-      );
+
+      setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)))
     } catch (err) {
-      setError(err instanceof Error ? err.message : '標記已讀失敗');
-      console.error('Failed to mark notification as read:', err);
+      setError(err instanceof Error ? err.message : '標記已讀失敗')
+      console.error('Failed to mark notification as read:', err)
     }
-  }, []);
+  }, [])
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
     try {
       // Mock API call - replace with real API
-      await mockApiDelay(300);
-      
+      await mockApiDelay(300)
+
       // In real implementation:
       // await fetch(`/api/v2/notifications/mark-all-read`, { method: 'POST' });
-      
-      setNotifications(prev => 
-        prev.map(n => ({ ...n, read: true }))
-      );
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     } catch (err) {
-      setError(err instanceof Error ? err.message : '標記全部已讀失敗');
-      console.error('Failed to mark all notifications as read:', err);
+      setError(err instanceof Error ? err.message : '標記全部已讀失敗')
+      console.error('Failed to mark all notifications as read:', err)
     }
-  }, []);
+  }, [])
 
   // Archive notification
   const archiveNotification = useCallback(async (notificationId: string) => {
     try {
       // Mock API call - replace with real API
-      await mockApiDelay(200);
-      
+      await mockApiDelay(200)
+
       // In real implementation:
       // await fetch(`/api/v2/notifications/${notificationId}/archive`, { method: 'POST' });
-      
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId ? { ...n, archived: true } : n
-        )
-      );
+
+      setNotifications(prev =>
+        prev.map(n => (n.id === notificationId ? { ...n, archived: true } : n))
+      )
     } catch (err) {
-      setError(err instanceof Error ? err.message : '封存通知失敗');
-      console.error('Failed to archive notification:', err);
+      setError(err instanceof Error ? err.message : '封存通知失敗')
+      console.error('Failed to archive notification:', err)
     }
-  }, []);
+  }, [])
 
   // Delete notification
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       // Mock API call - replace with real API
-      await mockApiDelay(200);
-      
+      await mockApiDelay(200)
+
       // In real implementation:
       // await fetch(`/api/v2/notifications/${notificationId}`, { method: 'DELETE' });
-      
-      setNotifications(prev => 
-        prev.filter(n => n.id !== notificationId)
-      );
+
+      setNotifications(prev => prev.filter(n => n.id !== notificationId))
     } catch (err) {
-      setError(err instanceof Error ? err.message : '刪除通知失敗');
-      console.error('Failed to delete notification:', err);
+      setError(err instanceof Error ? err.message : '刪除通知失敗')
+      console.error('Failed to delete notification:', err)
     }
-  }, []);
+  }, [])
 
   // Create new notification
-  const createNotification = useCallback(async (
-    notification: Omit<Notification, 'id' | 'created_at' | 'read' | 'archived'>
-  ) => {
-    try {
-      // Mock API call - replace with real API
-      await mockApiDelay(200);
-      
-      const newNotification: Notification = {
-        ...notification,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString(),
-        read: false,
-        archived: false
-      };
-      
-      // In real implementation:
-      // const response = await fetch('/api/v2/notifications', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(notification)
-      // });
-      // const newNotification = await response.json();
-      
-      setNotifications(prev => [newNotification, ...prev]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '建立通知失敗');
-      console.error('Failed to create notification:', err);
-    }
-  }, []);
+  const createNotification = useCallback(
+    async (notification: Omit<Notification, 'id' | 'created_at' | 'read' | 'archived'>) => {
+      try {
+        // Mock API call - replace with real API
+        await mockApiDelay(200)
+
+        const newNotification: Notification = {
+          ...notification,
+          id: Date.now().toString(),
+          created_at: new Date().toISOString(),
+          read: false,
+          archived: false,
+        }
+
+        // In real implementation:
+        // const response = await fetch('/api/v2/notifications', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify(notification)
+        // });
+        // const newNotification = await response.json();
+
+        setNotifications(prev => [newNotification, ...prev])
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '建立通知失敗')
+        console.error('Failed to create notification:', err)
+      }
+    },
+    []
+  )
 
   // Refetch notifications
   const refetch = useCallback(async () => {
-    setLoading(true);
-    await fetchNotifications();
-  }, [fetchNotifications]);
+    setLoading(true)
+    await fetchNotifications()
+  }, [fetchNotifications])
 
   // Calculate unread count
-  const unreadCount = notifications.filter(n => !n.read && !n.archived).length;
+  const unreadCount = notifications.filter(n => !n.read && !n.archived).length
 
   // Initial fetch
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    fetchNotifications()
+  }, [fetchNotifications])
 
   // Auto refresh
   useEffect(() => {
-    if (!autoRefresh) return;
+    if (!autoRefresh) return
 
     const interval = setInterval(() => {
-      fetchNotifications();
-    }, refreshInterval);
+      fetchNotifications()
+    }, refreshInterval)
 
-    return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, fetchNotifications]);
+    return () => clearInterval(interval)
+  }, [autoRefresh, refreshInterval, fetchNotifications])
 
   return {
     notifications,
@@ -300,8 +293,8 @@ export function useNotifications(options: UseNotificationsOptions = {}): Notific
     archiveNotification,
     deleteNotification,
     refetch,
-    createNotification
-  };
+    createNotification,
+  }
 }
 
 // Helper function to create order status notification
@@ -320,8 +313,8 @@ export function createOrderStatusNotification(
     in_transit: '配送中',
     delivered: '已送達',
     cancelled: '已取消',
-    disputed: '有爭議'
-  };
+    disputed: '有爭議',
+  }
 
   return {
     type: 'order_status',
@@ -333,9 +326,9 @@ export function createOrderStatusNotification(
       order_number: orderNumber,
       customer_name: customerName,
       old_status: oldStatus,
-      new_status: newStatus
-    }
-  };
+      new_status: newStatus,
+    },
+  }
 }
 
 // Helper function to create payment notification
@@ -354,7 +347,7 @@ export function createPaymentNotification(
     metadata: {
       order_number: orderNumber,
       customer_name: customerName,
-      amount
-    }
-  };
+      amount,
+    },
+  }
 }

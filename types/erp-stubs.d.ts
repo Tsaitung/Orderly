@@ -3,4 +3,3 @@ declare module '@/lib/erp/*' {
   export default erpModule
   export = erpModule
 }
-

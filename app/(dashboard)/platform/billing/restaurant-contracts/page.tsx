@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Store, 
-  Plus, 
-  Search, 
-  Filter, 
-  MoreHorizontal, 
+import {
+  Store,
+  Plus,
+  Search,
+  Filter,
+  MoreHorizontal,
   Edit,
   Trash2,
   Copy,
@@ -23,7 +23,7 @@ import {
   Crown,
   Zap,
   Shield,
-  Star
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,12 +52,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
-import type { 
-  RestaurantSubscription, 
-  RestaurantPlanType, 
+import type {
+  RestaurantSubscription,
+  RestaurantPlanType,
   RestaurantContractStatus,
   BillingCycle,
-  FeatureFlag
+  FeatureFlag,
 } from '@/types/billing-restaurant'
 
 // 模擬數據
@@ -81,11 +81,11 @@ const mockSubscriptions: RestaurantSubscription[] = [
     consolidated_billing: true,
     cost_allocation_method: 'by_gmv',
     createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-09-15')
+    updatedAt: new Date('2024-09-15'),
   },
   {
     id: '2',
-    restaurant_id: 'rest_002', 
+    restaurant_id: 'rest_002',
     restaurant_name: '美味蒸餃',
     plan_type: 'free',
     status: 'active',
@@ -102,7 +102,7 @@ const mockSubscriptions: RestaurantSubscription[] = [
     consolidated_billing: false,
     cost_allocation_method: 'equal',
     createdAt: new Date('2024-08-01'),
-    updatedAt: new Date('2024-08-01')
+    updatedAt: new Date('2024-08-01'),
   },
   {
     id: '3',
@@ -123,8 +123,8 @@ const mockSubscriptions: RestaurantSubscription[] = [
     consolidated_billing: true,
     cost_allocation_method: 'by_gmv',
     createdAt: new Date('2023-12-01'),
-    updatedAt: new Date('2024-09-01')
-  }
+    updatedAt: new Date('2024-09-01'),
+  },
 ]
 
 const mockMetrics = {
@@ -133,29 +133,29 @@ const mockMetrics = {
   plan_distribution: {
     free: { count: 856, percentage: 68.6, revenue: 0 },
     pro: { count: 312, percentage: 25.0, revenue: 936000 },
-    enterprise: { count: 79, percentage: 6.3, revenue: 3624000 }
+    enterprise: { count: 79, percentage: 6.3, revenue: 3624000 },
   },
   churn_rate: 0.032,
   upgrade_rate: 0.125,
-  average_revenue_per_user: 3657
+  average_revenue_per_user: 3657,
 }
 
 const planTypeLabels = {
   free: 'Free 免費版',
   pro: 'Pro 專業版',
-  enterprise: 'Enterprise 企業版'
+  enterprise: 'Enterprise 企業版',
 }
 
 const planTypeIcons = {
   free: Users,
   pro: Star,
-  enterprise: Crown
+  enterprise: Crown,
 }
 
 const planTypeColors = {
   free: 'text-gray-600 bg-gray-50 border-gray-200',
   pro: 'text-green-600 bg-green-50 border-green-200',
-  enterprise: 'text-purple-600 bg-purple-50 border-purple-200'
+  enterprise: 'text-purple-600 bg-purple-50 border-purple-200',
 }
 
 const statusLabels = {
@@ -163,7 +163,7 @@ const statusLabels = {
   active: '生效中',
   paused: '暫停',
   cancelled: '已取消',
-  expired: '已過期'
+  expired: '已過期',
 }
 
 const statusColors = {
@@ -171,7 +171,7 @@ const statusColors = {
   active: 'bg-green-100 text-green-800',
   paused: 'bg-orange-100 text-orange-800',
   cancelled: 'bg-red-100 text-red-800',
-  expired: 'bg-red-100 text-red-800'
+  expired: 'bg-red-100 text-red-800',
 }
 
 const statusIcons = {
@@ -179,20 +179,20 @@ const statusIcons = {
   active: CheckCircle,
   paused: Clock,
   cancelled: XCircle,
-  expired: XCircle
+  expired: XCircle,
 }
 
 const billingCycleLabels = {
   monthly: '月繳',
   quarterly: '季繳',
-  yearly: '年繳'
+  yearly: '年繳',
 }
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('zh-TW', {
     style: 'currency',
     currency: 'TWD',
-    minimumFractionDigits: 0
+    minimumFractionDigits: 0,
   }).format(amount)
 }
 
@@ -207,11 +207,12 @@ export default function RestaurantContractsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   const filteredSubscriptions = subscriptions.filter(subscription => {
-    const matchesSearch = subscription.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         subscription.restaurant_id.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch =
+      subscription.restaurant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subscription.restaurant_id.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesPlan = planFilter === 'all' || subscription.plan_type === planFilter
     const matchesStatus = statusFilter === 'all' || subscription.status === statusFilter
-    
+
     return matchesSearch && matchesPlan && matchesStatus
   })
 
@@ -220,26 +221,26 @@ export default function RestaurantContractsPage() {
       {/* 頁面標題 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <div className="rounded-lg bg-green-50 p-2">
               <Store className="h-8 w-8 text-green-600" />
             </div>
             餐廳方案管理
           </h1>
-          <p className="text-gray-600 mt-2">🟢 管理餐廳訂閱方案、功能權限與計費設定</p>
+          <p className="mt-2 text-gray-600">🟢 管理餐廳訂閱方案、功能權限與計費設定</p>
         </div>
-        <Button className="bg-green-600 hover:bg-green-700 text-white">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button className="bg-green-600 text-white hover:bg-green-700">
+          <Plus className="mr-2 h-4 w-4" />
           新增訂閱
         </Button>
       </div>
 
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
         <Card className="border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-2">
                 <Store className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-4">
@@ -249,16 +250,18 @@ export default function RestaurantContractsPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-2">
                 <DollarSign className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">總營收</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockMetrics.total_revenue)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(mockMetrics.total_revenue)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -267,13 +270,17 @@ export default function RestaurantContractsPage() {
         <Card className="border-gray-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-gray-50 rounded-lg">
+              <div className="rounded-lg bg-gray-50 p-2">
                 <Users className="h-5 w-5 text-gray-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Free 用戶</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.plan_distribution.free.count}</p>
-                <p className="text-xs text-gray-500">{formatPercentage(mockMetrics.plan_distribution.free.percentage / 100)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.plan_distribution.free.count}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatPercentage(mockMetrics.plan_distribution.free.percentage / 100)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -282,13 +289,17 @@ export default function RestaurantContractsPage() {
         <Card className="border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-2">
                 <Star className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Pro 用戶</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.plan_distribution.pro.count}</p>
-                <p className="text-xs text-gray-500">{formatPercentage(mockMetrics.plan_distribution.pro.percentage / 100)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.plan_distribution.pro.count}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatPercentage(mockMetrics.plan_distribution.pro.percentage / 100)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -297,13 +308,17 @@ export default function RestaurantContractsPage() {
         <Card className="border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-50 rounded-lg">
+              <div className="rounded-lg bg-purple-50 p-2">
                 <Crown className="h-5 w-5 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Enterprise</p>
-                <p className="text-2xl font-bold text-gray-900">{mockMetrics.plan_distribution.enterprise.count}</p>
-                <p className="text-xs text-gray-500">{formatPercentage(mockMetrics.plan_distribution.enterprise.percentage / 100)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {mockMetrics.plan_distribution.enterprise.count}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {formatPercentage(mockMetrics.plan_distribution.enterprise.percentage / 100)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -312,12 +327,14 @@ export default function RestaurantContractsPage() {
         <Card className="border-green-200">
           <CardContent className="p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-2">
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">ARPU</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(mockMetrics.average_revenue_per_user)}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(mockMetrics.average_revenue_per_user)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -325,7 +342,7 @@ export default function RestaurantContractsPage() {
       </div>
 
       {/* 方案分布概覽 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="border-gray-200">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-gray-600">
@@ -341,11 +358,15 @@ export default function RestaurantContractsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">佔比</span>
-                <span className="font-medium">{formatPercentage(mockMetrics.plan_distribution.free.percentage / 100)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockMetrics.plan_distribution.free.percentage / 100)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">營收</span>
-                <span className="font-medium">{formatCurrency(mockMetrics.plan_distribution.free.revenue)}</span>
+                <span className="font-medium">
+                  {formatCurrency(mockMetrics.plan_distribution.free.revenue)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -366,11 +387,15 @@ export default function RestaurantContractsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">佔比</span>
-                <span className="font-medium">{formatPercentage(mockMetrics.plan_distribution.pro.percentage / 100)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockMetrics.plan_distribution.pro.percentage / 100)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">營收</span>
-                <span className="font-medium">{formatCurrency(mockMetrics.plan_distribution.pro.revenue)}</span>
+                <span className="font-medium">
+                  {formatCurrency(mockMetrics.plan_distribution.pro.revenue)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -387,15 +412,21 @@ export default function RestaurantContractsPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">用戶數量</span>
-                <span className="font-medium">{mockMetrics.plan_distribution.enterprise.count}</span>
+                <span className="font-medium">
+                  {mockMetrics.plan_distribution.enterprise.count}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">佔比</span>
-                <span className="font-medium">{formatPercentage(mockMetrics.plan_distribution.enterprise.percentage / 100)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockMetrics.plan_distribution.enterprise.percentage / 100)}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">營收</span>
-                <span className="font-medium">{formatCurrency(mockMetrics.plan_distribution.enterprise.revenue)}</span>
+                <span className="font-medium">
+                  {formatCurrency(mockMetrics.plan_distribution.enterprise.revenue)}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -405,14 +436,14 @@ export default function RestaurantContractsPage() {
       {/* 篩選與搜尋 */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder="搜尋餐廳名稱或 ID..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -467,18 +498,23 @@ export default function RestaurantContractsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubscriptions.map((subscription) => {
+              {filteredSubscriptions.map(subscription => {
                 const PlanIcon = planTypeIcons[subscription.plan_type]
                 const StatusIcon = statusIcons[subscription.status]
-                
+
                 return (
                   <TableRow key={subscription.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium text-gray-900">{subscription.restaurant_name}</div>
+                        <div className="font-medium text-gray-900">
+                          {subscription.restaurant_name}
+                        </div>
                         <div className="text-sm text-gray-500">{subscription.restaurant_id}</div>
                         {subscription.is_trial && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-200 mt-1">
+                          <Badge
+                            variant="outline"
+                            className="mt-1 border-orange-200 text-orange-600"
+                          >
                             試用中
                           </Badge>
                         )}
@@ -513,7 +549,7 @@ export default function RestaurantContractsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-blue-600 border-blue-200">
+                      <Badge variant="outline" className="border-blue-200 text-blue-600">
                         {billingCycleLabels[subscription.billing_cycle]}
                       </Badge>
                     </TableCell>
@@ -530,8 +566,12 @@ export default function RestaurantContractsPage() {
                     <TableCell>
                       <div className="text-sm">
                         <div>{subscription.next_billing_date.toLocaleDateString('zh-TW')}</div>
-                        <div className="text-gray-500 text-xs">
-                          {Math.ceil((subscription.next_billing_date.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} 天後
+                        <div className="text-xs text-gray-500">
+                          {Math.ceil(
+                            (subscription.next_billing_date.getTime() - new Date().getTime()) /
+                              (1000 * 60 * 60 * 24)
+                          )}{' '}
+                          天後
                         </div>
                       </div>
                     </TableCell>

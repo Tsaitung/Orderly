@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { 
+import {
   Building2,
   Users,
   ChevronRight,
@@ -15,7 +15,7 @@ import {
   Crown,
   Shield,
   Link as LinkIcon,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -65,7 +65,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // 模擬組織資料
       const mockOrganizations: Organization[] = [
         {
@@ -85,7 +85,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 8,
               isUserMember: false,
-              description: '負責平台整體營運管理'
+              description: '負責平台整體營運管理',
             },
             {
               id: 'platform_tech',
@@ -95,7 +95,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 12,
               isUserMember: false,
-              description: '負責技術開發與維護'
+              description: '負責技術開發與維護',
             },
             {
               id: 'platform_business',
@@ -105,9 +105,9 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 5,
               isUserMember: false,
-              description: '負責客戶關係與業務拓展'
-            }
-          ]
+              description: '負責客戶關係與業務拓展',
+            },
+          ],
         },
         {
           id: 'abc_restaurant',
@@ -139,7 +139,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
                   userCount: 12,
                   isUserMember: true,
                   userRole: '採購經理',
-                  description: '負責食材採購與供應商管理'
+                  description: '負責食材採購與供應商管理',
                 },
                 {
                   id: 'abc_logistics',
@@ -149,9 +149,9 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
                   level: 2,
                   userCount: 18,
                   isUserMember: false,
-                  description: '負責貨品配送與倉儲管理'
-                }
-              ]
+                  description: '負責貨品配送與倉儲管理',
+                },
+              ],
             },
             {
               id: 'abc_finance',
@@ -161,9 +161,9 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 25,
               isUserMember: false,
-              description: '負責財務管理與會計作業'
-            }
-          ]
+              description: '負責財務管理與會計作業',
+            },
+          ],
         },
         {
           id: 'food_supplier',
@@ -182,7 +182,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 35,
               isUserMember: false,
-              description: '負責客戶開發與維護'
+              description: '負責客戶開發與維護',
             },
             {
               id: 'supplier_warehouse',
@@ -192,10 +192,10 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
               level: 1,
               userCount: 54,
               isUserMember: false,
-              description: '負責庫存管理與出貨'
-            }
-          ]
-        }
+              description: '負責庫存管理與出貨',
+            },
+          ],
+        },
       ]
 
       const mockUserRelations: UserOrganizationRelation[] = [
@@ -206,7 +206,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
           permissions: ['order_management', 'supplier_view', 'financial_view'],
           isActive: true,
           joinedAt: '2024-01-15T09:00:00Z',
-          isPrimary: true
+          isPrimary: true,
         },
         {
           organizationId: 'abc_purchasing',
@@ -215,13 +215,13 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
           permissions: ['purchasing', 'supplier_management', 'inventory_view'],
           isActive: true,
           joinedAt: '2024-01-15T09:00:00Z',
-          isPrimary: false
-        }
+          isPrimary: false,
+        },
       ]
 
       setOrganizations(mockOrganizations)
       setUserRelations(mockUserRelations)
-      
+
       // 展開有使用者的節點
       const expandedIds = new Set<string>()
       const expandNodesWithUser = (orgs: Organization[]) => {
@@ -242,7 +242,6 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
       }
       expandNodesWithUser(mockOrganizations)
       setExpandedNodes(expandedIds)
-      
     } catch (err) {
       console.error('載入組織架構資料失敗:', err)
     } finally {
@@ -263,11 +262,23 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
   const getOrgTypeBadge = (type: Organization['type']) => {
     switch (type) {
       case 'platform':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">平台</Badge>
+        return (
+          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+            平台
+          </Badge>
+        )
       case 'restaurant':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">餐廳</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            餐廳
+          </Badge>
+        )
       case 'supplier':
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800">供應商</Badge>
+        return (
+          <Badge variant="outline" className="bg-purple-100 text-purple-800">
+            供應商
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">未知</Badge>
     }
@@ -281,24 +292,22 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
 
     return (
       <div key={org.id} className="select-none">
-        <div 
-          className={`flex items-center py-2 px-3 rounded-lg cursor-pointer transition-colors ${
-            isSelected 
-              ? 'bg-primary-100 border border-primary-200' 
-              : 'hover:bg-gray-50'
-          } ${org.isUserMember ? 'bg-blue-50 border-l-4 border-l-blue-400' : ''}`}
+        <div
+          className={`flex cursor-pointer items-center rounded-lg px-3 py-2 transition-colors ${
+            isSelected ? 'border border-primary-200 bg-primary-100' : 'hover:bg-gray-50'
+          } ${org.isUserMember ? 'border-l-4 border-l-blue-400 bg-blue-50' : ''}`}
           style={{ marginLeft: `${depth * 24}px` }}
           onClick={() => setSelectedOrg(isSelected ? null : org.id)}
         >
           {/* 展開/收合按鈕 */}
-          <div className="w-5 h-5 mr-2 flex items-center justify-center">
+          <div className="mr-2 flex h-5 w-5 items-center justify-center">
             {hasChildren && (
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   toggleNode(org.id)
                 }}
-                className="p-0.5 rounded hover:bg-gray-200"
+                className="rounded p-0.5 hover:bg-gray-200"
               >
                 {isExpanded ? (
                   <ChevronDown className="h-3 w-3" />
@@ -315,31 +324,31 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
           </div>
 
           {/* 組織資訊 */}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center space-x-2">
-              <span className="font-medium text-gray-900 truncate">{org.name}</span>
+              <span className="truncate font-medium text-gray-900">{org.name}</span>
               {getOrgTypeBadge(org.type)}
               {org.isUserMember && (
                 <Badge variant="default" className="bg-green-100 text-green-800">
-                  <UserCheck className="h-3 w-3 mr-1" />
+                  <UserCheck className="mr-1 h-3 w-3" />
                   成員
                 </Badge>
               )}
               {userRelation?.isPrimary && (
                 <Badge variant="default" className="bg-yellow-100 text-yellow-800">
-                  <Crown className="h-3 w-3 mr-1" />
+                  <Crown className="mr-1 h-3 w-3" />
                   主要組織
                 </Badge>
               )}
             </div>
             {org.description && (
-              <p className="text-xs text-gray-500 mt-0.5 truncate">{org.description}</p>
+              <p className="mt-0.5 truncate text-xs text-gray-500">{org.description}</p>
             )}
           </div>
 
           {/* 使用者數量 */}
-          <div className="flex items-center text-xs text-gray-500 mr-2">
-            <Users className="h-3 w-3 mr-1" />
+          <div className="mr-2 flex items-center text-xs text-gray-500">
+            <Users className="mr-1 h-3 w-3" />
             {org.userCount}
           </div>
 
@@ -382,41 +391,35 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* 組織架構樹 */}
       <div className="lg:col-span-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center">
-              <Building2 className="h-5 w-5 mr-2" />
+              <Building2 className="mr-2 h-5 w-5" />
               組織架構
             </CardTitle>
             <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditMode(!editMode)}
-              >
-                <Edit3 className="h-4 w-4 mr-2" />
+              <Button variant="outline" size="sm" onClick={() => setEditMode(!editMode)}>
+                <Edit3 className="mr-2 h-4 w-4" />
                 {editMode ? '完成編輯' : '編輯'}
               </Button>
               <Button variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 加入組織
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1">
-              {organizations.map(org => renderOrganizationNode(org))}
-            </div>
+            <div className="space-y-1">{organizations.map(org => renderOrganizationNode(org))}</div>
           </CardContent>
         </Card>
       </div>
@@ -427,19 +430,19 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <LinkIcon className="h-5 w-5 mr-2" />
+              <LinkIcon className="mr-2 h-5 w-5" />
               組織關聯
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {userRelations.map((relation) => (
-                <div key={relation.organizationId} className="p-3 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{relation.organizationName}</span>
+              {userRelations.map(relation => (
+                <div key={relation.organizationId} className="rounded-lg border p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium">{relation.organizationName}</span>
                     {relation.isPrimary && (
                       <Badge variant="default" className="bg-yellow-100 text-yellow-800">
-                        <Crown className="h-3 w-3 mr-1" />
+                        <Crown className="mr-1 h-3 w-3" />
                         主要
                       </Badge>
                     )}
@@ -462,21 +465,21 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
                       </span>
                     </div>
                   </div>
-                  
+
                   {editMode && !relation.isPrimary && (
-                    <div className="mt-2 pt-2 border-t">
+                    <div className="mt-2 border-t pt-2">
                       <Button variant="outline" size="sm" className="w-full">
-                        <Trash2 className="h-3 w-3 mr-2" />
+                        <Trash2 className="mr-2 h-3 w-3" />
                         移除關聯
                       </Button>
                     </div>
                   )}
                 </div>
               ))}
-              
+
               {editMode && (
                 <Button variant="outline" size="sm" className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   新增組織關聯
                 </Button>
               )}
@@ -489,7 +492,7 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2" />
+                <MapPin className="mr-2 h-5 w-5" />
                 組織詳情
               </CardTitle>
             </CardHeader>
@@ -505,10 +508,10 @@ export function OrganizationTree({ userId }: OrganizationTreeProps) {
                   }
                   return null
                 }
-                
+
                 const org = findOrg(organizations, selectedOrg)
                 if (!org) return <p className="text-gray-500">找不到組織資訊</p>
-                
+
                 return (
                   <div className="space-y-3">
                     <div>

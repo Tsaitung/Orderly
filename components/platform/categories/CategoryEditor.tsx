@@ -44,7 +44,7 @@ export function CategoryEditor({
   parentCategory,
   categories,
   onSave,
-  loading = false
+  loading = false,
 }: CategoryEditorProps) {
   const [formData, setFormData] = React.useState({
     code: '',
@@ -53,7 +53,7 @@ export function CategoryEditor({
     parentId: '',
     description: '',
     isActive: true,
-    sortOrder: 0
+    sortOrder: 0,
   })
 
   const isEditing = !!category
@@ -71,7 +71,7 @@ export function CategoryEditor({
           parentId: category.parentId || '',
           description: category.description || '',
           isActive: category.isActive,
-          sortOrder: category.sortOrder
+          sortOrder: category.sortOrder,
         })
       } else if (parentCategory) {
         // Adding child to specific parent
@@ -82,7 +82,7 @@ export function CategoryEditor({
           parentId: parentCategory.id,
           description: '',
           isActive: true,
-          sortOrder: 0
+          sortOrder: 0,
         })
       } else {
         // Adding new root category
@@ -93,7 +93,7 @@ export function CategoryEditor({
           parentId: '',
           description: '',
           isActive: true,
-          sortOrder: 0
+          sortOrder: 0,
         })
       }
     }
@@ -101,12 +101,12 @@ export function CategoryEditor({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       await onSave({
         ...formData,
         // Don't include parentId if it's empty
-        parentId: formData.parentId || undefined
+        parentId: formData.parentId || undefined,
       })
       onOpenChange(false)
     } catch (error) {
@@ -123,10 +123,10 @@ export function CategoryEditor({
     return true
   })
 
-  const dialogTitle = isEditing 
-    ? '編輯類別' 
-    : isAddingChild 
-      ? `新增子類別至：${parentCategory?.name}` 
+  const dialogTitle = isEditing
+    ? '編輯類別'
+    : isAddingChild
+      ? `新增子類別至：${parentCategory?.name}`
       : '新增類別'
 
   const dialogDescription = isEditing
@@ -136,128 +136,140 @@ export function CategoryEditor({
       : '建立新的產品類別'
 
   return (
-    <AccessibleModal isOpen={open} onClose={() => onOpenChange(false)} title={dialogTitle} size="md" className="sm:max-w-[500px]">
-      <div className="text-sm text-gray-600 mb-2">{dialogDescription}</div>
+    <AccessibleModal
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      title={dialogTitle}
+      size="md"
+      className="sm:max-w-[500px]"
+    >
+      <div className="mb-2 text-sm text-gray-600">{dialogDescription}</div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Category Code */}
-            <div className="space-y-2">
-              <Label htmlFor="code">類別代碼 *</Label>
-              <Input
-                id="code"
-                value={formData.code}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  code: e.target.value.toUpperCase() 
-                }))}
-                placeholder="例如: VEGG"
-                maxLength={4}
-                required
-                disabled={isEditing} // Don't allow editing code
-              />
-              <p className="text-xs text-gray-500">4位英文字母代碼</p>
-            </div>
-
-            {/* Sort Order */}
-            <div className="space-y-2">
-              <Label htmlFor="sortOrder">排序</Label>
-              <Input
-                id="sortOrder"
-                type="number"
-                value={formData.sortOrder}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  sortOrder: parseInt(e.target.value) || 0 
-                }))}
-                min={0}
-              />
-            </div>
-          </div>
-
-          {/* Category Name (Chinese) */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Category Code */}
           <div className="space-y-2">
-            <Label htmlFor="name">類別名稱 (中文) *</Label>
+            <Label htmlFor="code">類別代碼 *</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="例如: 蔬菜"
+              id="code"
+              value={formData.code}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  code: e.target.value.toUpperCase(),
+                }))
+              }
+              placeholder="例如: VEGG"
+              maxLength={4}
               required
+              disabled={isEditing} // Don't allow editing code
             />
+            <p className="text-xs text-gray-500">4位英文字母代碼</p>
           </div>
 
-          {/* Category Name (English) */}
+          {/* Sort Order */}
           <div className="space-y-2">
-            <Label htmlFor="nameEn">類別名稱 (英文) *</Label>
+            <Label htmlFor="sortOrder">排序</Label>
             <Input
-              id="nameEn"
-              value={formData.nameEn}
-              onChange={(e) => setFormData(prev => ({ ...prev, nameEn: e.target.value }))}
-              placeholder="例如: Vegetables"
-              required
+              id="sortOrder"
+              type="number"
+              value={formData.sortOrder}
+              onChange={e =>
+                setFormData(prev => ({
+                  ...prev,
+                  sortOrder: parseInt(e.target.value) || 0,
+                }))
+              }
+              min={0}
             />
           </div>
+        </div>
 
-          {/* Parent Category */}
-          {!isAddingChild && (
-            <div className="space-y-2">
-              <Label htmlFor="parentId">上層類別</Label>
-              <Select
-                value={formData.parentId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, parentId: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇上層類別 (留空為根類別)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">無 (根類別)</SelectItem>
-                  {availableParents.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+        {/* Category Name (Chinese) */}
+        <div className="space-y-2">
+          <Label htmlFor="name">類別名稱 (中文) *</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="例如: 蔬菜"
+            required
+          />
+        </div>
 
-          {/* Description */}
+        {/* Category Name (English) */}
+        <div className="space-y-2">
+          <Label htmlFor="nameEn">類別名稱 (英文) *</Label>
+          <Input
+            id="nameEn"
+            value={formData.nameEn}
+            onChange={e => setFormData(prev => ({ ...prev, nameEn: e.target.value }))}
+            placeholder="例如: Vegetables"
+            required
+          />
+        </div>
+
+        {/* Parent Category */}
+        {!isAddingChild && (
           <div className="space-y-2">
-            <Label htmlFor="description">描述</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="類別描述說明..."
-              rows={3}
-            />
-          </div>
-
-          {/* Active Status */}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, isActive: checked }))}
-            />
-            <Label htmlFor="isActive">啟用此類別</Label>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
+            <Label htmlFor="parentId">上層類別</Label>
+            <Select
+              value={formData.parentId}
+              onValueChange={value => setFormData(prev => ({ ...prev, parentId: value }))}
             >
-              取消
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? '儲存中...' : isEditing ? '更新' : '建立'}
-            </Button>
+              <SelectTrigger>
+                <SelectValue placeholder="選擇上層類別 (留空為根類別)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">無 (根類別)</SelectItem>
+                {availableParents.map(cat => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name} ({cat.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </form>
+        )}
+
+        {/* Description */}
+        <div className="space-y-2">
+          <Label htmlFor="description">描述</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="類別描述說明..."
+            rows={3}
+          />
+        </div>
+
+        {/* Active Status */}
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isActive"
+            checked={formData.isActive}
+            onCheckedChange={(checked: boolean) =>
+              setFormData(prev => ({ ...prev, isActive: checked }))
+            }
+          />
+          <Label htmlFor="isActive">啟用此類別</Label>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            取消
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? '儲存中...' : isEditing ? '更新' : '建立'}
+          </Button>
+        </div>
+      </form>
     </AccessibleModal>
   )
 }

@@ -40,7 +40,7 @@ export class SecurityLogger {
     'csrf',
     'ssn',
     'creditcard',
-    'cvv'
+    'cvv',
   ]
 
   private constructor() {
@@ -50,7 +50,7 @@ export class SecurityLogger {
       enableConsole: true,
       enableFileLogging: process.env.NODE_ENV === 'production',
       redactSensitiveData: true,
-      maxLogSize: 1024 * 1024 // 1MB
+      maxLogSize: 1024 * 1024, // 1MB
     }
   }
 
@@ -84,19 +84,16 @@ export class SecurityLogger {
 
     for (const key in redacted) {
       const lowerKey = key.toLowerCase()
-      
+
       // Check if key contains sensitive information
-      const isSensitive = this.sensitiveFields.some(field => 
-        lowerKey.includes(field)
-      )
+      const isSensitive = this.sensitiveFields.some(field => lowerKey.includes(field))
 
       if (isSensitive) {
         if (typeof redacted[key] === 'string') {
           // Show first 4 characters for identification, rest as asterisks
           const value = redacted[key] as string
-          redacted[key] = value.length > 4 
-            ? `${value.substring(0, 4)}${'*'.repeat(value.length - 4)}`
-            : '****'
+          redacted[key] =
+            value.length > 4 ? `${value.substring(0, 4)}${'*'.repeat(value.length - 4)}` : '****'
         } else {
           redacted[key] = '[REDACTED]'
         }
@@ -125,7 +122,7 @@ export class SecurityLogger {
       correlationId: correlationId || this.generateCorrelationId(),
       service: this.config.service,
       environment: this.config.environment,
-      ...this.redactSensitiveData(metadata)
+      ...this.redactSensitiveData(metadata),
     }
   }
 
@@ -138,7 +135,9 @@ export class SecurityLogger {
     // Console logging (always enabled in development)
     if (this.config.enableConsole || this.config.environment === 'development') {
       const colorCode = this.getColorCode(logEntry.level)
-      console.log(`${colorCode}[${logEntry.level.toUpperCase()}]${this.getColorCode('reset')} ${logString}`)
+      console.log(
+        `${colorCode}[${logEntry.level.toUpperCase()}]${this.getColorCode('reset')} ${logString}`
+      )
     }
 
     // File logging (production)
@@ -161,11 +160,11 @@ export class SecurityLogger {
    */
   private getColorCode(level: string): string {
     const colors = {
-      info: '\x1b[36m',    // Cyan
-      warn: '\x1b[33m',    // Yellow
-      error: '\x1b[31m',   // Red
+      info: '\x1b[36m', // Cyan
+      warn: '\x1b[33m', // Yellow
+      error: '\x1b[31m', // Red
       critical: '\x1b[41m\x1b[37m', // White on Red
-      reset: '\x1b[0m'     // Reset
+      reset: '\x1b[0m', // Reset
     }
     return colors[level as keyof typeof colors] || colors.reset
   }
@@ -200,7 +199,7 @@ export class SecurityLogger {
   public critical(event: string, metadata: Record<string, any> = {}, correlationId?: string): void {
     const logEntry = this.formatLogEntry('critical', event, metadata, correlationId)
     this.writeLog(logEntry)
-    
+
     // In production, critical events should trigger alerts
     // - Send to incident management system
     // - Trigger notifications to security team
@@ -211,16 +210,24 @@ export class SecurityLogger {
    * Log authentication events
    */
   public logAuthEvent(
-    eventType: 'login_attempt' | 'login_success' | 'login_failed' | 'logout' | 'token_refresh' | 'token_revoked',
+    eventType:
+      | 'login_attempt'
+      | 'login_success'
+      | 'login_failed'
+      | 'logout'
+      | 'token_refresh'
+      | 'token_revoked',
     userId?: string,
     metadata: Record<string, any> = {}
   ): void {
     const level = eventType.includes('failed') ? 'warn' : 'info'
-    this.writeLog(this.formatLogEntry(level, eventType, {
-      userId,
-      category: 'authentication',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry(level, eventType, {
+        userId,
+        category: 'authentication',
+        ...metadata,
+      })
+    )
   }
 
   /**
@@ -232,13 +239,16 @@ export class SecurityLogger {
     resource: string,
     metadata: Record<string, any> = {}
   ): void {
-    const level = eventType === 'access_denied' || eventType === 'insufficient_permissions' ? 'warn' : 'info'
-    this.writeLog(this.formatLogEntry(level, eventType, {
-      userId,
-      resource,
-      category: 'authorization',
-      ...metadata
-    }))
+    const level =
+      eventType === 'access_denied' || eventType === 'insufficient_permissions' ? 'warn' : 'info'
+    this.writeLog(
+      this.formatLogEntry(level, eventType, {
+        userId,
+        resource,
+        category: 'authorization',
+        ...metadata,
+      })
+    )
   }
 
   /**
@@ -250,46 +260,62 @@ export class SecurityLogger {
     userId: string,
     metadata: Record<string, any> = {}
   ): void {
-    this.writeLog(this.formatLogEntry('info', 'data_access', {
-      operation,
-      resource,
-      userId,
-      category: 'data_access',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry('info', 'data_access', {
+        operation,
+        resource,
+        userId,
+        category: 'data_access',
+        ...metadata,
+      })
+    )
   }
 
   /**
    * Log security incidents
    */
   public logSecurityIncident(
-    incidentType: 'brute_force' | 'suspicious_activity' | 'data_breach' | 'unauthorized_access' | 'malicious_request',
+    incidentType:
+      | 'brute_force'
+      | 'suspicious_activity'
+      | 'data_breach'
+      | 'unauthorized_access'
+      | 'malicious_request',
     severity: 'low' | 'medium' | 'high' | 'critical',
     metadata: Record<string, any> = {}
   ): void {
     const level = severity === 'critical' ? 'critical' : severity === 'high' ? 'error' : 'warn'
-    this.writeLog(this.formatLogEntry(level, 'security_incident', {
-      incidentType,
-      severity,
-      category: 'security_incident',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry(level, 'security_incident', {
+        incidentType,
+        severity,
+        category: 'security_incident',
+        ...metadata,
+      })
+    )
   }
 
   /**
    * Log API security events
    */
   public logApiSecurityEvent(
-    eventType: 'rate_limit_exceeded' | 'invalid_request' | 'sql_injection_attempt' | 'xss_attempt' | 'csrf_attempt',
+    eventType:
+      | 'rate_limit_exceeded'
+      | 'invalid_request'
+      | 'sql_injection_attempt'
+      | 'xss_attempt'
+      | 'csrf_attempt',
     endpoint: string,
     metadata: Record<string, any> = {}
   ): void {
     const level = eventType.includes('attempt') ? 'error' : 'warn'
-    this.writeLog(this.formatLogEntry(level, eventType, {
-      endpoint,
-      category: 'api_security',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry(level, eventType, {
+        endpoint,
+        category: 'api_security',
+        ...metadata,
+      })
+    )
   }
 
   /**
@@ -310,13 +336,15 @@ export class SecurityLogger {
     unit: string,
     metadata: Record<string, any> = {}
   ): void {
-    this.writeLog(this.formatLogEntry('info', 'performance_metric', {
-      metric,
-      value,
-      unit,
-      category: 'performance',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry('info', 'performance_metric', {
+        metric,
+        value,
+        unit,
+        category: 'performance',
+        ...metadata,
+      })
+    )
   }
 
   /**
@@ -328,13 +356,15 @@ export class SecurityLogger {
     organizationId: string,
     metadata: Record<string, any> = {}
   ): void {
-    this.writeLog(this.formatLogEntry('info', 'business_event', {
-      eventType,
-      userId,
-      organizationId,
-      category: 'business',
-      ...metadata
-    }))
+    this.writeLog(
+      this.formatLogEntry('info', 'business_event', {
+        eventType,
+        userId,
+        organizationId,
+        category: 'business',
+        ...metadata,
+      })
+    )
   }
 
   /**

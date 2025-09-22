@@ -2,12 +2,12 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { 
-  ChevronUp, 
-  ChevronDown, 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
+import {
+  ChevronUp,
+  ChevronDown,
+  MoreHorizontal,
+  Eye,
+  Edit,
   Copy,
   Shield,
   Clock,
@@ -15,7 +15,7 @@ import {
   XCircle,
   Settings,
   Building2,
-  Users
+  Users,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -54,7 +54,7 @@ export function RoleList({
   selectedStatus,
   selectedCategory,
   selectedRoles,
-  onRoleSelection
+  onRoleSelection,
 }: RoleListProps) {
   const [roles, setRoles] = React.useState<Role[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -73,7 +73,7 @@ export function RoleList({
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 800))
-      
+
       // 模擬資料
       const mockRoles: Role[] = [
         {
@@ -90,7 +90,7 @@ export function RoleList({
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
           createdBy: 'system',
-          tags: ['系統', '管理員']
+          tags: ['系統', '管理員'],
         },
         {
           id: '2',
@@ -106,7 +106,7 @@ export function RoleList({
           createdAt: '2024-01-15T10:00:00Z',
           updatedAt: '2024-02-20T15:30:00Z',
           createdBy: 'admin',
-          tags: ['餐廳', '管理員']
+          tags: ['餐廳', '管理員'],
         },
         {
           id: '3',
@@ -122,7 +122,7 @@ export function RoleList({
           createdAt: '2024-01-20T14:00:00Z',
           updatedAt: '2024-03-01T09:15:00Z',
           createdBy: 'admin',
-          tags: ['供應商', '管理員']
+          tags: ['供應商', '管理員'],
         },
         {
           id: '4',
@@ -138,7 +138,7 @@ export function RoleList({
           createdAt: '2024-02-01T11:30:00Z',
           updatedAt: '2024-03-15T16:45:00Z',
           createdBy: 'manager',
-          tags: ['採購', '自定義']
+          tags: ['採購', '自定義'],
         },
         {
           id: '5',
@@ -154,10 +154,10 @@ export function RoleList({
           createdAt: '2024-01-25T13:20:00Z',
           updatedAt: '2024-03-01T10:00:00Z',
           createdBy: 'manager',
-          tags: ['財務', '檢視']
-        }
+          tags: ['財務', '檢視'],
+        },
       ]
-      
+
       setRoles(mockRoles)
       setTotalPages(Math.ceil(mockRoles.length / 10))
     } catch (err) {
@@ -194,20 +194,45 @@ export function RoleList({
 
   const getStatusBadge = (isActive: boolean) => {
     if (isActive) {
-      return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />啟用</Badge>
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800">
+          <CheckCircle className="mr-1 h-3 w-3" />
+          啟用
+        </Badge>
+      )
     } else {
-      return <Badge variant="secondary" className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />停用</Badge>
+      return (
+        <Badge variant="secondary" className="bg-red-100 text-red-800">
+          <XCircle className="mr-1 h-3 w-3" />
+          停用
+        </Badge>
+      )
     }
   }
 
   const getRoleTypeBadge = (type: Role['type']) => {
     switch (type) {
       case 'platform':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800"><Settings className="h-3 w-3 mr-1" />平台</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            <Settings className="mr-1 h-3 w-3" />
+            平台
+          </Badge>
+        )
       case 'restaurant':
-        return <Badge variant="outline" className="bg-orange-100 text-orange-800"><Building2 className="h-3 w-3 mr-1" />餐廳</Badge>
+        return (
+          <Badge variant="outline" className="bg-orange-100 text-orange-800">
+            <Building2 className="mr-1 h-3 w-3" />
+            餐廳
+          </Badge>
+        )
       case 'supplier':
-        return <Badge variant="outline" className="bg-green-100 text-green-800"><Users className="h-3 w-3 mr-1" />供應商</Badge>
+        return (
+          <Badge variant="outline" className="bg-green-100 text-green-800">
+            <Users className="mr-1 h-3 w-3" />
+            供應商
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">未知</Badge>
     }
@@ -215,9 +240,18 @@ export function RoleList({
 
   const getRoleCategoryBadge = (isSystemRole: boolean) => {
     if (isSystemRole) {
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800"><Shield className="h-3 w-3 mr-1" />系統角色</Badge>
+      return (
+        <Badge variant="outline" className="bg-gray-100 text-gray-800">
+          <Shield className="mr-1 h-3 w-3" />
+          系統角色
+        </Badge>
+      )
     } else {
-      return <Badge variant="outline" className="bg-purple-100 text-purple-800">自定義</Badge>
+      return (
+        <Badge variant="outline" className="bg-purple-100 text-purple-800">
+          自定義
+        </Badge>
+      )
     }
   }
 
@@ -225,16 +259,25 @@ export function RoleList({
     return new Date(dateString).toLocaleDateString('zh-TW')
   }
 
-  const SortableHeader = ({ field, children }: { field: keyof Role; children: React.ReactNode }) => (
-    <th 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-50"
+  const SortableHeader = ({
+    field,
+    children,
+  }: {
+    field: keyof Role
+    children: React.ReactNode
+  }) => (
+    <th
+      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hover:bg-gray-50"
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center space-x-1">
         <span>{children}</span>
-        {sortBy === field && (
-          sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-        )}
+        {sortBy === field &&
+          (sortOrder === 'asc' ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          ))}
       </div>
     </th>
   )
@@ -246,10 +289,10 @@ export function RoleList({
           <div className="animate-pulse space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center space-x-4">
-                <div className="w-4 h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 w-4 rounded bg-gray-200"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 w-1/4 rounded bg-gray-200"></div>
+                  <div className="h-3 w-1/3 rounded bg-gray-200"></div>
                 </div>
               </div>
             ))}
@@ -264,9 +307,7 @@ export function RoleList({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>角色清單</span>
-          <span className="text-sm font-normal text-gray-500">
-            共 {roles.length} 個角色
-          </span>
+          <span className="text-sm font-normal text-gray-500">共 {roles.length} 個角色</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -281,49 +322,47 @@ export function RoleList({
                   />
                 </th>
                 <SortableHeader field="name">角色資訊</SortableHeader>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   類型
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   分類
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   狀態
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   使用者數
                 </th>
                 <SortableHeader field="updatedAt">更新時間</SortableHeader>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {roles.map((role) => (
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {roles.map(role => (
                 <tr key={role.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <Checkbox
                       checked={selectedRoles.includes(role.id)}
-                      onCheckedChange={(checked) => handleSelectRole(role.id, checked as boolean)}
+                      onCheckedChange={checked => handleSelectRole(role.id, checked as boolean)}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-start">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                      <div className="h-10 w-10 flex-shrink-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
                           <Shield className="h-5 w-5 text-primary-700" />
                         </div>
                       </div>
                       <div className="ml-4 min-w-0 flex-1">
-                        <div className="text-sm font-medium text-gray-900 truncate">
+                        <div className="truncate text-sm font-medium text-gray-900">
                           {role.name}
                         </div>
-                        <div className="text-sm text-gray-500 truncate">
-                          {role.description}
-                        </div>
-                        <div className="flex items-center space-x-1 mt-1">
-                          {role.tags.map((tag) => (
+                        <div className="truncate text-sm text-gray-500">{role.description}</div>
+                        <div className="mt-1 flex items-center space-x-1">
+                          {role.tags.map(tag => (
                             <Badge key={tag} variant="outline" className="text-xs">
                               {tag}
                             </Badge>
@@ -332,25 +371,21 @@ export function RoleList({
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getRoleTypeBadge(role.type)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">{getRoleTypeBadge(role.type)}</td>
+                  <td className="whitespace-nowrap px-6 py-4">
                     {getRoleCategoryBadge(role.isSystemRole)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(role.isActive)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">{getStatusBadge(role.isActive)}</td>
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <Users className="h-4 w-4 text-gray-400 mr-2" />
+                      <Users className="mr-2 h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-900">{role.userCount}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatDateTime(role.updatedAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                     <div className="relative">
                       <Button
                         variant="ghost"
@@ -359,38 +394,38 @@ export function RoleList({
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                      
+
                       {showDropdown === role.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                        <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
                           <div className="py-1">
                             <Link
                               href={`/platform/roles/${role.id}`}
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setShowDropdown(null)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />
+                              <Eye className="mr-2 h-4 w-4" />
                               檢視詳情
                             </Link>
                             <Link
                               href={`/platform/roles/${role.id}/edit`}
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              <Edit className="h-4 w-4 mr-2" />
+                              <Edit className="mr-2 h-4 w-4" />
                               編輯角色
                             </Link>
                             <button
-                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setShowDropdown(null)}
                             >
-                              <Copy className="h-4 w-4 mr-2" />
+                              <Copy className="mr-2 h-4 w-4" />
                               複製角色
                             </button>
                             {!role.isSystemRole && (
                               <button
-                                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                                 onClick={() => setShowDropdown(null)}
                               >
-                                <XCircle className="h-4 w-4 mr-2" />
+                                <XCircle className="mr-2 h-4 w-4" />
                                 {role.isActive ? '停用角色' : '啟用角色'}
                               </button>
                             )}
@@ -404,12 +439,13 @@ export function RoleList({
             </tbody>
           </table>
         </div>
-        
+
         {/* 分頁 */}
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              顯示第 {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, roles.length)} 筆，共 {roles.length} 筆
+              顯示第 {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, roles.length)}{' '}
+              筆，共 {roles.length} 筆
             </div>
             <div className="flex space-x-2">
               <Button

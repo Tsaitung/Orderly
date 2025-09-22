@@ -55,7 +55,7 @@ class SecureJWTService {
       audience: ['orderly-web', 'orderly-api'],
       accessTokenExpiry: '15m',
       refreshTokenExpiry: '7d',
-      keyRotationInterval: 24 * 60 * 60 * 1000 // 24 hours
+      keyRotationInterval: 24 * 60 * 60 * 1000, // 24 hours
     }
   }
 
@@ -79,14 +79,14 @@ class SecureJWTService {
    */
   private async generateNewKeyPair(): Promise<void> {
     const { publicKey, privateKey } = await generateKeyPair('RS256', {
-      modulusLength: 2048
+      modulusLength: 2048,
     })
 
     this.currentKeyPair = {
       publicKey,
       privateKey,
       kid: crypto.randomUUID(),
-      createdAt: new Date()
+      createdAt: new Date(),
     }
   }
 
@@ -109,39 +109,43 @@ class SecureJWTService {
   private async rotateKeys(): Promise<void> {
     const oldKeyPair = this.currentKeyPair
     await this.generateNewKeyPair()
-    
+
     // Log key rotation for security audit
-    console.log(JSON.stringify({
-      level: 'info',
-      event: 'key_rotation',
-      oldKeyId: oldKeyPair?.kid,
-      newKeyId: this.currentKeyPair?.kid,
-      timestamp: new Date().toISOString()
-    }))
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        event: 'key_rotation',
+        oldKeyId: oldKeyPair?.kid,
+        newKeyId: this.currentKeyPair?.kid,
+        timestamp: new Date().toISOString(),
+      })
+    )
   }
 
   /**
    * Create access and refresh token pair
    */
-  public async createTokenPair(payload: Omit<JWTPayload, 'iat' | 'exp' | 'jti' | 'type'>): Promise<TokenPair> {
+  public async createTokenPair(
+    payload: Omit<JWTPayload, 'iat' | 'exp' | 'jti' | 'type'>
+  ): Promise<TokenPair> {
     if (!this.currentKeyPair) {
       throw new Error('JWT service not initialized')
     }
 
     const now = Math.floor(Date.now() / 1000)
-    const accessExpiry = now + (15 * 60) // 15 minutes
-    const refreshExpiry = now + (7 * 24 * 60 * 60) // 7 days
+    const accessExpiry = now + 15 * 60 // 15 minutes
+    const refreshExpiry = now + 7 * 24 * 60 * 60 // 7 days
 
     // Create access token
     const accessJti = crypto.randomUUID()
     const accessToken = await new SignJWT({
       ...payload,
       type: 'access',
-      jti: accessJti
+      jti: accessJti,
     })
       .setProtectedHeader({
         alg: this.config.algorithm,
-        kid: this.currentKeyPair.kid
+        kid: this.currentKeyPair.kid,
       })
       .setIssuer(this.config.issuer)
       .setAudience(this.config.audience)
@@ -154,11 +158,11 @@ class SecureJWTService {
     const refreshToken = await new SignJWT({
       sub: payload.sub,
       type: 'refresh',
-      jti: refreshJti
+      jti: refreshJti,
     })
       .setProtectedHeader({
         alg: this.config.algorithm,
-        kid: this.currentKeyPair.kid
+        kid: this.currentKeyPair.kid,
       })
       .setIssuer(this.config.issuer)
       .setAudience(this.config.audience)
@@ -170,7 +174,7 @@ class SecureJWTService {
       accessToken,
       refreshToken,
       expiresAt: new Date(accessExpiry * 1000),
-      refreshExpiresAt: new Date(refreshExpiry * 1000)
+      refreshExpiresAt: new Date(refreshExpiry * 1000),
     }
   }
 
@@ -185,7 +189,7 @@ class SecureJWTService {
 
       const { payload } = await jwtVerify(token, this.currentKeyPair.publicKey, {
         issuer: this.config.issuer,
-        audience: this.config.audience
+        audience: this.config.audience,
       })
 
       const jwtPayload = payload as JWTPayload
@@ -198,12 +202,14 @@ class SecureJWTService {
       return jwtPayload
     } catch (error) {
       // Log failed verification for security monitoring
-      console.log(JSON.stringify({
-        level: 'warn',
-        event: 'token_verification_failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      }))
+      console.log(
+        JSON.stringify({
+          level: 'warn',
+          event: 'token_verification_failed',
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString(),
+        })
+      )
       return null
     }
   }
@@ -213,7 +219,7 @@ class SecureJWTService {
    */
   public async refreshAccessToken(refreshToken: string): Promise<TokenPair | null> {
     const payload = await this.verifyToken(refreshToken)
-    
+
     if (!payload || payload.type !== 'refresh') {
       return null
     }
@@ -227,7 +233,7 @@ class SecureJWTService {
       email: payload.email || '',
       organizationId: payload.organizationId || '',
       role: payload.role || '',
-      organizationType: payload.organizationType || 'restaurant'
+      organizationType: payload.organizationType || 'restaurant',
     })
   }
 
@@ -236,14 +242,16 @@ class SecureJWTService {
    */
   public revokeToken(jti: string): void {
     this.revokedTokens.add(jti)
-    
+
     // Log token revocation for security audit
-    console.log(JSON.stringify({
-      level: 'info',
-      event: 'token_revoked',
-      jti,
-      timestamp: new Date().toISOString()
-    }))
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        event: 'token_revoked',
+        jti,
+        timestamp: new Date().toISOString(),
+      })
+    )
   }
 
   /**
@@ -276,8 +284,8 @@ class SecureJWTService {
   public cleanupRevokedTokens(): void {
     // This is a simplified implementation
     // In production, you'd want to store revoked tokens in Redis with TTL
-    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000)
-    
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+
     // For now, we'll clear all tokens periodically
     // In production, implement with Redis and proper TTL
     if (this.revokedTokens.size > 10000) {

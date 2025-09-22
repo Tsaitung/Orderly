@@ -82,4 +82,3 @@ export type NotificationDTO = {
   readAt?: string | Date
   priority: 'low' | 'medium' | 'high' | 'urgent' | string
 }
-

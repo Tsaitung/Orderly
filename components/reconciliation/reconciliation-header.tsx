@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Settings, 
+import {
+  Play,
+  Pause,
+  Square,
+  Settings,
   Download,
   Upload,
   RefreshCw,
@@ -13,7 +13,7 @@ import {
   Brain,
   AlertTriangle,
   Clock,
-  Target
+  Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +52,7 @@ export default function ReconciliationHeader() {
     queueSize: 15,
     mlConfidence: 87.8,
     anomaliesDetected: 3,
-    lastRunTime: '2024-01-15 16:45:23'
+    lastRunTime: '2024-01-15 16:45:23',
   })
 
   const [isConfigOpen, setIsConfigOpen] = React.useState(false)
@@ -62,7 +62,7 @@ export default function ReconciliationHeader() {
     maxRetries: 3,
     timeoutSeconds: 30,
     enableAutoApproval: true,
-    enableAdvancedMatching: true
+    enableAdvancedMatching: true,
   })
 
   const { announcePolite, announceSuccess, announceUrgent } = useScreenReaderAnnouncer()
@@ -70,7 +70,7 @@ export default function ReconciliationHeader() {
   const handleStartEngine = React.useCallback(() => {
     setStats(prev => ({ ...prev, isRunning: true }))
     announcePolite('AI 對帳引擎已啟動')
-    
+
     // 模擬即時數據更新
     const interval = setInterval(() => {
       setStats(prev => ({
@@ -78,7 +78,7 @@ export default function ReconciliationHeader() {
         totalProcessed: prev.totalProcessed + Math.floor(Math.random() * 5) + 1,
         queueSize: Math.max(0, prev.queueSize - Math.floor(Math.random() * 3)),
         avgProcessingTime: 2.1 + Math.random() * 0.8,
-        mlConfidence: 85 + Math.random() * 10
+        mlConfidence: 85 + Math.random() * 10,
       }))
     }, 3000)
 
@@ -131,14 +131,14 @@ export default function ReconciliationHeader() {
     { value: '80', label: '80% - 平衡模式' },
     { value: '85', label: '85% - 推薦模式' },
     { value: '90', label: '90% - 嚴格模式' },
-    { value: '95', label: '95% - 極嚴格模式' }
+    { value: '95', label: '95% - 極嚴格模式' },
   ]
 
   const batchSizeOptions = [
     { value: '10', label: '10 筆 - 小批量' },
     { value: '25', label: '25 筆 - 中批量' },
     { value: '50', label: '50 筆 - 大批量' },
-    { value: '100', label: '100 筆 - 超大批量' }
+    { value: '100', label: '100 筆 - 超大批量' },
   ]
 
   return (
@@ -152,20 +152,18 @@ export default function ReconciliationHeader() {
               {/* 引擎狀態指示器 */}
               <div className="flex items-center space-x-3">
                 <div className="relative">
-                  <div className={`w-4 h-4 rounded-full ${getEngineStatusColor()}`}>
+                  <div className={`h-4 w-4 rounded-full ${getEngineStatusColor()}`}>
                     {stats.isRunning && (
-                      <div className="absolute inset-0 w-4 h-4 rounded-full bg-green-500 animate-ping" />
+                      <div className="absolute inset-0 h-4 w-4 animate-ping rounded-full bg-green-500" />
                     )}
                   </div>
                 </div>
                 <div>
-                  <div className="font-medium text-gray-900 flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 font-medium text-gray-900">
                     <Brain className="h-4 w-4 text-primary-500" />
                     <span>AI 對帳引擎</span>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    狀態: {getEngineStatusText()}
-                  </div>
+                  <div className="text-sm text-gray-600">狀態: {getEngineStatusText()}</div>
                 </div>
               </div>
 
@@ -215,7 +213,7 @@ export default function ReconciliationHeader() {
                 <Upload className="h-4 w-4" />
                 <span className="hidden md:inline">匯入訂單</span>
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -253,7 +251,7 @@ export default function ReconciliationHeader() {
       </Card>
 
       {/* 即時統計儀表板 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
         {/* 處理總數 */}
         <Card>
           <CardContent className="p-4 text-center">
@@ -267,9 +265,7 @@ export default function ReconciliationHeader() {
         {/* 成功率 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {stats.successRate}%
-            </div>
+            <div className="text-2xl font-bold text-green-600">{stats.successRate}%</div>
             <div className="text-sm text-gray-600">成功率</div>
             <div className="mt-2">
               <Progress value={stats.successRate} className="h-1" />
@@ -280,13 +276,13 @@ export default function ReconciliationHeader() {
         {/* 平均處理時間 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600 flex items-center justify-center space-x-1">
+            <div className="flex items-center justify-center space-x-1 text-2xl font-bold text-blue-600">
               <span>{stats.avgProcessingTime.toFixed(1)}</span>
               <span className="text-sm">s</span>
             </div>
             <div className="text-sm text-gray-600">平均處理時間</div>
-            <div className="flex items-center justify-center mt-1">
-              <Clock className="h-3 w-3 text-gray-400 mr-1" />
+            <div className="mt-1 flex items-center justify-center">
+              <Clock className="mr-1 h-3 w-3 text-gray-400" />
               <span className="text-xs text-gray-500">比目標快 70%</span>
             </div>
           </CardContent>
@@ -295,9 +291,7 @@ export default function ReconciliationHeader() {
         {/* 待處理佇列 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.queueSize}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.queueSize}</div>
             <div className="text-sm text-gray-600">待處理佇列</div>
             {stats.queueSize > 10 && (
               <Badge variant="warning" size="sm" className="mt-1">
@@ -310,14 +304,14 @@ export default function ReconciliationHeader() {
         {/* ML 置信度 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary-500 flex items-center justify-center space-x-1">
+            <div className="flex items-center justify-center space-x-1 text-2xl font-bold text-primary-500">
               <Zap className="h-5 w-5" />
               <span>{stats.mlConfidence.toFixed(1)}%</span>
             </div>
             <div className="text-sm text-gray-600">ML 置信度</div>
             <div className="mt-2">
-              <Progress 
-                value={stats.mlConfidence} 
+              <Progress
+                value={stats.mlConfidence}
                 className="h-1"
                 variant={stats.mlConfidence >= 85 ? 'success' : 'warning'}
               />
@@ -328,7 +322,7 @@ export default function ReconciliationHeader() {
         {/* 異常檢測 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600 flex items-center justify-center space-x-1">
+            <div className="flex items-center justify-center space-x-1 text-2xl font-bold text-red-600">
               <AlertTriangle className="h-5 w-5" />
               <span>{stats.anomaliesDetected}</span>
             </div>
@@ -344,14 +338,12 @@ export default function ReconciliationHeader() {
         {/* 引擎效能 */}
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600 flex items-center justify-center space-x-1">
+            <div className="flex items-center justify-center space-x-1 text-2xl font-bold text-green-600">
               <Target className="h-5 w-5" />
               <span>A+</span>
             </div>
             <div className="text-sm text-gray-600">引擎效能</div>
-            <div className="text-xs text-gray-500 mt-1">
-              超越目標 94%
-            </div>
+            <div className="mt-1 text-xs text-gray-500">超越目標 94%</div>
           </CardContent>
         </Card>
       </div>
@@ -370,16 +362,18 @@ export default function ReconciliationHeader() {
           {/* 核心參數 */}
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900">核心參數</h4>
-            
+
             <AccessibleSelect
               label="置信度閾值"
               name="confidence-threshold"
               options={confidenceThresholdOptions}
               value={config.confidenceThreshold.toString()}
-              onChange={(value) => setConfig(prev => ({ 
-                ...prev, 
-                confidenceThreshold: parseInt(value) 
-              }))}
+              onChange={value =>
+                setConfig(prev => ({
+                  ...prev,
+                  confidenceThreshold: parseInt(value),
+                }))
+              }
               helperText="低於此置信度的匹配將標記為需要人工審核"
             />
 
@@ -388,10 +382,12 @@ export default function ReconciliationHeader() {
               name="batch-size"
               options={batchSizeOptions}
               value={config.batchSize.toString()}
-              onChange={(value) => setConfig(prev => ({ 
-                ...prev, 
-                batchSize: parseInt(value) 
-              }))}
+              onChange={value =>
+                setConfig(prev => ({
+                  ...prev,
+                  batchSize: parseInt(value),
+                }))
+              }
               helperText="每次處理的訂單數量，影響記憶體使用和處理速度"
             />
 
@@ -400,10 +396,12 @@ export default function ReconciliationHeader() {
               name="max-retries"
               type="number"
               value={config.maxRetries.toString()}
-              onChange={(value) => setConfig(prev => ({ 
-                ...prev, 
-                maxRetries: parseInt(value) || 0
-              }))}
+              onChange={value =>
+                setConfig(prev => ({
+                  ...prev,
+                  maxRetries: parseInt(value) || 0,
+                }))
+              }
               helperText="處理失敗時的重試次數"
             />
 
@@ -412,10 +410,12 @@ export default function ReconciliationHeader() {
               name="timeout-seconds"
               type="number"
               value={config.timeoutSeconds.toString()}
-              onChange={(value) => setConfig(prev => ({ 
-                ...prev, 
-                timeoutSeconds: parseInt(value) || 30
-              }))}
+              onChange={value =>
+                setConfig(prev => ({
+                  ...prev,
+                  timeoutSeconds: parseInt(value) || 30,
+                }))
+              }
               helperText="單筆訂單處理的最大等待時間"
             />
           </div>
@@ -423,23 +423,23 @@ export default function ReconciliationHeader() {
           {/* 進階設定 */}
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900">進階設定</h4>
-            
+
             <div className="space-y-3">
               <label className="flex items-center space-x-3">
                 <input
                   type="checkbox"
                   checked={config.enableAutoApproval}
-                  onChange={(e) => setConfig(prev => ({ 
-                    ...prev, 
-                    enableAutoApproval: e.target.checked 
-                  }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      enableAutoApproval: e.target.checked,
+                    }))
+                  }
                   className="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
                   <div className="font-medium text-gray-900">啟用自動核准</div>
-                  <div className="text-sm text-gray-600">
-                    高置信度匹配將自動核准，無需人工審核
-                  </div>
+                  <div className="text-sm text-gray-600">高置信度匹配將自動核准，無需人工審核</div>
                 </div>
               </label>
 
@@ -447,10 +447,12 @@ export default function ReconciliationHeader() {
                 <input
                   type="checkbox"
                   checked={config.enableAdvancedMatching}
-                  onChange={(e) => setConfig(prev => ({ 
-                    ...prev, 
-                    enableAdvancedMatching: e.target.checked 
-                  }))}
+                  onChange={e =>
+                    setConfig(prev => ({
+                      ...prev,
+                      enableAdvancedMatching: e.target.checked,
+                    }))
+                  }
                   className="rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                 />
                 <div>
@@ -464,9 +466,9 @@ export default function ReconciliationHeader() {
           </div>
 
           {/* 配置預覽 */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h5 className="font-medium text-gray-900 mb-2">配置預覽</h5>
-            <div className="text-sm text-gray-600 space-y-1">
+          <div className="rounded-lg bg-gray-50 p-4">
+            <h5 className="mb-2 font-medium text-gray-900">配置預覽</h5>
+            <div className="space-y-1 text-sm text-gray-600">
               <div>• 置信度閾值: {config.confidenceThreshold}%</div>
               <div>• 批次大小: {config.batchSize} 筆</div>
               <div>• 重試次數: {config.maxRetries} 次</div>

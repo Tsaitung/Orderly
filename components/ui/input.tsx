@@ -10,18 +10,18 @@ const inputVariants = cva(
         default: 'h-9',
         sm: 'h-8 text-xs',
         lg: 'h-10 text-base',
-        xl: 'h-12 text-lg px-4'
+        xl: 'h-12 text-lg px-4',
       },
       variant: {
         default: 'border-input',
         error: 'border-destructive focus-visible:ring-destructive',
-        success: 'border-green-500 focus-visible:ring-green-500'
-      }
+        success: 'border-green-500 focus-visible:ring-green-500',
+      },
     },
     defaultVariants: {
       size: 'default',
-      variant: 'default'
-    }
+      variant: 'default',
+    },
   }
 )
 
@@ -37,46 +37,49 @@ export interface InputProps
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ 
-    className, 
-    type, 
-    size,
-    variant,
-    label,
-    error,
-    helperText,
-    leftIcon,
-    rightIcon,
-    containerClassName,
-    id,
-    ...props 
-  }, ref) => {
+  (
+    {
+      className,
+      type,
+      size,
+      variant,
+      label,
+      error,
+      helperText,
+      leftIcon,
+      rightIcon,
+      containerClassName,
+      id,
+      ...props
+    },
+    ref
+  ) => {
     const generatedId = React.useId()
     const inputId = id || generatedId
     const errorId = `${inputId}-error`
     const helperTextId = `${inputId}-helper`
-    
+
     // 根據錯誤狀態調整變體
     const effectiveVariant = error ? 'error' : variant
 
     return (
       <div className={cn('w-full', containerClassName)}>
         {label && (
-          <label 
+          <label
             htmlFor={inputId}
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 block"
+            className="mb-2 block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
           >
             {label}
           </label>
         )}
-        
+
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 transform text-muted-foreground">
               {leftIcon}
             </div>
           )}
-          
+
           <input
             type={type}
             id={inputId}
@@ -94,29 +97,22 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={error ? 'true' : undefined}
             {...props}
           />
-          
+
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 transform text-muted-foreground">
               {rightIcon}
             </div>
           )}
         </div>
-        
+
         {error && (
-          <p 
-            id={errorId}
-            className="text-sm text-destructive mt-1"
-            role="alert"
-          >
+          <p id={errorId} className="mt-1 text-sm text-destructive" role="alert">
             {error}
           </p>
         )}
-        
+
         {helperText && !error && (
-          <p 
-            id={helperTextId}
-            className="text-sm text-muted-foreground mt-1"
-          >
+          <p id={helperTextId} className="mt-1 text-sm text-muted-foreground">
             {helperText}
           </p>
         )}

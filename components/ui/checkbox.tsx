@@ -9,20 +9,22 @@ const checkboxVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-gray-300 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500',
+        default:
+          'border-gray-300 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500',
         error: 'border-red-500 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500',
-        success: 'border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500'
+        success:
+          'border-green-500 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500',
       },
       size: {
         default: 'h-4 w-4',
         sm: 'h-3 w-3',
-        lg: 'h-5 w-5'
-      }
+        lg: 'h-5 w-5',
+      },
     },
     defaultVariants: {
       variant: 'default',
-      size: 'default'
-    }
+      size: 'default',
+    },
   }
 )
 
@@ -36,9 +38,7 @@ const Checkbox = React.forwardRef<
     className={cn(checkboxVariants({ variant, size }), className)}
     {...props}
   >
-    <CheckboxPrimitive.Indicator
-      className={cn('flex items-center justify-center text-current')}
-    >
+    <CheckboxPrimitive.Indicator className={cn('flex items-center justify-center text-current')}>
       <Check className="h-3 w-3" />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>

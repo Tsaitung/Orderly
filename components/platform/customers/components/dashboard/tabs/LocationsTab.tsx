@@ -3,14 +3,14 @@
 // ============================================================================
 // Locations and Business Units view with geographic and operational details
 
-'use client';
+'use client'
 
-import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import React, { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 import {
   MapPin,
   Building2,
@@ -22,51 +22,51 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
-  Filter
-} from 'lucide-react';
+  Filter,
+} from 'lucide-react'
 
-import { ActivityBadge, ActivityDot } from '../shared/ActivityIndicator';
+import { ActivityBadge, ActivityDot } from '../shared/ActivityIndicator'
 
-import type { 
+import type {
   HierarchyNode,
   SearchResult,
   FilterOptions,
   SortOptions,
   ActivityMetrics,
-  CustomerMetrics
-} from '../../../types';
+  CustomerMetrics,
+} from '../../../types'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface LocationsTabProps {
-  tree: HierarchyNode[];
-  searchResults: SearchResult[];
-  filters: FilterOptions;
-  sortOptions: SortOptions;
-  searchQuery: string;
+  tree: HierarchyNode[]
+  searchResults: SearchResult[]
+  filters: FilterOptions
+  sortOptions: SortOptions
+  searchQuery: string
 }
 
 interface EnhancedLocationNode extends HierarchyNode {
-  activity?: ActivityMetrics;
-  metrics?: CustomerMetrics;
-  companyName?: string;
-  address?: string;
-  coordinates?: { lat: number; lng: number };
-  operatingHours?: string;
-  deliveryZone?: string;
-  businessUnits?: EnhancedBusinessUnit[];
+  activity?: ActivityMetrics
+  metrics?: CustomerMetrics
+  companyName?: string
+  address?: string
+  coordinates?: { lat: number; lng: number }
+  operatingHours?: string
+  deliveryZone?: string
+  businessUnits?: EnhancedBusinessUnit[]
 }
 
 interface EnhancedBusinessUnit {
-  id: string;
-  name: string;
-  type: 'kitchen' | 'bar' | 'bakery' | 'storage' | 'office' | 'other';
-  isActive: boolean;
-  activity?: ActivityMetrics;
-  budget?: number;
-  manager?: string;
+  id: string
+  name: string
+  type: 'kitchen' | 'bar' | 'bakery' | 'storage' | 'office' | 'other'
+  isActive: boolean
+  activity?: ActivityMetrics
+  budget?: number
+  manager?: string
 }
 
 // ============================================================================
@@ -79,27 +79,25 @@ const businessUnitTypes = [
   { type: 'bakery', label: '烘焙部', icon: '🥖' },
   { type: 'storage', label: '倉庫', icon: '📦' },
   { type: 'office', label: '辦公室', icon: '🏢' },
-  { type: 'other', label: '其他', icon: '📋' }
-] as const;
+  { type: 'other', label: '其他', icon: '📋' },
+] as const
 
 const generateMockLocationData = (node: HierarchyNode): EnhancedLocationNode => {
-  const hash = node.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const baseScore = 40 + (hash % 50);
-  
-  const level: ActivityMetrics['level'] = 
-    baseScore >= 80 ? 'active' :
-    baseScore >= 60 ? 'medium' :
-    baseScore >= 40 ? 'low' : 'dormant';
+  const hash = node.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const baseScore = 40 + (hash % 50)
+
+  const level: ActivityMetrics['level'] =
+    baseScore >= 80 ? 'active' : baseScore >= 60 ? 'medium' : baseScore >= 40 ? 'low' : 'dormant'
 
   const activity: ActivityMetrics = {
     score: baseScore,
     level,
     lastOrderDate: new Date(Date.now() - (hash % 14) * 24 * 60 * 60 * 1000),
     orderFrequency: Math.max(1, Math.round(baseScore / 8)),
-    monthlyRevenue: (baseScore * 500) + (hash % 50000),
+    monthlyRevenue: baseScore * 500 + (hash % 50000),
     trend: hash % 3 === 0 ? 'up' : hash % 3 === 1 ? 'down' : 'stable',
-    trendScore: -10 + (hash % 30)
-  };
+    trendScore: -10 + (hash % 30),
+  }
 
   const metrics: CustomerMetrics = {
     totalOrders: 10 + (hash % 100),
@@ -108,45 +106,45 @@ const generateMockLocationData = (node: HierarchyNode): EnhancedLocationNode => 
     lastOrderDate: new Date(Date.now() - (hash % 7) * 24 * 60 * 60 * 1000),
     orderFrequency: 3 + (hash % 15),
     deliverySuccessRate: 80 + (hash % 20),
-    avgDeliveryTime: 1 + (hash % 4)
-  };
+    avgDeliveryTime: 1 + (hash % 4),
+  }
 
   // Generate business units
-  const numUnits = 1 + (hash % 4);
-  const businessUnits: EnhancedBusinessUnit[] = [];
-  
+  const numUnits = 1 + (hash % 4)
+  const businessUnits: EnhancedBusinessUnit[] = []
+
   for (let i = 0; i < numUnits; i++) {
-    const unitHash = hash + i * 17;
-    const unitType = businessUnitTypes[unitHash % businessUnitTypes.length];
-    
+    const unitHash = hash + i * 17
+    const unitType = businessUnitTypes[unitHash % businessUnitTypes.length]
+
     businessUnits.push({
       id: `${node.id}-unit-${i}`,
       name: `${unitType.label}${i > 0 ? ` ${i + 1}` : ''}`,
       type: unitType.type as any,
-      isActive: (unitHash % 10) > 1, // 80% active
+      isActive: unitHash % 10 > 1, // 80% active
       activity: {
         score: 30 + (unitHash % 60),
-        level: (30 + (unitHash % 60)) >= 70 ? 'active' : 
-               (30 + (unitHash % 60)) >= 50 ? 'medium' : 'low',
+        level:
+          30 + (unitHash % 60) >= 70 ? 'active' : 30 + (unitHash % 60) >= 50 ? 'medium' : 'low',
         lastOrderDate: new Date(Date.now() - (unitHash % 7) * 24 * 60 * 60 * 1000),
         orderFrequency: 1 + (unitHash % 8),
         monthlyRevenue: 10000 + (unitHash % 30000),
         trend: unitHash % 3 === 0 ? 'up' : unitHash % 3 === 1 ? 'down' : 'stable',
-        trendScore: -5 + (unitHash % 20)
+        trendScore: -5 + (unitHash % 20),
       },
       budget: 20000 + (unitHash % 80000),
-      manager: `經理${String.fromCharCode(65 + (unitHash % 26))}`
-    });
+      manager: `經理${String.fromCharCode(65 + (unitHash % 26))}`,
+    })
   }
 
   // Mock addresses based on major Taiwan cities
-  const cities = ['台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市'];
-  const districts = ['信義區', '大安區', '中山區', '松山區', '中正區', '板橋區'];
-  const city = cities[hash % cities.length];
-  const district = districts[hash % districts.length];
-  const road = `${String.fromCharCode(65 + (hash % 26))}路`;
-  const number = 1 + (hash % 999);
-  const floor = 1 + (hash % 20);
+  const cities = ['台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市']
+  const districts = ['信義區', '大安區', '中山區', '松山區', '中正區', '板橋區']
+  const city = cities[hash % cities.length]
+  const district = districts[hash % districts.length]
+  const road = `${String.fromCharCode(65 + (hash % 26))}路`
+  const number = 1 + (hash % 999)
+  const floor = 1 + (hash % 20)
 
   return {
     ...node,
@@ -156,30 +154,30 @@ const generateMockLocationData = (node: HierarchyNode): EnhancedLocationNode => 
     address: `${city}${district}${road}${number}號${floor}樓`,
     coordinates: {
       lat: 23.5 + (hash % 400) / 100, // Taiwan latitude range
-      lng: 120.0 + (hash % 400) / 100 // Taiwan longitude range
+      lng: 120.0 + (hash % 400) / 100, // Taiwan longitude range
     },
     operatingHours: `${7 + (hash % 3)}:00 - ${20 + (hash % 4)}:00`,
     deliveryZone: `配送區域 ${String.fromCharCode(65 + (hash % 8))}`,
-    businessUnits
-  };
-};
+    businessUnits,
+  }
+}
 
 // ============================================================================
 // Business Unit Card Component
 // ============================================================================
 
 interface BusinessUnitCardProps {
-  unit: EnhancedBusinessUnit;
-  locationName: string;
+  unit: EnhancedBusinessUnit
+  locationName: string
 }
 
 function BusinessUnitCard({ unit, locationName }: BusinessUnitCardProps) {
-  const unitTypeConfig = businessUnitTypes.find(t => t.type === unit.type);
-  
+  const unitTypeConfig = businessUnitTypes.find(t => t.type === unit.type)
+
   return (
     <Card variant="outlined" colorScheme="gray" className="transition-colors hover:bg-gray-50">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
+        <div className="mb-3 flex items-start justify-between">
           <div className="flex items-center space-x-2">
             <span className="text-lg">{unitTypeConfig?.icon}</span>
             <div>
@@ -187,14 +185,14 @@ function BusinessUnitCard({ unit, locationName }: BusinessUnitCardProps) {
               <p className="text-sm text-gray-500">{locationName}</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <ActivityDot level={unit.activity!.level} size="sm" />
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className={cn(
-                "text-xs",
-                unit.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                'text-xs',
+                unit.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
               )}
             >
               {unit.isActive ? '營運中' : '暫停'}
@@ -213,7 +211,9 @@ function BusinessUnitCard({ unit, locationName }: BusinessUnitCardProps) {
           </div>
           <div>
             <span className="text-gray-500">月營收:</span>
-            <span className="ml-1 font-medium">NT$ {(unit.activity!.monthlyRevenue / 1000).toFixed(0)}K</span>
+            <span className="ml-1 font-medium">
+              NT$ {(unit.activity!.monthlyRevenue / 1000).toFixed(0)}K
+            </span>
           </div>
           <div>
             <span className="text-gray-500">訂單頻率:</span>
@@ -222,7 +222,7 @@ function BusinessUnitCard({ unit, locationName }: BusinessUnitCardProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -230,41 +230,43 @@ function BusinessUnitCard({ unit, locationName }: BusinessUnitCardProps) {
 // ============================================================================
 
 interface LocationCardProps {
-  location: EnhancedLocationNode;
-  onLocationSelect: (location: HierarchyNode) => void;
-  isSelected?: boolean;
+  location: EnhancedLocationNode
+  onLocationSelect: (location: HierarchyNode) => void
+  isSelected?: boolean
 }
 
 function LocationCard({ location, onLocationSelect, isSelected }: LocationCardProps) {
-  const [showBusinessUnits, setShowBusinessUnits] = useState(false);
+  const [showBusinessUnits, setShowBusinessUnits] = useState(false)
 
   return (
-    <Card 
+    <Card
       variant="filled"
       colorScheme="white"
       className={cn(
-        "transition-all duration-200 hover:shadow-md",
-        isSelected && "ring-2 ring-primary-500"
+        'transition-all duration-200 hover:shadow-md',
+        isSelected && 'ring-2 ring-primary-500'
       )}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="mb-2 flex items-center space-x-2">
               <MapPin className="h-5 w-5 text-gray-500" />
-              <Badge variant="secondary" className="text-xs">營業據點</Badge>
+              <Badge variant="secondary" className="text-xs">
+                營業據點
+              </Badge>
               {location.activity!.level === 'active' && (
-                <Badge className="text-xs bg-green-100 text-green-800">
+                <Badge className="bg-green-100 text-xs text-green-800">
                   <Star className="mr-1 h-3 w-3" />
                   熱點
                 </Badge>
               )}
             </div>
-            
-            <CardTitle className="text-lg font-semibold text-gray-900 mb-1">
+
+            <CardTitle className="mb-1 text-lg font-semibold text-gray-900">
               {location.name}
             </CardTitle>
-            
+
             <div className="space-y-1 text-sm text-gray-600">
               <div className="flex items-center">
                 <Building2 className="mr-1 h-4 w-4" />
@@ -280,50 +282,48 @@ function LocationCard({ location, onLocationSelect, isSelected }: LocationCardPr
               </div>
             </div>
           </div>
-          
+
           <ActivityDot level={location.activity!.level} size="md" />
         </div>
       </CardHeader>
 
       <CardContent className="pt-0">
         {/* Activity Status */}
-        <div className="flex items-center justify-between mb-4">
-          <ActivityBadge 
-            level={location.activity!.level} 
+        <div className="mb-4 flex items-center justify-between">
+          <ActivityBadge
+            level={location.activity!.level}
             score={location.activity!.score}
             size="sm"
           />
-          
-          <div className="text-sm text-gray-500">
-            配送區域: {location.deliveryZone}
-          </div>
+
+          <div className="text-sm text-gray-500">配送區域: {location.deliveryZone}</div>
         </div>
 
         {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="mb-4 grid grid-cols-2 gap-4">
           <div>
-            <div className="text-xs text-gray-500 mb-1">月營收</div>
+            <div className="mb-1 text-xs text-gray-500">月營收</div>
             <div className="text-lg font-bold text-gray-900">
               NT$ {(location.metrics!.monthlyRevenue / 1000).toFixed(0)}K
             </div>
           </div>
-          
+
           <div>
-            <div className="text-xs text-gray-500 mb-1">配送成功率</div>
+            <div className="mb-1 text-xs text-gray-500">配送成功率</div>
             <div className="text-lg font-bold text-gray-900">
               {location.metrics!.deliverySuccessRate}%
             </div>
           </div>
-          
+
           <div>
-            <div className="text-xs text-gray-500 mb-1">平均配送時間</div>
+            <div className="mb-1 text-xs text-gray-500">平均配送時間</div>
             <div className="text-sm font-medium text-gray-700">
               {location.metrics!.avgDeliveryTime} 小時
             </div>
           </div>
-          
+
           <div>
-            <div className="text-xs text-gray-500 mb-1">業務單位</div>
+            <div className="mb-1 text-xs text-gray-500">業務單位</div>
             <div className="text-sm font-medium text-gray-700">
               {location.businessUnits?.length || 0} 個單位
             </div>
@@ -332,7 +332,7 @@ function LocationCard({ location, onLocationSelect, isSelected }: LocationCardPr
 
         {/* Business Units Toggle */}
         {location.businessUnits && location.businessUnits.length > 0 && (
-          <div className="pt-3 border-t border-gray-100">
+          <div className="border-t border-gray-100 pt-3">
             <Button
               variant="ghost"
               size="sm"
@@ -346,15 +346,11 @@ function LocationCard({ location, onLocationSelect, isSelected }: LocationCardPr
                 <ChevronRight className="h-4 w-4" />
               )}
             </Button>
-            
+
             {showBusinessUnits && (
               <div className="mt-3 space-y-2">
-                {location.businessUnits.map((unit) => (
-                  <BusinessUnitCard
-                    key={unit.id}
-                    unit={unit}
-                    locationName={location.name}
-                  />
+                {location.businessUnits.map(unit => (
+                  <BusinessUnitCard key={unit.id} unit={unit} locationName={location.name} />
                 ))}
               </div>
             )}
@@ -362,7 +358,7 @@ function LocationCard({ location, onLocationSelect, isSelected }: LocationCardPr
         )}
 
         {/* Action Button */}
-        <div className="mt-4 pt-3 border-t border-gray-100">
+        <div className="mt-4 border-t border-gray-100 pt-3">
           <Button
             variant="outline"
             size="sm"
@@ -374,7 +370,7 @@ function LocationCard({ location, onLocationSelect, isSelected }: LocationCardPr
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -386,120 +382,118 @@ export default function LocationsTab({
   searchResults,
   filters,
   sortOptions,
-  searchQuery
+  searchQuery,
 }: LocationsTabProps) {
-  const [localSearch, setLocalSearch] = useState('');
-  const [selectedLocationId, setSelectedLocationId] = useState<string>();
+  const [localSearch, setLocalSearch] = useState('')
+  const [selectedLocationId, setSelectedLocationId] = useState<string>()
 
   // Process locations data with mock enhancement
   const enhancedLocations = useMemo<EnhancedLocationNode[]>(() => {
     // Get all locations from the tree (flatten if needed)
-    const allLocations: HierarchyNode[] = [];
-    
+    const allLocations: HierarchyNode[] = []
+
     const collectLocations = (nodes: HierarchyNode[]) => {
       nodes.forEach(node => {
         if (node.type === 'location') {
-          allLocations.push(node);
+          allLocations.push(node)
         }
         if (node.children && node.children.length > 0) {
-          collectLocations(node.children);
+          collectLocations(node.children)
         }
-      });
-    };
-    
-    collectLocations(tree);
+      })
+    }
+
+    collectLocations(tree)
 
     // If searching, filter by search results
-    const locations = searchQuery && searchResults.length > 0
-      ? searchResults.map(result => result.entity).filter(node => node.type === 'location')
-      : allLocations;
+    const locations =
+      searchQuery && searchResults.length > 0
+        ? searchResults.map(result => result.entity).filter(node => node.type === 'location')
+        : allLocations
 
-    return locations.map(location => generateMockLocationData(location));
-  }, [tree, searchResults, searchQuery]);
+    return locations.map(location => generateMockLocationData(location))
+  }, [tree, searchResults, searchQuery])
 
   // Apply filters
   const filteredLocations = useMemo(() => {
-    let result = enhancedLocations;
+    let result = enhancedLocations
 
     // Apply local search
     if (localSearch.trim()) {
-      result = result.filter(location => 
-        location.name.toLowerCase().includes(localSearch.toLowerCase()) ||
-        location.address?.toLowerCase().includes(localSearch.toLowerCase()) ||
-        location.companyName?.toLowerCase().includes(localSearch.toLowerCase())
-      );
+      result = result.filter(
+        location =>
+          location.name.toLowerCase().includes(localSearch.toLowerCase()) ||
+          location.address?.toLowerCase().includes(localSearch.toLowerCase()) ||
+          location.companyName?.toLowerCase().includes(localSearch.toLowerCase())
+      )
     }
 
     // Apply activity level filters
     if (filters.activityLevels.length < 4) {
-      result = result.filter(location => 
-        location.activity && filters.activityLevels.includes(location.activity.level)
-      );
+      result = result.filter(
+        location => location.activity && filters.activityLevels.includes(location.activity.level)
+      )
     }
 
     // Apply revenue filters
     if (filters.minRevenue !== undefined) {
-      result = result.filter(location => 
-        location.metrics && location.metrics.monthlyRevenue >= filters.minRevenue!
-      );
+      result = result.filter(
+        location => location.metrics && location.metrics.monthlyRevenue >= filters.minRevenue!
+      )
     }
     if (filters.maxRevenue !== undefined) {
-      result = result.filter(location => 
-        location.metrics && location.metrics.monthlyRevenue <= filters.maxRevenue!
-      );
+      result = result.filter(
+        location => location.metrics && location.metrics.monthlyRevenue <= filters.maxRevenue!
+      )
     }
 
     // Apply include inactive filter
     if (!filters.includeInactive) {
-      result = result.filter(location => location.isActive);
+      result = result.filter(location => location.isActive)
     }
 
-    return result;
-  }, [enhancedLocations, filters, localSearch]);
+    return result
+  }, [enhancedLocations, filters, localSearch])
 
   const handleLocationSelect = (location: HierarchyNode) => {
-    setSelectedLocationId(location.id);
-    console.log('Selected location:', location);
-  };
+    setSelectedLocationId(location.id)
+    console.log('Selected location:', location)
+  }
 
   // Calculate total business units
   const totalBusinessUnits = filteredLocations.reduce(
-    (sum, location) => sum + (location.businessUnits?.length || 0), 
+    (sum, location) => sum + (location.businessUnits?.length || 0),
     0
-  );
+  )
 
   return (
     <div className="space-y-6">
       {/* Header with local search */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
           <Input
             placeholder="搜尋據點名稱、地址、公司..."
             value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
+            onChange={e => setLocalSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-        
+
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">
-            顯示 {filteredLocations.length} 個營業據點
-          </span>
+          <span className="text-sm text-gray-500">顯示 {filteredLocations.length} 個營業據點</span>
         </div>
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Card variant="filled" colorScheme="primary">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary-900">
-              {filteredLocations.length}
-            </div>
+            <div className="text-2xl font-bold text-primary-900">{filteredLocations.length}</div>
             <div className="text-sm text-primary-700">營業據點</div>
           </CardContent>
         </Card>
-        
+
         <Card variant="filled" colorScheme="green">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-900">
@@ -508,23 +502,24 @@ export default function LocationsTab({
             <div className="text-sm text-green-700">活躍據點</div>
           </CardContent>
         </Card>
-        
+
         <Card variant="filled" colorScheme="gray">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-gray-900">
-              {totalBusinessUnits}
-            </div>
+            <div className="text-2xl font-bold text-gray-900">{totalBusinessUnits}</div>
             <div className="text-sm text-gray-700">業務單位</div>
           </CardContent>
         </Card>
-        
+
         <Card variant="filled" colorScheme="platform">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-platform-900">
               {Math.round(
-                filteredLocations.reduce((sum, l) => sum + (l.metrics?.deliverySuccessRate || 0), 0) / 
-                Math.max(1, filteredLocations.length)
-              )}%
+                filteredLocations.reduce(
+                  (sum, l) => sum + (l.metrics?.deliverySuccessRate || 0),
+                  0
+                ) / Math.max(1, filteredLocations.length)
+              )}
+              %
             </div>
             <div className="text-sm text-platform-700">平均配送成功率</div>
           </CardContent>
@@ -534,15 +529,15 @@ export default function LocationsTab({
       {/* Locations Grid */}
       {filteredLocations.length === 0 ? (
         <Card>
-          <CardContent className="text-center py-12">
-            <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">沒有找到營業據點</h3>
+          <CardContent className="py-12 text-center">
+            <MapPin className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">沒有找到營業據點</h3>
             <p className="text-gray-500">請調整篩選條件或搜尋關鍵字</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredLocations.map((location) => (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+          {filteredLocations.map(location => (
             <LocationCard
               key={location.id}
               location={location}
@@ -553,5 +548,5 @@ export default function LocationsTab({
         </div>
       )}
     </div>
-  );
+  )
 }

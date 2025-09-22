@@ -9,7 +9,7 @@ import CustomerSegments from '@/components/supplier/customers/customer-segments'
 import { Plus, Download, MessageSquare } from 'lucide-react'
 
 export default function SupplierCustomersPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
@@ -23,45 +23,49 @@ export default function SupplierCustomersPage({
         </div>
         <div className="flex space-x-3">
           <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+            <Download className="mr-2 h-4 w-4" />
             匯出報表
           </Button>
           <Button variant="outline">
-            <MessageSquare className="h-4 w-4 mr-2" />
+            <MessageSquare className="mr-2 h-4 w-4" />
             群發通知
           </Button>
           <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             新增客戶
           </Button>
         </div>
       </div>
 
       {/* 客戶統計 */}
-      <Suspense fallback={
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="p-6 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-8 bg-gray-200 rounded"></div>
-            </Card>
-          ))}
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i} className="animate-pulse p-6">
+                <div className="mb-2 h-4 rounded bg-gray-200"></div>
+                <div className="h-8 rounded bg-gray-200"></div>
+              </Card>
+            ))}
+          </div>
+        }
+      >
         <CustomerStats />
       </Suspense>
 
       {/* 客戶分群分析 */}
-      <Suspense fallback={
-        <Card className="p-6 animate-pulse">
-          <div className="h-6 bg-gray-200 rounded mb-4"></div>
-          <div className="grid grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        </Card>
-      }>
+      <Suspense
+        fallback={
+          <Card className="animate-pulse p-6">
+            <div className="mb-4 h-6 rounded bg-gray-200"></div>
+            <div className="grid grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-32 rounded bg-gray-200"></div>
+              ))}
+            </div>
+          </Card>
+        }
+      >
         <CustomerSegments />
       </Suspense>
 
@@ -69,23 +73,25 @@ export default function SupplierCustomersPage({
       <CustomerFilters searchParams={searchParams} />
 
       {/* 客戶列表 */}
-      <Suspense fallback={
-        <Card className="p-6">
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="border rounded-lg p-4 animate-pulse">
-                <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+      <Suspense
+        fallback={
+          <Card className="p-6">
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-lg border p-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-16 w-16 rounded-full bg-gray-200"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-1/2 rounded bg-gray-200"></div>
+                      <div className="h-3 w-1/3 rounded bg-gray-200"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      }>
+              ))}
+            </div>
+          </Card>
+        }
+      >
         <CustomerList searchParams={searchParams} />
       </Suspense>
     </div>

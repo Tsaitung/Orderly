@@ -13,11 +13,11 @@ export default function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">客戶管理</h1>
-          <p className="text-gray-600 mt-1">
+          <p className="mt-1 text-gray-600">
             全新架構的客戶層級管理系統 - 簡化狀態管理，徹底解決無限迴圈問題
           </p>
         </div>
-        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+        <div className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
           新版本
         </div>
       </div>

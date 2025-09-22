@@ -1,15 +1,15 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Plus, 
-  Upload, 
-  Download, 
-  FileText, 
+import {
+  Plus,
+  Upload,
+  Download,
+  FileText,
   Settings,
   Users,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -26,13 +26,13 @@ interface QuickActionProps {
   disabled?: boolean
 }
 
-function QuickAction({ 
-  title, 
-  description, 
-  icon, 
-  onClick, 
+function QuickAction({
+  title,
+  description,
+  icon,
+  onClick,
   variant = 'secondary',
-  disabled = false
+  disabled = false,
 }: QuickActionProps) {
   const getVariantStyles = () => {
     switch (variant) {
@@ -48,19 +48,17 @@ function QuickAction({
   return (
     <Button
       variant="ghost"
-      className={`h-auto p-4 flex flex-col items-center text-center space-y-3 border-2 transition-all duration-200 ${getVariantStyles()}`}
+      className={`flex h-auto flex-col items-center space-y-3 border-2 p-4 text-center transition-all duration-200 ${getVariantStyles()}`}
       onClick={onClick}
       disabled={disabled}
       aria-describedby={`${title.replace(/\s+/g, '-')}-description`}
     >
-      <div className="flex-shrink-0">
-        {icon}
-      </div>
+      <div className="flex-shrink-0">{icon}</div>
       <div className="space-y-1">
-        <div className="font-medium text-sm">{title}</div>
-        <div 
+        <div className="text-sm font-medium">{title}</div>
+        <div
           id={`${title.replace(/\s+/g, '-')}-description`}
-          className="text-xs opacity-75 leading-relaxed"
+          className="text-xs leading-relaxed opacity-75"
         >
           {description}
         </div>
@@ -76,7 +74,7 @@ export default function QuickActions() {
     supplier: '',
     items: '',
     delivery_date: '',
-    notes: ''
+    notes: '',
   })
   const { announcePolite, announceSuccess } = useScreenReaderAnnouncer()
 
@@ -107,51 +105,51 @@ export default function QuickActions() {
       description: '快速建立新的採購訂單',
       icon: <Plus className="h-6 w-6" />,
       onClick: () => setIsNewOrderOpen(true),
-      variant: 'primary' as const
+      variant: 'primary' as const,
     },
     {
       title: '批量匯入',
       description: '從 Excel 或 CSV 檔案匯入多筆訂單',
       icon: <Upload className="h-6 w-6" />,
-      onClick: () => setIsImportOpen(true)
+      onClick: () => setIsImportOpen(true),
     },
     {
       title: '匯出報表',
       description: '下載訂單和財務報表',
       icon: <Download className="h-6 w-6" />,
-      onClick: () => announcePolite('準備匯出報表')
+      onClick: () => announcePolite('準備匯出報表'),
     },
     {
       title: '處理異常',
       description: '查看並處理 2 筆待處理異常',
       icon: <AlertCircle className="h-6 w-6" />,
       onClick: () => announcePolite('導航到異常處理頁面'),
-      variant: 'warning' as const
+      variant: 'warning' as const,
     },
     {
       title: '同步 ERP',
       description: '手動同步 ERP 系統資料',
       icon: <RefreshCw className="h-6 w-6" />,
-      onClick: handleSyncERP
+      onClick: handleSyncERP,
     },
     {
       title: '管理供應商',
       description: '新增或編輯供應商資訊',
       icon: <Users className="h-6 w-6" />,
-      onClick: () => announcePolite('導航到供應商管理頁面')
+      onClick: () => announcePolite('導航到供應商管理頁面'),
     },
     {
       title: '系統設定',
       description: '配置餐廳和系統參數',
       icon: <Settings className="h-6 w-6" />,
-      onClick: () => announcePolite('導航到系統設定頁面')
+      onClick: () => announcePolite('導航到系統設定頁面'),
     },
     {
       title: '查看文件',
       description: '使用手冊和操作說明',
       icon: <FileText className="h-6 w-6" />,
-      onClick: () => announcePolite('導航到幫助文件')
-    }
+      onClick: () => announcePolite('導航到幫助文件'),
+    },
   ]
 
   return (
@@ -160,11 +158,11 @@ export default function QuickActions() {
         <CardHeader>
           <CardTitle id="quick-actions-title" className="flex items-center space-x-2">
             <span>快速操作</span>
-            <div className="h-2 w-2 bg-primary-500 rounded-full" aria-hidden="true" />
+            <div className="h-2 w-2 rounded-full bg-primary-500" aria-hidden="true" />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-8">
             {quickActions.map((action, index) => (
               <QuickAction
                 key={index}
@@ -196,35 +194,35 @@ export default function QuickActions() {
             required
             placeholder="選擇或搜尋供應商"
             value={orderData.supplier}
-            onChange={(value) => setOrderData(prev => ({ ...prev, supplier: value }))}
+            onChange={value => setOrderData(prev => ({ ...prev, supplier: value }))}
             helperText="開始輸入供應商名稱進行搜尋"
           />
-          
+
           <AccessibleFormField
             label="採購項目"
             name="items"
             required
             placeholder="輸入採購項目，一行一項"
             value={orderData.items}
-            onChange={(value) => setOrderData(prev => ({ ...prev, items: value }))}
+            onChange={value => setOrderData(prev => ({ ...prev, items: value }))}
             helperText="格式：產品名稱 - 數量 - 單位，例如：新鮮蔬菜 - 10 - 公斤"
           />
-          
+
           <AccessibleFormField
             label="預計送達日期"
             name="delivery_date"
             type="date"
             required
             value={orderData.delivery_date}
-            onChange={(value) => setOrderData(prev => ({ ...prev, delivery_date: value }))}
+            onChange={value => setOrderData(prev => ({ ...prev, delivery_date: value }))}
           />
-          
+
           <AccessibleFormField
             label="備註"
             name="notes"
             placeholder="特殊要求或注意事項"
             value={orderData.notes}
-            onChange={(value) => setOrderData(prev => ({ ...prev, notes: value }))}
+            onChange={value => setOrderData(prev => ({ ...prev, notes: value }))}
           />
         </div>
       </FormDialog>
@@ -239,22 +237,18 @@ export default function QuickActions() {
         submitText="開始匯入"
       >
         <div className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600 mb-2">
-              拖拽檔案到此處或點擊選擇檔案
-            </p>
-            <p className="text-xs text-gray-500">
-              支援 .xlsx、.csv 格式，檔案大小不超過 10MB
-            </p>
+          <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+            <Upload className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+            <p className="mb-2 text-sm text-gray-600">拖拽檔案到此處或點擊選擇檔案</p>
+            <p className="text-xs text-gray-500">支援 .xlsx、.csv 格式，檔案大小不超過 10MB</p>
             <Button variant="outline" className="mt-4">
               選擇檔案
             </Button>
           </div>
-          
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">檔案格式要求：</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h4 className="mb-2 font-medium text-blue-900">檔案格式要求：</h4>
+            <ul className="space-y-1 text-sm text-blue-800">
               <li>• 第一列為標題行：供應商、產品名稱、數量、單位、預計送達日期</li>
               <li>• 日期格式：YYYY-MM-DD</li>
               <li>• 數量必須為數字</li>

@@ -12,14 +12,17 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${refresh}`
+        Authorization: `Bearer ${refresh}`,
       },
-      body: JSON.stringify({})
+      body: JSON.stringify({}),
     })
     const data = await res.json().catch(() => ({}))
 
     if (!res.ok || !data?.success) {
-      return NextResponse.json({ success: false, message: data?.message || 'Refresh failed' }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: data?.message || 'Refresh failed' },
+        { status: 401 }
+      )
     }
 
     const accessToken: string | undefined = data.token || data.access_token

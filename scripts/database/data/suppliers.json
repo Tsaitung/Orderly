@@ -4,11 +4,7 @@
     "name": "新鮮食材供應商",
     "type": "supplier",
     "settings": {
-      "deliveryDays": [
-        "monday",
-        "wednesday",
-        "friday"
-      ],
+      "deliveryDays": ["monday", "wednesday", "friday"],
       "paymentTerms": 30,
       "minOrderAmount": 1000
     },
@@ -71,10 +67,7 @@
           "is_closed": false
         }
       },
-      "deliveryZones": [
-        "台北市大安區",
-        "台北市信義區"
-      ],
+      "deliveryZones": ["台北市大安區", "台北市信義區"],
       "minimumOrderAmount": 1500.0,
       "paymentTermsDays": 30,
       "bankAccountInfo": null,
@@ -117,23 +110,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "台北市",
-      "新北市",
-      "桃園市",
-      "新竹縣市"
-    ],
-    "productCategories": [
-      "餅乾",
-      "穀物製品",
-      "糖果",
-      "乾貨"
-    ],
-    "certifications": [
-      "ISO 22000",
-      "HACCP",
-      "清真認證"
-    ],
+    "deliveryZones": ["台北市", "新北市", "桃園市", "新竹縣市"],
+    "productCategories": ["餅乾", "穀物製品", "糖果", "乾貨"],
+    "certifications": ["ISO 22000", "HACCP", "清真認證"],
     "createdAt": "2025-09-20T14:32:58.982000",
     "updatedAt": "2025-09-20T14:32:58.982000",
     "profile": null
@@ -157,23 +136,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "台北市",
-      "新北市",
-      "桃園市",
-      "新竹縣市"
-    ],
-    "productCategories": [
-      "餅乾",
-      "穀物製品",
-      "糖果",
-      "乾貨"
-    ],
-    "certifications": [
-      "ISO 22000",
-      "HACCP",
-      "清真認證"
-    ],
+    "deliveryZones": ["台北市", "新北市", "桃園市", "新竹縣市"],
+    "productCategories": ["餅乾", "穀物製品", "糖果", "乾貨"],
+    "certifications": ["ISO 22000", "HACCP", "清真認證"],
     "createdAt": "2025-09-20T14:33:26.244000",
     "updatedAt": "2025-09-20T14:33:26.244000",
     "profile": {
@@ -212,20 +177,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "台北市",
-        "新北市",
-        "桃園市",
-        "新竹縣市"
-      ],
+      "deliveryZones": ["台北市", "新北市", "桃園市", "新竹縣市"],
       "minimumOrderAmount": 50000.0,
       "paymentTermsDays": 30,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "ISO 22000",
-        "HACCP",
-        "清真認證"
-      ],
+      "qualityCertifications": ["ISO 22000", "HACCP", "清真認證"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {
@@ -265,22 +221,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "全台灣"
-    ],
-    "productCategories": [
-      "調味料",
-      "醬料",
-      "飲料",
-      "泡麵",
-      "乳製品"
-    ],
-    "certifications": [
-      "ISO 9001",
-      "ISO 22000",
-      "HACCP",
-      "SQF"
-    ],
+    "deliveryZones": ["全台灣"],
+    "productCategories": ["調味料", "醬料", "飲料", "泡麵", "乳製品"],
+    "certifications": ["ISO 9001", "ISO 22000", "HACCP", "SQF"],
     "createdAt": "2025-09-20T14:33:26.255000",
     "updatedAt": "2025-09-20T14:33:26.255000",
     "profile": {
@@ -319,18 +262,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "全台灣"
-      ],
+      "deliveryZones": ["全台灣"],
       "minimumOrderAmount": 30000.0,
       "paymentTermsDays": 15,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "ISO 9001",
-        "ISO 22000",
-        "HACCP",
-        "SQF"
-      ],
+      "qualityCertifications": ["ISO 9001", "ISO 22000", "HACCP", "SQF"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {
@@ -370,23 +306,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "台中市",
-      "彰化縣",
-      "南投縣",
-      "苗栗縣"
-    ],
-    "productCategories": [
-      "有機蔬菜",
-      "根莖類",
-      "葉菜類",
-      "瓜果類"
-    ],
-    "certifications": [
-      "有機認證",
-      "產銷履歷",
-      "CAS"
-    ],
+    "deliveryZones": ["台中市", "彰化縣", "南投縣", "苗栗縣"],
+    "productCategories": ["有機蔬菜", "根莖類", "葉菜類", "瓜果類"],
+    "certifications": ["有機認證", "產銷履歷", "CAS"],
     "createdAt": "2025-09-20T14:33:26.255000",
     "updatedAt": "2025-09-20T14:33:26.255000",
     "profile": {
@@ -425,20 +347,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "台中市",
-        "彰化縣",
-        "南投縣",
-        "苗栗縣"
-      ],
+      "deliveryZones": ["台中市", "彰化縣", "南投縣", "苗栗縣"],
       "minimumOrderAmount": 8000.0,
       "paymentTermsDays": 15,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "有機認證",
-        "產銷履歷",
-        "CAS"
-      ],
+      "qualityCertifications": ["有機認證", "產銷履歷", "CAS"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {
@@ -478,22 +391,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "大台北地區",
-      "桃園市",
-      "基隆市"
-    ],
-    "productCategories": [
-      "冷凍海鮮",
-      "進口肉品",
-      "乳製品",
-      "冷凍蔬菜"
-    ],
-    "certifications": [
-      "HACCP",
-      "FDA認證",
-      "冷鏈認證"
-    ],
+    "deliveryZones": ["大台北地區", "桃園市", "基隆市"],
+    "productCategories": ["冷凍海鮮", "進口肉品", "乳製品", "冷凍蔬菜"],
+    "certifications": ["HACCP", "FDA認證", "冷鏈認證"],
     "createdAt": "2025-09-20T14:33:26.256000",
     "updatedAt": "2025-09-20T14:33:26.256000",
     "profile": {
@@ -532,19 +432,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "大台北地區",
-        "桃園市",
-        "基隆市"
-      ],
+      "deliveryZones": ["大台北地區", "桃園市", "基隆市"],
       "minimumOrderAmount": 25000.0,
       "paymentTermsDays": 15,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "HACCP",
-        "FDA認證",
-        "冷鏈認證"
-      ],
+      "qualityCertifications": ["HACCP", "FDA認證", "冷鏈認證"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {
@@ -584,22 +476,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "嘉義縣市",
-      "台南市",
-      "雲林縣"
-    ],
-    "productCategories": [
-      "稻米",
-      "蔬菜",
-      "水果",
-      "農特產品"
-    ],
-    "certifications": [
-      "產銷履歷",
-      "有機認證",
-      "CAS台灣優良農產品"
-    ],
+    "deliveryZones": ["嘉義縣市", "台南市", "雲林縣"],
+    "productCategories": ["稻米", "蔬菜", "水果", "農特產品"],
+    "certifications": ["產銷履歷", "有機認證", "CAS台灣優良農產品"],
     "createdAt": "2025-09-20T14:33:26.257000",
     "updatedAt": "2025-09-20T14:33:26.257000",
     "profile": {
@@ -638,19 +517,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "嘉義縣市",
-        "台南市",
-        "雲林縣"
-      ],
+      "deliveryZones": ["嘉義縣市", "台南市", "雲林縣"],
       "minimumOrderAmount": 5000.0,
       "paymentTermsDays": 15,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "產銷履歷",
-        "有機認證",
-        "CAS台灣優良農產品"
-      ],
+      "qualityCertifications": ["產銷履歷", "有機認證", "CAS台灣優良農產品"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {
@@ -690,22 +561,9 @@
     "onboardingStatus": null,
     "onboardingProgress": {},
     "onboardingCompletedAt": null,
-    "deliveryZones": [
-      "屏東縣",
-      "高雄市",
-      "台東縣"
-    ],
-    "productCategories": [
-      "有機蔬菜",
-      "熱帶水果",
-      "香草",
-      "有機肉品"
-    ],
-    "certifications": [
-      "有機認證",
-      "友善環境",
-      "碳足跡認證"
-    ],
+    "deliveryZones": ["屏東縣", "高雄市", "台東縣"],
+    "productCategories": ["有機蔬菜", "熱帶水果", "香草", "有機肉品"],
+    "certifications": ["有機認證", "友善環境", "碳足跡認證"],
     "createdAt": "2025-09-20T14:33:26.257000",
     "updatedAt": "2025-09-20T14:33:26.257000",
     "profile": {
@@ -744,19 +602,11 @@
           "closed": true
         }
       },
-      "deliveryZones": [
-        "屏東縣",
-        "高雄市",
-        "台東縣"
-      ],
+      "deliveryZones": ["屏東縣", "高雄市", "台東縣"],
       "minimumOrderAmount": 3000.0,
       "paymentTermsDays": 15,
       "bankAccountInfo": null,
-      "qualityCertifications": [
-        "有機認證",
-        "友善環境",
-        "碳足跡認證"
-      ],
+      "qualityCertifications": ["有機認證", "友善環境", "碳足跡認證"],
       "foodSafetyLicense": null,
       "foodSafetyExpiresAt": null,
       "contactPreferences": {

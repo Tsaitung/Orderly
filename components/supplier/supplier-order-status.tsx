@@ -1,10 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Clock, 
-  CheckCircle, 
-  Truck, 
+import {
+  Clock,
+  CheckCircle,
+  Truck,
   Package,
   AlertTriangle,
   Eye,
@@ -16,7 +16,7 @@ import {
   Filter,
   Search,
   SortAsc,
-  SortDesc
+  SortDesc,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -46,7 +46,15 @@ interface SupplierOrder {
     notes?: string
   }>
   totalAmount: number
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'shipped' | 'delivered' | 'completed' | 'cancelled'
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'preparing'
+    | 'ready'
+    | 'shipped'
+    | 'delivered'
+    | 'completed'
+    | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   orderDate: string
   requestedDeliveryDate: string
@@ -66,11 +74,19 @@ const mockSupplierOrders: SupplierOrder[] = [
     restaurantContact: {
       name: '張經理',
       phone: '02-1234-5678',
-      address: '台北市信義區忠孝東路四段 123 號'
+      address: '台北市信義區忠孝東路四段 123 號',
     },
     items: [
       { id: '1-1', name: '有機高麗菜', quantity: 20, unit: '公斤', unitPrice: 45, totalPrice: 900 },
-      { id: '1-2', name: '新鮮蘿蔔', quantity: 15, unit: '公斤', unitPrice: 30, totalPrice: 450, notes: '要求特選品質' }
+      {
+        id: '1-2',
+        name: '新鮮蘿蔔',
+        quantity: 15,
+        unit: '公斤',
+        unitPrice: 30,
+        totalPrice: 450,
+        notes: '要求特選品質',
+      },
     ],
     totalAmount: 1350,
     status: 'pending',
@@ -80,7 +96,7 @@ const mockSupplierOrders: SupplierOrder[] = [
     estimatedPreparationTime: 4,
     notes: '急單，請優先處理',
     paymentStatus: 'pending',
-    tags: ['急單', '老客戶', '蔬菜']
+    tags: ['急單', '老客戶', '蔬菜'],
   },
   {
     id: '2',
@@ -89,11 +105,11 @@ const mockSupplierOrders: SupplierOrder[] = [
     restaurantContact: {
       name: '李主廚',
       phone: '02-2345-6789',
-      address: '台北市大安區敦化南路二段 456 號'
+      address: '台北市大安區敦化南路二段 456 號',
     },
     items: [
       { id: '2-1', name: '優質牛肉', quantity: 10, unit: '公斤', unitPrice: 800, totalPrice: 8000 },
-      { id: '2-2', name: '新鮮香菇', quantity: 5, unit: '公斤', unitPrice: 120, totalPrice: 600 }
+      { id: '2-2', name: '新鮮香菇', quantity: 5, unit: '公斤', unitPrice: 120, totalPrice: 600 },
     ],
     totalAmount: 8600,
     status: 'confirmed',
@@ -104,7 +120,7 @@ const mockSupplierOrders: SupplierOrder[] = [
     estimatedPreparationTime: 8,
     paymentStatus: 'paid',
     customerRating: 5,
-    tags: ['高價值', 'VIP客戶', '肉品']
+    tags: ['高價值', 'VIP客戶', '肉品'],
   },
   {
     id: '3',
@@ -113,11 +129,11 @@ const mockSupplierOrders: SupplierOrder[] = [
     restaurantContact: {
       name: '王老闆',
       phone: '02-3456-7890',
-      address: '台北市中山區南京東路三段 789 號'
+      address: '台北市中山區南京東路三段 789 號',
     },
     items: [
       { id: '3-1', name: '新鮮鮭魚', quantity: 3, unit: '公斤', unitPrice: 1200, totalPrice: 3600 },
-      { id: '3-2', name: '海鮮拼盤', quantity: 2, unit: '份', unitPrice: 800, totalPrice: 1600 }
+      { id: '3-2', name: '海鮮拼盤', quantity: 2, unit: '份', unitPrice: 800, totalPrice: 1600 },
     ],
     totalAmount: 5200,
     status: 'preparing',
@@ -127,7 +143,7 @@ const mockSupplierOrders: SupplierOrder[] = [
     confirmedDeliveryDate: '2024-01-16 11:00',
     estimatedPreparationTime: 6,
     paymentStatus: 'paid',
-    tags: ['海鮮', '定期客戶']
+    tags: ['海鮮', '定期客戶'],
   },
   {
     id: '4',
@@ -136,11 +152,11 @@ const mockSupplierOrders: SupplierOrder[] = [
     restaurantContact: {
       name: '陳大姐',
       phone: '02-4567-8901',
-      address: '台北市萬華區西門街 101 號'
+      address: '台北市萬華區西門街 101 號',
     },
     items: [
       { id: '4-1', name: '季節蔬菜包', quantity: 1, unit: '箱', unitPrice: 800, totalPrice: 800 },
-      { id: '4-2', name: '調味料組合', quantity: 2, unit: '組', unitPrice: 200, totalPrice: 400 }
+      { id: '4-2', name: '調味料組合', quantity: 2, unit: '組', unitPrice: 200, totalPrice: 400 },
     ],
     totalAmount: 1200,
     status: 'shipped',
@@ -150,8 +166,8 @@ const mockSupplierOrders: SupplierOrder[] = [
     confirmedDeliveryDate: '2024-01-15 16:00',
     estimatedPreparationTime: 2,
     paymentStatus: 'paid',
-    tags: ['小額', '組合商品']
-  }
+    tags: ['小額', '組合商品'],
+  },
 ]
 
 export default function SupplierOrderStatus() {
@@ -168,11 +184,12 @@ export default function SupplierOrderStatus() {
 
   const filteredOrders = React.useMemo(() => {
     let filtered = orders.filter(order => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch =
+        searchTerm === '' ||
         order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.restaurant.toLowerCase().includes(searchTerm.toLowerCase()) ||
         order.restaurantContact.name.toLowerCase().includes(searchTerm.toLowerCase())
-      
+
       const matchesStatus = statusFilter === 'all' || order.status === statusFilter
       const matchesPriority = priorityFilter === 'all' || order.priority === priorityFilter
 
@@ -183,116 +200,180 @@ export default function SupplierOrderStatus() {
     filtered.sort((a, b) => {
       const aValue = a[sortField]
       const bValue = b[sortField]
-      
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         const comparison = aValue.localeCompare(bValue)
         return sortDirection === 'asc' ? comparison : -comparison
       }
-      
+
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         const comparison = aValue - bValue
         return sortDirection === 'asc' ? comparison : -comparison
       }
-      
+
       return 0
     })
 
     return filtered
   }, [orders, searchTerm, statusFilter, priorityFilter, sortField, sortDirection])
 
-  const handleSort = React.useCallback((field: keyof SupplierOrder) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-    announcePolite(`按 ${field} ${sortDirection === 'asc' ? '升序' : '降序'} 排序`)
-  }, [sortField, sortDirection, announcePolite])
+  const handleSort = React.useCallback(
+    (field: keyof SupplierOrder) => {
+      if (sortField === field) {
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortField(field)
+        setSortDirection('asc')
+      }
+      announcePolite(`按 ${field} ${sortDirection === 'asc' ? '升序' : '降序'} 排序`)
+    },
+    [sortField, sortDirection, announcePolite]
+  )
 
-  const handleViewDetail = React.useCallback((order: SupplierOrder) => {
-    setSelectedOrder(order)
-    setIsDetailOpen(true)
-    announcePolite(`查看訂單 ${order.orderNumber} 詳細資訊`)
-  }, [announcePolite])
+  const handleViewDetail = React.useCallback(
+    (order: SupplierOrder) => {
+      setSelectedOrder(order)
+      setIsDetailOpen(true)
+      announcePolite(`查看訂單 ${order.orderNumber} 詳細資訊`)
+    },
+    [announcePolite]
+  )
 
-  const handleConfirmOrder = React.useCallback((orderId: string) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status: 'confirmed' as const, confirmedDeliveryDate: order.requestedDeliveryDate }
-        : order
-    ))
-    announceSuccess('訂單已確認')
-  }, [announceSuccess])
+  const handleConfirmOrder = React.useCallback(
+    (orderId: string) => {
+      setOrders(prev =>
+        prev.map(order =>
+          order.id === orderId
+            ? {
+                ...order,
+                status: 'confirmed' as const,
+                confirmedDeliveryDate: order.requestedDeliveryDate,
+              }
+            : order
+        )
+      )
+      announceSuccess('訂單已確認')
+    },
+    [announceSuccess]
+  )
 
-  const handleUpdateStatus = React.useCallback((orderId: string, newStatus: SupplierOrder['status']) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId 
-        ? { ...order, status: newStatus }
-        : order
-    ))
-    announceSuccess(`訂單狀態已更新為 ${getStatusText(newStatus)}`)
-  }, [announceSuccess])
+  const handleUpdateStatus = React.useCallback(
+    (orderId: string, newStatus: SupplierOrder['status']) => {
+      setOrders(prev =>
+        prev.map(order => (order.id === orderId ? { ...order, status: newStatus } : order))
+      )
+      announceSuccess(`訂單狀態已更新為 ${getStatusText(newStatus)}`)
+    },
+    [announceSuccess]
+  )
 
   const getStatusIcon = (status: SupplierOrder['status']) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4 text-yellow-600" />
-      case 'confirmed': return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'preparing': return <Package className="h-4 w-4 text-blue-600" />
-      case 'ready': return <CheckCircle className="h-4 w-4 text-green-500" />
-      case 'shipped': return <Truck className="h-4 w-4 text-purple-600" />
-      case 'delivered': return <CheckCircle className="h-4 w-4 text-green-700" />
-      case 'completed': return <CheckCircle className="h-4 w-4 text-green-800" />
-      case 'cancelled': return <AlertTriangle className="h-4 w-4 text-red-600" />
+      case 'pending':
+        return <Clock className="h-4 w-4 text-yellow-600" />
+      case 'confirmed':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'preparing':
+        return <Package className="h-4 w-4 text-blue-600" />
+      case 'ready':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'shipped':
+        return <Truck className="h-4 w-4 text-purple-600" />
+      case 'delivered':
+        return <CheckCircle className="h-4 w-4 text-green-700" />
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-800" />
+      case 'cancelled':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />
     }
   }
 
   const getStatusText = (status: SupplierOrder['status']) => {
     switch (status) {
-      case 'pending': return '待確認'
-      case 'confirmed': return '已確認'
-      case 'preparing': return '準備中'
-      case 'ready': return '待出貨'
-      case 'shipped': return '已出貨'
-      case 'delivered': return '已送達'
-      case 'completed': return '已完成'
-      case 'cancelled': return '已取消'
+      case 'pending':
+        return '待確認'
+      case 'confirmed':
+        return '已確認'
+      case 'preparing':
+        return '準備中'
+      case 'ready':
+        return '待出貨'
+      case 'shipped':
+        return '已出貨'
+      case 'delivered':
+        return '已送達'
+      case 'completed':
+        return '已完成'
+      case 'cancelled':
+        return '已取消'
     }
   }
 
   const getStatusVariant = (status: SupplierOrder['status']) => {
     switch (status) {
-      case 'pending': return 'warning'
-      case 'confirmed': case 'ready': case 'delivered': case 'completed': return 'success'
-      case 'preparing': case 'shipped': return 'info'
-      case 'cancelled': return 'destructive'
-      default: return 'secondary'
+      case 'pending':
+        return 'warning'
+      case 'confirmed':
+      case 'ready':
+      case 'delivered':
+      case 'completed':
+        return 'success'
+      case 'preparing':
+      case 'shipped':
+        return 'info'
+      case 'cancelled':
+        return 'destructive'
+      default:
+        return 'secondary'
     }
   }
 
   const getPriorityColor = (priority: SupplierOrder['priority']) => {
     switch (priority) {
-      case 'urgent': return 'border-l-red-500 bg-red-50'
-      case 'high': return 'border-l-orange-500 bg-orange-50'
-      case 'medium': return 'border-l-yellow-500 bg-yellow-50'
-      case 'low': return 'border-l-green-500 bg-green-50'
+      case 'urgent':
+        return 'border-l-red-500 bg-red-50'
+      case 'high':
+        return 'border-l-orange-500 bg-orange-50'
+      case 'medium':
+        return 'border-l-yellow-500 bg-yellow-50'
+      case 'low':
+        return 'border-l-green-500 bg-green-50'
     }
   }
 
   const getPriorityText = (priority: SupplierOrder['priority']) => {
     switch (priority) {
-      case 'urgent': return '緊急'
-      case 'high': return '高'
-      case 'medium': return '中'
-      case 'low': return '低'
+      case 'urgent':
+        return '緊急'
+      case 'high':
+        return '高'
+      case 'medium':
+        return '中'
+      case 'low':
+        return '低'
     }
   }
 
   const getPaymentStatusBadge = (status: SupplierOrder['paymentStatus']) => {
     switch (status) {
-      case 'paid': return <Badge variant="success" size="sm">已付款</Badge>
-      case 'pending': return <Badge variant="warning" size="sm">待付款</Badge>
-      case 'overdue': return <Badge variant="destructive" size="sm">逾期</Badge>
+      case 'paid':
+        return (
+          <Badge variant="success" size="sm">
+            已付款
+          </Badge>
+        )
+      case 'pending':
+        return (
+          <Badge variant="warning" size="sm">
+            待付款
+          </Badge>
+        )
+      case 'overdue':
+        return (
+          <Badge variant="destructive" size="sm">
+            逾期
+          </Badge>
+        )
     }
   }
 
@@ -302,7 +383,7 @@ export default function SupplierOrderStatus() {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
   }
 
@@ -315,7 +396,7 @@ export default function SupplierOrderStatus() {
     { value: 'shipped', label: '已出貨' },
     { value: 'delivered', label: '已送達' },
     { value: 'completed', label: '已完成' },
-    { value: 'cancelled', label: '已取消' }
+    { value: 'cancelled', label: '已取消' },
   ]
 
   const priorityOptions = [
@@ -323,7 +404,7 @@ export default function SupplierOrderStatus() {
     { value: 'urgent', label: '緊急' },
     { value: 'high', label: '高' },
     { value: 'medium', label: '中' },
-    { value: 'low', label: '低' }
+    { value: 'low', label: '低' },
   ]
 
   // 統計數據
@@ -332,7 +413,7 @@ export default function SupplierOrderStatus() {
     const urgent = orders.filter(o => o.priority === 'urgent').length
     const preparing = orders.filter(o => o.status === 'preparing').length
     const shipping = orders.filter(o => o.status === 'shipped').length
-    
+
     return { pending, urgent, preparing, shipping }
   }, [orders])
 
@@ -344,7 +425,7 @@ export default function SupplierOrderStatus() {
             <Package className="h-5 w-5 text-blue-600" />
             <span>訂單狀態追蹤</span>
           </CardTitle>
-          
+
           {/* 快速統計 */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
@@ -367,19 +448,19 @@ export default function SupplierOrderStatus() {
 
       <CardContent className="space-y-4">
         {/* 搜尋和篩選 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋訂單編號、餐廳或聯絡人..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
-          
+
           <AccessibleSelect
             label="訂單狀態"
             name="status-filter"
@@ -387,7 +468,7 @@ export default function SupplierOrderStatus() {
             value={statusFilter}
             onChange={setStatusFilter}
           />
-          
+
           <AccessibleSelect
             label="優先級"
             name="priority-filter"
@@ -400,28 +481,26 @@ export default function SupplierOrderStatus() {
         {/* 訂單列表 */}
         <div className="space-y-3">
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className="py-8 text-center text-gray-500">
+              <Package className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p>沒有找到符合條件的訂單</p>
             </div>
           ) : (
-            filteredOrders.map((order) => (
+            filteredOrders.map(order => (
               <div
                 key={order.id}
                 className={cn(
-                  'border rounded-lg p-4 transition-all hover:shadow-md',
+                  'rounded-lg border p-4 transition-all hover:shadow-md',
                   'border-l-4',
                   getPriorityColor(order.priority)
                 )}
               >
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
                   {/* 基本資訊 */}
-                  <div className="lg:col-span-4 space-y-2">
+                  <div className="space-y-2 lg:col-span-4">
                     <div className="flex items-center space-x-3">
-                      <div className="font-bold text-blue-600">
-                        {order.orderNumber}
-                      </div>
-                      <Badge 
+                      <div className="font-bold text-blue-600">{order.orderNumber}</div>
+                      <Badge
                         variant={getStatusVariant(order.status)}
                         className="flex items-center space-x-1"
                       >
@@ -432,17 +511,15 @@ export default function SupplierOrderStatus() {
                         {getPriorityText(order.priority)}
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-1">
-                      <div className="font-medium text-gray-900">
-                        {order.restaurant}
-                      </div>
-                      <div className="text-sm text-gray-600 flex items-center space-x-2">
+                      <div className="font-medium text-gray-900">{order.restaurant}</div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <span>聯絡人: {order.restaurantContact.name}</span>
                         <Phone className="h-3 w-3" />
                         <span>{order.restaurantContact.phone}</span>
                       </div>
-                      <div className="text-sm text-gray-600 flex items-center space-x-1">
+                      <div className="flex items-center space-x-1 text-sm text-gray-600">
                         <MapPin className="h-3 w-3" />
                         <span>{order.restaurantContact.address}</span>
                       </div>
@@ -450,8 +527,8 @@ export default function SupplierOrderStatus() {
                   </div>
 
                   {/* 訂單詳情 */}
-                  <div className="lg:col-span-4 space-y-2">
-                    <div className="text-sm space-y-1">
+                  <div className="space-y-2 lg:col-span-4">
+                    <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">品項數量:</span>
                         <span className="font-medium">{order.items.length} 項</span>
@@ -473,7 +550,9 @@ export default function SupplierOrderStatus() {
                             {[...Array(5)].map((_, i) => (
                               <span
                                 key={i}
-                                className={i < order.customerRating! ? 'text-yellow-400' : 'text-gray-300'}
+                                className={
+                                  i < order.customerRating! ? 'text-yellow-400' : 'text-gray-300'
+                                }
                               >
                                 ★
                               </span>
@@ -485,35 +564,35 @@ export default function SupplierOrderStatus() {
                   </div>
 
                   {/* 時間資訊 */}
-                  <div className="lg:col-span-2 space-y-2">
-                    <div className="text-sm space-y-1">
+                  <div className="space-y-2 lg:col-span-2">
+                    <div className="space-y-1 text-sm">
                       <div>
-                        <span className="text-gray-600 block">下單時間:</span>
+                        <span className="block text-gray-600">下單時間:</span>
                         <span className="text-xs">{formatDateTime(order.orderDate)}</span>
                       </div>
                       <div>
-                        <span className="text-gray-600 block">要求交期:</span>
+                        <span className="block text-gray-600">要求交期:</span>
                         <span className="text-xs text-orange-600">
                           {formatDateTime(order.requestedDeliveryDate)}
                         </span>
                       </div>
                       {order.confirmedDeliveryDate && (
                         <div>
-                          <span className="text-gray-600 block">確認交期:</span>
+                          <span className="block text-gray-600">確認交期:</span>
                           <span className="text-xs text-green-600">
                             {formatDateTime(order.confirmedDeliveryDate)}
                           </span>
                         </div>
                       )}
                       <div>
-                        <span className="text-gray-600 block">預估準備:</span>
+                        <span className="block text-gray-600">預估準備:</span>
                         <span className="text-xs">{order.estimatedPreparationTime} 小時</span>
                       </div>
                     </div>
                   </div>
 
                   {/* 操作按鈕 */}
-                  <div className="lg:col-span-2 flex flex-col space-y-2">
+                  <div className="flex flex-col space-y-2 lg:col-span-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -523,7 +602,7 @@ export default function SupplierOrderStatus() {
                       <Eye className="h-4 w-4" />
                       <span>查看詳情</span>
                     </Button>
-                    
+
                     {order.status === 'pending' && (
                       <Button
                         variant="solid"
@@ -536,23 +615,24 @@ export default function SupplierOrderStatus() {
                         <span>確認訂單</span>
                       </Button>
                     )}
-                    
+
                     {(order.status === 'confirmed' || order.status === 'preparing') && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleUpdateStatus(order.id, 
-                          order.status === 'confirmed' ? 'preparing' : 'ready'
-                        )}
+                        onClick={() =>
+                          handleUpdateStatus(
+                            order.id,
+                            order.status === 'confirmed' ? 'preparing' : 'ready'
+                          )
+                        }
                         className="flex items-center space-x-1"
                       >
                         <Package className="h-4 w-4" />
-                        <span>
-                          {order.status === 'confirmed' ? '開始準備' : '準備完成'}
-                        </span>
+                        <span>{order.status === 'confirmed' ? '開始準備' : '準備完成'}</span>
                       </Button>
                     )}
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -577,7 +657,7 @@ export default function SupplierOrderStatus() {
 
                 {/* 備註 */}
                 {order.notes && (
-                  <div className="mt-3 p-2 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                  <div className="mt-3 rounded-r border-l-4 border-yellow-400 bg-yellow-50 p-2">
                     <p className="text-sm text-yellow-800">
                       <strong>備註:</strong> {order.notes}
                     </p>
@@ -601,7 +681,7 @@ export default function SupplierOrderStatus() {
             {/* 訂單基本資訊 */}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">訂單資訊</h4>
+                <h4 className="mb-3 font-medium text-gray-900">訂單資訊</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">訂單編號:</span>
@@ -629,7 +709,7 @@ export default function SupplierOrderStatus() {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">客戶資訊</h4>
+                <h4 className="mb-3 font-medium text-gray-900">客戶資訊</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">餐廳名稱:</span>
@@ -653,22 +733,23 @@ export default function SupplierOrderStatus() {
 
             {/* 訂單項目明細 */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">訂單明細</h4>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 grid grid-cols-6 gap-4 text-sm font-medium text-gray-700">
+              <h4 className="mb-3 font-medium text-gray-900">訂單明細</h4>
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="grid grid-cols-6 gap-4 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   <div className="col-span-2">品項名稱</div>
                   <div>數量</div>
                   <div>單位</div>
                   <div>單價</div>
                   <div>小計</div>
                 </div>
-                {selectedOrder.items.map((item) => (
-                  <div key={item.id} className="px-4 py-3 grid grid-cols-6 gap-4 text-sm border-t border-gray-100">
+                {selectedOrder.items.map(item => (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-6 gap-4 border-t border-gray-100 px-4 py-3 text-sm"
+                  >
                     <div className="col-span-2">
                       <div className="font-medium">{item.name}</div>
-                      {item.notes && (
-                        <div className="text-xs text-gray-500 mt-1">{item.notes}</div>
-                      )}
+                      {item.notes && <div className="mt-1 text-xs text-gray-500">{item.notes}</div>}
                     </div>
                     <div>{item.quantity}</div>
                     <div>{item.unit}</div>
@@ -676,8 +757,8 @@ export default function SupplierOrderStatus() {
                     <div className="font-medium">NT$ {item.totalPrice.toLocaleString()}</div>
                   </div>
                 ))}
-                <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
-                  <div className="flex justify-between items-center">
+                <div className="border-t border-gray-200 bg-gray-50 px-4 py-3">
+                  <div className="flex items-center justify-between">
                     <span className="font-medium">總計</span>
                     <span className="text-lg font-bold text-green-600">
                       NT$ {selectedOrder.totalAmount.toLocaleString()}
@@ -690,7 +771,7 @@ export default function SupplierOrderStatus() {
             {/* 狀態和備註 */}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">訂單狀態</h4>
+                <h4 className="mb-3 font-medium text-gray-900">訂單狀態</h4>
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(selectedOrder.status)}
@@ -710,7 +791,11 @@ export default function SupplierOrderStatus() {
                         {[...Array(5)].map((_, i) => (
                           <span
                             key={i}
-                            className={i < selectedOrder.customerRating! ? 'text-yellow-400' : 'text-gray-300'}
+                            className={
+                              i < selectedOrder.customerRating!
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }
                           >
                             ★
                           </span>
@@ -726,8 +811,8 @@ export default function SupplierOrderStatus() {
 
               {selectedOrder.notes && (
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-3">特殊備註</h4>
-                  <div className="p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r">
+                  <h4 className="mb-3 font-medium text-gray-900">特殊備註</h4>
+                  <div className="rounded-r border-l-4 border-yellow-400 bg-yellow-50 p-3">
                     <p className="text-sm text-yellow-800">{selectedOrder.notes}</p>
                   </div>
                 </div>
@@ -737,7 +822,7 @@ export default function SupplierOrderStatus() {
             {/* 標籤 */}
             {selectedOrder.tags.length > 0 && (
               <div>
-                <h4 className="font-medium text-gray-900 mb-3">訂單標籤</h4>
+                <h4 className="mb-3 font-medium text-gray-900">訂單標籤</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedOrder.tags.map((tag, index) => (
                     <Badge key={index} variant="outline">

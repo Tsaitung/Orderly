@@ -14,13 +14,11 @@ export default function AdminDashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">平台儀表板</h1>
-          <p className="text-gray-600 mt-1">
-            即時監控井然 Orderly 平台的關鍵業務指標和系統狀態
-          </p>
+          <p className="mt-1 text-gray-600">即時監控井然 Orderly 平台的關鍵業務指標和系統狀態</p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
-          <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+          <div className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
             系統正常運行
           </div>
           <LastUpdateTime />

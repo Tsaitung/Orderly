@@ -1,7 +1,16 @@
 'use client'
 
 import React from 'react'
-import { FolderTree, FolderOpen, Tag, Search, Settings, Plus, Upload, RotateCcw } from 'lucide-react'
+import {
+  FolderTree,
+  FolderOpen,
+  Tag,
+  Search,
+  Settings,
+  Plus,
+  Upload,
+  RotateCcw,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -59,11 +68,13 @@ export function CategoryManagement() {
     const level1Categories = categories.filter(cat => cat.level === 1).length
     const level2Categories = categories.filter(cat => cat.level === 2).length
     const activeCategories = categories.filter(cat => cat.isActive).length
-    const categoriesWithProducts = categories.filter(cat => 
-      (cat._count?.products || cat.products?.length || 0) > 0
+    const categoriesWithProducts = categories.filter(
+      cat => (cat._count?.products || cat.products?.length || 0) > 0
     ).length
-    const mappingAccuracy = totalCategories > 0 ? 
-      Math.round((categoriesWithProducts / totalCategories) * 100 * 10) / 10 : 0
+    const mappingAccuracy =
+      totalCategories > 0
+        ? Math.round((categoriesWithProducts / totalCategories) * 100 * 10) / 10
+        : 0
 
     return {
       totalCategories,
@@ -71,18 +82,19 @@ export function CategoryManagement() {
       level2Categories,
       activeCategories,
       standardizedCategories: categoriesWithProducts,
-      mappingAccuracy
+      mappingAccuracy,
     }
   }, [categories])
 
   // Filter categories based on search
   const filteredCategories = React.useMemo(() => {
     if (!searchTerm) return categories
-    
-    return categories.filter(cat => 
-      cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cat.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cat.code.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return categories.filter(
+      cat =>
+        cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cat.nameEn.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cat.code.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [categories, searchTerm])
 
@@ -90,7 +102,7 @@ export function CategoryManagement() {
   const handleSaveCategory = async (categoryData: Partial<Category>) => {
     try {
       setLoading(true)
-      
+
       if (editingCategory) {
         await http.put(`/products/categories/${editingCategory.id}`, categoryData)
       } else {
@@ -132,7 +144,7 @@ export function CategoryManagement() {
       alert('無法刪除含有產品的類別')
       return
     }
-    
+
     if (confirm(`確定要刪除類別「${category.name}」嗎？`)) {
       // TODO: Implement delete API call
       console.log('Delete category:', category.id)
@@ -142,7 +154,7 @@ export function CategoryManagement() {
   return (
     <div className="space-y-6">
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -154,7 +166,7 @@ export function CategoryManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -166,7 +178,7 @@ export function CategoryManagement() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -205,7 +217,7 @@ export function CategoryManagement() {
       </div>
 
       {/* 主要管理區域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* 類別樹狀結構 */}
         <div className="lg:col-span-2">
           <Card>
@@ -222,26 +234,23 @@ export function CategoryManagement() {
                     onClick={fetchCategories}
                     disabled={refreshing}
                   >
-                    <RotateCcw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    <RotateCcw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
                     重新整理
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleAddRoot}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button size="sm" onClick={handleAddRoot}>
+                    <Plus className="mr-2 h-4 w-4" />
                     新增類別
                   </Button>
                 </div>
               </div>
-              
+
               {/* 搜尋 */}
               <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder="搜尋產品類別..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -249,10 +258,10 @@ export function CategoryManagement() {
             <CardContent>
               <CategoryTree
                 categories={filteredCategories}
-                onSelectCategory={(c) => setSelectedCategory(c as any)}
-                onEditCategory={(c) => handleEditCategory(c as any)}
-                onDeleteCategory={(c) => handleDeleteCategory(c as any)}
-                onAddChild={(c) => handleAddChild(c as any)}
+                onSelectCategory={c => setSelectedCategory(c as any)}
+                onEditCategory={c => handleEditCategory(c as any)}
+                onDeleteCategory={c => handleDeleteCategory(c as any)}
+                onAddChild={c => handleAddChild(c as any)}
                 selectedCategoryId={selectedCategory?.id}
               />
             </CardContent>
@@ -270,54 +279,54 @@ export function CategoryManagement() {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-600">類別代碼</Label>
-                    <p className="text-lg font-mono">{selectedCategory.code}</p>
+                    <p className="font-mono text-lg">{selectedCategory.code}</p>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-600">中文名稱</Label>
                     <p className="text-lg">{selectedCategory.name}</p>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-600">英文名稱</Label>
                     <p className="text-lg">{selectedCategory.nameEn}</p>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-600">層級</Label>
                     <p>第 {selectedCategory.level} 級</p>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-600">狀態</Label>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={selectedCategory.isActive ? "default" : "secondary"}>
+                      <Badge variant={selectedCategory.isActive ? 'default' : 'secondary'}>
                         {selectedCategory.isActive ? '啟用' : '停用'}
                       </Badge>
                     </div>
                   </div>
-                  
+
                   {selectedCategory.description && (
                     <div>
                       <Label className="text-sm font-medium text-gray-600">描述</Label>
                       <p className="text-sm text-gray-700">{selectedCategory.description}</p>
                     </div>
                   )}
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-600">產品數量</Label>
-                    <p>{selectedCategory._count?.products || selectedCategory.products?.length || 0} 個產品</p>
+                    <p>
+                      {selectedCategory._count?.products || selectedCategory.products?.length || 0}{' '}
+                      個產品
+                    </p>
                   </div>
-                  
-                  <div className="pt-4 space-y-2">
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleEditCategory(selectedCategory)}
-                    >
+
+                  <div className="space-y-2 pt-4">
+                    <Button className="w-full" onClick={() => handleEditCategory(selectedCategory)}>
                       編輯類別
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full"
                       onClick={() => handleAddChild(selectedCategory)}
                     >
@@ -326,8 +335,8 @@ export function CategoryManagement() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <FolderTree className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <div className="py-8 text-center text-gray-500">
+                  <FolderTree className="mx-auto mb-4 h-12 w-12 text-gray-300" />
                   <p>選擇一個類別以查看詳細資訊</p>
                 </div>
               )}
@@ -351,6 +360,6 @@ export function CategoryManagement() {
 }
 
 // Simple Label component for the detail panel
-function Label({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Label({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <label className={`block text-sm font-medium ${className}`}>{children}</label>
 }

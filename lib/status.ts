@@ -4,7 +4,14 @@
 
 import { CheckCircle, Clock, Truck, Package, AlertTriangle } from 'lucide-react'
 
-export type BadgeVariant = 'default' | 'outline' | 'secondary' | 'warning' | 'info' | 'success' | 'destructive'
+export type BadgeVariant =
+  | 'default'
+  | 'outline'
+  | 'secondary'
+  | 'warning'
+  | 'info'
+  | 'success'
+  | 'destructive'
 
 export type OrderStatusKey =
   | 'draft'

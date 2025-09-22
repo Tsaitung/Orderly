@@ -11,12 +11,12 @@ import {
   ERPOrderSchema,
   ERPProductSchema,
   ERPInventorySchema,
-  ERPCustomerSchema
+  ERPCustomerSchema,
 } from '../erp-adapter-interface'
 
 /**
  * Microsoft Dynamics 365 ERP 適配器
- * 
+ *
  * 支援功能:
  * - Web API (OData v4) 集成
  * - 訂單同步 (銷售訂單/採購訂單)
@@ -33,46 +33,46 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   // Dynamics 365 特定配置
   private readonly defaultFieldMapping = {
     // 訂單欄位對應
-    'orderNumber': 'name',
-    'externalId': 'salesorderid',
-    'customerCode': '_customerid_value',
-    'orderDate': 'dateordered',
-    'deliveryDate': 'requestdeliveryby',
-    'totalAmount': 'totalamount',
-    'status': 'statecode',
-    'notes': 'description',
-    
+    orderNumber: 'name',
+    externalId: 'salesorderid',
+    customerCode: '_customerid_value',
+    orderDate: 'dateordered',
+    deliveryDate: 'requestdeliveryby',
+    totalAmount: 'totalamount',
+    status: 'statecode',
+    notes: 'description',
+
     // 產品欄位對應
-    'code': 'productnumber',
-    'name': 'name',
-    'basePrice': 'defaultuomscheduleid',
-    'unit': 'defaultuomid',
-    'isActive': 'statecode',
-    'category': '_parentproductid_value',
-    'description': 'description',
-    
+    code: 'productnumber',
+    name: 'name',
+    basePrice: 'defaultuomscheduleid',
+    unit: 'defaultuomid',
+    isActive: 'statecode',
+    category: '_parentproductid_value',
+    description: 'description',
+
     // 庫存欄位對應
-    'productCode': '_productid_value',
-    'availableQuantity': 'quantityonhand',
-    'reservedQuantity': 'quantityallocated',
-    'location': '_siteid_value',
-    
+    productCode: '_productid_value',
+    availableQuantity: 'quantityonhand',
+    reservedQuantity: 'quantityallocated',
+    location: '_siteid_value',
+
     // 客戶欄位對應
-    'code': 'accountnumber',
-    'name': 'name',
-    'contactPerson': 'primarycontactid',
-    'email': 'emailaddress1',
-    'phone': 'telephone1',
-    'isActive': 'statecode'
+    code: 'accountnumber',
+    name: 'name',
+    contactPerson: 'primarycontactid',
+    email: 'emailaddress1',
+    phone: 'telephone1',
+    isActive: 'statecode',
   }
 
   constructor(config: ERPConnectionConfig) {
     super(config)
-    
+
     // 合併欄位對應
     this.config.fieldMapping = {
       ...this.defaultFieldMapping,
-      ...this.config.fieldMapping
+      ...this.config.fieldMapping,
     }
   }
 
@@ -82,16 +82,16 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
         grant_type: 'client_credentials',
         client_id: this.config.authentication.credentials.clientId,
         client_secret: this.config.authentication.credentials.clientSecret,
-        scope: `${this.config.baseUrl}/.default`
+        scope: `${this.config.baseUrl}/.default`,
       }
 
       const tokenUrl = `https://login.microsoftonline.com/${this.config.metadata.tenantId}/oauth2/v2.0/token`
-      
+
       const response = await this.makeOAuthRequest('POST', tokenUrl, tokenData)
-      
+
       if (response.access_token) {
         this.accessToken = response.access_token
-        this.tokenExpiry = new Date(Date.now() + (response.expires_in * 1000))
+        this.tokenExpiry = new Date(Date.now() + response.expires_in * 1000)
         this.isConnected = true
         this.lastError = undefined
         return true
@@ -129,7 +129,7 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   getConnectionStatus(): { connected: boolean; lastError?: string } {
     return {
       connected: this.isConnected && !!this.accessToken && !this.isTokenExpired(),
-      lastError: this.lastError
+      lastError: this.lastError,
     }
   }
 
@@ -165,23 +165,24 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
       }
 
       const queryParams = new URLSearchParams()
-      
+
       if (filters.length > 0) {
         queryParams.append('$filter', filters.join(' and '))
       }
-      
+
       if (options?.pageSize) {
         queryParams.append('$top', options.pageSize.toString())
       }
-      
+
       if (options?.pageNumber && options?.pageSize) {
         queryParams.append('$skip', ((options.pageNumber - 1) * options.pageSize).toString())
       }
 
       const query = queryParams.toString() ? `?${queryParams.toString()}` : ''
       const response = await this.makeRequest('GET', `/api/data/v9.2/salesorders${query}`)
-      
-      const orders: ERPOrder[] = response.value?.map((d365Order: any) => this.mapDynamics365OrderToStandard(d365Order)) || []
+
+      const orders: ERPOrder[] =
+        response.value?.map((d365Order: any) => this.mapDynamics365OrderToStandard(d365Order)) || []
 
       return {
         success: true,
@@ -190,13 +191,13 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
           totalCount: response['@Microsoft.Dynamics.CRM.totalrecordcount'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get orders'
+        error: error instanceof Error ? error.message : 'Failed to get orders',
       }
     }
   }
@@ -204,43 +205,53 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async createOrder(order: ERPOrder): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Order = this.mapStandardOrderToDynamics365(order)
       const response = await this.makeRequest('POST', '/api/data/v9.2/salesorders', d365Order)
-      
+
       const createdOrder = this.mapDynamics365OrderToStandard(response)
-      
+
       return {
         success: true,
-        data: createdOrder
+        data: createdOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create order'
+        error: error instanceof Error ? error.message : 'Failed to create order',
       }
     }
   }
 
-  async updateOrder(externalId: string, updates: Partial<ERPOrder>): Promise<ERPApiResponse<ERPOrder>> {
+  async updateOrder(
+    externalId: string,
+    updates: Partial<ERPOrder>
+  ): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Updates = this.mapStandardOrderToDynamics365(updates as ERPOrder)
-      const response = await this.makeRequest('PATCH', `/api/data/v9.2/salesorders(${externalId})`, d365Updates)
-      
+      const response = await this.makeRequest(
+        'PATCH',
+        `/api/data/v9.2/salesorders(${externalId})`,
+        d365Updates
+      )
+
       // 取得更新後的訂單
-      const updatedOrderResponse = await this.makeRequest('GET', `/api/data/v9.2/salesorders(${externalId})`)
+      const updatedOrderResponse = await this.makeRequest(
+        'GET',
+        `/api/data/v9.2/salesorders(${externalId})`
+      )
       const updatedOrder = this.mapDynamics365OrderToStandard(updatedOrderResponse)
-      
+
       return {
         success: true,
-        data: updatedOrder
+        data: updatedOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update order'
+        error: error instanceof Error ? error.message : 'Failed to update order',
       }
     }
   }
@@ -248,18 +259,18 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async deleteOrder(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // Dynamics 365 通常不刪除記錄，而是停用
       await this.makeRequest('PATCH', `/api/data/v9.2/salesorders(${externalId})`, {
         statecode: 1, // Inactive
-        statuscode: 2  // Cancelled
+        statuscode: 2, // Cancelled
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete order'
+        error: error instanceof Error ? error.message : 'Failed to delete order',
       }
     }
   }
@@ -267,18 +278,18 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async getOrderById(externalId: string): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/data/v9.2/salesorders(${externalId})`)
       const order = this.mapDynamics365OrderToStandard(response)
-      
+
       return {
         success: true,
-        data: order
+        data: order,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get order'
+        error: error instanceof Error ? error.message : 'Failed to get order',
       }
     }
   }
@@ -309,23 +320,26 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
       }
 
       const queryParams = new URLSearchParams()
-      
+
       if (filters.length > 0) {
         queryParams.append('$filter', filters.join(' and '))
       }
-      
+
       if (options?.pageSize) {
         queryParams.append('$top', options.pageSize.toString())
       }
-      
+
       if (options?.pageNumber && options?.pageSize) {
         queryParams.append('$skip', ((options.pageNumber - 1) * options.pageSize).toString())
       }
 
       const query = queryParams.toString() ? `?${queryParams.toString()}` : ''
       const response = await this.makeRequest('GET', `/api/data/v9.2/products${query}`)
-      
-      const products: ERPProduct[] = response.value?.map((d365Product: any) => this.mapDynamics365ProductToStandard(d365Product)) || []
+
+      const products: ERPProduct[] =
+        response.value?.map((d365Product: any) =>
+          this.mapDynamics365ProductToStandard(d365Product)
+        ) || []
 
       return {
         success: true,
@@ -334,13 +348,13 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
           totalCount: response['@Microsoft.Dynamics.CRM.totalrecordcount'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get products'
+        error: error instanceof Error ? error.message : 'Failed to get products',
       }
     }
   }
@@ -348,43 +362,49 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async createProduct(product: ERPProduct): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Product = this.mapStandardProductToDynamics365(product)
       const response = await this.makeRequest('POST', '/api/data/v9.2/products', d365Product)
-      
+
       const createdProduct = this.mapDynamics365ProductToStandard(response)
-      
+
       return {
         success: true,
-        data: createdProduct
+        data: createdProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create product'
+        error: error instanceof Error ? error.message : 'Failed to create product',
       }
     }
   }
 
-  async updateProduct(externalId: string, updates: Partial<ERPProduct>): Promise<ERPApiResponse<ERPProduct>> {
+  async updateProduct(
+    externalId: string,
+    updates: Partial<ERPProduct>
+  ): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Updates = this.mapStandardProductToDynamics365(updates as ERPProduct)
       await this.makeRequest('PATCH', `/api/data/v9.2/products(${externalId})`, d365Updates)
-      
+
       // 取得更新後的產品
-      const updatedProductResponse = await this.makeRequest('GET', `/api/data/v9.2/products(${externalId})`)
+      const updatedProductResponse = await this.makeRequest(
+        'GET',
+        `/api/data/v9.2/products(${externalId})`
+      )
       const updatedProduct = this.mapDynamics365ProductToStandard(updatedProductResponse)
-      
+
       return {
         success: true,
-        data: updatedProduct
+        data: updatedProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update product'
+        error: error instanceof Error ? error.message : 'Failed to update product',
       }
     }
   }
@@ -392,17 +412,17 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async deleteProduct(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // Dynamics 365 停用產品
       await this.makeRequest('PATCH', `/api/data/v9.2/products(${externalId})`, {
-        statecode: 1 // Inactive
+        statecode: 1, // Inactive
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete product'
+        error: error instanceof Error ? error.message : 'Failed to delete product',
       }
     }
   }
@@ -410,18 +430,18 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async getProductById(externalId: string): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/data/v9.2/products(${externalId})`)
       const product = this.mapDynamics365ProductToStandard(response)
-      
+
       return {
         success: true,
-        data: product
+        data: product,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get product'
+        error: error instanceof Error ? error.message : 'Failed to get product',
       }
     }
   }
@@ -438,7 +458,9 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
       const filters: string[] = []
 
       if (options?.productCodes && options.productCodes.length > 0) {
-        const productFilter = options.productCodes.map(code => `_productid_value eq '${code}'`).join(' or ')
+        const productFilter = options.productCodes
+          .map(code => `_productid_value eq '${code}'`)
+          .join(' or ')
         filters.push(`(${productFilter})`)
       }
 
@@ -447,24 +469,30 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
       }
 
       const queryParams = new URLSearchParams()
-      
+
       if (filters.length > 0) {
         queryParams.append('$filter', filters.join(' and '))
       }
 
       const query = queryParams.toString() ? `?${queryParams.toString()}` : ''
-      const response = await this.makeRequest('GET', `/api/data/v9.2/msdyn_inventoryjournals${query}`)
-      
-      const inventory: ERPInventory[] = response.value?.map((d365Inventory: any) => this.mapDynamics365InventoryToStandard(d365Inventory)) || []
+      const response = await this.makeRequest(
+        'GET',
+        `/api/data/v9.2/msdyn_inventoryjournals${query}`
+      )
+
+      const inventory: ERPInventory[] =
+        response.value?.map((d365Inventory: any) =>
+          this.mapDynamics365InventoryToStandard(d365Inventory)
+        ) || []
 
       return {
         success: true,
-        data: inventory
+        data: inventory,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get inventory'
+        error: error instanceof Error ? error.message : 'Failed to get inventory',
       }
     }
   }
@@ -472,27 +500,31 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async updateInventory(updates: ERPInventory[]): Promise<ERPApiResponse<ERPInventory[]>> {
     try {
       await this.ensureConnected()
-      
+
       const results: ERPInventory[] = []
-      
+
       for (const update of updates) {
         try {
           const d365Update = this.mapStandardInventoryToDynamics365(update)
-          const response = await this.makeRequest('POST', '/api/data/v9.2/msdyn_inventoryjournals', d365Update)
+          const response = await this.makeRequest(
+            'POST',
+            '/api/data/v9.2/msdyn_inventoryjournals',
+            d365Update
+          )
           results.push(this.mapDynamics365InventoryToStandard(response))
         } catch (error) {
           console.error(`Failed to update inventory for ${update.productCode}:`, error)
         }
       }
-      
+
       return {
         success: true,
-        data: results
+        data: results,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update inventory'
+        error: error instanceof Error ? error.message : 'Failed to update inventory',
       }
     }
   }
@@ -518,23 +550,26 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
       }
 
       const queryParams = new URLSearchParams()
-      
+
       if (filters.length > 0) {
         queryParams.append('$filter', filters.join(' and '))
       }
-      
+
       if (options?.pageSize) {
         queryParams.append('$top', options.pageSize.toString())
       }
-      
+
       if (options?.pageNumber && options?.pageSize) {
         queryParams.append('$skip', ((options.pageNumber - 1) * options.pageSize).toString())
       }
 
       const query = queryParams.toString() ? `?${queryParams.toString()}` : ''
       const response = await this.makeRequest('GET', `/api/data/v9.2/accounts${query}`)
-      
-      const customers: ERPCustomer[] = response.value?.map((d365Customer: any) => this.mapDynamics365CustomerToStandard(d365Customer)) || []
+
+      const customers: ERPCustomer[] =
+        response.value?.map((d365Customer: any) =>
+          this.mapDynamics365CustomerToStandard(d365Customer)
+        ) || []
 
       return {
         success: true,
@@ -543,13 +578,13 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
           totalCount: response['@Microsoft.Dynamics.CRM.totalrecordcount'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customers'
+        error: error instanceof Error ? error.message : 'Failed to get customers',
       }
     }
   }
@@ -557,43 +592,49 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async createCustomer(customer: ERPCustomer): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Customer = this.mapStandardCustomerToDynamics365(customer)
       const response = await this.makeRequest('POST', '/api/data/v9.2/accounts', d365Customer)
-      
+
       const createdCustomer = this.mapDynamics365CustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: createdCustomer
+        data: createdCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create customer'
+        error: error instanceof Error ? error.message : 'Failed to create customer',
       }
     }
   }
 
-  async updateCustomer(externalId: string, updates: Partial<ERPCustomer>): Promise<ERPApiResponse<ERPCustomer>> {
+  async updateCustomer(
+    externalId: string,
+    updates: Partial<ERPCustomer>
+  ): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const d365Updates = this.mapStandardCustomerToDynamics365(updates as ERPCustomer)
       await this.makeRequest('PATCH', `/api/data/v9.2/accounts(${externalId})`, d365Updates)
-      
+
       // 取得更新後的客戶
-      const updatedCustomerResponse = await this.makeRequest('GET', `/api/data/v9.2/accounts(${externalId})`)
+      const updatedCustomerResponse = await this.makeRequest(
+        'GET',
+        `/api/data/v9.2/accounts(${externalId})`
+      )
       const updatedCustomer = this.mapDynamics365CustomerToStandard(updatedCustomerResponse)
-      
+
       return {
         success: true,
-        data: updatedCustomer
+        data: updatedCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update customer'
+        error: error instanceof Error ? error.message : 'Failed to update customer',
       }
     }
   }
@@ -601,18 +642,18 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   async getCustomerById(externalId: string): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/api/data/v9.2/accounts(${externalId})`)
       const customer = this.mapDynamics365CustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: customer
+        data: customer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customer'
+        error: error instanceof Error ? error.message : 'Failed to get customer',
       }
     }
   }
@@ -633,8 +674,8 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
         endTime: new Date(),
         duration: 0,
         syncDirection: options.syncDirection,
-        batchSize: options.batchSize
-      }
+        batchSize: options.batchSize,
+      },
     }
 
     try {
@@ -643,13 +684,13 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
     } catch (error) {
       result.errors.push({
         recordId: 'sync',
-        error: error instanceof Error ? error.message : 'Sync failed'
+        error: error instanceof Error ? error.message : 'Sync failed',
       })
     }
 
     result.metadata.endTime = new Date()
     result.metadata.duration = result.metadata.endTime.getTime() - startTime.getTime()
-    
+
     return result
   }
 
@@ -677,7 +718,9 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateOrders(updates: Array<{ externalId: string; data: Partial<ERPOrder> }>): Promise<ERPApiResponse<ERPOrder[]>> {
+  async batchUpdateOrders(
+    updates: Array<{ externalId: string; data: Partial<ERPOrder> }>
+  ): Promise<ERPApiResponse<ERPOrder[]>> {
     const results: ERPOrder[] = []
     for (const update of updates) {
       const result = await this.updateOrder(update.externalId, update.data)
@@ -699,7 +742,9 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateProducts(updates: Array<{ externalId: string; data: Partial<ERPProduct> }>): Promise<ERPApiResponse<ERPProduct[]>> {
+  async batchUpdateProducts(
+    updates: Array<{ externalId: string; data: Partial<ERPProduct> }>
+  ): Promise<ERPApiResponse<ERPProduct[]>> {
     const results: ERPProduct[] = []
     for (const update of updates) {
       const result = await this.updateProduct(update.externalId, update.data)
@@ -726,12 +771,12 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
 
   private mapOrderStatusToDynamics365(orderlyStatus: string): number {
     const statusMap: Record<string, number> = {
-      'draft': 0,      // Active
-      'confirmed': 0,   // Active
-      'shipped': 0,     // Active
-      'delivered': 0,   // Active
-      'completed': 1,   // Inactive
-      'cancelled': 1    // Inactive
+      draft: 0, // Active
+      confirmed: 0, // Active
+      shipped: 0, // Active
+      delivered: 0, // Active
+      completed: 1, // Inactive
+      cancelled: 1, // Inactive
     }
     return statusMap[orderlyStatus] || 0
   }
@@ -775,7 +820,7 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
   private async makeOAuthRequest(method: 'POST', url: string, data: any): Promise<any> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Orderly-Dynamics365-Adapter/2.0'
+      'User-Agent': 'Orderly-Dynamics365-Adapter/2.0',
     }
 
     try {
@@ -783,7 +828,7 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
         method,
         headers,
         body: new URLSearchParams(data).toString(),
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {
@@ -797,14 +842,18 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
     }
   }
 
-  protected async makeRequest(method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', endpoint: string, data?: any): Promise<any> {
+  protected async makeRequest(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    endpoint: string,
+    data?: any
+  ): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'User-Agent': 'Orderly-Dynamics365-Adapter/2.0',
       'OData-MaxVersion': '4.0',
       'OData-Version': '4.0',
-      'Accept': 'application/json'
+      Accept: 'application/json',
     }
 
     // 添加 OAuth Bearer Token
@@ -817,7 +866,7 @@ export class MicrosoftDynamics365Adapter extends ERPAdapterInterface {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {

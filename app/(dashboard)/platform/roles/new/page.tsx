@@ -13,11 +13,11 @@ export default function NewRolePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link 
+          <Link
             href="/platform/roles"
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center text-gray-600 transition-colors hover:text-gray-900"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
+            <ArrowLeft className="mr-2 h-5 w-5" />
             返回角色管理
           </Link>
         </div>
@@ -26,9 +26,7 @@ export default function NewRolePage() {
       <div className="max-w-4xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">新增角色</h1>
-          <p className="text-gray-600 mt-1">
-            創建新的系統角色，設定基本資訊和權限配置
-          </p>
+          <p className="mt-1 text-gray-600">創建新的系統角色，設定基本資訊和權限配置</p>
         </div>
 
         <RoleForm mode="create" />

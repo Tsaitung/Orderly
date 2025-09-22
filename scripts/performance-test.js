@@ -2,7 +2,7 @@
 
 /**
  * Orderly Platform Performance Testing Suite
- * 
+ *
  * This script performs comprehensive performance testing including:
  * - Load testing with various concurrent users
  * - Stress testing to find breaking points
@@ -11,10 +11,10 @@
  * - Performance regression detection
  */
 
-const http = require('http');
-const https = require('https');
-const { performance } = require('perf_hooks');
-const fs = require('fs');
+const http = require('http')
+const https = require('https')
+const { performance } = require('perf_hooks')
+const fs = require('fs')
 
 // 配置
 const CONFIG = {
@@ -35,7 +35,7 @@ const CONFIG = {
     errorRate: 0.05, // 5%
     minThroughput: 100, // requests per second
   },
-};
+}
 
 // 性能結果存儲
 const results = {
@@ -49,7 +49,7 @@ const results = {
   concurrentUsers: 0,
   endpoints: {},
   systemMetrics: [],
-};
+}
 
 // 初始化端點統計
 CONFIG.endpoints.forEach(endpoint => {
@@ -59,17 +59,17 @@ CONFIG.endpoints.forEach(endpoint => {
     failures: 0,
     latencies: [],
     errors: [],
-  };
-});
+  }
+})
 
 // HTTP 請求函數
 function makeRequest(endpoint) {
-  return new Promise((resolve) => {
-    const startTime = performance.now();
-    const url = new URL(endpoint.path, CONFIG.baseUrl);
-    const isHttps = url.protocol === 'https:';
-    const client = isHttps ? https : http;
-    
+  return new Promise(resolve => {
+    const startTime = performance.now()
+    const url = new URL(endpoint.path, CONFIG.baseUrl)
+    const isHttps = url.protocol === 'https:'
+    const client = isHttps ? https : http
+
     const options = {
       hostname: url.hostname,
       port: url.port || (isHttps ? 443 : 80),
@@ -79,20 +79,20 @@ function makeRequest(endpoint) {
         'Content-Type': 'application/json',
         'User-Agent': 'Orderly-Performance-Test/1.0',
       },
-    };
-
-    if (endpoint.body) {
-      const bodyString = JSON.stringify(endpoint.body);
-      options.headers['Content-Length'] = Buffer.byteLength(bodyString);
     }
 
-    const req = client.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
+    if (endpoint.body) {
+      const bodyString = JSON.stringify(endpoint.body)
+      options.headers['Content-Length'] = Buffer.byteLength(bodyString)
+    }
+
+    const req = client.request(options, res => {
+      let data = ''
+      res.on('data', chunk => (data += chunk))
       res.on('end', () => {
-        const endTime = performance.now();
-        const latency = endTime - startTime;
-        
+        const endTime = performance.now()
+        const latency = endTime - startTime
+
         const result = {
           endpoint: `${endpoint.method} ${endpoint.path}`,
           latency,
@@ -100,16 +100,16 @@ function makeRequest(endpoint) {
           success: res.statusCode >= 200 && res.statusCode < 400,
           timestamp: Date.now(),
           responseSize: Buffer.byteLength(data),
-        };
+        }
 
-        resolve(result);
-      });
-    });
+        resolve(result)
+      })
+    })
 
-    req.on('error', (error) => {
-      const endTime = performance.now();
-      const latency = endTime - startTime;
-      
+    req.on('error', error => {
+      const endTime = performance.now()
+      const latency = endTime - startTime
+
       const result = {
         endpoint: `${endpoint.method} ${endpoint.path}`,
         latency,
@@ -117,13 +117,13 @@ function makeRequest(endpoint) {
         success: false,
         error: error.message,
         timestamp: Date.now(),
-      };
+      }
 
-      resolve(result);
-    });
+      resolve(result)
+    })
 
     req.setTimeout(5000, () => {
-      req.destroy();
+      req.destroy()
       const result = {
         endpoint: `${endpoint.method} ${endpoint.path}`,
         latency: 5000,
@@ -131,86 +131,86 @@ function makeRequest(endpoint) {
         success: false,
         error: 'Request timeout',
         timestamp: Date.now(),
-      };
-      resolve(result);
-    });
+      }
+      resolve(result)
+    })
 
     if (endpoint.body) {
-      req.write(JSON.stringify(endpoint.body));
+      req.write(JSON.stringify(endpoint.body))
     }
 
-    req.end();
-  });
+    req.end()
+  })
 }
 
 // 選擇隨機端點（基於權重）
 function selectRandomEndpoint() {
-  const totalWeight = CONFIG.endpoints.reduce((sum, e) => sum + e.weight, 0);
-  let randomWeight = Math.random() * totalWeight;
-  
+  const totalWeight = CONFIG.endpoints.reduce((sum, e) => sum + e.weight, 0)
+  let randomWeight = Math.random() * totalWeight
+
   for (const endpoint of CONFIG.endpoints) {
-    randomWeight -= endpoint.weight;
+    randomWeight -= endpoint.weight
     if (randomWeight <= 0) {
-      return endpoint;
+      return endpoint
     }
   }
-  
-  return CONFIG.endpoints[0]; // fallback
+
+  return CONFIG.endpoints[0] // fallback
 }
 
 // 用戶會話模擬
 async function simulateUser(userId) {
-  const userResults = [];
-  const startTime = Date.now();
-  
+  const userResults = []
+  const startTime = Date.now()
+
   while (Date.now() - results.startTime < CONFIG.testDuration) {
-    const endpoint = selectRandomEndpoint();
-    const result = await makeRequest(endpoint);
-    
+    const endpoint = selectRandomEndpoint()
+    const result = await makeRequest(endpoint)
+
     // 記錄結果
-    results.totalRequests++;
+    results.totalRequests++
     if (result.success) {
-      results.successfulRequests++;
+      results.successfulRequests++
     } else {
-      results.failedRequests++;
+      results.failedRequests++
       results.errors.push({
         userId,
         endpoint: result.endpoint,
         error: result.error || `HTTP ${result.statusCode}`,
         timestamp: result.timestamp,
-      });
+      })
     }
 
-    results.latencies.push(result.latency);
-    
+    results.latencies.push(result.latency)
+
     // 端點統計
-    const endpointStats = results.endpoints[result.endpoint];
-    endpointStats.requests++;
-    endpointStats.latencies.push(result.latency);
-    
+    const endpointStats = results.endpoints[result.endpoint]
+    endpointStats.requests++
+    endpointStats.latencies.push(result.latency)
+
     if (result.success) {
-      endpointStats.successes++;
+      endpointStats.successes++
     } else {
-      endpointStats.failures++;
-      endpointStats.errors.push(result.error || `HTTP ${result.statusCode}`);
+      endpointStats.failures++
+      endpointStats.errors.push(result.error || `HTTP ${result.statusCode}`)
     }
 
-    userResults.push(result);
-    
+    userResults.push(result)
+
     // 隨機延遲（模擬真實用戶行為）
-    const delay = Math.random() * 1000 + 500; // 500-1500ms
-    await new Promise(resolve => setTimeout(resolve, delay));
+    const delay = Math.random() * 1000 + 500 // 500-1500ms
+    await new Promise(resolve => setTimeout(resolve, delay))
   }
-  
-  return userResults;
+
+  return userResults
 }
 
 // 收集系統指標
 async function collectSystemMetrics() {
   try {
-    const healthData = await makeRequest({ path: '/health', method: 'GET' });
-    const metricsData = await makeRequest({ path: '/metrics/business', method: 'GET' });
-    
+    const healthData = await makeRequest({ path: '/health', method: 'GET' })
+    const metricsData = await makeRequest({ path: '/metrics/business', method: 'GET' })
+
     if (healthData.success && metricsData.success) {
       results.systemMetrics.push({
         timestamp: Date.now(),
@@ -218,20 +218,20 @@ async function collectSystemMetrics() {
         memoryUsage: 'collected', // Would parse actual response
         responseTime: healthData.latency,
         businessMetrics: 'collected', // Would parse actual response
-      });
+      })
     }
   } catch (error) {
-    console.warn('Failed to collect system metrics:', error.message);
+    console.warn('Failed to collect system metrics:', error.message)
   }
 }
 
 // 計算統計數據
 function calculateStats(latencies) {
-  if (latencies.length === 0) return {};
-  
-  const sorted = [...latencies].sort((a, b) => a - b);
-  const sum = latencies.reduce((a, b) => a + b, 0);
-  
+  if (latencies.length === 0) return {}
+
+  const sorted = [...latencies].sort((a, b) => a - b)
+  const sum = latencies.reduce((a, b) => a + b, 0)
+
   return {
     min: sorted[0],
     max: sorted[sorted.length - 1],
@@ -241,15 +241,15 @@ function calculateStats(latencies) {
     p95: sorted[Math.floor(sorted.length * 0.95)],
     p99: sorted[Math.floor(sorted.length * 0.99)],
     count: latencies.length,
-  };
+  }
 }
 
 // 生成性能報告
 function generateReport() {
-  const duration = (results.endTime - results.startTime) / 1000;
-  const throughput = results.totalRequests / duration;
-  const errorRate = results.failedRequests / results.totalRequests;
-  const overallStats = calculateStats(results.latencies);
+  const duration = (results.endTime - results.startTime) / 1000
+  const throughput = results.totalRequests / duration
+  const errorRate = results.failedRequests / results.totalRequests
+  const overallStats = calculateStats(results.latencies)
 
   const report = {
     summary: {
@@ -291,13 +291,13 @@ function generateReport() {
     endpoints: {},
     errors: results.errors.slice(0, 10), // Top 10 errors
     recommendations: [],
-  };
+  }
 
   // 端點詳細統計
   Object.entries(results.endpoints).forEach(([endpoint, stats]) => {
-    const endpointLatencyStats = calculateStats(stats.latencies);
-    const endpointErrorRate = stats.failures / stats.requests;
-    
+    const endpointLatencyStats = calculateStats(stats.latencies)
+    const endpointErrorRate = stats.failures / stats.requests
+
     report.endpoints[endpoint] = {
       requests: stats.requests,
       successes: stats.successes,
@@ -307,134 +307,144 @@ function generateReport() {
         mean: `${endpointLatencyStats.mean?.toFixed(2)}ms`,
         p95: `${endpointLatencyStats.p95?.toFixed(2)}ms`,
       },
-    };
-  });
+    }
+  })
 
   // 性能建議
   if (!report.thresholds.maxLatency.passed) {
-    report.recommendations.push('High latency detected. Consider optimizing database queries and caching.');
+    report.recommendations.push(
+      'High latency detected. Consider optimizing database queries and caching.'
+    )
   }
-  
+
   if (!report.thresholds.errorRate.passed) {
-    report.recommendations.push('High error rate detected. Review application logs and error handling.');
+    report.recommendations.push(
+      'High error rate detected. Review application logs and error handling.'
+    )
   }
-  
+
   if (!report.thresholds.throughput.passed) {
-    report.recommendations.push('Low throughput detected. Consider scaling resources or optimizing bottlenecks.');
+    report.recommendations.push(
+      'Low throughput detected. Consider scaling resources or optimizing bottlenecks.'
+    )
   }
 
   if (overallStats.p99 > overallStats.p95 * 2) {
-    report.recommendations.push('High latency variance detected. Some requests are significantly slower.');
+    report.recommendations.push(
+      'High latency variance detected. Some requests are significantly slower.'
+    )
   }
 
-  return report;
+  return report
 }
 
 // 主要測試函數
 async function runPerformanceTest() {
-  console.log('🚀 Starting Orderly Platform Performance Test');
-  console.log(`📊 Configuration:`);
-  console.log(`   Base URL: ${CONFIG.baseUrl}`);
-  console.log(`   Max Concurrent Users: ${CONFIG.maxConcurrentUsers}`);
-  console.log(`   Test Duration: ${CONFIG.testDuration / 1000}s`);
-  console.log(`   Ramp-up Time: ${CONFIG.rampUpTime / 1000}s`);
-  console.log('');
+  console.log('🚀 Starting Orderly Platform Performance Test')
+  console.log(`📊 Configuration:`)
+  console.log(`   Base URL: ${CONFIG.baseUrl}`)
+  console.log(`   Max Concurrent Users: ${CONFIG.maxConcurrentUsers}`)
+  console.log(`   Test Duration: ${CONFIG.testDuration / 1000}s`)
+  console.log(`   Ramp-up Time: ${CONFIG.rampUpTime / 1000}s`)
+  console.log('')
 
-  results.startTime = Date.now();
+  results.startTime = Date.now()
 
   // 系統指標收集（每5秒）
-  const metricsInterval = setInterval(collectSystemMetrics, 5000);
+  const metricsInterval = setInterval(collectSystemMetrics, 5000)
 
   // 逐步增加用戶負載
-  const userPromises = [];
-  const usersPerStep = Math.ceil(CONFIG.maxConcurrentUsers / 10);
-  
+  const userPromises = []
+  const usersPerStep = Math.ceil(CONFIG.maxConcurrentUsers / 10)
+
   for (let step = 0; step < 10; step++) {
-    const stepUsers = Math.min(usersPerStep, CONFIG.maxConcurrentUsers - results.concurrentUsers);
-    
+    const stepUsers = Math.min(usersPerStep, CONFIG.maxConcurrentUsers - results.concurrentUsers)
+
     for (let i = 0; i < stepUsers; i++) {
-      const userId = results.concurrentUsers + i;
-      userPromises.push(simulateUser(userId));
+      const userId = results.concurrentUsers + i
+      userPromises.push(simulateUser(userId))
     }
-    
-    results.concurrentUsers += stepUsers;
-    console.log(`📈 Ramping up to ${results.concurrentUsers} concurrent users`);
-    
+
+    results.concurrentUsers += stepUsers
+    console.log(`📈 Ramping up to ${results.concurrentUsers} concurrent users`)
+
     if (step < 9) {
-      await new Promise(resolve => setTimeout(resolve, CONFIG.rampUpTime / 10));
+      await new Promise(resolve => setTimeout(resolve, CONFIG.rampUpTime / 10))
     }
   }
 
-  console.log(`🔥 Running full load test with ${results.concurrentUsers} users for ${CONFIG.testDuration / 1000}s`);
+  console.log(
+    `🔥 Running full load test with ${results.concurrentUsers} users for ${CONFIG.testDuration / 1000}s`
+  )
 
   // 等待所有用戶會話完成
-  await Promise.all(userPromises);
-  
-  clearInterval(metricsInterval);
-  results.endTime = Date.now();
+  await Promise.all(userPromises)
 
-  console.log('✅ Performance test completed');
-  console.log('');
+  clearInterval(metricsInterval)
+  results.endTime = Date.now()
+
+  console.log('✅ Performance test completed')
+  console.log('')
 
   // 生成並輸出報告
-  const report = generateReport();
-  
-  console.log('📋 PERFORMANCE TEST REPORT');
-  console.log('='.repeat(50));
-  console.log('');
-  
-  console.log('📊 SUMMARY:');
+  const report = generateReport()
+
+  console.log('📋 PERFORMANCE TEST REPORT')
+  console.log('='.repeat(50))
+  console.log('')
+
+  console.log('📊 SUMMARY:')
   Object.entries(report.summary).forEach(([key, value]) => {
-    console.log(`   ${key}: ${value}`);
-  });
-  console.log('');
-  
-  console.log('⏱️  LATENCY STATISTICS:');
+    console.log(`   ${key}: ${value}`)
+  })
+  console.log('')
+
+  console.log('⏱️  LATENCY STATISTICS:')
   Object.entries(report.latencyStats).forEach(([key, value]) => {
-    console.log(`   ${key}: ${value}`);
-  });
-  console.log('');
-  
-  console.log('🎯 THRESHOLD RESULTS:');
+    console.log(`   ${key}: ${value}`)
+  })
+  console.log('')
+
+  console.log('🎯 THRESHOLD RESULTS:')
   Object.entries(report.thresholds).forEach(([metric, data]) => {
-    const status = data.passed ? '✅' : '❌';
-    console.log(`   ${status} ${metric}: ${data.actual} (threshold: ${data.threshold})`);
-  });
-  console.log('');
+    const status = data.passed ? '✅' : '❌'
+    console.log(`   ${status} ${metric}: ${data.actual} (threshold: ${data.threshold})`)
+  })
+  console.log('')
 
   if (report.recommendations.length > 0) {
-    console.log('💡 RECOMMENDATIONS:');
+    console.log('💡 RECOMMENDATIONS:')
     report.recommendations.forEach((rec, index) => {
-      console.log(`   ${index + 1}. ${rec}`);
-    });
-    console.log('');
+      console.log(`   ${index + 1}. ${rec}`)
+    })
+    console.log('')
   }
 
   // 保存詳細報告到文件
-  const reportPath = `performance-report-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
-  console.log(`📁 Detailed report saved to: ${reportPath}`);
+  const reportPath = `performance-report-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+  fs.writeFileSync(reportPath, JSON.stringify(report, null, 2))
+  console.log(`📁 Detailed report saved to: ${reportPath}`)
 
   // 退出代碼（CI/CD集成）
-  const allPassed = Object.values(report.thresholds).every(t => t.passed);
-  process.exit(allPassed ? 0 : 1);
+  const allPassed = Object.values(report.thresholds).every(t => t.passed)
+  process.exit(allPassed ? 0 : 1)
 }
 
 // 處理中斷信號
 process.on('SIGINT', () => {
-  console.log('\n⚠️  Test interrupted by user');
-  results.endTime = Date.now();
-  const report = generateReport();
-  console.log('Partial results:', JSON.stringify(report.summary, null, 2));
-  process.exit(2);
-});
+  console.log('\n⚠️  Test interrupted by user')
+  results.endTime = Date.now()
+  const report = generateReport()
+  console.log('Partial results:', JSON.stringify(report.summary, null, 2))
+  process.exit(2)
+})
 
 // 運行測試
 if (require.main === module) {
   runPerformanceTest().catch(error => {
-    console.error('❌ Performance test failed:', error);
-    process.exit(1);
-  });
+    console.error('❌ Performance test failed:', error)
+    process.exit(1)
+  })
 }
 
-module.exports = { runPerformanceTest, CONFIG };
+module.exports = { runPerformanceTest, CONFIG }

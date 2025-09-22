@@ -1,10 +1,10 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Brain, 
-  TrendingUp, 
-  Clock, 
+import {
+  Brain,
+  TrendingUp,
+  Clock,
   AlertTriangle,
   CheckCircle,
   Target,
@@ -12,7 +12,7 @@ import {
   Settings,
   BarChart3,
   Calendar,
-  Filter
+  Filter,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -57,7 +57,7 @@ export default function ReconciliationSidebar() {
       change: { value: 3.1, direction: 'up', isGood: true },
       icon: <Target className="h-4 w-4" />,
       color: 'text-green-600',
-      description: '自動對帳成功率'
+      description: '自動對帳成功率',
     },
     {
       title: '平均處理時間',
@@ -65,7 +65,7 @@ export default function ReconciliationSidebar() {
       change: { value: 15.2, direction: 'down', isGood: true },
       icon: <Clock className="h-4 w-4" />,
       color: 'text-blue-600',
-      description: '單筆訂單處理時間'
+      description: '單筆訂單處理時間',
     },
     {
       title: '異常檢測',
@@ -73,7 +73,7 @@ export default function ReconciliationSidebar() {
       change: { value: 2, direction: 'up', isGood: false },
       icon: <AlertTriangle className="h-4 w-4" />,
       color: 'text-red-600',
-      description: '需要人工介入'
+      description: '需要人工介入',
     },
     {
       title: 'ML 置信度',
@@ -81,8 +81,8 @@ export default function ReconciliationSidebar() {
       change: { value: 5.3, direction: 'up', isGood: true },
       icon: <Brain className="h-4 w-4" />,
       color: 'text-purple-600',
-      description: '機器學習模型準確度'
-    }
+      description: '機器學習模型準確度',
+    },
   ]
 
   const mlInsights: MLInsight[] = [
@@ -94,7 +94,7 @@ export default function ReconciliationSidebar() {
       confidence: 89.2,
       impact: 'medium',
       actionable: true,
-      timestamp: '5 分鐘前'
+      timestamp: '5 分鐘前',
     },
     {
       id: '2',
@@ -104,7 +104,7 @@ export default function ReconciliationSidebar() {
       confidence: 76.8,
       impact: 'high',
       actionable: true,
-      timestamp: '12 分鐘前'
+      timestamp: '12 分鐘前',
     },
     {
       id: '3',
@@ -114,7 +114,7 @@ export default function ReconciliationSidebar() {
       confidence: 93.5,
       impact: 'medium',
       actionable: true,
-      timestamp: '28 分鐘前'
+      timestamp: '28 分鐘前',
     },
     {
       id: '4',
@@ -124,57 +124,74 @@ export default function ReconciliationSidebar() {
       confidence: 82.1,
       impact: 'low',
       actionable: false,
-      timestamp: '1 小時前'
-    }
+      timestamp: '1 小時前',
+    },
   ]
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true)
     announcePolite('正在重新整理 AI 洞察')
-    
+
     // 模擬 API 請求
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     setRefreshing(false)
     announcePolite('AI 洞察已更新')
   }, [announcePolite])
 
-  const handleApplyInsight = React.useCallback((insight: MLInsight) => {
-    announcePolite(`正在應用洞察：${insight.title}`)
-    // TODO: 實現洞察應用邏輯
-  }, [announcePolite])
+  const handleApplyInsight = React.useCallback(
+    (insight: MLInsight) => {
+      announcePolite(`正在應用洞察：${insight.title}`)
+      // TODO: 實現洞察應用邏輯
+    },
+    [announcePolite]
+  )
 
   const getInsightIcon = (type: MLInsight['type']) => {
     switch (type) {
-      case 'pattern': return <BarChart3 className="h-4 w-4 text-blue-600" />
-      case 'anomaly': return <AlertTriangle className="h-4 w-4 text-red-600" />
-      case 'optimization': return <Zap className="h-4 w-4 text-yellow-600" />
-      case 'trend': return <TrendingUp className="h-4 w-4 text-green-600" />
+      case 'pattern':
+        return <BarChart3 className="h-4 w-4 text-blue-600" />
+      case 'anomaly':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />
+      case 'optimization':
+        return <Zap className="h-4 w-4 text-yellow-600" />
+      case 'trend':
+        return <TrendingUp className="h-4 w-4 text-green-600" />
     }
   }
 
   const getInsightTypeText = (type: MLInsight['type']) => {
     switch (type) {
-      case 'pattern': return '模式識別'
-      case 'anomaly': return '異常檢測'
-      case 'optimization': return '優化建議'
-      case 'trend': return '趨勢預測'
+      case 'pattern':
+        return '模式識別'
+      case 'anomaly':
+        return '異常檢測'
+      case 'optimization':
+        return '優化建議'
+      case 'trend':
+        return '趨勢預測'
     }
   }
 
   const getImpactColor = (impact: MLInsight['impact']) => {
     switch (impact) {
-      case 'high': return 'text-red-600'
-      case 'medium': return 'text-yellow-600'
-      case 'low': return 'text-green-600'
+      case 'high':
+        return 'text-red-600'
+      case 'medium':
+        return 'text-yellow-600'
+      case 'low':
+        return 'text-green-600'
     }
   }
 
   const getImpactText = (impact: MLInsight['impact']) => {
     switch (impact) {
-      case 'high': return '高影響'
-      case 'medium': return '中影響'
-      case 'low': return '低影響'
+      case 'high':
+        return '高影響'
+      case 'medium':
+        return '中影響'
+      case 'low':
+        return '低影響'
     }
   }
 
@@ -182,7 +199,7 @@ export default function ReconciliationSidebar() {
     { value: 'today', label: '今日' },
     { value: 'week', label: '本週' },
     { value: 'month', label: '本月' },
-    { value: 'quarter', label: '本季' }
+    { value: 'quarter', label: '本季' },
   ]
 
   return (
@@ -207,18 +224,12 @@ export default function ReconciliationSidebar() {
             <div key={index} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className={stat.color}>
-                    {stat.icon}
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">
-                    {stat.title}
-                  </span>
+                  <div className={stat.color}>{stat.icon}</div>
+                  <span className="text-sm font-medium text-gray-900">{stat.title}</span>
                 </div>
-                <div className={`text-lg font-bold ${stat.color}`}>
-                  {stat.value}
-                </div>
+                <div className={`text-lg font-bold ${stat.color}`}>{stat.value}</div>
               </div>
-              
+
               {stat.change && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-500">{stat.description}</span>
@@ -227,10 +238,10 @@ export default function ReconciliationSidebar() {
                   </span>
                 </div>
               )}
-              
+
               {typeof stat.value === 'string' && stat.value.includes('%') && (
-                <Progress 
-                  value={parseFloat(stat.value)} 
+                <Progress
+                  value={parseFloat(stat.value)}
                   className="h-1"
                   variant={parseFloat(stat.value) >= 90 ? 'success' : 'default'}
                 />
@@ -244,7 +255,7 @@ export default function ReconciliationSidebar() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-lg">
               <Brain className="h-5 w-5 text-primary-500" />
               <span>AI 洞察</span>
             </CardTitle>
@@ -261,35 +272,27 @@ export default function ReconciliationSidebar() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-3 max-h-80 overflow-y-auto">
-            {mlInsights.map((insight) => (
+          <div className="max-h-80 space-y-3 overflow-y-auto">
+            {mlInsights.map(insight => (
               <div
                 key={insight.id}
-                className="p-3 border border-gray-200 rounded-lg space-y-2 hover:bg-gray-50 transition-colors"
+                className="space-y-2 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50"
               >
                 {/* 洞察標題和類型 */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     {getInsightIcon(insight.type)}
-                    <span className="font-medium text-sm text-gray-900">
-                      {insight.title}
-                    </span>
+                    <span className="text-sm font-medium text-gray-900">{insight.title}</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Badge 
-                      variant="outline" 
-                      size="sm"
-                      className="text-xs"
-                    >
+                    <Badge variant="outline" size="sm" className="text-xs">
                       {getInsightTypeText(insight.type)}
                     </Badge>
                   </div>
                 </div>
 
                 {/* 洞察描述 */}
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {insight.description}
-                </p>
+                <p className="text-xs leading-relaxed text-gray-600">{insight.description}</p>
 
                 {/* 置信度和影響程度 */}
                 <div className="flex items-center justify-between">
@@ -301,18 +304,19 @@ export default function ReconciliationSidebar() {
                       {getImpactText(insight.impact)}
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {insight.timestamp}
-                  </div>
+                  <div className="text-xs text-gray-400">{insight.timestamp}</div>
                 </div>
 
                 {/* 置信度進度條 */}
-                <Progress 
-                  value={insight.confidence} 
+                <Progress
+                  value={insight.confidence}
                   className="h-1"
                   variant={
-                    insight.confidence >= 85 ? 'success' :
-                    insight.confidence >= 70 ? 'default' : 'warning'
+                    insight.confidence >= 85
+                      ? 'success'
+                      : insight.confidence >= 70
+                        ? 'default'
+                        : 'warning'
                   }
                 />
 
@@ -323,7 +327,7 @@ export default function ReconciliationSidebar() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleApplyInsight(insight)}
-                      className="text-xs h-7"
+                      className="h-7 text-xs"
                     >
                       應用建議
                     </Button>
@@ -334,7 +338,7 @@ export default function ReconciliationSidebar() {
           </div>
 
           {/* 洞察統計 */}
-          <div className="pt-3 border-t border-gray-200">
+          <div className="border-t border-gray-200 pt-3">
             <div className="grid grid-cols-2 gap-3 text-center">
               <div className="space-y-1">
                 <div className="text-lg font-bold text-primary-500">
@@ -344,7 +348,10 @@ export default function ReconciliationSidebar() {
               </div>
               <div className="space-y-1">
                 <div className="text-lg font-bold text-blue-600">
-                  {(mlInsights.reduce((sum, i) => sum + i.confidence, 0) / mlInsights.length).toFixed(1)}%
+                  {(
+                    mlInsights.reduce((sum, i) => sum + i.confidence, 0) / mlInsights.length
+                  ).toFixed(1)}
+                  %
                 </div>
                 <div className="text-xs text-gray-600">平均置信度</div>
               </div>
@@ -365,37 +372,37 @@ export default function ReconciliationSidebar() {
             className="w-full justify-start"
             onClick={() => announcePolite('導航到引擎設定')}
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="mr-2 h-4 w-4" />
             引擎參數調整
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
             className="w-full justify-start"
             onClick={() => announcePolite('導航到歷史分析')}
           >
-            <BarChart3 className="h-4 w-4 mr-2" />
+            <BarChart3 className="mr-2 h-4 w-4" />
             歷史分析報告
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
             className="w-full justify-start"
             onClick={() => announcePolite('導航到排程設定')}
           >
-            <Calendar className="h-4 w-4 mr-2" />
+            <Calendar className="mr-2 h-4 w-4" />
             自動排程設定
           </Button>
-          
+
           <Button
             variant="outline"
             size="sm"
             className="w-full justify-start"
             onClick={() => announcePolite('導航到規則管理')}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="mr-2 h-4 w-4" />
             對帳規則管理
           </Button>
         </CardContent>

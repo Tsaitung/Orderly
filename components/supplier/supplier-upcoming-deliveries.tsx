@@ -1,9 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  Truck, 
-  Clock, 
+import {
+  Truck,
+  Clock,
   MapPin,
   Package,
   User,
@@ -16,7 +16,7 @@ import {
   Thermometer,
   Camera,
   MessageSquare,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -76,7 +76,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
       contact: '張經理',
       phone: '02-1234-5678',
       address: '台北市信義區忠孝東路四段 123 號',
-      coordinates: { lat: 25.041, lng: 121.567 }
+      coordinates: { lat: 25.041, lng: 121.567 },
     },
     scheduledDate: '2024-01-16',
     timeSlot: '08:00-10:00',
@@ -87,7 +87,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
     driver: {
       name: '陳師傅',
       phone: '0912-345-678',
-      vehicleNumber: 'ABC-1234'
+      vehicleNumber: 'ABC-1234',
     },
     items: [
       {
@@ -96,7 +96,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         quantity: 20,
         unit: '公斤',
         category: '蔬菜類',
-        temperatureRequirement: 'chilled'
+        temperatureRequirement: 'chilled',
       },
       {
         id: '1-2',
@@ -105,13 +105,13 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         unit: '公斤',
         category: '蔬菜類',
         temperatureRequirement: 'chilled',
-        specialHandling: '需特選品質'
-      }
+        specialHandling: '需特選品質',
+      },
     ],
     totalValue: 1350,
     specialInstructions: '急單，請準時送達。聯絡張經理確認收貨。',
     estimatedDuration: 45,
-    distance: 12.5
+    distance: 12.5,
   },
   {
     id: '2',
@@ -121,7 +121,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
       contact: '李主廚',
       phone: '02-2345-6789',
       address: '台北市大安區敦化南路二段 456 號',
-      coordinates: { lat: 25.027, lng: 121.554 }
+      coordinates: { lat: 25.027, lng: 121.554 },
     },
     scheduledDate: '2024-01-16',
     timeSlot: '14:00-16:00',
@@ -132,7 +132,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
     driver: {
       name: '王師傅',
       phone: '0923-456-789',
-      vehicleNumber: 'DEF-5678'
+      vehicleNumber: 'DEF-5678',
     },
     items: [
       {
@@ -141,7 +141,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         quantity: 10,
         unit: '公斤',
         category: '肉品類',
-        temperatureRequirement: 'chilled'
+        temperatureRequirement: 'chilled',
       },
       {
         id: '2-2',
@@ -149,12 +149,12 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         quantity: 5,
         unit: '公斤',
         category: '蔬菜類',
-        temperatureRequirement: 'room'
-      }
+        temperatureRequirement: 'room',
+      },
     ],
     totalValue: 8600,
     estimatedDuration: 35,
-    distance: 8.2
+    distance: 8.2,
   },
   {
     id: '3',
@@ -164,7 +164,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
       contact: '王老闆',
       phone: '02-3456-7890',
       address: '台北市中山區南京東路三段 789 號',
-      coordinates: { lat: 25.052, lng: 121.544 }
+      coordinates: { lat: 25.052, lng: 121.544 },
     },
     scheduledDate: '2024-01-16',
     timeSlot: '11:00-12:00',
@@ -175,7 +175,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
     driver: {
       name: '李師傅',
       phone: '0934-567-890',
-      vehicleNumber: 'GHI-9012'
+      vehicleNumber: 'GHI-9012',
     },
     items: [
       {
@@ -184,7 +184,7 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         quantity: 3,
         unit: '公斤',
         category: '海鮮類',
-        temperatureRequirement: 'frozen'
+        temperatureRequirement: 'frozen',
       },
       {
         id: '3-2',
@@ -192,13 +192,13 @@ const mockUpcomingDeliveries: UpcomingDelivery[] = [
         quantity: 2,
         unit: '份',
         category: '海鮮類',
-        temperatureRequirement: 'frozen'
-      }
+        temperatureRequirement: 'frozen',
+      },
     ],
     totalValue: 5200,
     estimatedDuration: 30,
-    distance: 6.8
-  }
+    distance: 6.8,
+  },
 ]
 
 export default function SupplierUpcomingDeliveries() {
@@ -208,84 +208,115 @@ export default function SupplierUpcomingDeliveries() {
 
   const getStatusIcon = (status: UpcomingDelivery['status']) => {
     switch (status) {
-      case 'scheduled': return <Calendar className="h-4 w-4 text-blue-600" />
-      case 'preparing': return <Package className="h-4 w-4 text-yellow-600" />
-      case 'en_route': return <Truck className="h-4 w-4 text-green-600" />
-      case 'delivered': return <CheckCircle className="h-4 w-4 text-green-700" />
-      case 'delayed': return <AlertTriangle className="h-4 w-4 text-red-600" />
+      case 'scheduled':
+        return <Calendar className="h-4 w-4 text-blue-600" />
+      case 'preparing':
+        return <Package className="h-4 w-4 text-yellow-600" />
+      case 'en_route':
+        return <Truck className="h-4 w-4 text-green-600" />
+      case 'delivered':
+        return <CheckCircle className="h-4 w-4 text-green-700" />
+      case 'delayed':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />
     }
   }
 
   const getStatusText = (status: UpcomingDelivery['status']) => {
     switch (status) {
-      case 'scheduled': return '已排程'
-      case 'preparing': return '準備中'
-      case 'en_route': return '配送中'
-      case 'delivered': return '已送達'
-      case 'delayed': return '延遲'
+      case 'scheduled':
+        return '已排程'
+      case 'preparing':
+        return '準備中'
+      case 'en_route':
+        return '配送中'
+      case 'delivered':
+        return '已送達'
+      case 'delayed':
+        return '延遲'
     }
   }
 
   const getStatusVariant = (status: UpcomingDelivery['status']) => {
     switch (status) {
-      case 'scheduled': return 'info'
-      case 'preparing': return 'warning'
-      case 'en_route': return 'success'
-      case 'delivered': return 'success'
-      case 'delayed': return 'destructive'
-      default: return 'secondary'
+      case 'scheduled':
+        return 'info'
+      case 'preparing':
+        return 'warning'
+      case 'en_route':
+        return 'success'
+      case 'delivered':
+        return 'success'
+      case 'delayed':
+        return 'destructive'
+      default:
+        return 'secondary'
     }
   }
 
   const getPriorityColor = (priority: UpcomingDelivery['priority']) => {
     switch (priority) {
-      case 'urgent': return 'border-l-red-500 bg-red-50'
-      case 'high': return 'border-l-orange-500 bg-orange-50'
-      case 'normal': return 'border-l-blue-500 bg-blue-50'
+      case 'urgent':
+        return 'border-l-red-500 bg-red-50'
+      case 'high':
+        return 'border-l-orange-500 bg-orange-50'
+      case 'normal':
+        return 'border-l-blue-500 bg-blue-50'
     }
   }
 
   const getVehicleIcon = (vehicleType: UpcomingDelivery['vehicleType']) => {
     switch (vehicleType) {
-      case 'refrigerated': return <Thermometer className="h-4 w-4 text-blue-600" />
-      case 'frozen': return <Thermometer className="h-4 w-4 text-cyan-600" />
-      default: return <Truck className="h-4 w-4 text-gray-600" />
+      case 'refrigerated':
+        return <Thermometer className="h-4 w-4 text-blue-600" />
+      case 'frozen':
+        return <Thermometer className="h-4 w-4 text-cyan-600" />
+      default:
+        return <Truck className="h-4 w-4 text-gray-600" />
     }
   }
 
   const getVehicleText = (vehicleType: UpcomingDelivery['vehicleType']) => {
     switch (vehicleType) {
-      case 'refrigerated': return '冷藏車'
-      case 'frozen': return '冷凍車'
-      case 'standard': return '標準貨車'
+      case 'refrigerated':
+        return '冷藏車'
+      case 'frozen':
+        return '冷凍車'
+      case 'standard':
+        return '標準貨車'
     }
   }
 
   const formatTime = (timeString: string) => {
     return new Date(timeString).toLocaleTimeString('zh-TW', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
   }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('zh-TW', {
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     })
   }
 
-  const handleDeliverySelect = React.useCallback((delivery: UpcomingDelivery) => {
-    setSelectedDelivery(delivery)
-    announcePolite(`已選擇配送單：${delivery.orderNumber}`)
-  }, [announcePolite])
+  const handleDeliverySelect = React.useCallback(
+    (delivery: UpcomingDelivery) => {
+      setSelectedDelivery(delivery)
+      announcePolite(`已選擇配送單：${delivery.orderNumber}`)
+    },
+    [announcePolite]
+  )
 
-  const handleStatusUpdate = React.useCallback((deliveryId: string, newStatus: UpcomingDelivery['status']) => {
-    announceSuccess(`配送狀態已更新為：${getStatusText(newStatus)}`)
-  }, [announceSuccess])
+  const handleStatusUpdate = React.useCallback(
+    (deliveryId: string, newStatus: UpcomingDelivery['status']) => {
+      announceSuccess(`配送狀態已更新為：${getStatusText(newStatus)}`)
+    },
+    [announceSuccess]
+  )
 
-  const todayDeliveries = mockUpcomingDeliveries.filter(d => 
-    new Date(d.scheduledDate).toDateString() === new Date().toDateString()
+  const todayDeliveries = mockUpcomingDeliveries.filter(
+    d => new Date(d.scheduledDate).toDateString() === new Date().toDateString()
   )
 
   const stats = React.useMemo(() => {
@@ -293,7 +324,7 @@ export default function SupplierUpcomingDeliveries() {
     const preparing = mockUpcomingDeliveries.filter(d => d.status === 'preparing').length
     const enRoute = mockUpcomingDeliveries.filter(d => d.status === 'en_route').length
     const urgent = mockUpcomingDeliveries.filter(d => d.priority === 'urgent').length
-    
+
     return { total, preparing, enRoute, urgent }
   }, [])
 
@@ -305,7 +336,7 @@ export default function SupplierUpcomingDeliveries() {
             <Truck className="h-5 w-5 text-green-600" />
             <span>今日配送排程</span>
           </CardTitle>
-          
+
           {/* 快速統計 */}
           <div className="flex items-center space-x-2">
             <Badge variant="warning" size="sm">
@@ -323,21 +354,21 @@ export default function SupplierUpcomingDeliveries() {
 
       <CardContent className="space-y-4">
         {/* 今日配送概覽 */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="p-3 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <div className="rounded-lg bg-gradient-to-r from-green-50 to-green-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-600 font-medium">今日配送</p>
+                <p className="text-sm font-medium text-green-600">今日配送</p>
                 <p className="text-xl font-bold text-green-700">{todayDeliveries.length}</p>
               </div>
               <Truck className="h-6 w-6 text-green-500" />
             </div>
           </div>
 
-          <div className="p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+          <div className="rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-medium">總距離</p>
+                <p className="text-sm font-medium text-blue-600">總距離</p>
                 <p className="text-xl font-bold text-blue-700">
                   {todayDeliveries.reduce((sum, d) => sum + d.distance, 0).toFixed(1)}km
                 </p>
@@ -350,16 +381,16 @@ export default function SupplierUpcomingDeliveries() {
         {/* 配送清單 */}
         <div className="space-y-3">
           {todayDeliveries.length === 0 ? (
-            <div className="text-center py-6 text-gray-500">
-              <Truck className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <div className="py-6 text-center text-gray-500">
+              <Truck className="mx-auto mb-3 h-12 w-12 opacity-50" />
               <p>今日暫無配送排程</p>
             </div>
           ) : (
-            todayDeliveries.map((delivery) => (
+            todayDeliveries.map(delivery => (
               <div
                 key={delivery.id}
                 className={cn(
-                  'border rounded-lg p-4 transition-all hover:shadow-md cursor-pointer',
+                  'cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md',
                   'border-l-4',
                   getPriorityColor(delivery.priority)
                 )}
@@ -369,11 +400,9 @@ export default function SupplierUpcomingDeliveries() {
                   {/* 配送基本資訊 */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">
-                          {delivery.orderNumber}
-                        </span>
-                        <Badge 
+                      <div className="mb-1 flex items-center space-x-2">
+                        <span className="font-medium text-gray-900">{delivery.orderNumber}</span>
+                        <Badge
                           variant={getStatusVariant(delivery.status)}
                           className="flex items-center space-x-1"
                         >
@@ -381,11 +410,13 @@ export default function SupplierUpcomingDeliveries() {
                           <span>{getStatusText(delivery.status)}</span>
                         </Badge>
                       </div>
-                      
-                      <div className="text-sm text-gray-600 space-y-1">
+
+                      <div className="space-y-1 text-sm text-gray-600">
                         <div className="flex items-center space-x-2">
                           <User className="h-3 w-3" />
-                          <span>{delivery.customer.name} • {delivery.customer.contact}</span>
+                          <span>
+                            {delivery.customer.name} • {delivery.customer.contact}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <MapPin className="h-3 w-3" />
@@ -393,12 +424,14 @@ export default function SupplierUpcomingDeliveries() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Clock className="h-3 w-3" />
-                          <span>{delivery.timeSlot} • 預計 {formatTime(delivery.estimatedArrival)}</span>
+                          <span>
+                            {delivery.timeSlot} • 預計 {formatTime(delivery.estimatedArrival)}
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="text-right space-y-1">
+                    <div className="space-y-1 text-right">
                       <div className="text-sm font-medium text-gray-900">
                         NT$ {delivery.totalValue.toLocaleString()}
                       </div>
@@ -415,21 +448,21 @@ export default function SupplierUpcomingDeliveries() {
                   {/* 司機資訊 */}
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200">
                         <User className="h-3 w-3 text-gray-600" />
                       </div>
                       <span className="text-gray-700">
                         {delivery.driver.name} • {delivery.driver.vehicleNumber}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
                       <Button variant="ghost" size="sm" className="h-6 px-2 text-blue-600">
-                        <Phone className="h-3 w-3 mr-1" />
+                        <Phone className="mr-1 h-3 w-3" />
                         <span className="text-xs">聯絡</span>
                       </Button>
                       <Button variant="ghost" size="sm" className="h-6 px-2 text-green-600">
-                        <Navigation className="h-3 w-3 mr-1" />
+                        <Navigation className="mr-1 h-3 w-3" />
                         <span className="text-xs">導航</span>
                       </Button>
                     </div>
@@ -441,7 +474,10 @@ export default function SupplierUpcomingDeliveries() {
                       <Package className="h-3 w-3" />
                       <span>
                         {delivery.items.length} 項商品：
-                        {delivery.items.slice(0, 2).map(item => item.name).join('、')}
+                        {delivery.items
+                          .slice(0, 2)
+                          .map(item => item.name)
+                          .join('、')}
                         {delivery.items.length > 2 && '等'}
                       </span>
                     </div>
@@ -449,7 +485,7 @@ export default function SupplierUpcomingDeliveries() {
 
                   {/* 特殊指示 */}
                   {delivery.specialInstructions && (
-                    <div className="p-2 bg-yellow-50 border-l-4 border-yellow-400 rounded-r text-sm">
+                    <div className="rounded-r border-l-4 border-yellow-400 bg-yellow-50 p-2 text-sm">
                       <p className="text-yellow-800">
                         <strong>特殊指示：</strong> {delivery.specialInstructions}
                       </p>
@@ -457,19 +493,15 @@ export default function SupplierUpcomingDeliveries() {
                   )}
 
                   {/* 操作按鈕 */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-2">
                     <div className="flex items-center space-x-2">
                       {delivery.status === 'en_route' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center space-x-1"
-                        >
+                        <Button variant="outline" size="sm" className="flex items-center space-x-1">
                           <Camera className="h-3 w-3" />
                           <span>拍照存證</span>
                         </Button>
                       )}
-                      
+
                       <Button
                         variant="ghost"
                         size="sm"
@@ -480,11 +512,7 @@ export default function SupplierUpcomingDeliveries() {
                       </Button>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center space-x-1"
-                    >
+                    <Button variant="outline" size="sm" className="flex items-center space-x-1">
                       <span>查看詳情</span>
                       <ArrowRight className="h-3 w-3" />
                     </Button>
@@ -496,12 +524,12 @@ export default function SupplierUpcomingDeliveries() {
         </div>
 
         {/* 配送提醒 */}
-        <div className="mt-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <h4 className="font-medium text-green-900 mb-2 flex items-center space-x-2">
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-3">
+          <h4 className="mb-2 flex items-center space-x-2 font-medium text-green-900">
             <CheckCircle className="h-4 w-4" />
             <span>配送提醒</span>
           </h4>
-          <ul className="text-sm text-green-800 space-y-1">
+          <ul className="space-y-1 text-sm text-green-800">
             <li>• 冷鏈商品請確保溫度維持</li>
             <li>• 送達前請聯絡客戶確認收貨</li>
             <li>• 完成配送後記得拍照存證</li>

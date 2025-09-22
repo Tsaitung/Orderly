@@ -7,8 +7,8 @@ export async function GET() {
     version: '1.0.0',
     services: {
       frontend: 'connected',
-      system: 'operational'  
+      system: 'operational',
     },
-    message: 'Basic health check - database and Redis checks disabled for reliable builds'
+    message: 'Basic health check - database and Redis checks disabled for reliable builds',
   })
 }

@@ -53,7 +53,7 @@ export class AuthService {
       email: payload.email,
       organizationId: payload.organizationId,
       role: payload.role,
-      organizationType: payload.organizationType
+      organizationType: payload.organizationType,
     })
     return tokens.accessToken
   }
@@ -72,7 +72,7 @@ export class AuthService {
       email: '', // Will be fetched from user service if needed
       organizationId: context.organizationId,
       role: context.role,
-      organizationType: context.organizationType
+      organizationType: context.organizationType,
     }
   }
 
@@ -87,7 +87,7 @@ export class AuthService {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 15 * 60, // 15 minutes
-      path: '/'
+      path: '/',
     })
   }
 
@@ -96,8 +96,8 @@ export class AuthService {
    */
   static async getSessionFromCookie(): Promise<SessionPayload | null> {
     const cookieStore = cookies()
-    const token = cookieStore.get('orderly-session')?.value ||
-                  cookieStore.get('orderly-access-token')?.value
+    const token =
+      cookieStore.get('orderly-session')?.value || cookieStore.get('orderly-access-token')?.value
 
     if (!token) {
       return null
@@ -119,7 +119,11 @@ export class AuthService {
   /**
    * Secure login with comprehensive validation and security logging
    */
-  static async login(credentials: LoginCredentials, ipAddress?: string, userAgent?: string): Promise<{
+  static async login(
+    credentials: LoginCredentials,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{
     success: boolean
     user?: SessionPayload
     token?: string
@@ -127,7 +131,7 @@ export class AuthService {
     errorCode?: string
   }> {
     const result = await authService.login(credentials, ipAddress, userAgent)
-    
+
     if (result.success && result.user && result.tokens) {
       // Cache user session for backward compatibility
       await CacheService.setUserSession(result.user.id, {
@@ -136,9 +140,9 @@ export class AuthService {
         organizationId: result.user.organizationId,
         role: result.user.role,
         organizationType: result.user.organizationType,
-        lastLoginAt: new Date()
+        lastLoginAt: new Date(),
       })
-      
+
       return {
         success: true,
         user: {
@@ -146,23 +150,27 @@ export class AuthService {
           email: result.user.email,
           organizationId: result.user.organizationId,
           role: result.user.role,
-          organizationType: result.user.organizationType
+          organizationType: result.user.organizationType,
         },
-        token: result.tokens.accessToken
+        token: result.tokens.accessToken,
       }
     }
-    
+
     return {
       success: false,
       error: result.error || '登入失敗',
-      errorCode: result.errorCode
+      errorCode: result.errorCode,
     }
   }
 
   /**
    * Secure registration with input validation and security checks
    */
-  static async register(data: RegisterData, ipAddress?: string, userAgent?: string): Promise<{
+  static async register(
+    data: RegisterData,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<{
     success: boolean
     user?: SessionPayload
     token?: string
@@ -170,7 +178,7 @@ export class AuthService {
     errorCode?: string
   }> {
     const result = await authService.register(data, ipAddress, userAgent)
-    
+
     if (result.success && result.user && result.tokens) {
       // Cache user session for backward compatibility
       await CacheService.setUserSession(result.user.id, {
@@ -179,9 +187,9 @@ export class AuthService {
         organizationId: result.user.organizationId,
         role: result.user.role,
         organizationType: result.user.organizationType,
-        registeredAt: new Date()
+        registeredAt: new Date(),
       })
-      
+
       return {
         success: true,
         user: {
@@ -189,16 +197,16 @@ export class AuthService {
           email: result.user.email,
           organizationId: result.user.organizationId,
           role: result.user.role,
-          organizationType: result.user.organizationType
+          organizationType: result.user.organizationType,
         },
-        token: result.tokens.accessToken
+        token: result.tokens.accessToken,
       }
     }
-    
+
     return {
       success: false,
       error: result.error || '註冊失敗',
-      errorCode: result.errorCode
+      errorCode: result.errorCode,
     }
   }
 
@@ -211,7 +219,7 @@ export class AuthService {
       if (accessToken) {
         await authService.logout(accessToken, refreshToken)
       }
-      
+
       // Clear Redis cache
       await CacheService.deleteUserSession(userId)
     } catch (error) {
@@ -237,7 +245,7 @@ export class AuthService {
         organizationId: session.organizationId,
         role: session.role,
         organizationType: session.organizationType,
-        lastLoginAt: new Date()
+        lastLoginAt: new Date(),
       }
     } catch (error) {
       console.error('Get current user error:', error)

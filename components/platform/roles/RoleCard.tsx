@@ -2,28 +2,28 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { 
-  Shield, 
-  Users, 
-  Settings, 
-  Building2, 
-  Eye, 
-  Edit, 
-  Copy, 
-  Trash2, 
-  MoreHorizontal, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
+import {
+  Shield,
+  Users,
+  Settings,
+  Building2,
+  Eye,
+  Edit,
+  Copy,
+  Trash2,
+  MoreHorizontal,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  TrendingUp,
+  TrendingDown,
   AlertCircle,
   Lock,
   Unlock,
   Star,
   Calendar,
   Activity,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -76,7 +76,7 @@ export function RoleCard({
   onCopy,
   onDelete,
   onToggleStatus,
-  className = ''
+  className = '',
 }: RoleCardProps) {
   const [showDropdown, setShowDropdown] = React.useState(false)
 
@@ -84,16 +84,22 @@ export function RoleCard({
     const types = {
       platform: { name: '平台', color: 'bg-blue-100 text-blue-800', icon: Settings },
       restaurant: { name: '餐廳', color: 'bg-orange-100 text-orange-800', icon: Building2 },
-      supplier: { name: '供應商', color: 'bg-green-100 text-green-800', icon: Users }
+      supplier: { name: '供應商', color: 'bg-green-100 text-green-800', icon: Users },
     }
-    return types[type as keyof typeof types] || { name: type, color: 'bg-gray-100 text-gray-800', icon: Shield }
+    return (
+      types[type as keyof typeof types] || {
+        name: type,
+        color: 'bg-gray-100 text-gray-800',
+        icon: Shield,
+      }
+    )
   }
 
   const getUsageFrequencyDisplay = (frequency?: string) => {
     const displays = {
       high: { text: '高頻', color: 'text-green-600', icon: TrendingUp },
       medium: { text: '中頻', color: 'text-yellow-600', icon: Activity },
-      low: { text: '低頻', color: 'text-red-600', icon: TrendingDown }
+      low: { text: '低頻', color: 'text-red-600', icon: TrendingDown },
     }
     return frequency ? displays[frequency as keyof typeof displays] || displays.medium : null
   }
@@ -109,9 +115,9 @@ export function RoleCard({
   const getRatingStars = (rating?: number) => {
     if (!rating) return null
     return Array.from({ length: 5 }, (_, i) => (
-      <Star 
-        key={i} 
-        className={`h-3 w-3 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+      <Star
+        key={i}
+        className={`h-3 w-3 ${i < Math.floor(rating) ? 'fill-current text-yellow-400' : 'text-gray-300'}`}
       />
     ))
   }
@@ -141,18 +147,16 @@ export function RoleCard({
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
+              <div className="rounded-lg bg-primary-100 p-2">
                 <Shield className="h-4 w-4 text-primary-700" />
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="font-medium text-sm">{role.name}</span>
-                  <Badge className={`${typeDisplay.color} text-xs`}>
-                    {typeDisplay.name}
-                  </Badge>
+                  <span className="text-sm font-medium">{role.name}</span>
+                  <Badge className={`${typeDisplay.color} text-xs`}>{typeDisplay.name}</Badge>
                   {role.isSystemRole && (
                     <Badge variant="outline" className="text-xs">
-                      <Lock className="h-2 w-2 mr-1" />
+                      <Lock className="mr-1 h-2 w-2" />
                       系統
                     </Badge>
                   )}
@@ -164,8 +168,16 @@ export function RoleCard({
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                {role.isActive ? <CheckCircle2 className="h-2 w-2 mr-1" /> : <XCircle className="h-2 w-2 mr-1" />}
+              <Badge
+                className={
+                  role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }
+              >
+                {role.isActive ? (
+                  <CheckCircle2 className="mr-1 h-2 w-2" />
+                ) : (
+                  <XCircle className="mr-1 h-2 w-2" />
+                )}
                 {role.isActive ? '啟用' : '停用'}
               </Badge>
               {showActions && (
@@ -187,25 +199,25 @@ export function RoleCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-start space-x-3">
-              <div className="p-3 bg-primary-100 rounded-lg">
+              <div className="rounded-lg bg-primary-100 p-3">
                 <TypeIcon className="h-6 w-6 text-primary-700" />
               </div>
               <div className="flex-1">
-                <div className="flex items-center space-x-2 mb-2">
+                <div className="mb-2 flex items-center space-x-2">
                   <CardTitle className="text-lg">{role.name}</CardTitle>
                   <Badge className={typeDisplay.color}>
-                    <TypeIcon className="h-3 w-3 mr-1" />
+                    <TypeIcon className="mr-1 h-3 w-3" />
                     {typeDisplay.name}
                   </Badge>
                   {role.isSystemRole && (
                     <Badge variant="outline" className="bg-gray-100 text-gray-800">
-                      <Lock className="h-3 w-3 mr-1" />
+                      <Lock className="mr-1 h-3 w-3" />
                       系統角色
                     </Badge>
                   )}
                 </div>
                 {showDescription && (
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{role.description}</p>
+                  <p className="mb-3 line-clamp-2 text-sm text-gray-600">{role.description}</p>
                 )}
                 <div className="flex flex-wrap gap-1">
                   {role.tags.map(tag => (
@@ -217,8 +229,16 @@ export function RoleCard({
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                {role.isActive ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+              <Badge
+                className={
+                  role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }
+              >
+                {role.isActive ? (
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                ) : (
+                  <XCircle className="mr-1 h-3 w-3" />
+                )}
                 {role.isActive ? '啟用' : '停用'}
               </Badge>
               {role.rating && (
@@ -230,11 +250,11 @@ export function RoleCard({
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {/* 統計資訊 */}
           {showStats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="text-center">
                 <div className="text-lg font-bold text-primary-600">{role.userCount}</div>
                 <div className="text-xs text-gray-500">使用者</div>
@@ -251,7 +271,7 @@ export function RoleCard({
                 {usageDisplay && UsageIcon && (
                   <>
                     <div className={`text-lg font-bold ${usageDisplay.color}`}>
-                      <UsageIcon className="h-5 w-5 mx-auto" />
+                      <UsageIcon className="mx-auto h-5 w-5" />
                     </div>
                     <div className="text-xs text-gray-500">{usageDisplay.text}</div>
                   </>
@@ -259,9 +279,9 @@ export function RoleCard({
               </div>
             </div>
           )}
-          
+
           {/* 時間資訊 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
+          <div className="grid grid-cols-1 gap-4 text-xs text-gray-500 md:grid-cols-2">
             <div className="flex items-center space-x-2">
               <Calendar className="h-3 w-3" />
               <span>建立: {formatDate(role.createdAt)}</span>
@@ -283,51 +303,47 @@ export function RoleCard({
               </div>
             )}
           </div>
-          
+
           {/* 操作按鈕 */}
           {showActions && (
-            <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center justify-between border-t pt-3">
               <div className="flex space-x-2">
                 <Link href={`/platform/roles/${role.id}`}>
                   <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-2" />
+                    <Eye className="mr-2 h-4 w-4" />
                     檢視
                   </Button>
                 </Link>
                 {!role.isSystemRole && (
                   <Button variant="outline" size="sm" onClick={() => onEdit?.(role.id)}>
-                    <Edit className="h-4 w-4 mr-2" />
+                    <Edit className="mr-2 h-4 w-4" />
                     編輯
                   </Button>
                 )}
               </div>
-              
+
               <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setShowDropdown(!showDropdown)}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
-                
+
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                  <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
                     <div className="py-1">
                       <button
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         onClick={() => {
                           onCopy?.(role.id)
                           setShowDropdown(false)
                         }}
                       >
-                        <Copy className="h-4 w-4 mr-2" />
+                        <Copy className="mr-2 h-4 w-4" />
                         複製角色
                       </button>
                       {!role.isSystemRole && (
                         <>
                           <button
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => {
                               onToggleStatus?.(role.id)
                               setShowDropdown(false)
@@ -335,24 +351,24 @@ export function RoleCard({
                           >
                             {role.isActive ? (
                               <>
-                                <XCircle className="h-4 w-4 mr-2" />
+                                <XCircle className="mr-2 h-4 w-4" />
                                 停用角色
                               </>
                             ) : (
                               <>
-                                <CheckCircle2 className="h-4 w-4 mr-2" />
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
                                 啟用角色
                               </>
                             )}
                           </button>
                           <button
-                            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                             onClick={() => {
                               onDelete?.(role.id)
                               setShowDropdown(false)
                             }}
                           >
-                            <Trash2 className="h-4 w-4 mr-2" />
+                            <Trash2 className="mr-2 h-4 w-4" />
                             刪除角色
                           </button>
                         </>
@@ -374,34 +390,38 @@ export function RoleCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="rounded-lg bg-primary-100 p-2">
               <TypeIcon className="h-5 w-5 text-primary-700" />
             </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
+              <div className="mb-1 flex items-center space-x-2">
                 <CardTitle className="text-base">{role.name}</CardTitle>
-                <Badge className={`${typeDisplay.color} text-xs`}>
-                  {typeDisplay.name}
-                </Badge>
+                <Badge className={`${typeDisplay.color} text-xs`}>{typeDisplay.name}</Badge>
                 {role.isSystemRole && (
                   <Badge variant="outline" className="text-xs">
-                    <Lock className="h-3 w-3 mr-1" />
+                    <Lock className="mr-1 h-3 w-3" />
                     系統
                   </Badge>
                 )}
               </div>
               {showDescription && (
-                <p className="text-sm text-gray-600 line-clamp-2">{role.description}</p>
+                <p className="line-clamp-2 text-sm text-gray-600">{role.description}</p>
               )}
             </div>
           </div>
-          <Badge className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-            {role.isActive ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <XCircle className="h-3 w-3 mr-1" />}
+          <Badge
+            className={role.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+          >
+            {role.isActive ? (
+              <CheckCircle2 className="mr-1 h-3 w-3" />
+            ) : (
+              <XCircle className="mr-1 h-3 w-3" />
+            )}
             {role.isActive ? '啟用' : '停用'}
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-3">
         {/* 標籤 */}
         <div className="flex flex-wrap gap-1">
@@ -416,7 +436,7 @@ export function RoleCard({
             </Badge>
           )}
         </div>
-        
+
         {/* 統計 */}
         {showStats && (
           <div className="flex items-center justify-between text-sm text-gray-600">
@@ -428,22 +448,20 @@ export function RoleCard({
               <Shield className="h-4 w-4" />
               <span>{role.permissionCount}</span>
             </div>
-            <div className="text-xs text-gray-500">
-              {formatDate(role.updatedAt)}
-            </div>
+            <div className="text-xs text-gray-500">{formatDate(role.updatedAt)}</div>
           </div>
         )}
-        
+
         {/* 操作按鈕 */}
         {showActions && (
-          <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center justify-between border-t pt-2">
             <Link href={`/platform/roles/${role.id}`}>
               <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-2" />
+                <Eye className="mr-2 h-4 w-4" />
                 檢視
               </Button>
             </Link>
-            
+
             <div className="flex space-x-1">
               {!role.isSystemRole && (
                 <Button variant="ghost" size="sm" onClick={() => onEdit?.(role.id)}>
@@ -454,21 +472,17 @@ export function RoleCard({
                 <Copy className="h-4 w-4" />
               </Button>
               <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setShowDropdown(!showDropdown)}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
-                
+
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                  <div className="absolute right-0 z-10 mt-2 w-40 rounded-md border border-gray-200 bg-white shadow-lg">
                     <div className="py-1">
                       {!role.isSystemRole && (
                         <>
                           <button
-                            className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="flex w-full items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => {
                               onToggleStatus?.(role.id)
                               setShowDropdown(false)
@@ -477,7 +491,7 @@ export function RoleCard({
                             {role.isActive ? '停用' : '啟用'}
                           </button>
                           <button
-                            className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                            className="flex w-full items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                             onClick={() => {
                               onDelete?.(role.id)
                               setShowDropdown(false)

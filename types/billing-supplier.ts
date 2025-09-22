@@ -14,9 +14,19 @@ export interface BaseEntity {
 // 供應商計費核心類型
 // ============================================================================
 
-export type SupplierFeeType = 'transaction_fee' | 'fast_payout' | 'promo' | 'exposure_package' | 'saas_package'
+export type SupplierFeeType =
+  | 'transaction_fee'
+  | 'fast_payout'
+  | 'promo'
+  | 'exposure_package'
+  | 'saas_package'
 export type PricingModel = 'percentage' | 'fixed' | 'tiered' | 'formula'
-export type SupplierContractStatus = 'draft' | 'pending_approval' | 'active' | 'paused' | 'terminated'
+export type SupplierContractStatus =
+  | 'draft'
+  | 'pending_approval'
+  | 'active'
+  | 'paused'
+  | 'terminated'
 export type SupplierScope = 'global' | 'supplier_group' | 'supplier' | 'sku'
 export type RatingTier = 'Bronze' | 'Silver' | 'Gold' | 'Platinum'
 

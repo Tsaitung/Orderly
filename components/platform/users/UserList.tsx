@@ -2,17 +2,17 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { 
-  ChevronUp, 
-  ChevronDown, 
-  MoreHorizontal, 
-  Eye, 
-  Edit, 
+import {
+  ChevronUp,
+  ChevronDown,
+  MoreHorizontal,
+  Eye,
+  Edit,
   UserX,
   Shield,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -51,7 +51,7 @@ export function UserList({
   selectedStatus,
   selectedOrganization,
   selectedUsers,
-  onUserSelection
+  onUserSelection,
 }: UserListProps) {
   const [users, setUsers] = React.useState<User[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -63,14 +63,22 @@ export function UserList({
 
   React.useEffect(() => {
     loadUsers()
-  }, [searchTerm, selectedRole, selectedStatus, selectedOrganization, sortBy, sortOrder, currentPage])
+  }, [
+    searchTerm,
+    selectedRole,
+    selectedStatus,
+    selectedOrganization,
+    sortBy,
+    sortOrder,
+    currentPage,
+  ])
 
   const loadUsers = async () => {
     try {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 800))
-      
+
       // 模擬資料
       const mockUsers: User[] = [
         {
@@ -81,13 +89,13 @@ export function UserList({
           organization: {
             id: 'org1',
             name: 'ABC 餐廳',
-            type: 'restaurant'
+            type: 'restaurant',
           },
           role: '餐廳管理員',
           status: 'active',
           lastLoginAt: '2024-09-21T10:30:00Z',
           createdAt: '2024-01-15T09:00:00Z',
-          permissions: ['order_management', 'supplier_view', 'financial_view']
+          permissions: ['order_management', 'supplier_view', 'financial_view'],
         },
         {
           id: '2',
@@ -97,13 +105,13 @@ export function UserList({
           organization: {
             id: 'org2',
             name: 'DEF 餐廳',
-            type: 'restaurant'
+            type: 'restaurant',
           },
           role: '會計人員',
           status: 'active',
           lastLoginAt: '2024-09-21T08:15:00Z',
           createdAt: '2024-02-20T14:30:00Z',
-          permissions: ['financial_management', 'order_view']
+          permissions: ['financial_management', 'order_view'],
         },
         {
           id: '3',
@@ -113,13 +121,13 @@ export function UserList({
           organization: {
             id: 'org3',
             name: '優質食材供應商',
-            type: 'supplier'
+            type: 'supplier',
           },
           role: '供應商管理員',
           status: 'pending',
           lastLoginAt: '2024-09-20T16:45:00Z',
           createdAt: '2024-09-18T11:20:00Z',
-          permissions: ['product_management', 'order_processing']
+          permissions: ['product_management', 'order_processing'],
         },
         {
           id: '4',
@@ -129,13 +137,13 @@ export function UserList({
           organization: {
             id: 'org4',
             name: '井然 Orderly 平台',
-            type: 'platform'
+            type: 'platform',
           },
           role: '平台超級管理員',
           status: 'active',
           lastLoginAt: '2024-09-21T11:00:00Z',
           createdAt: '2023-12-01T09:00:00Z',
-          permissions: ['all_permissions']
+          permissions: ['all_permissions'],
         },
         {
           id: '5',
@@ -145,16 +153,16 @@ export function UserList({
           organization: {
             id: 'org5',
             name: 'GHI 連鎖餐廳',
-            type: 'restaurant'
+            type: 'restaurant',
           },
           role: '一般員工',
           status: 'inactive',
           lastLoginAt: '2024-09-15T14:20:00Z',
           createdAt: '2024-03-10T10:00:00Z',
-          permissions: ['order_view']
-        }
+          permissions: ['order_view'],
+        },
       ]
-      
+
       setUsers(mockUsers)
       setTotalPages(Math.ceil(mockUsers.length / 10))
     } catch (err) {
@@ -192,11 +200,26 @@ export function UserList({
   const getStatusBadge = (status: User['status']) => {
     switch (status) {
       case 'active':
-        return <Badge variant="default" className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />活躍</Badge>
+        return (
+          <Badge variant="default" className="bg-green-100 text-green-800">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            活躍
+          </Badge>
+        )
       case 'inactive':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />已停用</Badge>
+        return (
+          <Badge variant="secondary" className="bg-red-100 text-red-800">
+            <XCircle className="mr-1 h-3 w-3" />
+            已停用
+          </Badge>
+        )
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />待啟用</Badge>
+        return (
+          <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+            <Clock className="mr-1 h-3 w-3" />
+            待啟用
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">未知</Badge>
     }
@@ -205,11 +228,23 @@ export function UserList({
   const getOrganizationTypeBadge = (type: User['organization']['type']) => {
     switch (type) {
       case 'restaurant':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">餐廳</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            餐廳
+          </Badge>
+        )
       case 'supplier':
-        return <Badge variant="outline" className="bg-purple-100 text-purple-800">供應商</Badge>
+        return (
+          <Badge variant="outline" className="bg-purple-100 text-purple-800">
+            供應商
+          </Badge>
+        )
       case 'platform':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">平台</Badge>
+        return (
+          <Badge variant="outline" className="bg-gray-100 text-gray-800">
+            平台
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">未知</Badge>
     }
@@ -219,7 +254,7 @@ export function UserList({
     const date = new Date(dateString)
     const now = new Date()
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
+
     if (diffInHours < 1) {
       return '剛剛'
     } else if (diffInHours < 24) {
@@ -231,16 +266,25 @@ export function UserList({
     }
   }
 
-  const SortableHeader = ({ field, children }: { field: keyof User; children: React.ReactNode }) => (
-    <th 
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-50"
+  const SortableHeader = ({
+    field,
+    children,
+  }: {
+    field: keyof User
+    children: React.ReactNode
+  }) => (
+    <th
+      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hover:bg-gray-50"
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center space-x-1">
         <span>{children}</span>
-        {sortBy === field && (
-          sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
-        )}
+        {sortBy === field &&
+          (sortOrder === 'asc' ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          ))}
       </div>
     </th>
   )
@@ -252,11 +296,11 @@ export function UserList({
           <div className="animate-pulse space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center space-x-4">
-                <div className="w-4 h-4 bg-gray-200 rounded"></div>
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="h-4 w-4 rounded bg-gray-200"></div>
+                <div className="h-10 w-10 rounded-full bg-gray-200"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 w-1/4 rounded bg-gray-200"></div>
+                  <div className="h-3 w-1/3 rounded bg-gray-200"></div>
                 </div>
               </div>
             ))}
@@ -271,9 +315,7 @@ export function UserList({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>使用者清單</span>
-          <span className="text-sm font-normal text-gray-500">
-            共 {users.length} 位使用者
-          </span>
+          <span className="text-sm font-normal text-gray-500">共 {users.length} 位使用者</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -288,35 +330,35 @@ export function UserList({
                   />
                 </th>
                 <SortableHeader field="name">使用者</SortableHeader>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   組織
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   角色
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                   狀態
                 </th>
                 <SortableHeader field="lastLoginAt">最後登入</SortableHeader>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+            <tbody className="divide-y divide-gray-200 bg-white">
+              {users.map(user => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <Checkbox
                       checked={selectedUsers.includes(user.id)}
-                      onCheckedChange={(checked) => handleSelectUser(user.id, checked as boolean)}
+                      onCheckedChange={checked => handleSelectUser(user.id, checked as boolean)}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                          <span className="text-primary-700 font-medium">
+                      <div className="h-10 w-10 flex-shrink-0">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
+                          <span className="font-medium text-primary-700">
                             {user.name.charAt(0)}
                           </span>
                         </div>
@@ -327,25 +369,23 @@ export function UserList({
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="space-y-1">
                       <div className="text-sm text-gray-900">{user.organization.name}</div>
                       {getOrganizationTypeBadge(user.organization.type)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-6 py-4">
                     <div className="flex items-center">
-                      <Shield className="h-4 w-4 text-gray-400 mr-2" />
+                      <Shield className="mr-2 h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-900">{user.role}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(user.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="whitespace-nowrap px-6 py-4">{getStatusBadge(user.status)}</td>
+                  <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                     {formatDateTime(user.lastLoginAt)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                     <div className="relative">
                       <Button
                         variant="ghost"
@@ -354,30 +394,30 @@ export function UserList({
                       >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                      
+
                       {showDropdown === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                        <div className="absolute right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">
                           <div className="py-1">
                             <Link
                               href={`/platform/users/${user.id}`}
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setShowDropdown(null)}
                             >
-                              <Eye className="h-4 w-4 mr-2" />
+                              <Eye className="mr-2 h-4 w-4" />
                               檢視詳情
                             </Link>
                             <button
-                              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               onClick={() => setShowDropdown(null)}
                             >
-                              <Edit className="h-4 w-4 mr-2" />
+                              <Edit className="mr-2 h-4 w-4" />
                               編輯使用者
                             </button>
                             <button
-                              className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                               onClick={() => setShowDropdown(null)}
                             >
-                              <UserX className="h-4 w-4 mr-2" />
+                              <UserX className="mr-2 h-4 w-4" />
                               停用帳號
                             </button>
                           </div>
@@ -390,12 +430,13 @@ export function UserList({
             </tbody>
           </table>
         </div>
-        
+
         {/* 分頁 */}
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="border-t border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              顯示第 {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, users.length)} 筆，共 {users.length} 筆
+              顯示第 {(currentPage - 1) * 10 + 1} - {Math.min(currentPage * 10, users.length)}{' '}
+              筆，共 {users.length} 筆
             </div>
             <div className="flex space-x-2">
               <Button

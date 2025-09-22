@@ -3,38 +3,31 @@
 // ============================================================================
 // 5-tab interface for Customer Hierarchy Dashboard with responsive design
 
-'use client';
+'use client'
 
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  BarChart3,
-  Users,
-  Building2,
-  MapPin,
-  TrendingUp,
-  ChevronDown
-} from 'lucide-react';
-import type { DashboardTab } from '../../types';
+import React from 'react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { BarChart3, Users, Building2, MapPin, TrendingUp, ChevronDown } from 'lucide-react'
+import type { DashboardTab } from '../../types'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface TabItem {
-  key: DashboardTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
+  key: DashboardTab
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  description: string
 }
 
 interface TabNavigationProps {
-  activeTab: DashboardTab;
-  onTabChange: (tab: DashboardTab) => void;
-  counts: Record<DashboardTab, number>;
-  className?: string;
+  activeTab: DashboardTab
+  onTabChange: (tab: DashboardTab) => void
+  counts: Record<DashboardTab, number>
+  className?: string
 }
 
 // ============================================================================
@@ -46,99 +39,93 @@ const TAB_ITEMS: TabItem[] = [
     key: 'overview',
     label: '總覽',
     icon: BarChart3,
-    description: '儀表板概況與關鍵指標'
+    description: '儀表板概況與關鍵指標',
   },
   {
     key: 'groups',
     label: '客戶集團',
     icon: Users,
-    description: '集團層級客戶管理'
+    description: '集團層級客戶管理',
   },
   {
     key: 'companies',
     label: '公司',
     icon: Building2,
-    description: '公司層級詳細資料'
+    description: '公司層級詳細資料',
   },
   {
     key: 'locations',
     label: '營業據點',
     icon: MapPin,
-    description: '地點與業務單位管理'
+    description: '地點與業務單位管理',
   },
   {
     key: 'analytics',
     label: '數據分析',
     icon: TrendingUp,
-    description: '深度統計與趨勢分析'
-  }
-];
+    description: '深度統計與趨勢分析',
+  },
+]
 
 // ============================================================================
 // Desktop Tab Navigation
 // ============================================================================
 
 interface DesktopTabsProps {
-  activeTab: DashboardTab;
-  onTabChange: (tab: DashboardTab) => void;
-  counts: Record<DashboardTab, number>;
+  activeTab: DashboardTab
+  onTabChange: (tab: DashboardTab) => void
+  counts: Record<DashboardTab, number>
 }
 
 function DesktopTabs({ activeTab, onTabChange, counts }: DesktopTabsProps) {
   return (
-    <div className="hidden md:flex border-b border-gray-200 bg-white">
+    <div className="hidden border-b border-gray-200 bg-white md:flex">
       <nav className="flex space-x-8 px-6" aria-label="客戶層級導航">
-        {TAB_ITEMS.map((tab) => {
-          const isActive = activeTab === tab.key;
-          const Icon = tab.icon;
-          const count = counts[tab.key];
-          
+        {TAB_ITEMS.map(tab => {
+          const isActive = activeTab === tab.key
+          const Icon = tab.icon
+          const count = counts[tab.key]
+
           return (
             <button
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
               className={cn(
-                "group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200",
+                'group inline-flex items-center border-b-2 px-1 py-4 text-sm font-medium transition-colors duration-200',
                 isActive
-                  ? "border-primary-500 text-primary-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
               )}
               aria-current={isActive ? 'page' : undefined}
               title={tab.description}
             >
-              <Icon 
+              <Icon
                 className={cn(
-                  "mr-2 h-5 w-5 transition-colors duration-200",
-                  isActive 
-                    ? "text-primary-500" 
-                    : "text-gray-400 group-hover:text-gray-500"
+                  'mr-2 h-5 w-5 transition-colors duration-200',
+                  isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
                 )}
                 aria-hidden="true"
               />
-              
-              <span className="whitespace-nowrap">
-                {tab.label}
-              </span>
-              
+
+              <span className="whitespace-nowrap">{tab.label}</span>
+
               {count > 0 && (
-                <Badge 
-                  variant="secondary" 
+                <Badge
+                  variant="secondary"
                   className={cn(
-                    "ml-2 transition-colors duration-200",
-                    isActive
-                      ? "bg-primary-100 text-primary-700"
-                      : "bg-gray-100 text-gray-600"
+                    'ml-2 transition-colors duration-200',
+                    isActive ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
                   )}
                 >
                   {count}
                 </Badge>
               )}
             </button>
-          );
+          )
         })}
       </nav>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -146,18 +133,18 @@ function DesktopTabs({ activeTab, onTabChange, counts }: DesktopTabsProps) {
 // ============================================================================
 
 interface MobileTabsProps {
-  activeTab: DashboardTab;
-  onTabChange: (tab: DashboardTab) => void;
-  counts: Record<DashboardTab, number>;
+  activeTab: DashboardTab
+  onTabChange: (tab: DashboardTab) => void
+  counts: Record<DashboardTab, number>
 }
 
 function MobileTabs({ activeTab, onTabChange, counts }: MobileTabsProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const activeTabItem = TAB_ITEMS.find(tab => tab.key === activeTab);
-  const Icon = activeTabItem?.icon || BarChart3;
+  const [isOpen, setIsOpen] = React.useState(false)
+  const activeTabItem = TAB_ITEMS.find(tab => tab.key === activeTab)
+  const Icon = activeTabItem?.icon || BarChart3
 
   return (
-    <div className="md:hidden bg-white border-b border-gray-200">
+    <div className="border-b border-gray-200 bg-white md:hidden">
       <div className="px-4 py-3">
         <div className="relative">
           <Button
@@ -176,64 +163,62 @@ function MobileTabs({ activeTab, onTabChange, counts }: MobileTabsProps) {
                 </Badge>
               )}
             </div>
-            <ChevronDown 
+            <ChevronDown
               className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isOpen && "transform rotate-180"
+                'h-4 w-4 transition-transform duration-200',
+                isOpen && 'rotate-180 transform'
               )}
             />
           </Button>
 
           {isOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-gray-200 bg-white shadow-lg">
               <div className="py-1">
-                {TAB_ITEMS.map((tab) => {
-                  const Icon = tab.icon;
-                  const count = counts[tab.key];
-                  const isActive = activeTab === tab.key;
-                  
+                {TAB_ITEMS.map(tab => {
+                  const Icon = tab.icon
+                  const count = counts[tab.key]
+                  const isActive = activeTab === tab.key
+
                   return (
                     <button
                       key={tab.key}
                       onClick={() => {
-                        onTabChange(tab.key);
-                        setIsOpen(false);
+                        onTabChange(tab.key)
+                        setIsOpen(false)
                       }}
                       className={cn(
-                        "flex items-center w-full px-4 py-3 text-sm transition-colors duration-200",
+                        'flex w-full items-center px-4 py-3 text-sm transition-colors duration-200',
                         isActive
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-gray-700 hover:bg-gray-50"
+                          ? 'bg-primary-50 text-primary-700'
+                          : 'text-gray-700 hover:bg-gray-50'
                       )}
                     >
-                      <Icon 
+                      <Icon
                         className={cn(
-                          "mr-3 h-4 w-4",
-                          isActive ? "text-primary-500" : "text-gray-400"
+                          'mr-3 h-4 w-4',
+                          isActive ? 'text-primary-500' : 'text-gray-400'
                         )}
                       />
-                      
+
                       <div className="flex-1 text-left">
                         <div className="font-medium">{tab.label}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {tab.description}
-                        </div>
+                        <div className="mt-0.5 text-xs text-gray-500">{tab.description}</div>
                       </div>
-                      
+
                       {count > 0 && (
-                        <Badge 
+                        <Badge
                           variant="secondary"
                           className={cn(
                             isActive
-                              ? "bg-primary-100 text-primary-700"
-                              : "bg-gray-100 text-gray-600"
+                              ? 'bg-primary-100 text-primary-700'
+                              : 'bg-gray-100 text-gray-600'
                           )}
                         >
                           {count}
                         </Badge>
                       )}
                     </button>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -243,48 +228,36 @@ function MobileTabs({ activeTab, onTabChange, counts }: MobileTabsProps) {
 
       {/* Overlay for mobile dropdown */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} aria-hidden="true" />
       )}
     </div>
-  );
+  )
 }
 
 // ============================================================================
 // Main Tab Navigation Component
 // ============================================================================
 
-export default function TabNavigation({ 
-  activeTab, 
-  onTabChange, 
-  counts, 
-  className 
+export default function TabNavigation({
+  activeTab,
+  onTabChange,
+  counts,
+  className,
 }: TabNavigationProps) {
   // Close mobile dropdown when tab changes
   React.useEffect(() => {
     // This effect helps ensure mobile dropdown closes when activeTab changes
-  }, [activeTab]);
+  }, [activeTab])
 
   return (
-    <div className={cn("bg-white shadow-sm", className)}>
+    <div className={cn('bg-white shadow-sm', className)}>
       {/* Desktop Navigation */}
-      <DesktopTabs 
-        activeTab={activeTab}
-        onTabChange={onTabChange}
-        counts={counts}
-      />
-      
+      <DesktopTabs activeTab={activeTab} onTabChange={onTabChange} counts={counts} />
+
       {/* Mobile Navigation */}
-      <MobileTabs
-        activeTab={activeTab}
-        onTabChange={onTabChange}
-        counts={counts}
-      />
+      <MobileTabs activeTab={activeTab} onTabChange={onTabChange} counts={counts} />
     </div>
-  );
+  )
 }
 
 // ============================================================================

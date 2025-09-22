@@ -1,39 +1,45 @@
 // TODO: Replace data access with Order Service FastAPI client
 import { CacheService } from '@/lib/redis'
-import type { MatchResult, OrderLineItem, DeliveryItem, InvoiceItem, Discrepancy } from './matching-algorithm'
+import type {
+  MatchResult,
+  OrderLineItem,
+  DeliveryItem,
+  InvoiceItem,
+  Discrepancy,
+} from './matching-algorithm'
 
 export interface ConfidenceFactors {
   // 基礎匹配因子
-  productMatch: number          // 產品匹配度 (0-1)
-  priceMatch: number           // 價格匹配度 (0-1)
-  quantityMatch: number        // 數量匹配度 (0-1)
-  dateMatch: number            // 日期匹配度 (0-1)
-  
+  productMatch: number // 產品匹配度 (0-1)
+  priceMatch: number // 價格匹配度 (0-1)
+  quantityMatch: number // 數量匹配度 (0-1)
+  dateMatch: number // 日期匹配度 (0-1)
+
   // 歷史數據因子
-  supplierReliability: number  // 供應商可靠度 (0-1)
-  productHistory: number       // 產品歷史記錄 (0-1)
-  seasonalPattern: number      // 季節性模式 (0-1)
-  
+  supplierReliability: number // 供應商可靠度 (0-1)
+  productHistory: number // 產品歷史記錄 (0-1)
+  seasonalPattern: number // 季節性模式 (0-1)
+
   // 業務邏輯因子
-  orderComplexity: number      // 訂單複雜度影響 (0-1)
-  marketVolatility: number     // 市場波動性 (0-1)
-  customerTier: number         // 客戶等級影響 (0-1)
+  orderComplexity: number // 訂單複雜度影響 (0-1)
+  marketVolatility: number // 市場波動性 (0-1)
+  customerTier: number // 客戶等級影響 (0-1)
 }
 
 export interface ConfidenceWeights {
   // 基礎權重
-  productMatch: number         // 預設: 0.25
-  priceMatch: number          // 預設: 0.20
-  quantityMatch: number       // 預設: 0.20
-  dateMatch: number           // 預設: 0.10
-  
+  productMatch: number // 預設: 0.25
+  priceMatch: number // 預設: 0.20
+  quantityMatch: number // 預設: 0.20
+  dateMatch: number // 預設: 0.10
+
   // 進階權重
   supplierReliability: number // 預設: 0.10
-  productHistory: number      // 預設: 0.05
-  seasonalPattern: number     // 預設: 0.03
-  orderComplexity: number     // 預設: 0.03
-  marketVolatility: number    // 預設: 0.02
-  customerTier: number        // 預設: 0.02
+  productHistory: number // 預設: 0.05
+  seasonalPattern: number // 預設: 0.03
+  orderComplexity: number // 預設: 0.03
+  marketVolatility: number // 預設: 0.02
+  customerTier: number // 預設: 0.02
 }
 
 export interface HistoricalPattern {
@@ -57,11 +63,11 @@ export interface SeasonalFactor {
 
 export interface SupplierProfile {
   id: string
-  reliabilityScore: number      // 0-1
-  averageResponseTime: number   // 小時
-  orderFulfillmentRate: number  // 0-1
-  priceConsistency: number      // 0-1
-  qualityScore: number          // 0-1
+  reliabilityScore: number // 0-1
+  averageResponseTime: number // 小時
+  orderFulfillmentRate: number // 0-1
+  priceConsistency: number // 0-1
+  qualityScore: number // 0-1
   totalOrdersProcessed: number
   disputeResolutionRate: number // 0-1
   lastEvaluated: Date
@@ -70,15 +76,15 @@ export interface SupplierProfile {
 export class AdvancedConfidenceScoring {
   private static readonly DEFAULT_WEIGHTS: ConfidenceWeights = {
     productMatch: 0.25,
-    priceMatch: 0.20,
-    quantityMatch: 0.20,
-    dateMatch: 0.10,
-    supplierReliability: 0.10,
+    priceMatch: 0.2,
+    quantityMatch: 0.2,
+    dateMatch: 0.1,
+    supplierReliability: 0.1,
     productHistory: 0.05,
     seasonalPattern: 0.03,
     orderComplexity: 0.03,
     marketVolatility: 0.02,
-    customerTier: 0.02
+    customerTier: 0.02,
   }
 
   constructor(private weights: ConfidenceWeights = AdvancedConfidenceScoring.DEFAULT_WEIGHTS) {}
@@ -202,8 +208,9 @@ export class AdvancedConfidenceScoring {
       // 計算價格穩定性
       const prices = productOrders.map(item => Number(item.unitPrice))
       const avgPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length
-      const priceVariance = prices.reduce((sum, price) => sum + Math.pow(price - avgPrice, 2), 0) / prices.length
-      const priceStability = Math.max(0, 1 - (Math.sqrt(priceVariance) / avgPrice))
+      const priceVariance =
+        prices.reduce((sum, price) => sum + Math.pow(price - avgPrice, 2), 0) / prices.length
+      const priceStability = Math.max(0, 1 - Math.sqrt(priceVariance) / avgPrice)
 
       // 計算交易頻率分數
       const transactionFrequency = Math.min(productOrders.length / 30, 1) // 30次交易視為高頻
@@ -216,13 +223,16 @@ export class AdvancedConfidenceScoring {
         for (let i = 1; i < orderDates.length; i++) {
           intervals.push(orderDates[i] - orderDates[i - 1])
         }
-        const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length
-        const intervalVariance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length
-        timeConsistency = Math.max(0.3, 1 - (Math.sqrt(intervalVariance) / avgInterval))
+        const avgInterval =
+          intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length
+        const intervalVariance =
+          intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) /
+          intervals.length
+        timeConsistency = Math.max(0.3, 1 - Math.sqrt(intervalVariance) / avgInterval)
       }
 
       // 綜合分數
-      const historyScore = (priceStability * 0.4) + (transactionFrequency * 0.3) + (timeConsistency * 0.3)
+      const historyScore = priceStability * 0.4 + transactionFrequency * 0.3 + timeConsistency * 0.3
 
       // 快取結果 (30分鐘)
       await CacheService.set(cacheKey, historyScore, 1800)
@@ -237,40 +247,92 @@ export class AdvancedConfidenceScoring {
   /**
    * 獲取季節性調整因子
    */
-  async getSeasonalAdjustment(productName: string, currentDate: Date = new Date()): Promise<number> {
+  async getSeasonalAdjustment(
+    productName: string,
+    currentDate: Date = new Date()
+  ): Promise<number> {
     const month = currentDate.getMonth() + 1 // 1-12
 
     // 預定義的季節性模式
     const seasonalPatterns: Record<string, Record<number, number>> = {
       // 蔬菜類：夏季價格波動大
-      '蔬菜': {
-        1: 0.8, 2: 0.8, 3: 0.9, 4: 0.9, 5: 0.7, 6: 0.6,
-        7: 0.5, 8: 0.5, 9: 0.6, 10: 0.8, 11: 0.9, 12: 0.8
+      蔬菜: {
+        1: 0.8,
+        2: 0.8,
+        3: 0.9,
+        4: 0.9,
+        5: 0.7,
+        6: 0.6,
+        7: 0.5,
+        8: 0.5,
+        9: 0.6,
+        10: 0.8,
+        11: 0.9,
+        12: 0.8,
       },
       // 海鮮類：春節前後價格不穩定
-      '海鮮': {
-        1: 0.6, 2: 0.5, 3: 0.8, 4: 0.9, 5: 0.9, 6: 0.8,
-        7: 0.8, 8: 0.8, 9: 0.8, 10: 0.8, 11: 0.7, 12: 0.6
+      海鮮: {
+        1: 0.6,
+        2: 0.5,
+        3: 0.8,
+        4: 0.9,
+        5: 0.9,
+        6: 0.8,
+        7: 0.8,
+        8: 0.8,
+        9: 0.8,
+        10: 0.8,
+        11: 0.7,
+        12: 0.6,
       },
       // 肉類：較穩定
-      '肉類': {
-        1: 0.8, 2: 0.8, 3: 0.8, 4: 0.8, 5: 0.8, 6: 0.8,
-        7: 0.8, 8: 0.8, 9: 0.8, 10: 0.8, 11: 0.8, 12: 0.7
+      肉類: {
+        1: 0.8,
+        2: 0.8,
+        3: 0.8,
+        4: 0.8,
+        5: 0.8,
+        6: 0.8,
+        7: 0.8,
+        8: 0.8,
+        9: 0.8,
+        10: 0.8,
+        11: 0.8,
+        12: 0.7,
       },
       // 預設模式
-      'default': {
-        1: 0.8, 2: 0.8, 3: 0.8, 4: 0.8, 5: 0.8, 6: 0.8,
-        7: 0.8, 8: 0.8, 9: 0.8, 10: 0.8, 11: 0.8, 12: 0.8
-      }
+      default: {
+        1: 0.8,
+        2: 0.8,
+        3: 0.8,
+        4: 0.8,
+        5: 0.8,
+        6: 0.8,
+        7: 0.8,
+        8: 0.8,
+        9: 0.8,
+        10: 0.8,
+        11: 0.8,
+        12: 0.8,
+      },
     }
 
     // 判斷產品類別
     let category = 'default'
     if (productName.includes('蔬菜') || productName.includes('青菜')) {
       category = '蔬菜'
-    } else if (productName.includes('海鮮') || productName.includes('魚') || productName.includes('蝦')) {
+    } else if (
+      productName.includes('海鮮') ||
+      productName.includes('魚') ||
+      productName.includes('蝦')
+    ) {
       category = '海鮮'
-    } else if (productName.includes('肉') || productName.includes('牛') || productName.includes('豬') || productName.includes('雞')) {
+    } else if (
+      productName.includes('肉') ||
+      productName.includes('牛') ||
+      productName.includes('豬') ||
+      productName.includes('雞')
+    ) {
       category = '肉類'
     }
 
@@ -417,7 +479,7 @@ export class AdvancedConfidenceScoring {
       // 業務邏輯因子
       orderComplexity: this.calculateOrderComplexity(matchResult.orderItem, totalOrderItems),
       marketVolatility: this.getMarketVolatilityFactor(matchResult.orderItem.productName),
-      customerTier: await this.getCustomerTierAdjustment(matchResult.orderItem.restaurantId)
+      customerTier: await this.getCustomerTierAdjustment(matchResult.orderItem.restaurantId),
     }
 
     // 加權計算最終分數
@@ -444,7 +506,7 @@ export class AdvancedConfidenceScoring {
    */
   private extractFactorFromDiscrepancies(discrepancies: Discrepancy[], type: string): number {
     const relevantDiscrepancy = discrepancies.find(d => d.type === type)
-    
+
     if (!relevantDiscrepancy) {
       return 1.0 // 沒有差異表示完美匹配
     }
@@ -467,7 +529,10 @@ export class AdvancedConfidenceScoring {
   /**
    * 生成信心分數詳細報告
    */
-  async generateConfidenceReport(matchResult: MatchResult, totalOrderItems: number): Promise<{
+  async generateConfidenceReport(
+    matchResult: MatchResult,
+    totalOrderItems: number
+  ): Promise<{
     finalScore: number
     factors: ConfidenceFactors
     weights: ConfidenceWeights
@@ -486,7 +551,7 @@ export class AdvancedConfidenceScoring {
       seasonalPattern: await this.getSeasonalAdjustment(matchResult.orderItem.productName),
       orderComplexity: this.calculateOrderComplexity(matchResult.orderItem, totalOrderItems),
       marketVolatility: this.getMarketVolatilityFactor(matchResult.orderItem.productName),
-      customerTier: await this.getCustomerTierAdjustment(matchResult.orderItem.restaurantId)
+      customerTier: await this.getCustomerTierAdjustment(matchResult.orderItem.restaurantId),
     }
 
     const finalScore = await this.calculateAdvancedConfidenceScore(matchResult, totalOrderItems)
@@ -516,7 +581,7 @@ export class AdvancedConfidenceScoring {
       finalScore,
       factors,
       weights: this.weights,
-      recommendations
+      recommendations,
     }
   }
 }

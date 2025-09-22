@@ -12,12 +12,15 @@ export async function POST(req: NextRequest) {
     const res = await fetch(`${base}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, rememberMe: !!rememberMe })
+      body: JSON.stringify({ email, password, rememberMe: !!rememberMe }),
     })
     const data = await res.json().catch(() => ({}))
 
     if (!res.ok || !data?.success) {
-      return NextResponse.json({ success: false, message: data?.message || 'Login failed' }, { status: 401 })
+      return NextResponse.json(
+        { success: false, message: data?.message || 'Login failed' },
+        { status: 401 }
+      )
     }
 
     const accessToken: string | undefined = data.token || data.access_token

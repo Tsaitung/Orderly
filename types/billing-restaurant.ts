@@ -16,11 +16,11 @@ export interface BaseEntity {
 
 export type RestaurantPlanType = 'free' | 'pro' | 'enterprise'
 export type RestaurantContractStatus = 'draft' | 'active' | 'paused' | 'cancelled' | 'expired'
-export type FeatureFlag = 
-  | 'auto_reorder' 
-  | 'cost_report' 
-  | 'multi_store' 
-  | 'consolidated_po' 
+export type FeatureFlag =
+  | 'auto_reorder'
+  | 'cost_report'
+  | 'multi_store'
+  | 'consolidated_po'
   | 'fast_recon_export'
   | 'api_access'
   | 'advanced_analytics'

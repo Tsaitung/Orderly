@@ -1,16 +1,16 @@
 'use client'
 
 import React from 'react'
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  UserPlus, 
-  Download, 
-  Settings, 
+import {
+  Users,
+  Search,
+  Filter,
+  UserPlus,
+  Download,
+  Settings,
   Activity,
   Shield,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -32,17 +32,17 @@ export function UserManagement() {
   const [stats, setStats] = React.useState<UserStats | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  
+
   // 搜尋和篩選狀態
   const [searchTerm, setSearchTerm] = React.useState('')
   const [selectedRole, setSelectedRole] = React.useState<string>('all')
   const [selectedStatus, setSelectedStatus] = React.useState<string>('all')
   const [selectedOrganization, setSelectedOrganization] = React.useState<string>('all')
-  
+
   // 批量操作狀態
   const [selectedUsers, setSelectedUsers] = React.useState<string[]>([])
   const [showBatchActions, setShowBatchActions] = React.useState(false)
-  
+
   // 模態框狀態
   const [showAddUserModal, setShowAddUserModal] = React.useState(false)
 
@@ -55,7 +55,7 @@ export function UserManagement() {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       setStats({
         totalUsers: 1247,
         activeUsers: 1156,
@@ -63,7 +63,7 @@ export function UserManagement() {
         pendingUsers: 23,
         restaurantUsers: 856,
         supplierUsers: 321,
-        platformUsers: 70
+        platformUsers: 70,
       })
     } catch (err) {
       setError('載入使用者統計資料失敗')
@@ -97,17 +97,17 @@ export function UserManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
           <p className="text-gray-600">{error}</p>
           <Button onClick={loadUserStats} className="mt-4">
             重新載入
@@ -120,7 +120,7 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">總使用者數</CardTitle>
@@ -128,12 +128,10 @@ export function UserManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">
-              較上月增加 +12%
-            </p>
+            <p className="text-xs text-muted-foreground">較上月增加 +12%</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">活躍使用者</CardTitle>
@@ -142,7 +140,7 @@ export function UserManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats?.activeUsers}</div>
             <p className="text-xs text-muted-foreground">
-              活躍率 {Math.round((stats?.activeUsers || 0) / (stats?.totalUsers || 1) * 100)}%
+              活躍率 {Math.round(((stats?.activeUsers || 0) / (stats?.totalUsers || 1)) * 100)}%
             </p>
           </CardContent>
         </Card>
@@ -155,7 +153,7 @@ export function UserManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats?.restaurantUsers}</div>
             <p className="text-xs text-muted-foreground">
-              佔總數 {Math.round((stats?.restaurantUsers || 0) / (stats?.totalUsers || 1) * 100)}%
+              佔總數 {Math.round(((stats?.restaurantUsers || 0) / (stats?.totalUsers || 1)) * 100)}%
             </p>
           </CardContent>
         </Card>
@@ -168,7 +166,7 @@ export function UserManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{stats?.supplierUsers}</div>
             <p className="text-xs text-muted-foreground">
-              佔總數 {Math.round((stats?.supplierUsers || 0) / (stats?.totalUsers || 1) * 100)}%
+              佔總數 {Math.round(((stats?.supplierUsers || 0) / (stats?.totalUsers || 1)) * 100)}%
             </p>
           </CardContent>
         </Card>
@@ -180,22 +178,22 @@ export function UserManagement() {
           <CardTitle className="text-lg">搜尋與篩選</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋使用者姓名、Email 或組織..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <select
                 value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedRole(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有角色</option>
                 <option value="platform_admin">平台管理員</option>
@@ -204,31 +202,31 @@ export function UserManagement() {
                 <option value="supplier_admin">供應商管理員</option>
                 <option value="supplier_staff">供應商員工</option>
               </select>
-              
+
               <select
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有狀態</option>
                 <option value="active">活躍</option>
                 <option value="inactive">已停用</option>
                 <option value="pending">待啟用</option>
               </select>
-              
+
               <select
                 value={selectedOrganization}
-                onChange={(e) => setSelectedOrganization(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedOrganization(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有組織</option>
                 <option value="restaurant">餐廳</option>
                 <option value="supplier">供應商</option>
                 <option value="platform">平台</option>
               </select>
-              
+
               <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="mr-2 h-4 w-4" />
                 進階篩選
               </Button>
             </div>
@@ -242,9 +240,7 @@ export function UserManagement() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium">
-                  已選取 {selectedUsers.length} 個使用者
-                </span>
+                <span className="text-sm font-medium">已選取 {selectedUsers.length} 個使用者</span>
                 <div className="flex space-x-2">
                   <Button size="sm" onClick={handleBatchActivate}>
                     批量啟用
@@ -257,9 +253,9 @@ export function UserManagement() {
                   </Button>
                 </div>
               </div>
-              <Button 
-                size="sm" 
-                variant="ghost" 
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => {
                   setSelectedUsers([])
                   setShowBatchActions(false)

@@ -3,13 +3,13 @@
 // ============================================================================
 // Enhanced Customer Hierarchy Dashboard with tabbed BI interface
 
-'use client';
+'use client'
 
-import React from 'react';
-import { CustomerHierarchyDashboard } from './dashboard/CustomerHierarchyDashboard';
+import React from 'react'
+import { CustomerHierarchyDashboard } from './dashboard/CustomerHierarchyDashboard'
 
 // Import for backward compatibility
-import { CustomerHierarchyProvider } from '../context/CustomerHierarchyContext';
+import { CustomerHierarchyProvider } from '../context/CustomerHierarchyContext'
 
 // ============================================================================
 // Legacy Component Implementation (for reference)
@@ -22,11 +22,9 @@ import { CustomerHierarchyProvider } from '../context/CustomerHierarchyContext';
 // ============================================================================
 
 interface CustomerManagementProps {
-  className?: string;
+  className?: string
 }
 
 export function CustomerManagement({ className }: CustomerManagementProps) {
-  return (
-    <CustomerHierarchyDashboard className={className} />
-  );
+  return <CustomerHierarchyDashboard className={className} />
 }

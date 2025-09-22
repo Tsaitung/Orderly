@@ -63,23 +63,23 @@ export interface MatchingConfig {
   // Price tolerance settings
   priceTolerancePercent: number // Default: 3%
   freshProducePriceTolerancePercent: number // Default: 5%
-  
+
   // Quantity tolerance settings
   quantityTolerancePercent: number // Default: 2%
   minimumQuantityVariance: number // Default: 0.1
-  
+
   // Date validation settings
   deliveryDateToleranceDays: number // Default: 2
   invoiceDateToleranceDays: number // Default: 7
-  
+
   // Product matching settings
   productNameSimilarityThreshold: number // Default: 0.8
   productCodeStrictMatching: boolean // Default: true
-  
+
   // Auto-approval thresholds
   autoApprovalThreshold: number // Default: 0.95
   manualReviewThreshold: number // Default: 0.7
-  
+
   // ML model settings
   useHistoricalLearning: boolean // Default: true
   supplierSpecificRules: boolean // Default: true
@@ -98,7 +98,7 @@ export class FuzzyMatchingEngine {
     autoApprovalThreshold: 0.95,
     manualReviewThreshold: 0.7,
     useHistoricalLearning: true,
-    supplierSpecificRules: true
+    supplierSpecificRules: true,
   }
 
   constructor(private config: MatchingConfig = FuzzyMatchingEngine.DEFAULT_CONFIG) {}
@@ -107,7 +107,9 @@ export class FuzzyMatchingEngine {
    * 計算 Levenshtein 距離用於產品名稱相似度比較
    */
   private calculateLevenshteinDistance(str1: string, str2: string): number {
-    const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null))
+    const matrix = Array(str2.length + 1)
+      .fill(null)
+      .map(() => Array(str1.length + 1).fill(null))
 
     for (let i = 0; i <= str1.length; i++) {
       matrix[0][i] = i
@@ -124,8 +126,8 @@ export class FuzzyMatchingEngine {
         } else {
           matrix[j][i] = Math.min(
             matrix[j - 1][i - 1] + 1, // substitution
-            matrix[j][i - 1] + 1,     // insertion
-            matrix[j - 1][i] + 1      // deletion
+            matrix[j][i - 1] + 1, // insertion
+            matrix[j - 1][i] + 1 // deletion
           )
         }
       }
@@ -140,21 +142,30 @@ export class FuzzyMatchingEngine {
   private calculateStringSimilarity(str1: string, str2: string): number {
     if (str1 === str2) return 1
 
-    const cleanStr1 = str1.toLowerCase().replace(/[^\w\s]/g, '').trim()
-    const cleanStr2 = str2.toLowerCase().replace(/[^\w\s]/g, '').trim()
+    const cleanStr1 = str1
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .trim()
+    const cleanStr2 = str2
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .trim()
 
     if (cleanStr1 === cleanStr2) return 1
 
     const maxLength = Math.max(cleanStr1.length, cleanStr2.length)
     const distance = this.calculateLevenshteinDistance(cleanStr1, cleanStr2)
-    
-    return 1 - (distance / maxLength)
+
+    return 1 - distance / maxLength
   }
 
   /**
    * 產品匹配分數計算
    */
-  private calculateProductMatchScore(orderItem: OrderLineItem, comparisonItem: DeliveryItem | InvoiceItem): number {
+  private calculateProductMatchScore(
+    orderItem: OrderLineItem,
+    comparisonItem: DeliveryItem | InvoiceItem
+  ): number {
     let score = 0
     let weightSum = 0
 
@@ -166,13 +177,19 @@ export class FuzzyMatchingEngine {
       weightSum += 0.6
     } else {
       // 模糊匹配產品代碼
-      const codeSimilarity = this.calculateStringSimilarity(orderItem.productCode, comparisonItem.productCode)
+      const codeSimilarity = this.calculateStringSimilarity(
+        orderItem.productCode,
+        comparisonItem.productCode
+      )
       score += codeSimilarity * 0.6
       weightSum += 0.6
     }
 
     // 產品名稱匹配 (權重: 40%)
-    const nameSimilarity = this.calculateStringSimilarity(orderItem.productName, comparisonItem.productName)
+    const nameSimilarity = this.calculateStringSimilarity(
+      orderItem.productName,
+      comparisonItem.productName
+    )
     score += nameSimilarity * 0.4
     weightSum += 0.4
 
@@ -182,7 +199,10 @@ export class FuzzyMatchingEngine {
   /**
    * 價格匹配分數計算
    */
-  private calculatePriceMatchScore(orderItem: OrderLineItem, comparisonItem: DeliveryItem | InvoiceItem): number {
+  private calculatePriceMatchScore(
+    orderItem: OrderLineItem,
+    comparisonItem: DeliveryItem | InvoiceItem
+  ): number {
     const orderPrice = orderItem.unitPrice
     const comparisonPrice = comparisonItem.unitPrice
 
@@ -190,8 +210,8 @@ export class FuzzyMatchingEngine {
 
     // 判斷是否為生鮮產品 (可以通過產品類別或名稱關鍵字判斷)
     const isFreshProduce = this.isFreshProduce(orderItem.productName)
-    const tolerancePercent = isFreshProduce 
-      ? this.config.freshProducePriceTolerancePercent 
+    const tolerancePercent = isFreshProduce
+      ? this.config.freshProducePriceTolerancePercent
       : this.config.priceTolerancePercent
 
     const priceDifference = Math.abs(orderPrice - comparisonPrice)
@@ -214,14 +234,17 @@ export class FuzzyMatchingEngine {
   /**
    * 數量匹配分數計算
    */
-  private calculateQuantityMatchScore(orderItem: OrderLineItem, deliveryItem: DeliveryItem): number {
+  private calculateQuantityMatchScore(
+    orderItem: OrderLineItem,
+    deliveryItem: DeliveryItem
+  ): number {
     const orderedQty = orderItem.orderedQuantity
     const deliveredQty = deliveryItem.deliveredQuantity
 
     if (orderedQty === deliveredQty) return 1
 
     const quantityDifference = Math.abs(orderedQty - deliveredQty)
-    
+
     // 檢查是否在最小容許變動範圍內
     if (quantityDifference <= this.config.minimumQuantityVariance) {
       return 0.95
@@ -245,15 +268,22 @@ export class FuzzyMatchingEngine {
   /**
    * 日期匹配分數計算
    */
-  private calculateDateMatchScore(orderItem: OrderLineItem, comparisonItem: DeliveryItem | InvoiceItem): number {
+  private calculateDateMatchScore(
+    orderItem: OrderLineItem,
+    comparisonItem: DeliveryItem | InvoiceItem
+  ): number {
     const orderDate = orderItem.deliveryDate
-    const comparisonDate = 'deliveredDate' in comparisonItem ? comparisonItem.deliveredDate : comparisonItem.invoiceDate
-    
-    const daysDifference = Math.abs((orderDate.getTime() - comparisonDate.getTime()) / (1000 * 60 * 60 * 24))
-    
-    const toleranceDays = 'deliveredDate' in comparisonItem 
-      ? this.config.deliveryDateToleranceDays 
-      : this.config.invoiceDateToleranceDays
+    const comparisonDate =
+      'deliveredDate' in comparisonItem ? comparisonItem.deliveredDate : comparisonItem.invoiceDate
+
+    const daysDifference = Math.abs(
+      (orderDate.getTime() - comparisonDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    const toleranceDays =
+      'deliveredDate' in comparisonItem
+        ? this.config.deliveryDateToleranceDays
+        : this.config.invoiceDateToleranceDays
 
     if (daysDifference === 0) return 1
     if (daysDifference <= toleranceDays) {
@@ -281,8 +311,8 @@ export class FuzzyMatchingEngine {
    * 綜合匹配分數計算
    */
   calculateOverallMatchScore(
-    orderItem: OrderLineItem, 
-    deliveryItem?: DeliveryItem, 
+    orderItem: OrderLineItem,
+    deliveryItem?: DeliveryItem,
     invoiceItem?: InvoiceItem
   ): number {
     if (!deliveryItem && !invoiceItem) return 0
@@ -298,7 +328,8 @@ export class FuzzyMatchingEngine {
       const dateScore = this.calculateDateMatchScore(orderItem, deliveryItem)
 
       // 加權平均 (產品40%, 價格25%, 數量25%, 日期10%)
-      const deliveryScore = (productScore * 0.4) + (priceScore * 0.25) + (quantityScore * 0.25) + (dateScore * 0.1)
+      const deliveryScore =
+        productScore * 0.4 + priceScore * 0.25 + quantityScore * 0.25 + dateScore * 0.1
       totalScore += deliveryScore
       scoreCount++
     }
@@ -310,7 +341,7 @@ export class FuzzyMatchingEngine {
       const dateScore = this.calculateDateMatchScore(orderItem, invoiceItem)
 
       // 發票沒有數量比較，調整權重 (產品50%, 價格35%, 日期15%)
-      const invoiceScore = (productScore * 0.5) + (priceScore * 0.35) + (dateScore * 0.15)
+      const invoiceScore = productScore * 0.5 + priceScore * 0.35 + dateScore * 0.15
       totalScore += invoiceScore
       scoreCount++
     }
@@ -322,16 +353,22 @@ export class FuzzyMatchingEngine {
    * 檢測差異
    */
   detectDiscrepancies(
-    orderItem: OrderLineItem, 
-    deliveryItem?: DeliveryItem, 
+    orderItem: OrderLineItem,
+    deliveryItem?: DeliveryItem,
     invoiceItem?: InvoiceItem
   ): Discrepancy[] {
     const discrepancies: Discrepancy[] = []
 
     if (deliveryItem) {
       // 數量差異
-      if (Math.abs(orderItem.orderedQuantity - deliveryItem.deliveredQuantity) > this.config.minimumQuantityVariance) {
-        const variance = ((deliveryItem.deliveredQuantity - orderItem.orderedQuantity) / orderItem.orderedQuantity) * 100
+      if (
+        Math.abs(orderItem.orderedQuantity - deliveryItem.deliveredQuantity) >
+        this.config.minimumQuantityVariance
+      ) {
+        const variance =
+          ((deliveryItem.deliveredQuantity - orderItem.orderedQuantity) /
+            orderItem.orderedQuantity) *
+          100
         discrepancies.push({
           type: 'quantity',
           field: 'deliveredQuantity',
@@ -340,14 +377,14 @@ export class FuzzyMatchingEngine {
           variance: Math.abs(variance),
           severity: Math.abs(variance) > 10 ? 'high' : Math.abs(variance) > 5 ? 'medium' : 'low',
           description: `送貨數量 ${deliveryItem.deliveredQuantity} 與訂購數量 ${orderItem.orderedQuantity} 不符`,
-          autoResolvable: Math.abs(variance) <= this.config.quantityTolerancePercent
+          autoResolvable: Math.abs(variance) <= this.config.quantityTolerancePercent,
         })
       }
 
       // 價格差異
       const priceDifference = Math.abs(orderItem.unitPrice - deliveryItem.unitPrice)
       const priceVariancePercent = (priceDifference / orderItem.unitPrice) * 100
-      
+
       if (priceVariancePercent > this.config.priceTolerancePercent) {
         discrepancies.push({
           type: 'price',
@@ -355,14 +392,18 @@ export class FuzzyMatchingEngine {
           expected: orderItem.unitPrice,
           actual: deliveryItem.unitPrice,
           variance: priceVariancePercent,
-          severity: priceVariancePercent > 15 ? 'critical' : priceVariancePercent > 10 ? 'high' : 'medium',
+          severity:
+            priceVariancePercent > 15 ? 'critical' : priceVariancePercent > 10 ? 'high' : 'medium',
           description: `送貨單價 $${deliveryItem.unitPrice} 與訂購單價 $${orderItem.unitPrice} 差異 ${priceVariancePercent.toFixed(1)}%`,
-          autoResolvable: false
+          autoResolvable: false,
         })
       }
 
       // 產品差異
-      const productSimilarity = this.calculateStringSimilarity(orderItem.productName, deliveryItem.productName)
+      const productSimilarity = this.calculateStringSimilarity(
+        orderItem.productName,
+        deliveryItem.productName
+      )
       if (productSimilarity < this.config.productNameSimilarityThreshold) {
         discrepancies.push({
           type: 'product',
@@ -372,7 +413,7 @@ export class FuzzyMatchingEngine {
           variance: (1 - productSimilarity) * 100,
           severity: productSimilarity < 0.5 ? 'critical' : 'medium',
           description: `送貨商品 "${deliveryItem.productName}" 與訂購商品 "${orderItem.productName}" 不符`,
-          autoResolvable: false
+          autoResolvable: false,
         })
       }
     }
@@ -381,7 +422,7 @@ export class FuzzyMatchingEngine {
       // 發票價格與訂單價格比較
       const invoicePriceDifference = Math.abs(orderItem.unitPrice - invoiceItem.unitPrice)
       const invoicePriceVariancePercent = (invoicePriceDifference / orderItem.unitPrice) * 100
-      
+
       if (invoicePriceVariancePercent > this.config.priceTolerancePercent) {
         discrepancies.push({
           type: 'price',
@@ -389,9 +430,14 @@ export class FuzzyMatchingEngine {
           expected: orderItem.unitPrice,
           actual: invoiceItem.unitPrice,
           variance: invoicePriceVariancePercent,
-          severity: invoicePriceVariancePercent > 15 ? 'critical' : invoicePriceVariancePercent > 10 ? 'high' : 'medium',
+          severity:
+            invoicePriceVariancePercent > 15
+              ? 'critical'
+              : invoicePriceVariancePercent > 10
+                ? 'high'
+                : 'medium',
           description: `發票單價 $${invoiceItem.unitPrice} 與訂購單價 $${orderItem.unitPrice} 差異 ${invoicePriceVariancePercent.toFixed(1)}%`,
-          autoResolvable: false
+          autoResolvable: false,
         })
       }
     }
@@ -481,7 +527,11 @@ export class FuzzyMatchingEngine {
       }
 
       // 計算最終分數
-      const finalScore = this.calculateOverallMatchScore(orderItem, bestDeliveryMatch, bestInvoiceMatch)
+      const finalScore = this.calculateOverallMatchScore(
+        orderItem,
+        bestDeliveryMatch,
+        bestInvoiceMatch
+      )
 
       // 檢測差異
       const discrepancies = this.detectDiscrepancies(orderItem, bestDeliveryMatch, bestInvoiceMatch)
@@ -512,8 +562,8 @@ export class FuzzyMatchingEngine {
         metadata: {
           processedAt: new Date(),
           algorithmVersion: '1.0',
-          config: this.config
-        }
+          config: this.config,
+        },
       })
     }
 

@@ -10,42 +10,50 @@
 ## 1. Executive Summary
 
 ### 1.1 Product Overview
+
 The Customer Hierarchy Management System introduces a sophisticated 4-level organizational structure to the Orderly platform, enabling accurate representation of complex business relationships in the restaurant supply chain. This system replaces the current single-level customer management with a flexible, scalable hierarchy that accurately models real-world business structures.
 
 ### 1.2 Business Objectives
+
 - **Accurate Business Modeling**: Represent complex organizational structures (franchises, multi-location businesses, department-level ordering)
 - **Improved Financial Management**: Separate billing entities from ordering entities for accurate invoicing and accounting
 - **Enhanced Operational Efficiency**: Enable location-specific delivery management and department-level demand planning
 - **Scalability**: Support business growth from single restaurants to large restaurant groups
 
 ### 1.3 Success Metrics
-| Metric | Target | Measurement Method |
-|--------|--------|-------------------|
-| Migration Success Rate | 100% of existing customers migrated without data loss | System audit logs |
-| Hierarchy Adoption Rate | 60% of multi-location businesses using hierarchy features within 3 months | Usage analytics |
-| Order Processing Accuracy | 99.5% orders correctly mapped to hierarchy levels | Order audit reports |
-| User Satisfaction | >85% satisfaction with hierarchy management features | User surveys |
-| System Performance | <100ms response time for hierarchy queries | Performance monitoring |
+
+| Metric                    | Target                                                                    | Measurement Method     |
+| ------------------------- | ------------------------------------------------------------------------- | ---------------------- |
+| Migration Success Rate    | 100% of existing customers migrated without data loss                     | System audit logs      |
+| Hierarchy Adoption Rate   | 60% of multi-location businesses using hierarchy features within 3 months | Usage analytics        |
+| Order Processing Accuracy | 99.5% orders correctly mapped to hierarchy levels                         | Order audit reports    |
+| User Satisfaction         | >85% satisfaction with hierarchy management features                      | User surveys           |
+| System Performance        | <100ms response time for hierarchy queries                                | Performance monitoring |
 
 ---
 
 ## 2. Market Context & Business Justification
 
 ### 2.1 Current Pain Points
+
 1. **Single-level limitation**: Cannot represent restaurant chains, franchises, or multi-location businesses
 2. **Billing complexity**: No separation between ordering entity and billing entity
 3. **Delivery inefficiency**: Cannot manage multiple delivery locations for single company
 4. **Department visibility**: No way to track consumption by different kitchen departments
 
 ### 2.2 Market Requirements
+
 Based on customer feedback and market analysis:
+
 - **45% of restaurants** operate multiple locations
 - **68% of restaurant chains** require department-level cost tracking
 - **82% of suppliers** need separate billing and delivery addresses
 - **91% of accounting teams** require legal entity separation for invoicing
 
 ### 2.3 Competitive Advantage
+
 This hierarchy system provides:
+
 - **Industry-first** 4-level flexibility not offered by competitors
 - **Seamless migration** from existing single-level system
 - **API-first design** for ERP integration
@@ -58,6 +66,7 @@ This hierarchy system provides:
 ### 3.1 Hierarchy Levels Definition
 
 #### Level 1: Group (集團)
+
 - **Purpose**: Virtual umbrella entity for managing multiple companies
 - **Characteristics**:
   - Optional layer (can be skipped if not needed)
@@ -69,6 +78,7 @@ This hierarchy system provides:
   - Investment holding group
 
 #### Level 2: Company (公司)
+
 - **Purpose**: Legal entity for billing and accounting
 - **Characteristics**:
   - Government-registered entity with tax ID
@@ -83,6 +93,7 @@ This hierarchy system provides:
   - Individual proprietorship (身分證字號: A123456789)
 
 #### Level 3: Location (地點)
+
 - **Purpose**: Physical delivery destination
 - **Characteristics**:
   - Specific street address
@@ -95,6 +106,7 @@ This hierarchy system provides:
   - Central kitchen facility
 
 #### Level 4: Business Unit (業務單位)
+
 - **Purpose**: Actual ordering/demand entity
 - **Characteristics**:
   - Virtual subdivision within location
@@ -131,6 +143,7 @@ Group (Optional)
 ### 4.1 Restaurant Administrator Stories
 
 **Story 1: Initial Setup**
+
 ```
 As a restaurant administrator,
 I want to set up my company's hierarchy structure,
@@ -144,6 +157,7 @@ Acceptance Criteria:
 ```
 
 **Story 2: Multi-Location Management**
+
 ```
 As a restaurant chain manager,
 I want to manage orders across multiple locations,
@@ -157,6 +171,7 @@ Acceptance Criteria:
 ```
 
 **Story 3: Department-Level Ordering**
+
 ```
 As a location manager,
 I want different departments to place their own orders,
@@ -172,6 +187,7 @@ Acceptance Criteria:
 ### 4.2 Supplier Stories
 
 **Story 4: Customer Hierarchy Visibility**
+
 ```
 As a supplier,
 I want to see my customer's organizational structure,
@@ -185,6 +201,7 @@ Acceptance Criteria:
 ```
 
 **Story 5: Consolidated Billing**
+
 ```
 As a supplier's accounting team,
 I want to generate invoices at the company level,
@@ -200,6 +217,7 @@ Acceptance Criteria:
 ### 4.3 Platform Administrator Stories
 
 **Story 6: Migration Management**
+
 ```
 As a platform administrator,
 I want to migrate existing customers to the new hierarchy,
@@ -221,6 +239,7 @@ Acceptance Criteria:
 #### 5.1.1 CRUD Operations
 
 **Create Operations**
+
 - Create Group (optional)
 - Create Company with validation:
   - Tax ID format validation
@@ -236,18 +255,21 @@ Acceptance Criteria:
   - Budget allocation (optional)
 
 **Read Operations**
+
 - View complete hierarchy tree
 - Filter by hierarchy level
 - Search across all levels
 - Export hierarchy structure
 
 **Update Operations**
+
 - Edit entity details at any level
 - Move entities within hierarchy (with validation)
 - Bulk update operations
 - Change status (active/inactive)
 
 **Delete Operations**
+
 - Soft delete with data retention
 - Cascade rules:
   - Cannot delete if active orders exist
@@ -257,16 +279,19 @@ Acceptance Criteria:
 #### 5.1.2 Validation Rules
 
 **Company Level**
+
 - Tax ID must be valid format
 - One company cannot belong to multiple groups
 - Company must have at least one location to place orders
 
 **Location Level**
+
 - Address must be valid and complete
 - Delivery contact required
 - Cannot duplicate addresses within same company
 
 **Business Unit Level**
+
 - Unique code within location
 - Must belong to exactly one location
 - Cannot exist without parent location
@@ -274,10 +299,11 @@ Acceptance Criteria:
 ### 5.2 Data Relationships
 
 #### 5.2.1 Core Relationships
+
 ```sql
 -- Simplified schema representation
 Groups (1) ← → (n) Companies
-Companies (1) ← → (n) Locations  
+Companies (1) ← → (n) Locations
 Locations (1) ← → (n) BusinessUnits
 BusinessUnits (1) ← → (n) Orders
 Companies (1) ← → (n) Invoices
@@ -285,6 +311,7 @@ Locations (1) ← → (n) Deliveries
 ```
 
 #### 5.2.2 Constraints
+
 - **Referential Integrity**: Foreign key constraints at all levels
 - **Circular Reference Prevention**: Entity cannot be its own parent
 - **Orphan Prevention**: No entities without valid parent (except Group)
@@ -292,15 +319,17 @@ Locations (1) ← → (n) Deliveries
 ### 5.3 Permission & Access Control
 
 #### 5.3.1 Role-Based Permissions
-| Role | Group | Company | Location | Business Unit |
-|------|-------|---------|----------|---------------|
-| Group Admin | Full | Full | Full | Full |
-| Company Admin | View | Full | Full | Full |
-| Location Manager | View | View | Full (own) | Full (own) |
-| Unit Manager | View | View | View | Full (own) |
-| Regular User | View | View | View | View (own) |
+
+| Role             | Group | Company | Location   | Business Unit |
+| ---------------- | ----- | ------- | ---------- | ------------- |
+| Group Admin      | Full  | Full    | Full       | Full          |
+| Company Admin    | View  | Full    | Full       | Full          |
+| Location Manager | View  | View    | Full (own) | Full (own)    |
+| Unit Manager     | View  | View    | View       | Full (own)    |
+| Regular User     | View  | View    | View       | View (own)    |
 
 #### 5.3.2 Data Access Rules
+
 - Users can only see hierarchy within their organization
 - Suppliers can see customer hierarchy (read-only)
 - Cross-company visibility requires explicit permission
@@ -308,18 +337,21 @@ Locations (1) ← → (n) Deliveries
 ### 5.4 Integration Requirements
 
 #### 5.4.1 Order Management Integration
+
 - Orders must reference specific Business Unit
 - Order aggregation by any hierarchy level
 - Delivery address from Location level
 - Billing information from Company level
 
 #### 5.4.2 Billing System Integration
+
 - Invoices generated at Company level
 - Support for consolidated billing across locations
 - Department-level cost allocation
 - Integration with existing accounting systems
 
 #### 5.4.3 Reporting Integration
+
 - Hierarchical reporting structure
 - Drill-down from Group to Business Unit
 - Comparative analysis across levels
@@ -332,30 +364,35 @@ Locations (1) ← → (n) Deliveries
 ### 6.1 Migration Phases
 
 **Phase 1: Data Preparation (Week 1)**
+
 - Audit existing customer data
 - Identify multi-location customers
 - Create migration mapping
 - Prepare rollback procedures
 
 **Phase 2: System Updates (Week 2-3)**
+
 - Deploy database schema changes
 - Update APIs with hierarchy support
 - Implement backward compatibility layer
 - Deploy new UI components
 
 **Phase 3: Pilot Migration (Week 4)**
+
 - Migrate 10 pilot customers
 - Monitor system performance
 - Collect feedback
 - Fix identified issues
 
 **Phase 4: Full Migration (Week 5-6)**
+
 - Automated migration for simple customers
 - Assisted migration for complex organizations
 - Data validation and verification
 - Performance optimization
 
 **Phase 5: Transition Period (Week 7-8)**
+
 - Both systems run in parallel
 - Gradual feature deprecation
 - User training and support
@@ -364,6 +401,7 @@ Locations (1) ← → (n) Deliveries
 ### 6.2 Migration Rules
 
 **Single Location Customers**
+
 ```
 Current: Customer Entity
 ↓
@@ -374,6 +412,7 @@ New Structure:
 ```
 
 **Multi-Location Customers (Identified)**
+
 ```
 Current: Multiple Customer Entities
 ↓
@@ -388,14 +427,14 @@ New Structure:
 
 ### 6.3 Data Mapping
 
-| Current Field | New Location | Notes |
-|--------------|--------------|-------|
-| customer.id | company.legacy_id | Maintain for reference |
-| customer.name | company.name | Direct mapping |
-| customer.tax_id | company.tax_id | Validate format |
-| customer.address | location.address | Create default location |
-| customer.contact | location.contact | Move to location level |
-| Order.customer_id | Order.business_unit_id | Via migration table |
+| Current Field     | New Location           | Notes                   |
+| ----------------- | ---------------------- | ----------------------- |
+| customer.id       | company.legacy_id      | Maintain for reference  |
+| customer.name     | company.name           | Direct mapping          |
+| customer.tax_id   | company.tax_id         | Validate format         |
+| customer.address  | location.address       | Create default location |
+| customer.contact  | location.contact       | Move to location level  |
+| Order.customer_id | Order.business_unit_id | Via migration table     |
 
 ---
 
@@ -486,6 +525,7 @@ CREATE TABLE customer_migration_log (
 ### 7.2 API Endpoints
 
 **Hierarchy Management APIs**
+
 ```typescript
 // Groups
 GET    /api/v2/customer-hierarchy/groups
@@ -530,110 +570,110 @@ POST   /api/v2/customer-hierarchy/rollback/:customerId
 ```typescript
 // TypeScript interfaces for shared types
 export interface CustomerGroup {
-  id: string;
-  name: string;
-  code?: string;
-  description?: string;
-  companies?: CustomerCompany[];
-  metadata: Record<string, any>;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  name: string
+  code?: string
+  description?: string
+  companies?: CustomerCompany[]
+  metadata: Record<string, any>
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface CustomerCompany {
-  id: string;
-  groupId?: string;
-  name: string;
-  legalName?: string;
-  taxId: string;
-  taxIdType: 'company' | 'individual' | 'foreign';
-  billingAddress: Address;
-  billingContact: Contact;
-  locations?: CustomerLocation[];
-  metadata: Record<string, any>;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  groupId?: string
+  name: string
+  legalName?: string
+  taxId: string
+  taxIdType: 'company' | 'individual' | 'foreign'
+  billingAddress: Address
+  billingContact: Contact
+  locations?: CustomerLocation[]
+  metadata: Record<string, any>
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface CustomerLocation {
-  id: string;
-  companyId: string;
-  name: string;
-  code?: string;
-  address: Address;
-  deliveryContact: Contact;
-  operatingHours?: OperatingHours;
-  deliveryInstructions?: string;
-  coordinates?: Coordinates;
-  businessUnits?: BusinessUnit[];
-  metadata: Record<string, any>;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  companyId: string
+  name: string
+  code?: string
+  address: Address
+  deliveryContact: Contact
+  operatingHours?: OperatingHours
+  deliveryInstructions?: string
+  coordinates?: Coordinates
+  businessUnits?: BusinessUnit[]
+  metadata: Record<string, any>
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface BusinessUnit {
-  id: string;
-  locationId: string;
-  name: string;
-  code: string;
-  type?: 'kitchen' | 'bar' | 'bakery' | 'central_kitchen' | 'other';
-  costCenterCode?: string;
-  budgetMonthly?: number;
-  managerContact?: Contact;
-  orderingPermissions: OrderingPermissions;
-  metadata: Record<string, any>;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  locationId: string
+  name: string
+  code: string
+  type?: 'kitchen' | 'bar' | 'bakery' | 'central_kitchen' | 'other'
+  costCenterCode?: string
+  budgetMonthly?: number
+  managerContact?: Contact
+  orderingPermissions: OrderingPermissions
+  metadata: Record<string, any>
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Address {
-  street: string;
-  district?: string;
-  city: string;
-  state?: string;
-  postalCode?: string;
-  country: string;
+  street: string
+  district?: string
+  city: string
+  state?: string
+  postalCode?: string
+  country: string
 }
 
 export interface Contact {
-  name: string;
-  phone: string;
-  email?: string;
-  title?: string;
+  name: string
+  phone: string
+  email?: string
+  title?: string
 }
 
 export interface Coordinates {
-  latitude: number;
-  longitude: number;
+  latitude: number
+  longitude: number
 }
 
 export interface OperatingHours {
-  monday?: DayHours;
-  tuesday?: DayHours;
-  wednesday?: DayHours;
-  thursday?: DayHours;
-  friday?: DayHours;
-  saturday?: DayHours;
-  sunday?: DayHours;
-  holidays?: DayHours;
+  monday?: DayHours
+  tuesday?: DayHours
+  wednesday?: DayHours
+  thursday?: DayHours
+  friday?: DayHours
+  saturday?: DayHours
+  sunday?: DayHours
+  holidays?: DayHours
 }
 
 export interface DayHours {
-  open: string; // "09:00"
-  close: string; // "22:00"
-  breaks?: Array<{start: string; end: string}>;
+  open: string // "09:00"
+  close: string // "22:00"
+  breaks?: Array<{ start: string; end: string }>
 }
 
 export interface OrderingPermissions {
-  maxOrderValue?: number;
-  requiresApproval?: boolean;
-  approvers?: string[];
-  allowedSuppliers?: string[];
-  blockedCategories?: string[];
+  maxOrderValue?: number
+  requiresApproval?: boolean
+  approvers?: string[]
+  allowedSuppliers?: string[]
+  blockedCategories?: string[]
 }
 ```
 
@@ -642,6 +682,7 @@ export interface OrderingPermissions {
 ## 8. UI/UX Requirements
 
 ### 8.1 Hierarchy Visualization
+
 - **Tree View**: Expandable/collapsible tree structure
 - **Breadcrumb Navigation**: Show current position in hierarchy
 - **Quick Switch**: Dropdown to switch between entities at same level
@@ -650,24 +691,28 @@ export interface OrderingPermissions {
 ### 8.2 Management Interfaces
 
 **Hierarchy Builder**
+
 - Drag-and-drop interface for structure creation
 - Visual validation of relationships
 - Bulk import via CSV/Excel
 - Template library for common structures
 
 **Entity Management**
+
 - Detailed forms for each hierarchy level
 - Inline editing capabilities
 - Batch operations support
 - Status management (active/inactive/pending)
 
 **Migration Wizard**
+
 - Step-by-step migration process
 - Preview changes before applying
 - Validation warnings and errors
 - Progress tracking and rollback options
 
 ### 8.3 Mobile Considerations
+
 - Responsive hierarchy display
 - Touch-optimized tree navigation
 - Simplified mobile forms
@@ -678,15 +723,17 @@ export interface OrderingPermissions {
 ## 9. Performance Requirements
 
 ### 9.1 Response Time Targets
-| Operation | Target | Maximum |
-|-----------|--------|---------|
-| Hierarchy tree load | <100ms | 500ms |
-| Entity CRUD operations | <200ms | 1000ms |
-| Search across hierarchy | <300ms | 1500ms |
-| Bulk operations (per 100 items) | <2s | 5s |
-| Migration (per customer) | <5s | 30s |
+
+| Operation                       | Target | Maximum |
+| ------------------------------- | ------ | ------- |
+| Hierarchy tree load             | <100ms | 500ms   |
+| Entity CRUD operations          | <200ms | 1000ms  |
+| Search across hierarchy         | <300ms | 1500ms  |
+| Bulk operations (per 100 items) | <2s    | 5s      |
+| Migration (per customer)        | <5s    | 30s     |
 
 ### 9.2 Scalability Requirements
+
 - Support up to 10,000 companies
 - Support up to 100,000 locations
 - Support up to 500,000 business units
@@ -694,30 +741,34 @@ export interface OrderingPermissions {
 - Process 10,000 orders per hour with hierarchy
 
 ### 9.3 Data Volume Projections
+
 | Time Period | Groups | Companies | Locations | Business Units |
-|------------|--------|-----------|-----------|----------------|
-| Launch | 50 | 500 | 1,000 | 3,000 |
-| 6 months | 200 | 2,000 | 5,000 | 15,000 |
-| 1 year | 500 | 5,000 | 15,000 | 50,000 |
-| 2 years | 1,000 | 10,000 | 30,000 | 100,000 |
+| ----------- | ------ | --------- | --------- | -------------- |
+| Launch      | 50     | 500       | 1,000     | 3,000          |
+| 6 months    | 200    | 2,000     | 5,000     | 15,000         |
+| 1 year      | 500    | 5,000     | 15,000    | 50,000         |
+| 2 years     | 1,000  | 10,000    | 30,000    | 100,000        |
 
 ---
 
 ## 10. Security & Compliance
 
 ### 10.1 Data Security
+
 - **Encryption**: All hierarchy data encrypted at rest
 - **Access Logs**: Complete audit trail of all operations
 - **Data Isolation**: Strict tenant separation
 - **PII Protection**: Personal data in contacts encrypted
 
 ### 10.2 Compliance Requirements
+
 - **GDPR**: Right to erasure, data portability
 - **Tax Compliance**: Accurate legal entity separation
 - **Audit Trail**: Complete history of all changes
 - **Data Retention**: 7-year retention for financial records
 
 ### 10.3 Access Control
+
 - **Role-based access control (RBAC)** at each hierarchy level
 - **Attribute-based access control (ABAC)** for complex permissions
 - **API key management** for system integrations
@@ -730,6 +781,7 @@ export interface OrderingPermissions {
 ### 11.1 Test Scenarios
 
 **Functional Testing**
+
 - Create complete hierarchy (all 4 levels)
 - Create partial hierarchy (skip optional Group)
 - Update entity at each level
@@ -738,6 +790,7 @@ export interface OrderingPermissions {
 - Deactivate/reactivate entities
 
 **Migration Testing**
+
 - Single customer migration
 - Multi-location migration
 - Failed migration rollback
@@ -745,6 +798,7 @@ export interface OrderingPermissions {
 - Data integrity verification
 
 **Integration Testing**
+
 - Order creation with business unit
 - Invoice generation at company level
 - Delivery to location address
@@ -752,12 +806,14 @@ export interface OrderingPermissions {
 - API backward compatibility
 
 **Performance Testing**
+
 - Load testing with 10,000 companies
 - Stress testing hierarchy operations
 - Concurrent user testing
 - Migration performance benchmarking
 
 ### 11.2 Acceptance Criteria
+
 - All test scenarios pass with 100% success rate
 - Performance targets met under load
 - Zero data loss during migration
@@ -769,23 +825,27 @@ export interface OrderingPermissions {
 ## 12. Rollout Plan
 
 ### 12.1 Phase 1: Internal Testing (Week 1-2)
+
 - Development environment deployment
 - Internal team training
 - Bug fixes and optimizations
 
 ### 12.2 Phase 2: Pilot Program (Week 3-4)
+
 - Select 10 diverse pilot customers
 - Assisted migration and onboarding
 - Daily monitoring and support
 - Feedback collection and iteration
 
 ### 12.3 Phase 3: Gradual Rollout (Week 5-8)
+
 - 25% of customers (Week 5)
 - 50% of customers (Week 6)
 - 75% of customers (Week 7)
 - 100% of customers (Week 8)
 
 ### 12.4 Phase 4: Legacy Shutdown (Week 9-12)
+
 - Deprecation notices
 - Final migration assistance
 - Legacy system decommission
@@ -796,28 +856,31 @@ export interface OrderingPermissions {
 ## 13. Success Metrics & KPIs
 
 ### 13.1 Adoption Metrics
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Companies using hierarchy | 60% within 3 months | System analytics |
-| Multi-location setup rate | 80% of chains | Configuration audit |
-| Business unit utilization | 40% using departments | Order analysis |
-| Migration completion | 100% within 2 months | Migration dashboard |
+
+| Metric                    | Target                | Measurement         |
+| ------------------------- | --------------------- | ------------------- |
+| Companies using hierarchy | 60% within 3 months   | System analytics    |
+| Multi-location setup rate | 80% of chains         | Configuration audit |
+| Business unit utilization | 40% using departments | Order analysis      |
+| Migration completion      | 100% within 2 months  | Migration dashboard |
 
 ### 13.2 Operational Metrics
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Order accuracy | 99.5% | Order audit |
-| Billing accuracy | 99.9% | Invoice reconciliation |
-| System uptime | 99.9% | Monitoring tools |
+
+| Metric            | Target     | Measurement            |
+| ----------------- | ---------- | ---------------------- |
+| Order accuracy    | 99.5%      | Order audit            |
+| Billing accuracy  | 99.9%      | Invoice reconciliation |
+| System uptime     | 99.9%      | Monitoring tools       |
 | API response time | <100ms p95 | Performance monitoring |
 
 ### 13.3 Business Impact
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Customer satisfaction | >85% | NPS surveys |
-| Support ticket reduction | 30% decrease | Support system |
-| Operational efficiency | 25% time saving | Time tracking |
-| Revenue per customer | 15% increase | Financial analysis |
+
+| Metric                   | Target          | Measurement        |
+| ------------------------ | --------------- | ------------------ |
+| Customer satisfaction    | >85%            | NPS surveys        |
+| Support ticket reduction | 30% decrease    | Support system     |
+| Operational efficiency   | 25% time saving | Time tracking      |
+| Revenue per customer     | 15% increase    | Financial analysis |
 
 ---
 
@@ -826,16 +889,19 @@ export interface OrderingPermissions {
 ### 14.1 Technical Risks
 
 **Risk**: Migration failure causing data loss
+
 - **Probability**: Low
 - **Impact**: Critical
 - **Mitigation**: Complete backup, rollback procedures, pilot testing
 
 **Risk**: Performance degradation with complex hierarchies
+
 - **Probability**: Medium
 - **Impact**: High
 - **Mitigation**: Caching strategy, query optimization, load testing
 
 **Risk**: Integration failures with existing systems
+
 - **Probability**: Medium
 - **Impact**: Medium
 - **Mitigation**: Backward compatibility layer, extensive integration testing
@@ -843,16 +909,19 @@ export interface OrderingPermissions {
 ### 14.2 Business Risks
 
 **Risk**: Low adoption rate
+
 - **Probability**: Medium
 - **Impact**: High
 - **Mitigation**: User training, simplified UI, incentive programs
 
 **Risk**: Customer confusion during transition
+
 - **Probability**: High
 - **Impact**: Medium
 - **Mitigation**: Clear communication, parallel running, dedicated support
 
 ### 14.3 Mitigation Strategy Priority
+
 1. **Immediate**: Backup and rollback procedures
 2. **Week 1**: Performance optimization
 3. **Week 2**: User training materials
@@ -863,18 +932,21 @@ export interface OrderingPermissions {
 ## 15. Dependencies & Prerequisites
 
 ### 15.1 Technical Dependencies
+
 - Database schema migration tools
 - API versioning system
 - Caching infrastructure (Redis)
 - Search infrastructure (Elasticsearch)
 
 ### 15.2 Business Dependencies
+
 - Customer communication plan approved
 - Support team trained
 - Legal review of data structure
 - Finance team sign-off on billing changes
 
 ### 15.3 External Dependencies
+
 - Tax ID validation service integration
 - Address validation service
 - Geocoding service for coordinates
@@ -884,6 +956,7 @@ export interface OrderingPermissions {
 ## 16. Appendices
 
 ### Appendix A: Glossary
+
 - **Group**: Virtual umbrella entity for multiple companies
 - **Company**: Legal entity for billing and contracts
 - **Location**: Physical delivery address
@@ -892,6 +965,7 @@ export interface OrderingPermissions {
 - **Migration**: Process of moving from old to new system
 
 ### Appendix B: Reference Documents
+
 - Current Customer Management System Documentation
 - Database Schema Design Document
 - API Specification v2.0
@@ -899,6 +973,7 @@ export interface OrderingPermissions {
 - Technical Architecture Document
 
 ### Appendix C: Stakeholder Sign-off
+
 - [ ] Product Management
 - [ ] Engineering Lead
 - [ ] UX/UI Design
@@ -911,9 +986,9 @@ export interface OrderingPermissions {
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2025-09-19 | Product Team | Initial draft |
+| Version | Date       | Author       | Changes       |
+| ------- | ---------- | ------------ | ------------- |
+| 1.0     | 2025-09-19 | Product Team | Initial draft |
 
 ---
 

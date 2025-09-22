@@ -3,45 +3,43 @@
  * Provides consistent loading UX across supplier pages
  */
 
-'use client';
+'use client'
 
-import React from 'react';
-import { Loader2, Clock, TrendingUp, Users, Package } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import React from 'react'
+import { Loader2, Clock, TrendingUp, Users, Package } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 // ============================================================================
 // Basic Loading Components
 // ============================================================================
 
 interface SupplierSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  message?: string;
-  className?: string;
+  size?: 'sm' | 'md' | 'lg'
+  message?: string
+  className?: string
 }
 
 export function SupplierSpinner({ size = 'md', message, className = '' }: SupplierSpinnerProps) {
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-8 h-8',
-    lg: 'w-12 h-12'
-  };
+    lg: 'w-12 h-12',
+  }
 
   const textSizeClasses = {
     sm: 'text-sm',
     md: 'text-base',
-    lg: 'text-lg'
-  };
+    lg: 'text-lg',
+  }
 
   return (
     <div className={`flex flex-col items-center justify-center space-y-3 ${className}`}>
       <Loader2 className={`${sizeClasses[size]} animate-spin text-primary-600`} />
       {message && (
-        <p className={`${textSizeClasses[size]} text-gray-600 animate-pulse`}>
-          {message}
-        </p>
+        <p className={`${textSizeClasses[size]} animate-pulse text-gray-600`}>{message}</p>
       )}
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -49,18 +47,18 @@ export function SupplierSpinner({ size = 'md', message, className = '' }: Suppli
 // ============================================================================
 
 interface SkeletonProps {
-  className?: string;
-  animate?: boolean;
+  className?: string
+  animate?: boolean
 }
 
 function Skeleton({ className = '', animate = true }: SkeletonProps) {
   return (
-    <div 
-      className={`bg-gray-200 rounded ${animate ? 'animate-pulse' : ''} ${className}`}
+    <div
+      className={`rounded bg-gray-200 ${animate ? 'animate-pulse' : ''} ${className}`}
       role="presentation"
       aria-hidden="true"
     />
-  );
+  )
 }
 
 // ============================================================================
@@ -81,7 +79,7 @@ export function SupplierProfileSkeleton() {
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
@@ -117,7 +115,7 @@ export function SupplierProfileSkeleton() {
         </div>
       </div>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -128,12 +126,12 @@ export function SupplierDashboardSkeleton() {
   return (
     <div className="space-y-6">
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gray-100 rounded-lg">
-                <Skeleton className="w-6 h-6" />
+              <div className="rounded-lg bg-gray-100 p-3">
+                <Skeleton className="h-6 w-6" />
               </div>
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-20" />
@@ -145,7 +143,7 @@ export function SupplierDashboardSkeleton() {
       </div>
 
       {/* Charts and Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Revenue Chart */}
         <Card className="p-6">
           <div className="space-y-4">
@@ -163,8 +161,8 @@ export function SupplierDashboardSkeleton() {
             <Skeleton className="h-6 w-28" />
             <div className="space-y-3">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-3 p-3 border rounded">
-                  <Skeleton className="w-10 h-10 rounded-full" />
+                <div key={i} className="flex items-center space-x-3 rounded border p-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-32" />
                     <Skeleton className="h-3 w-24" />
@@ -177,7 +175,7 @@ export function SupplierDashboardSkeleton() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -189,11 +187,11 @@ export function SupplierCustomerListSkeleton() {
     <div className="space-y-4">
       {/* Filters */}
       <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <Skeleton className="h-10 w-full md:w-64" />
           <Skeleton className="h-10 w-full md:w-48" />
           <Skeleton className="h-10 w-full md:w-32" />
-          <div className="flex space-x-2 ml-auto">
+          <div className="ml-auto flex space-x-2">
             <Skeleton className="h-10 w-24" />
             <Skeleton className="h-10 w-20" />
           </div>
@@ -206,18 +204,18 @@ export function SupplierCustomerListSkeleton() {
           <Card key={i} className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Skeleton className="w-12 h-12 rounded-full" />
+                <Skeleton className="h-12 w-12 rounded-full" />
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-40" />
                   <Skeleton className="h-4 w-32" />
                 </div>
               </div>
               <div className="flex items-center space-x-6">
-                <div className="text-right space-y-1">
+                <div className="space-y-1 text-right">
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-3 w-12" />
                 </div>
-                <div className="text-right space-y-1">
+                <div className="space-y-1 text-right">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-3 w-16" />
                 </div>
@@ -241,7 +239,7 @@ export function SupplierCustomerListSkeleton() {
         <Skeleton className="h-8 w-24" />
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -262,7 +260,7 @@ export function SupplierOnboardingSkeleton() {
           <div className="flex justify-between">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex flex-col items-center space-y-2">
-                <Skeleton className="w-8 h-8 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
                 <Skeleton className="h-3 w-16" />
               </div>
             ))}
@@ -275,7 +273,7 @@ export function SupplierOnboardingSkeleton() {
         <div className="space-y-4">
           <Skeleton className="h-8 w-56" />
           <Skeleton className="h-4 w-full" />
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Skeleton className="h-4 w-32" />
@@ -298,7 +296,7 @@ export function SupplierOnboardingSkeleton() {
         </div>
       </Card>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -308,7 +306,7 @@ export function SupplierOnboardingSkeleton() {
 export function SupplierFormSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-4">
           <div className="space-y-2">
             <Skeleton className="h-4 w-24" />
@@ -337,13 +335,13 @@ export function SupplierFormSkeleton() {
           </div>
         </div>
       </div>
-      
-      <div className="flex justify-end space-x-3 pt-6 border-t">
+
+      <div className="flex justify-end space-x-3 border-t pt-6">
         <Skeleton className="h-10 w-20" />
         <Skeleton className="h-10 w-24" />
       </div>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -351,30 +349,30 @@ export function SupplierFormSkeleton() {
 // ============================================================================
 
 interface SupplierPageLoadingProps {
-  title?: string;
-  subtitle?: string;
-  type?: 'dashboard' | 'profile' | 'customers' | 'onboarding' | 'form';
+  title?: string
+  subtitle?: string
+  type?: 'dashboard' | 'profile' | 'customers' | 'onboarding' | 'form'
 }
 
-export function SupplierPageLoading({ 
-  title = "載入中...", 
-  subtitle = "正在取得供應商資料",
-  type = 'dashboard' 
+export function SupplierPageLoading({
+  title = '載入中...',
+  subtitle = '正在取得供應商資料',
+  type = 'dashboard',
 }: SupplierPageLoadingProps) {
   const renderContent = () => {
     switch (type) {
       case 'profile':
-        return <SupplierProfileSkeleton />;
+        return <SupplierProfileSkeleton />
       case 'customers':
-        return <SupplierCustomerListSkeleton />;
+        return <SupplierCustomerListSkeleton />
       case 'onboarding':
-        return <SupplierOnboardingSkeleton />;
+        return <SupplierOnboardingSkeleton />
       case 'form':
-        return <SupplierFormSkeleton />;
+        return <SupplierFormSkeleton />
       default:
-        return <SupplierDashboardSkeleton />;
+        return <SupplierDashboardSkeleton />
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -383,7 +381,7 @@ export function SupplierPageLoading({
         <div className="space-y-2">
           <div className="flex items-center space-x-3">
             <Skeleton className="h-8 w-48" />
-            <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
           </div>
           <Skeleton className="h-4 w-64" />
         </div>
@@ -393,45 +391,45 @@ export function SupplierPageLoading({
       {/* Content */}
       {renderContent()}
     </div>
-  );
+  )
 }
 
 // ============================================================================
 // Inline Loading States
 // ============================================================================
 
-export function SupplierInlineLoading({ message = "處理中..." }: { message?: string }) {
+export function SupplierInlineLoading({ message = '處理中...' }: { message?: string }) {
   return (
     <div className="flex items-center space-x-2 text-gray-600">
-      <Loader2 className="w-4 h-4 animate-spin" />
+      <Loader2 className="h-4 w-4 animate-spin" />
       <span className="text-sm">{message}</span>
     </div>
-  );
+  )
 }
 
-export function SupplierButtonLoading({ 
-  children, 
-  loading = false, 
-  loadingText = "處理中...",
-  ...props 
+export function SupplierButtonLoading({
+  children,
+  loading = false,
+  loadingText = '處理中...',
+  ...props
 }: {
-  children: React.ReactNode;
-  loading?: boolean;
-  loadingText?: string;
-  [key: string]: any;
+  children: React.ReactNode
+  loading?: boolean
+  loadingText?: string
+  [key: string]: any
 }) {
   return (
     <button {...props} disabled={loading || props.disabled}>
       {loading ? (
         <div className="flex items-center space-x-2">
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="h-4 w-4 animate-spin" />
           <span>{loadingText}</span>
         </div>
       ) : (
         children
       )}
     </button>
-  );
+  )
 }
 
 // ============================================================================
@@ -442,12 +440,8 @@ export function SupplierMetricSkeleton({ icon: Icon }: { icon?: React.ComponentT
   return (
     <Card className="p-6">
       <div className="flex items-center space-x-4">
-        <div className="p-3 bg-gray-100 rounded-lg">
-          {Icon ? (
-            <Icon className="w-6 h-6 text-gray-400" />
-          ) : (
-            <Skeleton className="w-6 h-6" />
-          )}
+        <div className="rounded-lg bg-gray-100 p-3">
+          {Icon ? <Icon className="h-6 w-6 text-gray-400" /> : <Skeleton className="h-6 w-6" />}
         </div>
         <div className="flex-1 space-y-2">
           <Skeleton className="h-4 w-20" />
@@ -456,17 +450,17 @@ export function SupplierMetricSkeleton({ icon: Icon }: { icon?: React.ComponentT
         </div>
       </div>
     </Card>
-  );
+  )
 }
 
 export function SupplierMetricsGridSkeleton() {
-  const metricIcons = [Clock, TrendingUp, Users, Package];
-  
+  const metricIcons = [Clock, TrendingUp, Users, Package]
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {metricIcons.map((Icon, i) => (
         <SupplierMetricSkeleton key={i} icon={Icon} />
       ))}
     </div>
-  );
+  )
 }

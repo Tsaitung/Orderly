@@ -1,31 +1,31 @@
 /** @type {import('next').NextConfig} */
-const path = require('path');
+const path = require('path')
 
 const nextConfig = {
   // Enable React 18 features
   reactStrictMode: true,
-  
+
   // Optimize for production
   swcMinify: true,
-  
+
   // Enable experimental features
   experimental: {
     // Server Components
     serverComponentsExternalPackages: ['ioredis', 'redis'],
-    
+
     // Optimize CSS - Disable critters to avoid issues
     optimizeCss: false,
-    
+
     // Enable middleware improvements
     middlewarePrefetch: 'strict',
   },
-  
+
   // Image optimization
   images: {
     domains: ['storage.googleapis.com'],
     formats: ['image/webp', 'image/avif'],
   },
-  
+
   // Headers for security
   async headers() {
     return [
@@ -50,9 +50,9 @@ const nextConfig = {
           },
         ],
       },
-    ];
+    ]
   },
-  
+
   // API routes configuration
   async rewrites() {
     return [
@@ -60,17 +60,17 @@ const nextConfig = {
       { source: '/api/v1/:path*', destination: '/api/:path*' },
       // Prefer BFF proxy (handled by app/api/bff)
       // No direct rewrite to gateway required
-    ];
+    ]
   },
-  
+
   // Environment variables
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
   },
-  
+
   // Output configuration for standalone builds
   output: 'standalone',
-  
+
   // Disable ESLint during builds to unblock deployment
   eslint: {
     ignoreDuringBuilds: true,
@@ -82,30 +82,30 @@ const nextConfig = {
   },
 
   // Ensure TS path aliases like '@/lib/*' resolve in Docker/CI builds
-  webpack: (config) => {
+  webpack: config => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname),
-      'lib': path.resolve(__dirname, 'lib'),
+      lib: path.resolve(__dirname, 'lib'),
       '@/lib': path.resolve(__dirname, 'lib'),
-    };
+    }
 
     // Add process polyfill for Next.js 14 browser compatibility
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
       process: 'process/browser',
-    };
+    }
 
     // Provide process global for browser
-    config.plugins = config.plugins || [];
+    config.plugins = config.plugins || []
     config.plugins.push(
-      new (require('webpack')).ProvidePlugin({
+      new (require('webpack').ProvidePlugin)({
         process: 'process/browser',
       })
-    );
+    )
 
-    return config;
+    return config
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

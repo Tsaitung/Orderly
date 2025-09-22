@@ -53,7 +53,7 @@ export function formatDate(
   locale: string = 'zh-TW'
 ): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  
+
   // 相對時間格式
   if (options.relative) {
     const now = new Date()
@@ -61,14 +61,14 @@ export function formatDate(
     const diffMins = Math.floor(diffMs / (1000 * 60))
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    
+
     if (diffMins < 1) return '剛剛'
     if (diffMins < 60) return `${diffMins} 分鐘前`
     if (diffHours < 24) return `${diffHours} 小時前`
     if (diffDays < 7) return `${diffDays} 天前`
     // 超過一週回歸一般格式
   }
-  
+
   return new Intl.DateTimeFormat(locale, options).format(dateObj)
 }
 
@@ -77,16 +77,13 @@ export function formatDate(
  * @param date 日期
  * @param locale 地區設定
  */
-export function formatRelativeTime(
-  date: Date | string,
-  locale: string = 'zh-TW'
-): string {
+export function formatRelativeTime(date: Date | string, locale: string = 'zh-TW'): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date
   const now = new Date()
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000)
-  
+
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
-  
+
   if (diffInSeconds < 60) {
     return rtf.format(-diffInSeconds, 'second')
   } else if (diffInSeconds < 3600) {
@@ -118,9 +115,15 @@ export function generateId(length: number = 8): string {
  * @param obj 要複製的對象
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== 'object') {return obj}
-  if (obj instanceof Date) {return new Date(obj.getTime()) as unknown as T}
-  if (obj instanceof Array) {return obj.map(item => deepClone(item)) as unknown as T}
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+  if (obj instanceof Date) {
+    return new Date(obj.getTime()) as unknown as T
+  }
+  if (obj instanceof Array) {
+    return obj.map(item => deepClone(item)) as unknown as T
+  }
   if (typeof obj === 'object') {
     const copy: Record<string, unknown> = {}
     for (const key in obj) {
@@ -151,7 +154,7 @@ export function getConfidenceLevel(score: number) {
       label: '高',
       color: 'text-reconciliation-approved',
       bgColor: 'bg-reconciliation-approved/10',
-      description: '自動匹配成功'
+      description: '自動匹配成功',
     }
   } else if (score >= 0.7) {
     return {
@@ -159,7 +162,7 @@ export function getConfidenceLevel(score: number) {
       label: '中',
       color: 'text-reconciliation-pending',
       bgColor: 'bg-reconciliation-pending/10',
-      description: '建議人工確認'
+      description: '建議人工確認',
     }
   } else {
     return {
@@ -167,7 +170,7 @@ export function getConfidenceLevel(score: number) {
       label: '低',
       color: 'text-reconciliation-disputed',
       bgColor: 'bg-reconciliation-disputed/10',
-      description: '需要人工處理'
+      description: '需要人工處理',
     }
   }
 }
@@ -181,30 +184,30 @@ export function getReconciliationStatusStyle(status: string) {
     pending: {
       label: '待處理',
       className: 'status-pending',
-      icon: '⏳'
+      icon: '⏳',
     },
     processing: {
       label: '處理中',
       className: 'status-processing',
-      icon: '🔄'
+      icon: '🔄',
     },
     approved: {
       label: '已完成',
       className: 'status-approved',
-      icon: '✅'
+      icon: '✅',
     },
     disputed: {
       label: '有爭議',
       className: 'status-disputed',
-      icon: '⚠️'
+      icon: '⚠️',
     },
     draft: {
       label: '草稿',
       className: 'status-draft',
-      icon: '📝'
-    }
+      icon: '📝',
+    },
   }
-  
+
   return statusMap[status as keyof typeof statusMap] || statusMap.draft
 }
 
@@ -217,25 +220,25 @@ export function getERPSyncStatusStyle(status: string) {
     connected: {
       label: '已連接',
       className: 'erp-connected',
-      icon: '🟢'
+      icon: '🟢',
     },
     syncing: {
       label: '同步中',
       className: 'erp-syncing',
-      icon: '🔄'
+      icon: '🔄',
     },
     error: {
       label: '錯誤',
       className: 'erp-error',
-      icon: '🔴'
+      icon: '🔴',
     },
     offline: {
       label: '離線',
       className: 'erp-offline',
-      icon: '⚫'
-    }
+      icon: '⚫',
+    },
   }
-  
+
   return statusMap[status as keyof typeof statusMap] || statusMap.offline
 }
 
@@ -262,17 +265,19 @@ export function isValidTaiwanPhone(phone: string): boolean {
  * @param taxId 統一編號
  */
 export function isValidTaiwanTaxId(taxId: string): boolean {
-  if (!/^\d{8}$/.test(taxId)) {return false}
-  
+  if (!/^\d{8}$/.test(taxId)) {
+    return false
+  }
+
   const weights = [1, 2, 1, 2, 1, 2, 4, 1]
   let sum = 0
-  
+
   for (let i = 0; i < 8; i++) {
     const digit = parseInt(taxId[i])
     const product = digit * weights[i]
     sum += Math.floor(product / 10) + (product % 10)
   }
-  
+
   return sum % 10 === 0
 }
 
@@ -296,12 +301,10 @@ export function safeJsonParse<T>(str: string, defaultValue: T): T {
  * @param total 總數
  * @param decimals 小數位數
  */
-export function calculatePercentage(
-  value: number,
-  total: number,
-  decimals: number = 1
-): number {
-  if (total === 0) {return 0}
+export function calculatePercentage(value: number, total: number, decimals: number = 1): number {
+  if (total === 0) {
+    return 0
+  }
   return Number(((value / total) * 100).toFixed(decimals))
 }
 

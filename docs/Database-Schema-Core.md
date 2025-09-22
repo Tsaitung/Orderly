@@ -58,7 +58,7 @@ CREATE TABLE organizations (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务索引
   CONSTRAINT valid_org_type CHECK (type IN ('restaurant', 'supplier'))
 );
@@ -69,6 +69,7 @@ CREATE INDEX idx_organizations_active ON organizations(is_active) WHERE is_activ
 ```
 
 **Key Features**:
+
 - **Type-based segregation**: 餐厅和供应商的清晰区分
 - **Settings JSON**: 灵活的组织级配置存储
 - **Soft delete**: 通过 `is_active` 实现逻辑删除
@@ -78,7 +79,7 @@ CREATE INDEX idx_organizations_active ON organizations(is_active) WHERE is_activ
 ```sql
 CREATE TYPE user_role AS ENUM (
   'restaurant_admin',
-  'restaurant_manager', 
+  'restaurant_manager',
   'restaurant_operator',
   'supplier_admin',
   'supplier_manager',
@@ -97,7 +98,7 @@ CREATE TABLE users (
   token_version INT DEFAULT 0,  -- 用于全局登出
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT valid_email_format CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
@@ -109,6 +110,7 @@ CREATE INDEX idx_users_role_org ON users(role, organization_id);
 ```
 
 **Security Features**:
+
 - **Role-based access**: 细粒度的权限角色设计
 - **Token versioning**: 支持强制全局登出功能
 - **Email validation**: 数据库级别的邮箱格式验证
@@ -132,7 +134,7 @@ CREATE TABLE products (
   active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   UNIQUE(supplier_id, code, version),
   CONSTRAINT positive_version CHECK (version > 0),
@@ -146,21 +148,22 @@ CREATE INDEX idx_products_category ON products(category);
 CREATE INDEX idx_products_active ON products(active) WHERE active = true;
 
 -- 全文搜索支持
-CREATE INDEX idx_products_search ON products 
+CREATE INDEX idx_products_search ON products
 USING gin(to_tsvector('simple', name || ' ' || COALESCE(code, '')));
 ```
 
 **Pricing JSON Structure**:
+
 ```json
 {
   "type": "fixed|market_price|tiered",
-  "base_price": 25.50,
-  "price_range": {"min": 20.00, "max": 30.00},
+  "base_price": 25.5,
+  "price_range": { "min": 20.0, "max": 30.0 },
   "unit": "斤",
   "minimum_order": 10,
   "tiers": [
-    {"from": 1, "to": 50, "price": 25.50},
-    {"from": 51, "to": 100, "price": 24.00}
+    { "from": 1, "to": 50, "price": 25.5 },
+    { "from": 51, "to": 100, "price": 24.0 }
   ],
   "valid_from": "2025-09-01T00:00:00Z",
   "valid_to": "2025-12-31T23:59:59Z"
@@ -176,7 +179,7 @@ USING gin(to_tsvector('simple', name || ' ' || COALESCE(code, '')));
 ```sql
 CREATE TYPE order_status AS ENUM (
   'draft',
-  'submitted', 
+  'submitted',
   'confirmed',
   'preparing',
   'shipped',
@@ -202,7 +205,7 @@ CREATE TABLE orders (
   created_by UUID REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT positive_amounts CHECK (
     subtotal >= 0 AND tax_amount >= 0 AND total_amount >= 0
@@ -223,7 +226,7 @@ CREATE INDEX idx_orders_restaurant_supplier ON orders(restaurant_id, supplier_id
 CREATE INDEX idx_orders_period_lookup ON orders(restaurant_id, supplier_id, delivery_date);
 
 -- 订单号搜索
-CREATE INDEX idx_orders_search ON orders 
+CREATE INDEX idx_orders_search ON orders
 USING gin(to_tsvector('simple', order_number || ' ' || COALESCE(notes, '')));
 ```
 
@@ -241,7 +244,7 @@ CREATE TABLE order_items (
   line_total DECIMAL(12, 2) NOT NULL,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT positive_quantity CHECK (quantity > 0),
   CONSTRAINT positive_price CHECK (unit_price >= 0),
@@ -265,7 +268,7 @@ CREATE INDEX idx_order_items_code ON order_items(product_code);
 ```sql
 CREATE TYPE reconciliation_status AS ENUM (
   'pending',
-  'processing', 
+  'processing',
   'review_required',
   'approved',
   'disputed',
@@ -280,32 +283,32 @@ CREATE TABLE reconciliations (
   restaurant_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   supplier_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   status reconciliation_status DEFAULT 'pending',
-  
+
   -- 对账汇总数据
   summary JSONB NOT NULL DEFAULT '{}',
-  
+
   -- 差异记录
   discrepancies JSONB DEFAULT '[]',
-  
+
   -- 解决方案
   resolution JSONB,
-  
+
   -- AI置信度评分 (0.0000 to 1.0000)
   confidence_score DECIMAL(5, 4),
-  
+
   -- 自动审批标识
   auto_approved BOOLEAN DEFAULT false,
-  
+
   created_by UUID REFERENCES users(id),
   approved_by UUID REFERENCES users(id),
   approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT valid_period CHECK (period_end > period_start),
   CONSTRAINT valid_confidence CHECK (
-    confidence_score IS NULL OR 
+    confidence_score IS NULL OR
     (confidence_score >= 0.0000 AND confidence_score <= 1.0000)
   ),
   CONSTRAINT approval_consistency CHECK (
@@ -323,13 +326,14 @@ CREATE INDEX idx_reconciliations_auto_approved ON reconciliations(auto_approved)
 ```
 
 **Summary JSON Structure**:
+
 ```json
 {
   "total_orders": 45,
-  "total_amount": 125680.50,
+  "total_amount": 125680.5,
   "total_quantity": 2340.5,
   "discrepancy_count": 3,
-  "discrepancy_amount": 245.80,
+  "discrepancy_amount": 245.8,
   "accuracy_rate": 0.9954,
   "processing_time_seconds": 125,
   "auto_resolved_count": 2,
@@ -345,29 +349,29 @@ CREATE TABLE reconciliation_items (
   reconciliation_id UUID REFERENCES reconciliations(id) ON DELETE CASCADE,
   order_id UUID REFERENCES orders(id),
   product_code VARCHAR(100) NOT NULL,
-  
+
   -- 数量对比
   ordered_quantity DECIMAL(10, 3) NOT NULL,
   delivered_quantity DECIMAL(10, 3) NOT NULL,
   accepted_quantity DECIMAL(10, 3) NOT NULL,
-  
+
   -- 金额计算
   unit_price DECIMAL(10, 4) NOT NULL,
   line_total DECIMAL(12, 2) NOT NULL,
-  
+
   -- 差异分析
   discrepancy_type VARCHAR(50),  -- 'quantity', 'price', 'quality', 'missing'
   discrepancy_amount DECIMAL(12, 2),
-  
+
   -- 解决方案
   resolution_action VARCHAR(50), -- 'accept', 'adjust', 'credit', 'dispute'
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT positive_quantities CHECK (
-    ordered_quantity >= 0 AND 
-    delivered_quantity >= 0 AND 
+    ordered_quantity >= 0 AND
+    delivered_quantity >= 0 AND
     accepted_quantity >= 0
   ),
   CONSTRAINT positive_price CHECK (unit_price >= 0),
@@ -392,7 +396,7 @@ CREATE INDEX idx_reconciliation_items_discrepancy ON reconciliation_items(discre
 ```sql
 -- 对账汇总视图 (每小时刷新)
 CREATE MATERIALIZED VIEW reconciliation_summary AS
-SELECT 
+SELECT
   restaurant_id,
   supplier_id,
   DATE_TRUNC('month', period_end) as period_month,
@@ -438,7 +442,7 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     o.id,
     o.order_number,
     o.total_amount,
@@ -450,7 +454,7 @@ BEGIN
     AND o.delivery_date BETWEEN p_period_start AND p_period_end
     AND o.status IN ('delivered', 'accepted', 'completed')
     AND NOT EXISTS (
-      SELECT 1 FROM reconciliation_items ri 
+      SELECT 1 FROM reconciliation_items ri
       WHERE ri.order_id = o.id
     )
   GROUP BY o.id, o.order_number, o.total_amount
@@ -477,7 +481,7 @@ CREATE TABLE audit_logs (
   ip_address INET,
   user_agent TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  
+
   -- 业务约束
   CONSTRAINT valid_action CHECK (action IN ('create', 'update', 'delete', 'approve', 'reject'))
 );
@@ -509,13 +513,13 @@ BEGIN
     ip_address
   ) VALUES (
     TG_TABLE_NAME,
-    CASE 
+    CASE
       WHEN TG_OP = 'DELETE' THEN OLD.id
       ELSE NEW.id
     END,
     LOWER(TG_OP),
     NULLIF(current_setting('app.user_id', true), '')::UUID,
-    CASE 
+    CASE
       WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD)
       WHEN TG_OP = 'INSERT' THEN to_jsonb(NEW)
       ELSE jsonb_build_object(
@@ -525,8 +529,8 @@ BEGIN
     END,
     NULLIF(current_setting('app.ip_address', true), '')::INET
   );
-  
-  RETURN CASE 
+
+  RETURN CASE
     WHEN TG_OP = 'DELETE' THEN OLD
     ELSE NEW
   END;
@@ -561,7 +565,7 @@ CREATE POLICY restaurant_order_policy ON orders
   TO authenticated_users
   USING (restaurant_id = current_setting('app.organization_id')::UUID);
 
--- 供应商数据访问策略  
+-- 供应商数据访问策略
 CREATE POLICY supplier_order_policy ON orders
   FOR SELECT
   TO authenticated_users
@@ -573,8 +577,8 @@ CREATE POLICY platform_admin_policy ON orders
   TO authenticated_users
   USING (
     EXISTS (
-      SELECT 1 FROM users 
-      WHERE id = current_setting('app.user_id')::UUID 
+      SELECT 1 FROM users
+      WHERE id = current_setting('app.user_id')::UUID
         AND role = 'platform_admin'
     )
   );
@@ -611,7 +615,7 @@ CREATE OR REPLACE FUNCTION cleanup_old_backups()
 RETURNS void AS $$
 BEGIN
   -- 清理30天前的WAL文件
-  PERFORM * FROM pg_ls_archive_statusdir() 
+  PERFORM * FROM pg_ls_archive_statusdir()
   WHERE modification_time < NOW() - INTERVAL '30 days';
 END;
 $$ LANGUAGE plpgsql;
@@ -624,9 +628,9 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION cleanup_audit_logs()
 RETURNS void AS $$
 BEGIN
-  DELETE FROM audit_logs 
+  DELETE FROM audit_logs
   WHERE created_at < NOW() - INTERVAL '2 years';
-  
+
   -- 记录清理统计
   INSERT INTO system_events (event_type, message, created_at)
   VALUES ('audit_cleanup', 'Cleaned up audit logs older than 2 years', NOW());
@@ -637,7 +641,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION cleanup_workflow_tasks()
 RETURNS void AS $$
 BEGIN
-  DELETE FROM workflow_tasks 
+  DELETE FROM workflow_tasks
   WHERE created_at < NOW() - INTERVAL '30 days'
     AND status IN ('completed', 'failed');
 END;
@@ -654,24 +658,24 @@ $$ LANGUAGE plpgsql;
 // SQLAlchemy connection configuration
 const prisma = new PrismaClient({
   datasources: {
-    db: { url: DATABASE_URL }
+    db: { url: DATABASE_URL },
   },
   // Connection pool settings
   connection_limit: 25,
   pool_timeout: 10,
   statement_timeout: 30000,
-  query_timeout: 30000
-});
+  query_timeout: 30000,
+})
 ```
 
 ### Performance Targets
 
-| Metric | Target | Notes |
-|--------|--------|-------|
-| **Query Response Time** | P95 < 100ms | Core business queries |
-| **Reconciliation Processing** | < 30 minutes | Monthly reconciliation |
-| **Connection Pool** | 80% utilization | Peak load handling |
-| **Index Hit Ratio** | > 99% | Cache effectiveness |
-| **Transaction Duration** | P99 < 5 seconds | Long-running queries |
+| Metric                        | Target          | Notes                  |
+| ----------------------------- | --------------- | ---------------------- |
+| **Query Response Time**       | P95 < 100ms     | Core business queries  |
+| **Reconciliation Processing** | < 30 minutes    | Monthly reconciliation |
+| **Connection Pool**           | 80% utilization | Peak load handling     |
+| **Index Hit Ratio**           | > 99%           | Cache effectiveness    |
+| **Transaction Duration**      | P99 < 5 seconds | Long-running queries   |
 
 This database schema provides the foundation for the 井然 Orderly platform's core functionality, optimized for high-performance reconciliation processing while maintaining data integrity and audit compliance.

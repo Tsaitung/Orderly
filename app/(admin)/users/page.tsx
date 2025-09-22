@@ -13,13 +13,11 @@ export default function UserManagementPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">用戶管理</h1>
-          <p className="text-gray-600 mt-1">
-            管理平台用戶、權限設定和帳戶生命週期
-          </p>
+          <p className="mt-1 text-gray-600">管理平台用戶、權限設定和帳戶生命週期</p>
         </div>
-        
+
         <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+          <button className="rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700">
             新增用戶
           </button>
         </div>

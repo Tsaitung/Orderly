@@ -39,11 +39,11 @@ export class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Generate unique error ID for tracking
     const errorId = `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    
+
     return {
       hasError: true,
       error,
-      errorId
+      errorId,
     }
   }
 
@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     this.setState({
       error,
-      errorInfo
+      errorInfo,
     })
   }
 
@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
         errorMessage: error.message,
         errorStack: error.stack,
         componentStack: errorInfo.componentStack,
-        errorId
+        errorId,
       }
 
       // Log to console in development
@@ -129,7 +129,7 @@ export class ErrorBoundary extends Component<Props, State> {
       hasError: false,
       error: undefined,
       errorInfo: undefined,
-      errorId: ''
+      errorId: '',
     })
   }
 
@@ -149,46 +149,48 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             {/* Error Icon */}
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <AlertTriangle className="h-8 w-8 text-red-600" />
               </div>
             </div>
 
             {/* Error Title */}
-            <h1 className="text-xl font-semibold text-gray-900 text-center mb-2">
-              系統發生錯誤
-            </h1>
+            <h1 className="mb-2 text-center text-xl font-semibold text-gray-900">系統發生錯誤</h1>
 
             {/* Error Description */}
-            <p className="text-gray-600 text-center mb-6">
+            <p className="mb-6 text-center text-gray-600">
               很抱歉，系統遇到了一個意外的錯誤。我們已經記錄了這個問題並會盡快修復。
             </p>
 
             {/* Error ID */}
-            <div className="bg-gray-50 rounded-md p-3 mb-6">
-              <p className="text-sm text-gray-500 text-center">
+            <div className="mb-6 rounded-md bg-gray-50 p-3">
+              <p className="text-center text-sm text-gray-500">
                 錯誤 ID: <code className="font-mono text-gray-700">{this.state.errorId}</code>
               </p>
             </div>
 
             {/* Error Details (Development Only) */}
-            {this.props.showDetails && process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mb-6 bg-red-50 rounded-md p-3">
-                <summary className="text-sm font-medium text-red-700 cursor-pointer">
-                  技術詳情 (開發模式)
-                </summary>
-                <div className="mt-2 text-xs text-red-600 font-mono">
-                  <p><strong>錯誤訊息:</strong> {this.state.error.message}</p>
-                  {this.state.error.stack && (
-                    <pre className="mt-2 whitespace-pre-wrap">{this.state.error.stack}</pre>
-                  )}
-                </div>
-              </details>
-            )}
+            {this.props.showDetails &&
+              process.env.NODE_ENV === 'development' &&
+              this.state.error && (
+                <details className="mb-6 rounded-md bg-red-50 p-3">
+                  <summary className="cursor-pointer text-sm font-medium text-red-700">
+                    技術詳情 (開發模式)
+                  </summary>
+                  <div className="mt-2 font-mono text-xs text-red-600">
+                    <p>
+                      <strong>錯誤訊息:</strong> {this.state.error.message}
+                    </p>
+                    {this.state.error.stack && (
+                      <pre className="mt-2 whitespace-pre-wrap">{this.state.error.stack}</pre>
+                    )}
+                  </div>
+                </details>
+              )}
 
             {/* Action Buttons */}
             <div className="space-y-3">
@@ -198,10 +200,10 @@ export class ErrorBoundary extends Component<Props, State> {
                 variant="solid"
                 colorScheme="primary"
               >
-                <RefreshCw className="w-4 h-4 mr-2" />
+                <RefreshCw className="mr-2 h-4 w-4" />
                 重試
               </Button>
-              
+
               <div className="flex space-x-3">
                 <Button
                   onClick={this.handleGoHome}
@@ -209,17 +211,17 @@ export class ErrorBoundary extends Component<Props, State> {
                   variant="outline"
                   colorScheme="gray"
                 >
-                  <Home className="w-4 h-4 mr-2" />
+                  <Home className="mr-2 h-4 w-4" />
                   返回首頁
                 </Button>
-                
+
                 <Button
                   onClick={this.handleReload}
                   className="flex-1"
                   variant="outline"
                   colorScheme="gray"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   重新載入
                 </Button>
               </div>
@@ -229,13 +231,13 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="mt-6 text-center">
               <p className="text-xs text-gray-500">
                 如果問題持續發生，請聯繫{' '}
-                <a 
-                  href="mailto:support@orderly.com" 
+                <a
+                  href="mailto:support@orderly.com"
                   className="text-primary-600 hover:text-primary-700"
                 >
                   技術支援
-                </a>
-                {' '}並提供上述錯誤 ID
+                </a>{' '}
+                並提供上述錯誤 ID
               </p>
             </div>
           </div>

@@ -4,7 +4,12 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { AccessibleModal, AccessibleModalContent, AccessibleModalHeader, AccessibleModalTitle } from '@/components/ui/accessible-modal'
+import {
+  AccessibleModal,
+  AccessibleModalContent,
+  AccessibleModalHeader,
+  AccessibleModalTitle,
+} from '@/components/ui/accessible-modal'
 import { formatDate } from '@/lib/utils'
 import type { Notification } from '@shared/types'
 import {
@@ -17,48 +22,48 @@ import {
   CheckCircle,
   Eye,
   Archive,
-  X
+  X,
 } from 'lucide-react'
 
 interface NotificationBellProps {
-  organizationId?: string;
-  className?: string;
+  organizationId?: string
+  className?: string
 }
 
 const NOTIFICATION_TYPES = {
   order_status: {
     label: '訂單狀態',
     icon: Package,
-    color: 'text-blue-600'
+    color: 'text-blue-600',
   },
   payment: {
     label: '付款通知',
     icon: DollarSign,
-    color: 'text-green-600'
+    color: 'text-green-600',
   },
   system: {
     label: '系統通知',
     icon: Info,
-    color: 'text-gray-600'
+    color: 'text-gray-600',
   },
   customer: {
     label: '客戶通知',
     icon: User,
-    color: 'text-purple-600'
+    color: 'text-purple-600',
   },
   product: {
     label: '商品通知',
     icon: Package,
-    color: 'text-orange-600'
-  }
-};
+    color: 'text-orange-600',
+  },
+}
 
 const PRIORITY_CONFIG = {
   low: { label: '低', variant: 'secondary' as const },
   medium: { label: '中', variant: 'outline' as const },
   high: { label: '高', variant: 'warning' as const },
-  urgent: { label: '緊急', variant: 'destructive' as const }
-};
+  urgent: { label: '緊急', variant: 'destructive' as const },
+}
 
 // Mock notifications - replace with real API
 const MOCK_NOTIFICATIONS: Notification[] = [
@@ -75,8 +80,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     metadata: {
       order_number: 'ORD-2024-001',
       customer_name: '星巴克咖啡',
-      new_status: 'confirmed'
-    }
+      new_status: 'confirmed',
+    },
   },
   {
     id: '2',
@@ -89,8 +94,8 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     read: false,
     archived: false,
     metadata: {
-      customer_name: '鼎泰豐'
-    }
+      customer_name: '鼎泰豐',
+    },
   },
   {
     id: '3',
@@ -103,71 +108,64 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     archived: false,
     metadata: {
       order_number: 'ORD-2024-002',
-      amount: 15000
-    }
-  }
-];
+      amount: 15000,
+    },
+  },
+]
 
-export default function NotificationBell({ organizationId, className = '' }: NotificationBellProps) {
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [isOpen, setIsOpen] = useState(false);
-  const [showFullModal, setShowFullModal] = useState(false);
+export default function NotificationBell({
+  organizationId,
+  className = '',
+}: NotificationBellProps) {
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS)
+  const [isOpen, setIsOpen] = useState(false)
+  const [showFullModal, setShowFullModal] = useState(false)
 
   // Get unread notifications
-  const unreadNotifications = notifications.filter(n => !n.read && !n.archived);
-  const unreadCount = unreadNotifications.length;
+  const unreadNotifications = notifications.filter(n => !n.read && !n.archived)
+  const unreadCount = unreadNotifications.length
 
   // Mark notification as read
   const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId ? { ...n, read: true } : n
-      )
-    );
-  };
+    setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)))
+  }
 
   // Archive notification
   const archiveNotification = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === notificationId ? { ...n, archived: true } : n
-      )
-    );
-  };
+    setNotifications(prev =>
+      prev.map(n => (n.id === notificationId ? { ...n, archived: true } : n))
+    )
+  }
 
   // Render notification preview
   const renderNotificationPreview = (notification: Notification) => {
-    const typeConfig = NOTIFICATION_TYPES[notification.type];
-    const priorityConfig = PRIORITY_CONFIG[notification.priority];
-    const Icon = typeConfig.icon;
+    const typeConfig = NOTIFICATION_TYPES[notification.type]
+    const priorityConfig = PRIORITY_CONFIG[notification.priority]
+    const Icon = typeConfig.icon
 
     return (
-      <div 
+      <div
         key={notification.id}
-        className="p-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer"
+        className="cursor-pointer border-b border-gray-100 p-3 hover:bg-gray-50"
         onClick={() => markAsRead(notification.id)}
       >
         <div className="flex items-start space-x-3">
-          <div className={`p-1.5 rounded-full bg-gray-100 ${typeConfig.color}`}>
+          <div className={`rounded-full bg-gray-100 p-1.5 ${typeConfig.color}`}>
             <Icon className="h-4 w-4" />
           </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 mb-1">
-              <h4 className="font-medium text-sm text-gray-900 truncate">
-                {notification.title}
-              </h4>
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center space-x-2">
+              <h4 className="truncate text-sm font-medium text-gray-900">{notification.title}</h4>
               {notification.priority === 'urgent' && (
-                <Badge variant="destructive" className="text-xs px-1 py-0">
+                <Badge variant="destructive" className="px-1 py-0 text-xs">
                   !
                 </Badge>
               )}
             </div>
-            
-            <p className="text-xs text-gray-600 line-clamp-2">
-              {notification.message}
-            </p>
-            
+
+            <p className="line-clamp-2 text-xs text-gray-600">{notification.message}</p>
+
             <div className="mt-1 text-xs text-gray-500">
               {formatDate(new Date(notification.created_at), { relative: true })}
             </div>
@@ -177,9 +175,9 @@ export default function NotificationBell({ organizationId, className = '' }: Not
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                archiveNotification(notification.id);
+              onClick={e => {
+                e.stopPropagation()
+                archiveNotification(notification.id)
               }}
               className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
             >
@@ -188,8 +186,8 @@ export default function NotificationBell({ organizationId, className = '' }: Not
           </div>
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -203,9 +201,9 @@ export default function NotificationBell({ organizationId, className = '' }: Not
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
+            <Badge
+              variant="destructive"
+              className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
@@ -214,8 +212,8 @@ export default function NotificationBell({ organizationId, className = '' }: Not
 
         {/* Dropdown Preview */}
         {isOpen && (
-          <Card className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-hidden shadow-lg z-50">
-            <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <Card className="absolute right-0 top-full z-50 mt-2 max-h-96 w-80 overflow-hidden shadow-lg">
+            <div className="border-b border-gray-200 bg-gray-50 p-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-gray-900">通知</h3>
                 <div className="flex items-center space-x-2">
@@ -223,8 +221,8 @@ export default function NotificationBell({ organizationId, className = '' }: Not
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setShowFullModal(true);
-                      setIsOpen(false);
+                      setShowFullModal(true)
+                      setIsOpen(false)
                     }}
                     className="text-xs"
                   >
@@ -245,21 +243,21 @@ export default function NotificationBell({ organizationId, className = '' }: Not
             <div className="max-h-80 overflow-y-auto">
               {unreadNotifications.length === 0 ? (
                 <div className="p-6 text-center">
-                  <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <Bell className="mx-auto mb-2 h-8 w-8 text-gray-400" />
                   <p className="text-sm text-gray-500">沒有新通知</p>
                 </div>
               ) : (
                 <div className="group">
                   {unreadNotifications.slice(0, 5).map(renderNotificationPreview)}
-                  
+
                   {unreadNotifications.length > 5 && (
-                    <div className="p-3 text-center border-t border-gray-100">
+                    <div className="border-t border-gray-100 p-3 text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setShowFullModal(true);
-                          setIsOpen(false);
+                          setShowFullModal(true)
+                          setIsOpen(false)
                         }}
                         className="text-xs text-blue-600"
                       >
@@ -276,7 +274,7 @@ export default function NotificationBell({ organizationId, className = '' }: Not
 
       {/* Full Notification Modal */}
       <AccessibleModal open={showFullModal} onOpenChange={setShowFullModal}>
-        <AccessibleModalContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+        <AccessibleModalContent className="max-h-[80vh] max-w-2xl overflow-hidden">
           <AccessibleModalHeader>
             <AccessibleModalTitle className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
@@ -289,11 +287,11 @@ export default function NotificationBell({ organizationId, className = '' }: Not
             </AccessibleModalTitle>
           </AccessibleModalHeader>
 
-          <div className="overflow-y-auto max-h-96">
+          <div className="max-h-96 overflow-y-auto">
             {notifications.filter(n => !n.archived).length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">沒有通知</h3>
+                <Bell className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <h3 className="mb-2 text-lg font-medium text-gray-900">沒有通知</h3>
                 <p className="text-gray-500">目前沒有任何通知</p>
               </div>
             ) : (
@@ -301,34 +299,30 @@ export default function NotificationBell({ organizationId, className = '' }: Not
                 {notifications
                   .filter(n => !n.archived)
                   .map(notification => {
-                    const typeConfig = NOTIFICATION_TYPES[notification.type];
-                    const priorityConfig = PRIORITY_CONFIG[notification.priority];
-                    const Icon = typeConfig.icon;
+                    const typeConfig = NOTIFICATION_TYPES[notification.type]
+                    const priorityConfig = PRIORITY_CONFIG[notification.priority]
+                    const Icon = typeConfig.icon
 
                     return (
-                      <Card 
+                      <Card
                         key={notification.id}
-                        className={`p-4 ${!notification.read ? 'bg-blue-50 border-blue-200' : ''}`}
+                        className={`p-4 ${!notification.read ? 'border-blue-200 bg-blue-50' : ''}`}
                       >
                         <div className="flex items-start space-x-3">
-                          <div className={`p-2 rounded-full bg-gray-100 ${typeConfig.color}`}>
+                          <div className={`rounded-full bg-gray-100 p-2 ${typeConfig.color}`}>
                             <Icon className="h-4 w-4" />
                           </div>
-                          
+
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h4 className="font-medium text-sm">
-                                {notification.title}
-                              </h4>
+                            <div className="mb-1 flex items-center space-x-2">
+                              <h4 className="text-sm font-medium">{notification.title}</h4>
                               <Badge variant={priorityConfig.variant} className="text-xs">
                                 {priorityConfig.label}
                               </Badge>
                             </div>
-                            
-                            <p className="text-sm text-gray-600 mb-2">
-                              {notification.message}
-                            </p>
-                            
+
+                            <p className="mb-2 text-sm text-gray-600">{notification.message}</p>
+
                             <div className="text-xs text-gray-500">
                               {formatDate(new Date(notification.created_at))}
                             </div>
@@ -345,7 +339,7 @@ export default function NotificationBell({ organizationId, className = '' }: Not
                                 <Eye className="h-3 w-3" />
                               </Button>
                             )}
-                            
+
                             <Button
                               variant="ghost"
                               size="sm"
@@ -357,7 +351,7 @@ export default function NotificationBell({ organizationId, className = '' }: Not
                           </div>
                         </div>
                       </Card>
-                    );
+                    )
                   })}
               </div>
             )}
@@ -366,12 +360,7 @@ export default function NotificationBell({ organizationId, className = '' }: Not
       </AccessibleModal>
 
       {/* Click outside to close */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />}
     </>
-  );
+  )
 }

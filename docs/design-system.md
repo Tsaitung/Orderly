@@ -31,6 +31,7 @@
 ```
 
 **品牌個性：**
+
 - **專業可信**：財務系統的可靠性
 - **智能高效**：自動化帶來的效率提升
 - **簡潔明了**：複雜流程的簡化體驗
@@ -38,6 +39,7 @@
 ### 色彩系統
 
 #### 主色彩
+
 ```css
 :root {
   /* 主色 - Mocha Mousse (現有) */
@@ -46,7 +48,7 @@
   --primary-200: #e3ddd3;
   --primary-300: #d1c7b8;
   --primary-400: #b8a894;
-  --primary-500: #a47864;  /* 主色 */
+  --primary-500: #a47864; /* 主色 */
   --primary-600: #8f6b56;
   --primary-700: #7a5a4a;
   --primary-800: #654b40;
@@ -55,27 +57,28 @@
 ```
 
 #### 對帳狀態色彩
+
 ```css
 :root {
   /* 對帳狀態專用色彩 */
-  --reconciliation-pending: #f59e0b;     /* 待審查 - 琥珀色 */
-  --reconciliation-processing: #3b82f6;  /* 處理中 - 藍色 */
-  --reconciliation-approved: #10b981;    /* 已完成 - 綠色 */
-  --reconciliation-disputed: #ef4444;    /* 需注意 - 紅色 */
-  --reconciliation-draft: #6b7280;       /* 草稿 - 灰色 */
-  
+  --reconciliation-pending: #f59e0b; /* 待審查 - 琥珀色 */
+  --reconciliation-processing: #3b82f6; /* 處理中 - 藍色 */
+  --reconciliation-approved: #10b981; /* 已完成 - 綠色 */
+  --reconciliation-disputed: #ef4444; /* 需注意 - 紅色 */
+  --reconciliation-draft: #6b7280; /* 草稿 - 灰色 */
+
   /* ERP 整合狀態 */
-  --erp-connected: #10b981;    /* 已連接 */
-  --erp-syncing: #f59e0b;      /* 同步中 */
-  --erp-error: #ef4444;        /* 錯誤 */
-  --erp-offline: #6b7280;      /* 離線 */
-  
+  --erp-connected: #10b981; /* 已連接 */
+  --erp-syncing: #f59e0b; /* 同步中 */
+  --erp-error: #ef4444; /* 錯誤 */
+  --erp-offline: #6b7280; /* 離線 */
+
   /* 語意色彩 */
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
   --info: #3b82f6;
-  
+
   /* 中性色彩 */
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -92,28 +95,29 @@
 
 #### 色彩使用指引
 
-| 用途 | 色彩 | 使用場景 |
-|------|------|----------|
+| 用途         | 色彩        | 使用場景                    |
+| ------------ | ----------- | --------------------------- |
 | **主要操作** | Primary-500 | CTA按鈕、重要連結、選中狀態 |
-| **對帳完成** | Success | 自動匹配成功、審核通過 |
-| **需要注意** | Warning | 待審查項目、部分匹配 |
-| **錯誤爭議** | Error | 對帳差異、系統錯誤 |
-| **資訊提示** | Info | 一般通知、說明文字 |
+| **對帳完成** | Success     | 自動匹配成功、審核通過      |
+| **需要注意** | Warning     | 待審查項目、部分匹配        |
+| **錯誤爭議** | Error       | 對帳差異、系統錯誤          |
+| **資訊提示** | Info        | 一般通知、說明文字          |
 
 ### 字體系統
 
 #### 字體族
+
 ```css
 :root {
   /* 中文字體 */
   --font-family-zh: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
-  
+
   /* 英文字體 */
   --font-family-en: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  
+
   /* 數字字體 (等寬) */
   --font-family-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  
+
   /* 組合字體 */
   --font-family-base: var(--font-family-en), var(--font-family-zh);
 }
@@ -124,52 +128,52 @@
 ```css
 /* 標題層級 */
 .text-h1 {
-  font-size: 2rem;      /* 32px */
+  font-size: 2rem; /* 32px */
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.025em;
 }
 
 .text-h2 {
-  font-size: 1.5rem;    /* 24px */
+  font-size: 1.5rem; /* 24px */
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.025em;
 }
 
 .text-h3 {
-  font-size: 1.25rem;   /* 20px */
+  font-size: 1.25rem; /* 20px */
   font-weight: 600;
   line-height: 1.4;
 }
 
 .text-h4 {
-  font-size: 1.125rem;  /* 18px */
+  font-size: 1.125rem; /* 18px */
   font-weight: 600;
   line-height: 1.4;
 }
 
 /* 內文層級 */
 .text-body-lg {
-  font-size: 1.125rem;  /* 18px */
+  font-size: 1.125rem; /* 18px */
   font-weight: 400;
   line-height: 1.6;
 }
 
 .text-body {
-  font-size: 1rem;      /* 16px */
+  font-size: 1rem; /* 16px */
   font-weight: 400;
   line-height: 1.6;
 }
 
 .text-body-sm {
-  font-size: 0.875rem;  /* 14px */
+  font-size: 0.875rem; /* 14px */
   font-weight: 400;
   line-height: 1.5;
 }
 
 .text-caption {
-  font-size: 0.75rem;   /* 12px */
+  font-size: 0.75rem; /* 12px */
   font-weight: 400;
   line-height: 1.4;
   color: var(--gray-600);
@@ -199,6 +203,7 @@
 ### 按鈕 (Button)
 
 #### 主要按鈕
+
 ```tsx
 interface ButtonProps {
   variant: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
@@ -221,6 +226,7 @@ interface ButtonProps {
 ```
 
 #### 按鈕樣式
+
 ```css
 /* 主要按鈕 */
 .btn-primary {
@@ -241,11 +247,26 @@ interface ButtonProps {
 }
 
 /* 尺寸變化 */
-.btn-xs { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
-.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
-.btn-md { padding: 0.5rem 1rem; font-size: 1rem; }
-.btn-lg { padding: 0.75rem 1.5rem; font-size: 1.125rem; }
-.btn-xl { padding: 1rem 2rem; font-size: 1.25rem; }
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+.btn-md {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.125rem;
+}
+.btn-xl {
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+}
 ```
 
 ### 對帳卡片 (ReconciliationCard)
@@ -344,6 +365,7 @@ interface ERPSyncIndicatorProps {
 ### 表單元件
 
 #### 輸入框 (Input)
+
 ```tsx
 interface InputProps {
   type?: 'text' | 'email' | 'password' | 'number';
@@ -400,14 +422,15 @@ interface InputProps {
 ```
 
 #### 選擇器 (Select)
+
 ```tsx
 interface SelectProps {
-  options: Array<{ value: string; label: string; disabled?: boolean }>;
-  value?: string;
-  onChange?: (value: string) => void;
-  placeholder?: string;
-  multiple?: boolean;
-  searchable?: boolean;
+  options: Array<{ value: string; label: string; disabled?: boolean }>
+  value?: string
+  onChange?: (value: string) => void
+  placeholder?: string
+  multiple?: boolean
+  searchable?: boolean
 }
 ```
 
@@ -481,33 +504,47 @@ interface DataTableProps<T> {
 ## 📱 響應式設計
 
 ### 斷點定義
+
 ```css
 :root {
-  --breakpoint-xs: 320px;   /* 小型手機 */
-  --breakpoint-sm: 640px;   /* 大型手機 */
-  --breakpoint-md: 768px;   /* 平板 */
-  --breakpoint-lg: 1024px;  /* 小型桌機 */
-  --breakpoint-xl: 1280px;  /* 大型桌機 */
+  --breakpoint-xs: 320px; /* 小型手機 */
+  --breakpoint-sm: 640px; /* 大型手機 */
+  --breakpoint-md: 768px; /* 平板 */
+  --breakpoint-lg: 1024px; /* 小型桌機 */
+  --breakpoint-xl: 1280px; /* 大型桌機 */
   --breakpoint-2xl: 1536px; /* 超大桌機 */
 }
 
 /* 響應式工具類 */
 @media (min-width: 640px) {
-  .sm\:hidden { display: none; }
-  .sm\:flex { display: flex; }
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .sm\:hidden {
+    display: none;
+  }
+  .sm\:flex {
+    display: flex;
+  }
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 768px) {
-  .md\:hidden { display: none; }
-  .md\:block { display: block; }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .md\:hidden {
+    display: none;
+  }
+  .md\:block {
+    display: block;
+  }
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 ```
 
 ### 行動端優化
 
 #### 觸控目標大小
+
 ```css
 /* 所有可觸控元素最小 44×44px */
 .touch-target {
@@ -528,6 +565,7 @@ interface DataTableProps<T> {
 ```
 
 #### 手勢控制
+
 ```css
 /* 滑動操作視覺回饋 */
 .swipe-action {
@@ -553,6 +591,7 @@ interface DataTableProps<T> {
 ### 微互動動畫
 
 #### 對帳匹配動畫
+
 ```css
 .auto-match-progress {
   position: relative;
@@ -566,22 +605,22 @@ interface DataTableProps<T> {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(16, 185, 129, 0.3) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.3) 50%, transparent 100%);
   animation: reconciliation-scan 2s ease-in-out;
 }
 
 @keyframes reconciliation-scan {
-  0% { left: -100%; }
-  100% { left: 100%; }
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
 }
 ```
 
 #### 信心分數視覺化
+
 ```css
 .confidence-indicator {
   display: flex;
@@ -600,7 +639,9 @@ interface DataTableProps<T> {
 .confidence-fill {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.8s ease, background-color 0.3s ease;
+  transition:
+    width 0.8s ease,
+    background-color 0.3s ease;
 }
 
 .confidence-high {
@@ -619,21 +660,21 @@ interface DataTableProps<T> {
 ### 載入狀態
 
 #### 骨架載入
+
 ```css
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--gray-200) 25%,
-    var(--gray-100) 50%,
-    var(--gray-200) 75%
-  );
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
 }
 
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeleton-text {
@@ -650,6 +691,7 @@ interface DataTableProps<T> {
 ```
 
 #### 進度指示器
+
 ```css
 .progress-ring {
   transform: rotate(-90deg);
@@ -727,24 +769,24 @@ const reconciliationTrendConfig = {
   colors: {
     processingTime: '#3b82f6',
     errorRate: '#ef4444',
-    savings: '#10b981'
+    savings: '#10b981',
   },
-  
+
   chart: {
     margin: { top: 20, right: 30, left: 20, bottom: 5 },
     grid: {
       strokeDasharray: '3 3',
-      stroke: '#e5e7eb'
-    }
+      stroke: '#e5e7eb',
+    },
   },
-  
+
   tooltip: {
     backgroundColor: 'white',
     border: '1px solid #e5e7eb',
     borderRadius: '8px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-  }
-};
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+  },
+}
 ```
 
 ### 差異分析圖表
@@ -784,6 +826,7 @@ const reconciliationTrendConfig = {
 ### WCAG 2.1 AA 合規
 
 #### 色彩對比
+
 ```css
 /* 確保所有文字與背景的對比度至少 4.5:1 */
 .text-high-contrast {
@@ -805,7 +848,7 @@ const reconciliationTrendConfig = {
     --gray-600: #000000;
     --border-color: #000000;
   }
-  
+
   .btn-outline {
     border-width: 2px;
   }
@@ -813,6 +856,7 @@ const reconciliationTrendConfig = {
 ```
 
 #### 焦點指示器
+
 ```css
 .focus-visible {
   outline: 2px solid var(--primary-500);
@@ -831,14 +875,15 @@ const reconciliationTrendConfig = {
 ```
 
 #### 螢幕閱讀器支援
+
 ```tsx
 // ARIA 標籤範例
-<div 
-  role="region" 
+<div
+  role="region"
   aria-label="對帳摘要"
   aria-describedby="reconciliation-help"
 >
-  <span 
+  <span
     className="financial-number"
     aria-label="總金額：新台幣四萬五千三百八十元"
   >
@@ -873,12 +918,12 @@ const reconciliationTrendConfig = {
 }
 
 /* Tab 順序指示 */
-[tabindex="0"]:focus,
-[tabindex="-1"]:focus {
+[tabindex='0']:focus,
+[tabindex='-1']:focus {
   position: relative;
 }
 
-[tabindex="0"]:focus::after {
+[tabindex='0']:focus::after {
   content: attr(data-tab-order);
   position: absolute;
   top: -8px;
@@ -898,42 +943,44 @@ const reconciliationTrendConfig = {
 ### 角色特定引導
 
 #### 餐廳用戶引導（5步驟）
+
 ```tsx
 const restaurantOnboarding = [
   {
     step: 1,
-    title: "歡迎使用井然 Orderly",
-    description: "讓我們用 5 分鐘設定您的自動化對帳系統",
-    target: ".welcome-banner"
+    title: '歡迎使用井然 Orderly',
+    description: '讓我們用 5 分鐘設定您的自動化對帳系統',
+    target: '.welcome-banner',
   },
   {
     step: 2,
-    title: "選擇您的角色",
-    description: "請選擇：餐廳經理 或 會計人員",
-    target: ".role-selector"
+    title: '選擇您的角色',
+    description: '請選擇：餐廳經理 或 會計人員',
+    target: '.role-selector',
   },
   {
     step: 3,
-    title: "ERP 整合設定",
-    description: "連接您的 ERP 系統，或選擇手動上傳",
-    target: ".erp-setup"
+    title: 'ERP 整合設定',
+    description: '連接您的 ERP 系統，或選擇手動上傳',
+    target: '.erp-setup',
   },
   {
     step: 4,
-    title: "第一次對帳",
-    description: "讓我們用範例數據練習對帳流程",
-    target: ".reconciliation-demo"
+    title: '第一次對帳',
+    description: '讓我們用範例數據練習對帳流程',
+    target: '.reconciliation-demo',
   },
   {
     step: 5,
-    title: "通知設定",
-    description: "設定差異和完成通知偏好",
-    target: ".notification-settings"
-  }
-];
+    title: '通知設定',
+    description: '設定差異和完成通知偏好',
+    target: '.notification-settings',
+  },
+]
 ```
 
 #### 引導覆蓋層樣式
+
 ```css
 .onboarding-overlay {
   position: fixed;
@@ -993,32 +1040,24 @@ const restaurantOnboarding = [
 
 ```tsx
 const featureIntroduction = {
-  week1: ["基本對帳工作流程", "訂單狀態追蹤"],
-  week2: ["進階篩選和搜尋", "批量操作"],
-  week3: ["爭議解決和溝通", "自訂通知"],
-  week4: ["分析和報表功能", "API 整合設定"]
-};
+  week1: ['基本對帳工作流程', '訂單狀態追蹤'],
+  week2: ['進階篩選和搜尋', '批量操作'],
+  week3: ['爭議解決和溝通', '自訂通知'],
+  week4: ['分析和報表功能', 'API 整合設定'],
+}
 
 // 情境式幫助提示
 const contextualHelp = {
   reconciliation: {
-    title: "對帳小貼士",
-    tips: [
-      "綠色項目表示自動匹配成功",
-      "黃色項目需要您的確認",
-      "紅色項目存在差異需要處理"
-    ]
+    title: '對帳小貼士',
+    tips: ['綠色項目表示自動匹配成功', '黃色項目需要您的確認', '紅色項目存在差異需要處理'],
   },
-  
+
   erp_sync: {
-    title: "ERP 同步說明",
-    tips: [
-      "藍色表示正在同步中",
-      "綠色表示同步成功",
-      "如果顯示紅色，請檢查連線設定"
-    ]
-  }
-};
+    title: 'ERP 同步說明',
+    tips: ['藍色表示正在同步中', '綠色表示同步成功', '如果顯示紅色，請檢查連線設定'],
+  },
+}
 ```
 
 ---
@@ -1032,30 +1071,30 @@ const contextualHelp = {
     --bg-primary: #111827;
     --bg-secondary: #1f2937;
     --bg-tertiary: #374151;
-    
+
     --text-primary: #f9fafb;
     --text-secondary: #d1d5db;
     --text-tertiary: #9ca3af;
-    
+
     --border-primary: #374151;
     --border-secondary: #4b5563;
-    
+
     /* 主色調整 */
     --primary-500: #d1a684;
     --primary-600: #b8956f;
   }
-  
+
   .reconciliation-card {
     background: var(--bg-secondary);
     border-color: var(--border-primary);
     color: var(--text-primary);
   }
-  
+
   .data-table {
     background: var(--bg-secondary);
     color: var(--text-primary);
   }
-  
+
   .data-table th {
     background: var(--bg-tertiary);
     color: var(--text-secondary);
@@ -1063,7 +1102,7 @@ const contextualHelp = {
 }
 
 /* 手動深色模式切換 */
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* 與 prefers-color-scheme: dark 相同的樣式 */
 }
 ```
@@ -1073,32 +1112,49 @@ const contextualHelp = {
 ## 📐 間距與佈局系統
 
 ### 間距比例
+
 ```css
 :root {
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
-  --space-20: 5rem;     /* 80px */
-  --space-24: 6rem;     /* 96px */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.25rem; /* 20px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-10: 2.5rem; /* 40px */
+  --space-12: 3rem; /* 48px */
+  --space-16: 4rem; /* 64px */
+  --space-20: 5rem; /* 80px */
+  --space-24: 6rem; /* 96px */
 }
 
 /* 間距工具類 */
-.p-4 { padding: var(--space-4); }
-.px-6 { padding-left: var(--space-6); padding-right: var(--space-6); }
-.py-8 { padding-top: var(--space-8); padding-bottom: var(--space-8); }
-.m-4 { margin: var(--space-4); }
-.mx-auto { margin-left: auto; margin-right: auto; }
-.gap-4 { gap: var(--space-4); }
+.p-4 {
+  padding: var(--space-4);
+}
+.px-6 {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+.py-8 {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+.m-4 {
+  margin: var(--space-4);
+}
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+.gap-4 {
+  gap: var(--space-4);
+}
 ```
 
 ### 網格系統
+
 ```css
 .container {
   width: 100%;
@@ -1112,22 +1168,36 @@ const contextualHelp = {
   gap: 1rem;
 }
 
-.grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
-.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-1 {
+  grid-template-columns: repeat(1, 1fr);
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 /* 響應式網格 */
 @media (min-width: 640px) {
-  .sm\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .sm\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 768px) {
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-  .lg\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .lg\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 ```
 
@@ -1138,6 +1208,7 @@ const contextualHelp = {
 ### 元件開發優先級
 
 #### 第1階段：基礎元件 (第1週)
+
 - [ ] Button 元件及變體
 - [ ] Input、Select 表單元件
 - [ ] Layout、Container 佈局元件
@@ -1145,6 +1216,7 @@ const contextualHelp = {
 - [ ] Color palette 設定
 
 #### 第2階段：業務元件 (第2週)
+
 - [ ] ReconciliationCard 對帳卡片
 - [ ] ERPSyncIndicator 同步指示器
 - [ ] DataTable 資料表格
@@ -1152,6 +1224,7 @@ const contextualHelp = {
 - [ ] KPICard 指標卡片
 
 #### 第3階段：互動元件 (第3週)
+
 - [ ] Modal、Dialog 彈窗
 - [ ] Tooltip、Popover 提示
 - [ ] Notification 通知系統
@@ -1159,6 +1232,7 @@ const contextualHelp = {
 - [ ] Progress 進度指示器
 
 #### 第4階段：進階功能 (第4週)
+
 - [ ] Chart 圖表元件
 - [ ] DatePicker 日期選擇
 - [ ] FileUpload 檔案上傳
@@ -1168,6 +1242,7 @@ const contextualHelp = {
 ### 品質檢查清單
 
 #### 設計一致性
+
 - [ ] 色彩使用符合設計規範
 - [ ] 字體大小和重量正確
 - [ ] 間距符合 4px 網格系統
@@ -1175,6 +1250,7 @@ const contextualHelp = {
 - [ ] 陰影效果適當且一致
 
 #### 無障礙檢查
+
 - [ ] 色彩對比度 ≥ 4.5:1
 - [ ] 鍵盤導航功能完整
 - [ ] ARIA 標籤正確設定
@@ -1182,12 +1258,14 @@ const contextualHelp = {
 - [ ] 螢幕閱讀器測試通過
 
 #### 響應式檢查
+
 - [ ] 行動端觸控目標 ≥ 44px
 - [ ] 平板佈局適配良好
 - [ ] 桌面端資訊密度適中
 - [ ] 不同解析度下正常顯示
 
 #### 效能檢查
+
 - [ ] 圖片使用 WebP 格式並優化
 - [ ] CSS 無重複或無用樣式
 - [ ] 動畫效能良好（60fps）
@@ -1200,6 +1278,7 @@ const contextualHelp = {
 ### 對帳流程視覺語言
 
 #### 置信度指示器設計
+
 ```css
 /* 對帳 AI 置信度視覺系統 */
 .confidence-indicator {
@@ -1240,11 +1319,11 @@ const contextualHelp = {
 }
 
 @keyframes countUp {
-  from { 
+  from {
     transform: scale(0.8);
     opacity: 0;
   }
-  to { 
+  to {
     transform: scale(1);
     opacity: 1;
   }
@@ -1252,6 +1331,7 @@ const contextualHelp = {
 ```
 
 #### 財務數據顯示規範
+
 ```css
 /* 金額顯示專用樣式 */
 .financial-amount {
@@ -1301,6 +1381,7 @@ const contextualHelp = {
 ### ERP 整合狀態設計
 
 #### 連接狀態指示器
+
 ```css
 .erp-status-indicator {
   display: inline-flex;
@@ -1349,13 +1430,16 @@ const contextualHelp = {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 ```
 
 ### 訂單狀態視覺系統
 
 #### 狀態流程指示器
+
 ```css
 .order-status-flow {
   display: flex;
@@ -1439,6 +1523,7 @@ const contextualHelp = {
 ## 📊 數據視覺化元件規範
 
 ### KPI 儀表板卡片
+
 ```css
 .kpi-dashboard {
   display: grid;
@@ -1529,6 +1614,7 @@ const contextualHelp = {
 ```
 
 ### 對帳進度環形圖
+
 ```css
 .reconciliation-progress {
   position: relative;
@@ -1589,6 +1675,7 @@ const contextualHelp = {
 ## 🔄 狀態管理與過渡動畫
 
 ### 載入狀態設計
+
 ```css
 /* 對帳處理載入動畫 */
 .reconciliation-loading {
@@ -1660,12 +1747,17 @@ const contextualHelp = {
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 ```
 
 ### 微互動動畫
+
 ```css
 /* 按鈕點擊波紋效果 */
 .ripple-button {
@@ -1683,7 +1775,9 @@ const contextualHelp = {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.5);
   transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  transition:
+    width 0.6s,
+    height 0.6s;
 }
 
 .ripple-button:active::before {
@@ -1699,7 +1793,7 @@ const contextualHelp = {
 
 .interactive-card:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 10px 25px rgba(0, 0, 0, 0.1),
     0 20px 40px rgba(0, 0, 0, 0.06);
 }
@@ -1725,9 +1819,15 @@ const contextualHelp = {
 }
 
 @keyframes digitFlip {
-  0% { transform: rotateX(0deg); }
-  50% { transform: rotateX(90deg); }
-  100% { transform: rotateX(0deg); }
+  0% {
+    transform: rotateX(0deg);
+  }
+  50% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
 }
 ```
 
@@ -1736,6 +1836,7 @@ const contextualHelp = {
 ## 📱 PWA 與離線設計規範
 
 ### 離線狀態指示器
+
 ```css
 .offline-indicator {
   position: fixed;
@@ -1783,6 +1884,7 @@ const contextualHelp = {
 ```
 
 ### 安裝提示設計
+
 ```css
 .pwa-install-prompt {
   position: fixed;
@@ -1856,26 +1958,27 @@ const contextualHelp = {
 ## 🌐 多語言支援設計
 
 ### RTL 語言支援
+
 ```css
 /* RTL 佈局支援 */
-[dir="rtl"] {
+[dir='rtl'] {
   direction: rtl;
 }
 
-[dir="rtl"] .layout-container {
+[dir='rtl'] .layout-container {
   flex-direction: row-reverse;
 }
 
-[dir="rtl"] .margin-left {
+[dir='rtl'] .margin-left {
   margin-left: 0;
   margin-right: var(--space-4);
 }
 
-[dir="rtl"] .text-align-left {
+[dir='rtl'] .text-align-left {
   text-align: right;
 }
 
-[dir="rtl"] .float-left {
+[dir='rtl'] .float-left {
   float: right;
 }
 
@@ -1896,6 +1999,7 @@ const contextualHelp = {
 ```
 
 ### 字體回退機制
+
 ```css
 /* 多語言字體堆疊 */
 .font-system {
@@ -1904,18 +2008,14 @@ const contextualHelp = {
     'Noto Sans TC',
     'PingFang TC',
     'Microsoft JhengHei',
-    /* 簡體中文 */
-    'Noto Sans SC', 
+    /* 簡體中文 */ 'Noto Sans SC',
     'PingFang SC',
     'Microsoft YaHei',
-    /* 日文 */
-    'Noto Sans JP',
+    /* 日文 */ 'Noto Sans JP',
     'Hiragino Sans',
-    /* 韓文 */
-    'Noto Sans KR',
+    /* 韓文 */ 'Noto Sans KR',
     'Malgun Gothic',
-    /* 英文回退 */
-    'Inter',
+    /* 英文回退 */ 'Inter',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -1924,20 +2024,20 @@ const contextualHelp = {
 }
 
 /* 地區特定調整 */
-[lang="zh-TW"] {
+[lang='zh-TW'] {
   font-family: 'Noto Sans TC', var(--font-family-base);
 }
 
-[lang="zh-CN"] {
+[lang='zh-CN'] {
   font-family: 'Noto Sans SC', var(--font-family-base);
 }
 
-[lang="ja"] {
+[lang='ja'] {
   font-family: 'Noto Sans JP', var(--font-family-base);
   line-height: 1.7; /* 日文需要更大行高 */
 }
 
-[lang="ko"] {
+[lang='ko'] {
   font-family: 'Noto Sans KR', var(--font-family-base);
 }
 ```
@@ -1947,25 +2047,29 @@ const contextualHelp = {
 ## 📋 實施檢查清單更新
 
 ### 技術實現檢查
+
 - [ ] CSS 變數正確定義並在所有瀏覽器中工作
 - [ ] 設計 Token 與實際樣式一致
 - [ ] 響應式斷點在所有裝置上正確運作
 - [ ] 動畫效能在低階裝置上可接受
 - [ ] 圖標載入策略優化
 
-### 業務邏輯檢查  
+### 業務邏輯檢查
+
 - [ ] 對帳狀態視覺化準確反映業務邏輯
 - [ ] ERP 整合狀態正確顯示
 - [ ] 財務數據格式化符合會計標準
 - [ ] 用戶角色權限正確反映在 UI 中
 
 ### 國際化檢查
+
 - [ ] 所有文字內容已提取為翻譯鍵值
 - [ ] RTL 語言佈局正確
-- [ ] 不同語言的字體載入正常  
+- [ ] 不同語言的字體載入正常
 - [ ] 數字、日期、貨幣格式化正確
 
 ### 效能優化檢查
+
 - [ ] 關鍵路徑 CSS 內聯載入
 - [ ] 非關鍵樣式延遲載入
 - [ ] 圖標字體或 SVG 優化

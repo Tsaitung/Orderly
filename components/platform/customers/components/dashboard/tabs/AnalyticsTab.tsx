@@ -3,13 +3,13 @@
 // ============================================================================
 // Deep statistics and trend analysis with charts and insights
 
-'use client';
+'use client'
 
-import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import React, { useMemo } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   TrendingUp,
   TrendingDown,
@@ -24,55 +24,55 @@ import {
   Award,
   AlertTriangle,
   Download,
-  RefreshCw
-} from 'lucide-react';
+  RefreshCw,
+} from 'lucide-react'
 
-import type { 
+import type {
   DashboardStatistics,
   HierarchyNode,
   SearchResult,
   FilterOptions,
   SortOptions,
-  ActivityMetrics
-} from '../../../types';
+  ActivityMetrics,
+} from '../../../types'
 
 // ============================================================================
 // Types
 // ============================================================================
 
 interface AnalyticsTabProps {
-  dashboardData: DashboardStatistics;
-  tree: HierarchyNode[];
-  searchResults: SearchResult[];
-  filters: FilterOptions;
-  sortOptions: SortOptions;
-  searchQuery: string;
+  dashboardData: DashboardStatistics
+  tree: HierarchyNode[]
+  searchResults: SearchResult[]
+  filters: FilterOptions
+  sortOptions: SortOptions
+  searchQuery: string
 }
 
 interface AnalyticsMetric {
-  id: string;
-  title: string;
-  value: string | number;
-  change: number;
-  changeLabel: string;
-  trend: 'up' | 'down' | 'stable';
-  icon: React.ComponentType<{ className?: string }>;
-  colorScheme: 'green' | 'red' | 'blue' | 'purple' | 'orange';
+  id: string
+  title: string
+  value: string | number
+  change: number
+  changeLabel: string
+  trend: 'up' | 'down' | 'stable'
+  icon: React.ComponentType<{ className?: string }>
+  colorScheme: 'green' | 'red' | 'blue' | 'purple' | 'orange'
 }
 
 interface TrendData {
-  period: string;
-  revenue: number;
-  orders: number;
-  customers: number;
-  activity: number;
+  period: string
+  revenue: number
+  orders: number
+  customers: number
+  activity: number
 }
 
 interface RegionalData {
-  region: string;
-  customers: number;
-  revenue: number;
-  growth: number;
+  region: string
+  customers: number
+  revenue: number
+  growth: number
 }
 
 // ============================================================================
@@ -80,15 +80,15 @@ interface RegionalData {
 // ============================================================================
 
 const generateTrendData = (): TrendData[] => {
-  const months = ['1月', '2月', '3月', '4月', '5月', '6月'];
+  const months = ['1月', '2月', '3月', '4月', '5月', '6月']
   return months.map((month, index) => ({
     period: month,
-    revenue: 1800000 + (index * 150000) + (Math.random() * 200000),
-    orders: 450 + (index * 30) + (Math.random() * 100),
-    customers: 180 + (index * 5) + (Math.random() * 20),
-    activity: 70 + (index * 2) + (Math.random() * 15)
-  }));
-};
+    revenue: 1800000 + index * 150000 + Math.random() * 200000,
+    orders: 450 + index * 30 + Math.random() * 100,
+    customers: 180 + index * 5 + Math.random() * 20,
+    activity: 70 + index * 2 + Math.random() * 15,
+  }))
+}
 
 const generateRegionalData = (): RegionalData[] => {
   return [
@@ -96,16 +96,16 @@ const generateRegionalData = (): RegionalData[] => {
     { region: '新北市', customers: 3, revenue: 800000, growth: 12.8 },
     { region: '桃園市', customers: 2, revenue: 450000, growth: 8.5 },
     { region: '台中市', customers: 2, revenue: 350000, growth: -2.1 },
-    { region: '高雄市', customers: 1, revenue: 180000, growth: 6.7 }
-  ];
-};
+    { region: '高雄市', customers: 1, revenue: 180000, growth: 6.7 },
+  ]
+}
 
 // ============================================================================
 // Analytics Metrics Component
 // ============================================================================
 
 interface AnalyticsMetricsProps {
-  dashboardData: DashboardStatistics;
+  dashboardData: DashboardStatistics
 }
 
 function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
@@ -118,7 +118,7 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: dashboardData.revenueGrowth > 0 ? 'up' : 'down',
       icon: TrendingUp,
-      colorScheme: 'green'
+      colorScheme: 'green',
     },
     {
       id: 'customer_retention',
@@ -128,7 +128,7 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: 'up',
       icon: Users,
-      colorScheme: 'blue'
+      colorScheme: 'blue',
     },
     {
       id: 'avg_order_value',
@@ -138,7 +138,7 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: 'down',
       icon: DollarSign,
-      colorScheme: 'orange'
+      colorScheme: 'orange',
     },
     {
       id: 'activity_score',
@@ -148,7 +148,7 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: 'up',
       icon: Activity,
-      colorScheme: 'purple'
+      colorScheme: 'purple',
     },
     {
       id: 'delivery_performance',
@@ -158,7 +158,7 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: 'up',
       icon: Target,
-      colorScheme: 'green'
+      colorScheme: 'green',
     },
     {
       id: 'customer_satisfaction',
@@ -168,63 +168,66 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
       changeLabel: '較上月',
       trend: 'up',
       icon: Award,
-      colorScheme: 'blue'
-    }
-  ];
+      colorScheme: 'blue',
+    },
+  ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {metrics.map((metric) => {
-        const Icon = metric.icon;
-        const isPositive = metric.trend === 'up';
-        
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {metrics.map(metric => {
+        const Icon = metric.icon
+        const isPositive = metric.trend === 'up'
+
         return (
           <Card key={metric.id} variant="filled" colorScheme="white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600 mb-1">
-                    {metric.title}
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 mb-2">
-                    {metric.value}
-                  </p>
+                  <p className="mb-1 text-sm font-medium text-gray-600">{metric.title}</p>
+                  <p className="mb-2 text-2xl font-bold text-gray-900">{metric.value}</p>
                   <div className="flex items-center">
                     {metric.trend === 'up' ? (
-                      <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                      <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
                     ) : metric.trend === 'down' ? (
-                      <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
+                      <TrendingDown className="mr-1 h-4 w-4 text-red-500" />
                     ) : (
-                      <div className="h-4 w-4 mr-1" />
+                      <div className="mr-1 h-4 w-4" />
                     )}
-                    <span className={cn(
-                      "text-sm font-medium",
-                      isPositive ? "text-green-600" : "text-red-600"
-                    )}>
-                      {isPositive ? '+' : ''}{metric.change.toFixed(1)}%
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        isPositive ? 'text-green-600' : 'text-red-600'
+                      )}
+                    >
+                      {isPositive ? '+' : ''}
+                      {metric.change.toFixed(1)}%
                     </span>
-                    <span className="text-sm text-gray-500 ml-1">
-                      {metric.changeLabel}
-                    </span>
+                    <span className="ml-1 text-sm text-gray-500">{metric.changeLabel}</span>
                   </div>
                 </div>
                 <div className="ml-4">
-                  <Icon className={cn(
-                    "h-8 w-8",
-                    metric.colorScheme === 'green' ? "text-green-500" :
-                    metric.colorScheme === 'blue' ? "text-blue-500" :
-                    metric.colorScheme === 'purple' ? "text-purple-500" :
-                    metric.colorScheme === 'orange' ? "text-orange-500" :
-                    "text-red-500"
-                  )} />
+                  <Icon
+                    className={cn(
+                      'h-8 w-8',
+                      metric.colorScheme === 'green'
+                        ? 'text-green-500'
+                        : metric.colorScheme === 'blue'
+                          ? 'text-blue-500'
+                          : metric.colorScheme === 'purple'
+                            ? 'text-purple-500'
+                            : metric.colorScheme === 'orange'
+                              ? 'text-orange-500'
+                              : 'text-red-500'
+                    )}
+                  />
                 </div>
               </div>
             </CardContent>
           </Card>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -232,12 +235,12 @@ function AnalyticsMetrics({ dashboardData }: AnalyticsMetricsProps) {
 // ============================================================================
 
 interface TrendChartProps {
-  data: TrendData[];
+  data: TrendData[]
 }
 
 function TrendChart({ data }: TrendChartProps) {
-  const maxRevenue = Math.max(...data.map(d => d.revenue));
-  
+  const maxRevenue = Math.max(...data.map(d => d.revenue))
+
   return (
     <Card>
       <CardHeader>
@@ -252,45 +255,41 @@ function TrendChart({ data }: TrendChartProps) {
         <div className="space-y-4">
           {data.map((item, index) => (
             <div key={index} className="flex items-center space-x-4">
-              <div className="w-12 text-sm text-gray-600 font-medium">
-                {item.period}
-              </div>
+              <div className="w-12 text-sm font-medium text-gray-600">{item.period}</div>
               <div className="flex-1">
-                <div className="flex items-center justify-between mb-1">
+                <div className="mb-1 flex items-center justify-between">
                   <span className="text-sm text-gray-600">營收</span>
                   <span className="text-sm font-medium">
                     NT$ {(item.revenue / 1000).toFixed(0)}K
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-primary-500 h-2 rounded-full transition-all duration-300" 
+                <div className="h-2 w-full rounded-full bg-gray-200">
+                  <div
+                    className="h-2 rounded-full bg-primary-500 transition-all duration-300"
                     style={{ width: `${(item.revenue / maxRevenue) * 100}%` }}
                   />
                 </div>
               </div>
               <div className="w-16 text-right">
-                <div className="text-sm font-medium text-gray-900">
-                  {item.orders}
-                </div>
+                <div className="text-sm font-medium text-gray-900">{item.orders}</div>
                 <div className="text-xs text-gray-500">訂單</div>
               </div>
             </div>
           ))}
         </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200">
+
+        <div className="mt-6 border-t border-gray-200 pt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">總成長率</span>
             <div className="flex items-center">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+              <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
               <span className="font-medium text-green-600">+22.8%</span>
             </div>
           </div>
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -298,12 +297,12 @@ function TrendChart({ data }: TrendChartProps) {
 // ============================================================================
 
 interface RegionalAnalysisProps {
-  data: RegionalData[];
+  data: RegionalData[]
 }
 
 function RegionalAnalysis({ data }: RegionalAnalysisProps) {
-  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
-  
+  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0)
+
   return (
     <Card>
       <CardHeader>
@@ -316,15 +315,25 @@ function RegionalAnalysis({ data }: RegionalAnalysisProps) {
       <CardContent>
         <div className="space-y-4">
           {data.map((region, index) => (
-            <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
+            <div
+              key={index}
+              className="flex items-center justify-between rounded-lg p-3 hover:bg-gray-50"
+            >
               <div className="flex items-center space-x-3">
-                <div className={cn(
-                  "w-3 h-3 rounded-full",
-                  index === 0 ? "bg-primary-500" :
-                  index === 1 ? "bg-blue-500" :
-                  index === 2 ? "bg-green-500" :
-                  index === 3 ? "bg-orange-500" : "bg-purple-500"
-                )} />
+                <div
+                  className={cn(
+                    'h-3 w-3 rounded-full',
+                    index === 0
+                      ? 'bg-primary-500'
+                      : index === 1
+                        ? 'bg-blue-500'
+                        : index === 2
+                          ? 'bg-green-500'
+                          : index === 3
+                            ? 'bg-orange-500'
+                            : 'bg-purple-500'
+                  )}
+                />
                 <div>
                   <div className="font-medium text-gray-900">{region.region}</div>
                   <div className="text-sm text-gray-500">
@@ -332,13 +341,16 @@ function RegionalAnalysis({ data }: RegionalAnalysisProps) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="text-right">
-                <div className={cn(
-                  "text-sm font-medium",
-                  region.growth > 0 ? "text-green-600" : "text-red-600"
-                )}>
-                  {region.growth > 0 ? '+' : ''}{region.growth.toFixed(1)}%
+                <div
+                  className={cn(
+                    'text-sm font-medium',
+                    region.growth > 0 ? 'text-green-600' : 'text-red-600'
+                  )}
+                >
+                  {region.growth > 0 ? '+' : ''}
+                  {region.growth.toFixed(1)}%
                 </div>
                 <div className="text-xs text-gray-500">
                   {((region.revenue / totalRevenue) * 100).toFixed(1)}% 占比
@@ -347,15 +359,15 @@ function RegionalAnalysis({ data }: RegionalAnalysisProps) {
             </div>
           ))}
         </div>
-        
-        <div className="mt-4 pt-4 border-t border-gray-200">
+
+        <div className="mt-4 border-t border-gray-200 pt-4">
           <Button variant="outline" size="sm" className="w-full">
             查看詳細區域報告
           </Button>
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -369,23 +381,23 @@ function InsightsAndRecommendations() {
       title: '營收成長強勁',
       description: '本月營收較上月成長 15.8%，主要來自王品集團和瓦城集團的訂單增加。',
       icon: TrendingUp,
-      action: '查看詳細分析'
+      action: '查看詳細分析',
     },
     {
       type: 'warning',
       title: '部分客戶活躍度下降',
       description: '有 3 個客戶集團的活躍度較上月下降超過 10%，建議主動聯繫了解需求。',
       icon: AlertTriangle,
-      action: '查看客戶清單'
+      action: '查看客戶清單',
     },
     {
       type: 'info',
       title: '配送效率優化機會',
       description: '台中地區的平均配送時間比其他地區高 20%，建議檢視配送路線規劃。',
       icon: Target,
-      action: '優化配送'
-    }
-  ];
+      action: '優化配送',
+    },
+  ]
 
   return (
     <Card>
@@ -398,45 +410,56 @@ function InsightsAndRecommendations() {
       </CardHeader>
       <CardContent className="space-y-4">
         {insights.map((insight, index) => {
-          const Icon = insight.icon;
-          
+          const Icon = insight.icon
+
           return (
-            <div key={index} className={cn(
-              "p-4 rounded-lg border-l-4",
-              insight.type === 'success' ? "bg-green-50 border-green-400" :
-              insight.type === 'warning' ? "bg-yellow-50 border-yellow-400" :
-              "bg-blue-50 border-blue-400"
-            )}>
+            <div
+              key={index}
+              className={cn(
+                'rounded-lg border-l-4 p-4',
+                insight.type === 'success'
+                  ? 'border-green-400 bg-green-50'
+                  : insight.type === 'warning'
+                    ? 'border-yellow-400 bg-yellow-50'
+                    : 'border-blue-400 bg-blue-50'
+              )}
+            >
               <div className="flex items-start space-x-3">
-                <Icon className={cn(
-                  "h-5 w-5 mt-0.5",
-                  insight.type === 'success' ? "text-green-600" :
-                  insight.type === 'warning' ? "text-yellow-600" :
-                  "text-blue-600"
-                )} />
+                <Icon
+                  className={cn(
+                    'mt-0.5 h-5 w-5',
+                    insight.type === 'success'
+                      ? 'text-green-600'
+                      : insight.type === 'warning'
+                        ? 'text-yellow-600'
+                        : 'text-blue-600'
+                  )}
+                />
                 <div className="flex-1">
-                  <h4 className="font-medium text-gray-900 mb-1">
-                    {insight.title}
-                  </h4>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {insight.description}
-                  </p>
-                  <Button variant="ghost" size="sm" className={cn(
-                    "h-auto p-0 font-medium",
-                    insight.type === 'success' ? "text-green-700 hover:text-green-800" :
-                    insight.type === 'warning' ? "text-yellow-700 hover:text-yellow-800" :
-                    "text-blue-700 hover:text-blue-800"
-                  )}>
+                  <h4 className="mb-1 font-medium text-gray-900">{insight.title}</h4>
+                  <p className="mb-2 text-sm text-gray-600">{insight.description}</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      'h-auto p-0 font-medium',
+                      insight.type === 'success'
+                        ? 'text-green-700 hover:text-green-800'
+                        : insight.type === 'warning'
+                          ? 'text-yellow-700 hover:text-yellow-800'
+                          : 'text-blue-700 hover:text-blue-800'
+                    )}
+                  >
                     {insight.action} →
                   </Button>
                 </div>
               </div>
             </div>
-          );
+          )
         })}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 // ============================================================================
@@ -449,20 +472,20 @@ export default function AnalyticsTab({
   searchResults,
   filters,
   sortOptions,
-  searchQuery
+  searchQuery,
 }: AnalyticsTabProps) {
-  const trendData = useMemo(() => generateTrendData(), []);
-  const regionalData = useMemo(() => generateRegionalData(), []);
+  const trendData = useMemo(() => generateTrendData(), [])
+  const regionalData = useMemo(() => generateRegionalData(), [])
 
   return (
     <div className="space-y-6">
       {/* Header Actions */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">數據分析總覽</h2>
-          <p className="text-sm text-gray-500 mt-1">深度統計分析與業務洞察</p>
+          <p className="mt-1 text-sm text-gray-500">深度統計分析與業務洞察</p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
@@ -479,10 +502,10 @@ export default function AnalyticsTab({
       <AnalyticsMetrics dashboardData={dashboardData} />
 
       {/* Charts and Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Trend Analysis */}
         <TrendChart data={trendData} />
-        
+
         {/* Regional Analysis */}
         <RegionalAnalysis data={regionalData} />
       </div>
@@ -491,7 +514,7 @@ export default function AnalyticsTab({
       <InsightsAndRecommendations />
 
       {/* Additional Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -503,21 +526,21 @@ export default function AnalyticsTab({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-primary-500 rounded-full" />
+                  <div className="h-3 w-3 rounded-full bg-primary-500" />
                   <span className="text-sm text-gray-600">連鎖餐飲</span>
                 </div>
                 <span className="text-sm font-medium">65%</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                  <div className="h-3 w-3 rounded-full bg-blue-500" />
                   <span className="text-sm text-gray-600">獨立餐廳</span>
                 </div>
                 <span className="text-sm font-medium">25%</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                  <div className="h-3 w-3 rounded-full bg-green-500" />
                   <span className="text-sm text-gray-600">團膳業者</span>
                 </div>
                 <span className="text-sm font-medium">10%</span>
@@ -538,8 +561,8 @@ export default function AnalyticsTab({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">上午 (9-12)</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="w-3/5 bg-primary-500 h-2 rounded-full" />
+                  <div className="h-2 w-20 rounded-full bg-gray-200">
+                    <div className="h-2 w-3/5 rounded-full bg-primary-500" />
                   </div>
                   <span className="text-sm font-medium">60%</span>
                 </div>
@@ -547,8 +570,8 @@ export default function AnalyticsTab({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">下午 (12-18)</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="w-4/5 bg-blue-500 h-2 rounded-full" />
+                  <div className="h-2 w-20 rounded-full bg-gray-200">
+                    <div className="h-2 w-4/5 rounded-full bg-blue-500" />
                   </div>
                   <span className="text-sm font-medium">80%</span>
                 </div>
@@ -556,8 +579,8 @@ export default function AnalyticsTab({
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">晚上 (18-24)</span>
                 <div className="flex items-center space-x-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="w-2/5 bg-green-500 h-2 rounded-full" />
+                  <div className="h-2 w-20 rounded-full bg-gray-200">
+                    <div className="h-2 w-2/5 rounded-full bg-green-500" />
                   </div>
                   <span className="text-sm font-medium">40%</span>
                 </div>
@@ -567,5 +590,5 @@ export default function AnalyticsTab({
         </Card>
       </div>
     </div>
-  );
+  )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
+import {
   BarChart3,
   DollarSign,
   TrendingUp,
@@ -18,7 +18,7 @@ import {
   Crown,
   Star,
   CreditCard,
-  Calculator
+  Calculator,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -37,7 +37,7 @@ import { cn } from '@/lib/utils'
 const mockOverviewData = {
   period: {
     start: new Date('2024-09-01'),
-    end: new Date('2024-09-30')
+    end: new Date('2024-09-30'),
   },
   total_revenue: 5628400,
   supplier_revenue: 1068400,
@@ -53,8 +53,8 @@ const mockOverviewData = {
     billing_automation: 98.7,
     reconciliation_accuracy: 99.2,
     payment_success_rate: 97.8,
-    dispute_rate: 0.8
-  }
+    dispute_rate: 0.8,
+  },
 }
 
 const mockSupplierMetrics = {
@@ -65,8 +65,8 @@ const mockSupplierMetrics = {
     Platinum: { count: 89, percentage: 26.0, avg_gmv: 250000 },
     Gold: { count: 123, percentage: 36.0, avg_gmv: 150000 },
     Silver: { count: 98, percentage: 28.7, avg_gmv: 80000 },
-    Bronze: { count: 32, percentage: 9.4, avg_gmv: 30000 }
-  }
+    Bronze: { count: 32, percentage: 9.4, avg_gmv: 30000 },
+  },
 }
 
 const mockRestaurantMetrics = {
@@ -74,11 +74,11 @@ const mockRestaurantMetrics = {
   plan_distribution: {
     free: { count: 856, percentage: 68.6, revenue: 0 },
     pro: { count: 312, percentage: 25.0, revenue: 936000 },
-    enterprise: { count: 79, percentage: 6.3, revenue: 3624000 }
+    enterprise: { count: 79, percentage: 6.3, revenue: 3624000 },
   },
   churn_rate: 0.032,
   upgrade_rate: 0.125,
-  arpu: 3657
+  arpu: 3657,
 }
 
 const mockRecentActivity = [
@@ -88,7 +88,7 @@ const mockRecentActivity = [
     description: '陽明春天生鮮 - 月度佣金結算',
     amount: 68400,
     timestamp: new Date('2024-09-30T09:30:00'),
-    status: 'completed'
+    status: 'completed',
   },
   {
     id: '2',
@@ -96,7 +96,7 @@ const mockRecentActivity = [
     description: '金龍餐廳集團 - Enterprise 年費續約',
     amount: 144000,
     timestamp: new Date('2024-09-30T08:15:00'),
-    status: 'completed'
+    status: 'completed',
   },
   {
     id: '3',
@@ -104,7 +104,7 @@ const mockRecentActivity = [
     description: '9月份供應商對帳異常',
     amount: 0,
     timestamp: new Date('2024-09-30T07:45:00'),
-    status: 'pending'
+    status: 'pending',
   },
   {
     id: '4',
@@ -112,15 +112,15 @@ const mockRecentActivity = [
     description: '美味蒸餃 - 費用爭議處理',
     amount: 1200,
     timestamp: new Date('2024-09-29T16:20:00'),
-    status: 'pending'
-  }
+    status: 'pending',
+  },
 ]
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('zh-TW', {
     style: 'currency',
     currency: 'TWD',
-    minimumFractionDigits: 0
+    minimumFractionDigits: 0,
   }).format(amount)
 }
 
@@ -140,20 +140,20 @@ const activityTypeLabels = {
   supplier_payment: '供應商付款',
   restaurant_subscription: '餐廳訂閱',
   reconciliation: '對帳處理',
-  dispute: '爭議處理'
+  dispute: '爭議處理',
 }
 
 const activityTypeColors = {
   supplier_payment: 'text-blue-600 bg-blue-50',
   restaurant_subscription: 'text-green-600 bg-green-50',
   reconciliation: 'text-orange-600 bg-orange-50',
-  dispute: 'text-red-600 bg-red-50'
+  dispute: 'text-red-600 bg-red-50',
 }
 
 const statusColors = {
   completed: 'bg-green-100 text-green-800',
   pending: 'bg-yellow-100 text-yellow-800',
-  failed: 'bg-red-100 text-red-800'
+  failed: 'bg-red-100 text-red-800',
 }
 
 export default function BillingOverviewPage() {
@@ -166,13 +166,13 @@ export default function BillingOverviewPage() {
       {/* 頁面標題 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg">
+          <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900">
+            <div className="rounded-lg bg-indigo-50 p-2">
               <BarChart3 className="h-8 w-8 text-indigo-600" />
             </div>
             計費總覽
           </h1>
-          <p className="text-gray-600 mt-2">收入統計與系統健康度監控</p>
+          <p className="mt-2 text-gray-600">收入統計與系統健康度監控</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={timePeriod} onValueChange={setTimePeriod}>
@@ -187,26 +187,35 @@ export default function BillingOverviewPage() {
             </SelectContent>
           </Select>
           <Button variant="outline">
-            <FileText className="h-4 w-4 mr-2" />
+            <FileText className="mr-2 h-4 w-4" />
             匯出報表
           </Button>
         </div>
       </div>
 
       {/* 核心指標 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-indigo-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">總營收</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(mockOverviewData.total_revenue)}</p>
-                <div className={cn('flex items-center mt-2', getGrowthColor(mockOverviewData.revenue_growth))}>
-                  <GrowthIcon className="h-4 w-4 mr-1" />
-                  <span className="text-sm font-medium">{formatPercentage(mockOverviewData.revenue_growth)}</span>
+                <p className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(mockOverviewData.total_revenue)}
+                </p>
+                <div
+                  className={cn(
+                    'mt-2 flex items-center',
+                    getGrowthColor(mockOverviewData.revenue_growth)
+                  )}
+                >
+                  <GrowthIcon className="mr-1 h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    {formatPercentage(mockOverviewData.revenue_growth)}
+                  </span>
                 </div>
               </div>
-              <div className="p-3 bg-indigo-50 rounded-lg">
+              <div className="rounded-lg bg-indigo-50 p-3">
                 <DollarSign className="h-8 w-8 text-indigo-600" />
               </div>
             </div>
@@ -218,13 +227,22 @@ export default function BillingOverviewPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">GMV 交易額</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(mockOverviewData.total_gmv)}</p>
-                <div className={cn('flex items-center mt-2', getGrowthColor(mockOverviewData.gmv_growth))}>
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  <span className="text-sm font-medium">{formatPercentage(mockOverviewData.gmv_growth)}</span>
+                <p className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(mockOverviewData.total_gmv)}
+                </p>
+                <div
+                  className={cn(
+                    'mt-2 flex items-center',
+                    getGrowthColor(mockOverviewData.gmv_growth)
+                  )}
+                >
+                  <TrendingUp className="mr-1 h-4 w-4" />
+                  <span className="text-sm font-medium">
+                    {formatPercentage(mockOverviewData.gmv_growth)}
+                  </span>
                 </div>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="rounded-lg bg-blue-50 p-3">
                 <TrendingUp className="h-8 w-8 text-blue-600" />
               </div>
             </div>
@@ -236,15 +254,17 @@ export default function BillingOverviewPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">活躍用戶</p>
-                <p className="text-3xl font-bold text-gray-900">{mockOverviewData.active_suppliers + mockOverviewData.active_restaurants}</p>
-                <div className="flex items-center mt-2 text-gray-600">
-                  <Building2 className="h-3 w-3 mr-1" />
+                <p className="text-3xl font-bold text-gray-900">
+                  {mockOverviewData.active_suppliers + mockOverviewData.active_restaurants}
+                </p>
+                <div className="mt-2 flex items-center text-gray-600">
+                  <Building2 className="mr-1 h-3 w-3" />
                   <span className="text-xs">{mockOverviewData.active_suppliers} 供應商</span>
-                  <Store className="h-3 w-3 ml-2 mr-1" />
+                  <Store className="ml-2 mr-1 h-3 w-3" />
                   <span className="text-xs">{mockOverviewData.active_restaurants} 餐廳</span>
                 </div>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg">
+              <div className="rounded-lg bg-green-50 p-3">
                 <Users className="h-8 w-8 text-green-600" />
               </div>
             </div>
@@ -256,15 +276,17 @@ export default function BillingOverviewPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">待處理事項</p>
-                <p className="text-3xl font-bold text-gray-900">{mockOverviewData.pending_reconciliations + mockOverviewData.overdue_payments}</p>
-                <div className="flex items-center mt-2 text-gray-600">
-                  <Calculator className="h-3 w-3 mr-1" />
+                <p className="text-3xl font-bold text-gray-900">
+                  {mockOverviewData.pending_reconciliations + mockOverviewData.overdue_payments}
+                </p>
+                <div className="mt-2 flex items-center text-gray-600">
+                  <Calculator className="mr-1 h-3 w-3" />
                   <span className="text-xs">{mockOverviewData.pending_reconciliations} 對帳</span>
-                  <CreditCard className="h-3 w-3 ml-2 mr-1" />
+                  <CreditCard className="ml-2 mr-1 h-3 w-3" />
                   <span className="text-xs">{mockOverviewData.overdue_payments} 逾期</span>
                 </div>
               </div>
-              <div className="p-3 bg-orange-50 rounded-lg">
+              <div className="rounded-lg bg-orange-50 p-3">
                 <AlertTriangle className="h-8 w-8 text-orange-600" />
               </div>
             </div>
@@ -281,21 +303,29 @@ export default function BillingOverviewPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{mockOverviewData.system_health.billing_automation}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {mockOverviewData.system_health.billing_automation}%
+              </div>
               <div className="text-sm text-gray-600">計費自動化率</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{mockOverviewData.system_health.reconciliation_accuracy}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {mockOverviewData.system_health.reconciliation_accuracy}%
+              </div>
               <div className="text-sm text-gray-600">對帳準確率</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{mockOverviewData.system_health.payment_success_rate}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {mockOverviewData.system_health.payment_success_rate}%
+              </div>
               <div className="text-sm text-gray-600">付款成功率</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{mockOverviewData.system_health.dispute_rate}%</div>
+              <div className="text-2xl font-bold text-green-600">
+                {mockOverviewData.system_health.dispute_rate}%
+              </div>
               <div className="text-sm text-gray-600">爭議率</div>
             </div>
           </div>
@@ -303,7 +333,7 @@ export default function BillingOverviewPage() {
       </Card>
 
       {/* 收入明細 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* 供應商收入 */}
         <Card className="border-blue-200">
           <CardHeader>
@@ -316,11 +346,15 @@ export default function BillingOverviewPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">總佣金收入</span>
-                <span className="text-lg font-bold text-blue-600">{formatCurrency(mockSupplierMetrics.total_commission)}</span>
+                <span className="text-lg font-bold text-blue-600">
+                  {formatCurrency(mockSupplierMetrics.total_commission)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">平均費率</span>
-                <span className="font-medium">{formatPercentage(mockSupplierMetrics.average_rate)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockSupplierMetrics.average_rate)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">頂級供應商</span>
@@ -329,12 +363,15 @@ export default function BillingOverviewPage() {
                   <span className="font-medium">{mockSupplierMetrics.top_tier_suppliers}</span>
                 </div>
               </div>
-              
-              <div className="pt-2 border-t">
-                <div className="text-sm font-medium text-gray-700 mb-2">評級分布</div>
+
+              <div className="border-t pt-2">
+                <div className="mb-2 text-sm font-medium text-gray-700">評級分布</div>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(mockSupplierMetrics.rating_distribution).map(([tier, data]) => (
-                    <div key={tier} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div
+                      key={tier}
+                      className="flex items-center justify-between rounded bg-gray-50 p-2"
+                    >
                       <span className="text-xs text-gray-600">{tier}</span>
                       <span className="text-xs font-medium">{data.count}</span>
                     </div>
@@ -357,7 +394,9 @@ export default function BillingOverviewPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">訂閱收入</span>
-                <span className="text-lg font-bold text-green-600">{formatCurrency(mockRestaurantMetrics.subscription_revenue)}</span>
+                <span className="text-lg font-bold text-green-600">
+                  {formatCurrency(mockRestaurantMetrics.subscription_revenue)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">ARPU</span>
@@ -365,36 +404,46 @@ export default function BillingOverviewPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">流失率</span>
-                <span className="font-medium">{formatPercentage(mockRestaurantMetrics.churn_rate)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockRestaurantMetrics.churn_rate)}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">升級率</span>
-                <span className="font-medium">{formatPercentage(mockRestaurantMetrics.upgrade_rate)}</span>
+                <span className="font-medium">
+                  {formatPercentage(mockRestaurantMetrics.upgrade_rate)}
+                </span>
               </div>
-              
-              <div className="pt-2 border-t">
-                <div className="text-sm font-medium text-gray-700 mb-2">方案分布</div>
+
+              <div className="border-t pt-2">
+                <div className="mb-2 text-sm font-medium text-gray-700">方案分布</div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <Users className="h-3 w-3 text-gray-600" />
                       <span className="text-xs text-gray-600">Free</span>
                     </div>
-                    <span className="text-xs font-medium">{mockRestaurantMetrics.plan_distribution.free.count}</span>
+                    <span className="text-xs font-medium">
+                      {mockRestaurantMetrics.plan_distribution.free.count}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <Star className="h-3 w-3 text-green-600" />
                       <span className="text-xs text-gray-600">Pro</span>
                     </div>
-                    <span className="text-xs font-medium">{mockRestaurantMetrics.plan_distribution.pro.count}</span>
+                    <span className="text-xs font-medium">
+                      {mockRestaurantMetrics.plan_distribution.pro.count}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <Crown className="h-3 w-3 text-purple-600" />
                       <span className="text-xs text-gray-600">Enterprise</span>
                     </div>
-                    <span className="text-xs font-medium">{mockRestaurantMetrics.plan_distribution.enterprise.count}</span>
+                    <span className="text-xs font-medium">
+                      {mockRestaurantMetrics.plan_distribution.enterprise.count}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -413,23 +462,34 @@ export default function BillingOverviewPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockRecentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between p-4 border rounded-lg">
+            {mockRecentActivity.map(activity => (
+              <div
+                key={activity.id}
+                className="flex items-center justify-between rounded-lg border p-4"
+              >
                 <div className="flex items-center gap-3">
                   <Badge className={cn('', activityTypeColors[activity.type])}>
                     {activityTypeLabels[activity.type]}
                   </Badge>
                   <div>
                     <div className="font-medium text-gray-900">{activity.description}</div>
-                    <div className="text-sm text-gray-500">{activity.timestamp.toLocaleString('zh-TW')}</div>
+                    <div className="text-sm text-gray-500">
+                      {activity.timestamp.toLocaleString('zh-TW')}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {activity.amount > 0 && (
-                    <span className="font-medium text-gray-900">{formatCurrency(activity.amount)}</span>
+                    <span className="font-medium text-gray-900">
+                      {formatCurrency(activity.amount)}
+                    </span>
                   )}
                   <Badge className={cn('', statusColors[activity.status])}>
-                    {activity.status === 'completed' ? '已完成' : activity.status === 'pending' ? '處理中' : '失敗'}
+                    {activity.status === 'completed'
+                      ? '已完成'
+                      : activity.status === 'pending'
+                        ? '處理中'
+                        : '失敗'}
                   </Badge>
                 </div>
               </div>

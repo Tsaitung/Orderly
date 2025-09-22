@@ -1,11 +1,11 @@
 'use client'
 
 import * as React from 'react'
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Clock, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
   Eye,
   Edit,
   Trash2,
@@ -17,7 +17,7 @@ import {
   SortDesc,
   Zap,
   Brain,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -75,7 +75,7 @@ const mockReconciliationData: ReconciliationItem[] = [
     mlSuggestion: {
       action: 'investigate',
       reason: '價格差異超過 2%，建議確認供應商調價通知',
-      alternativeMatches: ['INV-2024-VEG-002', 'INV-2024-VEG-003']
+      alternativeMatches: ['INV-2024-VEG-002', 'INV-2024-VEG-003'],
     },
     items: [
       {
@@ -85,7 +85,7 @@ const mockReconciliationData: ReconciliationItem[] = [
         invoiceQty: 20,
         orderPrice: 45,
         invoicePrice: 50,
-        matched: false
+        matched: false,
       },
       {
         id: '1-2',
@@ -94,11 +94,11 @@ const mockReconciliationData: ReconciliationItem[] = [
         invoiceQty: 15,
         orderPrice: 30,
         invoicePrice: 30,
-        matched: true
-      }
+        matched: true,
+      },
     ],
     timestamp: '2024-01-15 14:30:25',
-    processingTime: 3.2
+    processingTime: 3.2,
   },
   {
     id: '2',
@@ -113,7 +113,7 @@ const mockReconciliationData: ReconciliationItem[] = [
     status: 'matched',
     mlSuggestion: {
       action: 'approve',
-      reason: '完全匹配，建議自動核准'
+      reason: '完全匹配，建議自動核准',
     },
     items: [
       {
@@ -123,11 +123,11 @@ const mockReconciliationData: ReconciliationItem[] = [
         invoiceQty: 10,
         orderPrice: 800,
         invoicePrice: 800,
-        matched: true
-      }
+        matched: true,
+      },
     ],
     timestamp: '2024-01-15 15:45:12',
-    processingTime: 1.8
+    processingTime: 1.8,
   },
   {
     id: '3',
@@ -142,7 +142,7 @@ const mockReconciliationData: ReconciliationItem[] = [
     mlSuggestion: {
       action: 'investigate',
       reason: '未找到對應發票，可能延遲送達或供應商未提供',
-      alternativeMatches: []
+      alternativeMatches: [],
     },
     items: [
       {
@@ -152,12 +152,12 @@ const mockReconciliationData: ReconciliationItem[] = [
         invoiceQty: 0,
         orderPrice: 1200,
         invoicePrice: 0,
-        matched: false
-      }
+        matched: false,
+      },
     ],
     timestamp: '2024-01-15 16:20:45',
-    assignedTo: '張小明'
-  }
+    assignedTo: '張小明',
+  },
 ]
 
 export default function ReconciliationWorkspace() {
@@ -177,11 +177,12 @@ export default function ReconciliationWorkspace() {
 
   const filteredData = React.useMemo(() => {
     let filtered = data.filter(item => {
-      const matchesSearch = searchTerm === '' || 
+      const matchesSearch =
+        searchTerm === '' ||
         item.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.invoiceNumber && item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-      
+
       const matchesStatus = statusFilter === 'all' || item.status === statusFilter
 
       return matchesSearch && matchesStatus
@@ -191,17 +192,17 @@ export default function ReconciliationWorkspace() {
     filtered.sort((a, b) => {
       const aValue = a[sortField]
       const bValue = b[sortField]
-      
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         const comparison = aValue.localeCompare(bValue)
         return sortDirection === 'asc' ? comparison : -comparison
       }
-      
+
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         const comparison = aValue - bValue
         return sortDirection === 'asc' ? comparison : -comparison
       }
-      
+
       return 0
     })
 
@@ -215,21 +216,27 @@ export default function ReconciliationWorkspace() {
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
 
-  const handleSort = React.useCallback((field: keyof ReconciliationItem) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('asc')
-    }
-    announcePolite(`按 ${field} ${sortDirection === 'asc' ? '升序' : '降序'} 排序`)
-  }, [sortField, sortDirection, announcePolite])
+  const handleSort = React.useCallback(
+    (field: keyof ReconciliationItem) => {
+      if (sortField === field) {
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortField(field)
+        setSortDirection('asc')
+      }
+      announcePolite(`按 ${field} ${sortDirection === 'asc' ? '升序' : '降序'} 排序`)
+    },
+    [sortField, sortDirection, announcePolite]
+  )
 
-  const handleViewDetail = React.useCallback((item: ReconciliationItem) => {
-    setSelectedItem(item)
-    setIsDetailOpen(true)
-    announcePolite(`查看 ${item.orderNumber} 詳細資訊`)
-  }, [announcePolite])
+  const handleViewDetail = React.useCallback(
+    (item: ReconciliationItem) => {
+      setSelectedItem(item)
+      setIsDetailOpen(true)
+      announcePolite(`查看 ${item.orderNumber} 詳細資訊`)
+    },
+    [announcePolite]
+  )
 
   const handleApprove = React.useCallback((item: ReconciliationItem) => {
     setSelectedItem(item)
@@ -246,20 +253,23 @@ export default function ReconciliationWorkspace() {
   const handleConfirmAction = React.useCallback(() => {
     if (!selectedItem || !confirmAction) return
 
-    setData(prev => prev.map(item => 
-      item.id === selectedItem.id 
-        ? { 
-            ...item, 
-            status: confirmAction === 'approve' ? 'matched' : 'failed',
-            assignedTo: confirmAction === 'reject' ? '系統自動' : undefined
-          }
-        : item
-    ))
+    setData(prev =>
+      prev.map(item =>
+        item.id === selectedItem.id
+          ? {
+              ...item,
+              status: confirmAction === 'approve' ? 'matched' : 'failed',
+              assignedTo: confirmAction === 'reject' ? '系統自動' : undefined,
+            }
+          : item
+      )
+    )
 
-    const message = confirmAction === 'approve' 
-      ? `${selectedItem.orderNumber} 已核准`
-      : `${selectedItem.orderNumber} 已拒絕`
-    
+    const message =
+      confirmAction === 'approve'
+        ? `${selectedItem.orderNumber} 已核准`
+        : `${selectedItem.orderNumber} 已拒絕`
+
     announceSuccess(message)
     setIsConfirmOpen(false)
     setSelectedItem(null)
@@ -267,16 +277,16 @@ export default function ReconciliationWorkspace() {
   }, [selectedItem, confirmAction, announceSuccess])
 
   const handleBatchProcess = React.useCallback(() => {
-    const autoApprovable = data.filter(item => 
-      item.status === 'pending' && item.confidence >= 90
-    )
-    
+    const autoApprovable = data.filter(item => item.status === 'pending' && item.confidence >= 90)
+
     if (autoApprovable.length > 0) {
-      setData(prev => prev.map(item => 
-        autoApprovable.some(auto => auto.id === item.id)
-          ? { ...item, status: 'matched' as const }
-          : item
-      ))
+      setData(prev =>
+        prev.map(item =>
+          autoApprovable.some(auto => auto.id === item.id)
+            ? { ...item, status: 'matched' as const }
+            : item
+        )
+      )
       announceSuccess(`已自動核准 ${autoApprovable.length} 筆高置信度匹配`)
     } else {
       announcePolite('沒有符合自動核准條件的項目')
@@ -285,34 +295,52 @@ export default function ReconciliationWorkspace() {
 
   const getStatusIcon = (status: ReconciliationItem['status']) => {
     switch (status) {
-      case 'matched': return <CheckCircle className="h-4 w-4 text-green-600" />
-      case 'discrepancy': return <AlertTriangle className="h-4 w-4 text-yellow-600" />
-      case 'failed': return <XCircle className="h-4 w-4 text-red-600" />
-      case 'manual_review': return <Eye className="h-4 w-4 text-blue-600" />
-      case 'processing': return <RefreshCw className="h-4 w-4 text-gray-600 animate-spin" />
-      case 'pending': return <Clock className="h-4 w-4 text-gray-500" />
+      case 'matched':
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case 'discrepancy':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-600" />
+      case 'manual_review':
+        return <Eye className="h-4 w-4 text-blue-600" />
+      case 'processing':
+        return <RefreshCw className="h-4 w-4 animate-spin text-gray-600" />
+      case 'pending':
+        return <Clock className="h-4 w-4 text-gray-500" />
     }
   }
 
   const getStatusText = (status: ReconciliationItem['status']) => {
     switch (status) {
-      case 'matched': return '已匹配'
-      case 'discrepancy': return '有差異'
-      case 'failed': return '失敗'
-      case 'manual_review': return '人工審核'
-      case 'processing': return '處理中'
-      case 'pending': return '待處理'
+      case 'matched':
+        return '已匹配'
+      case 'discrepancy':
+        return '有差異'
+      case 'failed':
+        return '失敗'
+      case 'manual_review':
+        return '人工審核'
+      case 'processing':
+        return '處理中'
+      case 'pending':
+        return '待處理'
     }
   }
 
   const getStatusVariant = (status: ReconciliationItem['status']) => {
     switch (status) {
-      case 'matched': return 'success'
-      case 'discrepancy': return 'warning'
-      case 'failed': return 'destructive'
-      case 'manual_review': return 'info'
-      case 'processing': return 'secondary'
-      case 'pending': return 'outline'
+      case 'matched':
+        return 'success'
+      case 'discrepancy':
+        return 'warning'
+      case 'failed':
+        return 'destructive'
+      case 'manual_review':
+        return 'info'
+      case 'processing':
+        return 'secondary'
+      case 'pending':
+        return 'outline'
     }
   }
 
@@ -324,12 +352,18 @@ export default function ReconciliationWorkspace() {
 
   const getDiscrepancyTypeText = (type: ReconciliationItem['discrepancyType']) => {
     switch (type) {
-      case 'none': return '無差異'
-      case 'price': return '價格差異'
-      case 'quantity': return '數量差異'
-      case 'missing_item': return '缺少項目'
-      case 'extra_item': return '額外項目'
-      case 'quality': return '品質問題'
+      case 'none':
+        return '無差異'
+      case 'price':
+        return '價格差異'
+      case 'quantity':
+        return '數量差異'
+      case 'missing_item':
+        return '缺少項目'
+      case 'extra_item':
+        return '額外項目'
+      case 'quality':
+        return '品質問題'
     }
   }
 
@@ -340,11 +374,11 @@ export default function ReconciliationWorkspace() {
     { value: 'matched', label: '已匹配' },
     { value: 'discrepancy', label: '有差異' },
     { value: 'manual_review', label: '人工審核' },
-    { value: 'failed', label: '失敗' }
+    { value: 'failed', label: '失敗' },
   ]
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center space-x-2">
@@ -365,21 +399,21 @@ export default function ReconciliationWorkspace() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col space-y-4">
+      <CardContent className="flex flex-1 flex-col space-y-4">
         {/* 搜尋和篩選 */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋訂單編號、供應商或發票編號..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
-          
+
           <AccessibleSelect
             label="狀態篩選"
             name="status-filter"
@@ -392,35 +426,44 @@ export default function ReconciliationWorkspace() {
 
         {/* 對帳項目表格 */}
         <div className="flex-1 overflow-hidden">
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="overflow-hidden rounded-lg border border-gray-200">
             {/* 表格標題 */}
-            <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 grid grid-cols-12 gap-4 text-sm font-medium text-gray-700">
-              <div 
-                className="col-span-2 cursor-pointer flex items-center space-x-1 hover:text-gray-900"
+            <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700">
+              <div
+                className="col-span-2 flex cursor-pointer items-center space-x-1 hover:text-gray-900"
                 onClick={() => handleSort('orderNumber')}
               >
                 <span>訂單編號</span>
-                {sortField === 'orderNumber' && (
-                  sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                )}
+                {sortField === 'orderNumber' &&
+                  (sortDirection === 'asc' ? (
+                    <SortAsc className="h-3 w-3" />
+                  ) : (
+                    <SortDesc className="h-3 w-3" />
+                  ))}
               </div>
-              <div 
-                className="col-span-2 cursor-pointer flex items-center space-x-1 hover:text-gray-900"
+              <div
+                className="col-span-2 flex cursor-pointer items-center space-x-1 hover:text-gray-900"
                 onClick={() => handleSort('supplier')}
               >
                 <span>供應商</span>
-                {sortField === 'supplier' && (
-                  sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                )}
+                {sortField === 'supplier' &&
+                  (sortDirection === 'asc' ? (
+                    <SortAsc className="h-3 w-3" />
+                  ) : (
+                    <SortDesc className="h-3 w-3" />
+                  ))}
               </div>
-              <div 
-                className="col-span-2 cursor-pointer flex items-center space-x-1 hover:text-gray-900"
+              <div
+                className="col-span-2 flex cursor-pointer items-center space-x-1 hover:text-gray-900"
                 onClick={() => handleSort('confidence')}
               >
                 <span>置信度</span>
-                {sortField === 'confidence' && (
-                  sortDirection === 'asc' ? <SortAsc className="h-3 w-3" /> : <SortDesc className="h-3 w-3" />
-                )}
+                {sortField === 'confidence' &&
+                  (sortDirection === 'asc' ? (
+                    <SortAsc className="h-3 w-3" />
+                  ) : (
+                    <SortDesc className="h-3 w-3" />
+                  ))}
               </div>
               <div className="col-span-2">差異類型</div>
               <div className="col-span-2">狀態</div>
@@ -431,14 +474,14 @@ export default function ReconciliationWorkspace() {
             <div className="max-h-96 overflow-y-auto">
               {paginatedData.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
-                  <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <Brain className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>沒有找到符合條件的對帳項目</p>
                 </div>
               ) : (
-                paginatedData.map((item) => (
+                paginatedData.map(item => (
                   <div
                     key={item.id}
-                    className="border-b border-gray-100 px-4 py-3 grid grid-cols-12 gap-4 hover:bg-gray-50 transition-colors"
+                    className="grid grid-cols-12 gap-4 border-b border-gray-100 px-4 py-3 transition-colors hover:bg-gray-50"
                   >
                     {/* 訂單編號 */}
                     <div className="col-span-2">
@@ -454,8 +497,9 @@ export default function ReconciliationWorkspace() {
                       <div className="text-xs text-gray-500">
                         NT$ {item.orderAmount.toLocaleString()}
                         {item.discrepancyAmount !== 0 && (
-                          <span className="text-red-600"> 
-                            ({item.discrepancyAmount > 0 ? '+' : ''}{item.discrepancyAmount.toLocaleString()})
+                          <span className="text-red-600">
+                            ({item.discrepancyAmount > 0 ? '+' : ''}
+                            {item.discrepancyAmount.toLocaleString()})
                           </span>
                         )}
                       </div>
@@ -466,46 +510,51 @@ export default function ReconciliationWorkspace() {
                       <div className={cn('font-medium', getConfidenceColor(item.confidence))}>
                         {item.confidence.toFixed(1)}%
                       </div>
-                      <Progress 
-                        value={item.confidence} 
-                        className="h-1 mt-1"
+                      <Progress
+                        value={item.confidence}
+                        className="mt-1 h-1"
                         variant={
-                          item.confidence >= 90 ? 'success' :
-                          item.confidence >= 70 ? 'warning' : 'destructive'
+                          item.confidence >= 90
+                            ? 'success'
+                            : item.confidence >= 70
+                              ? 'warning'
+                              : 'destructive'
                         }
                       />
                     </div>
 
                     {/* 差異類型 */}
                     <div className="col-span-2">
-                      <Badge 
+                      <Badge
                         variant={item.discrepancyType === 'none' ? 'success' : 'warning'}
                         size="sm"
                       >
                         {getDiscrepancyTypeText(item.discrepancyType)}
                       </Badge>
                       {item.mlSuggestion && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          AI: {item.mlSuggestion.action === 'approve' ? '建議核准' : 
-                               item.mlSuggestion.action === 'reject' ? '建議拒絕' : '需要調查'}
+                        <div className="mt-1 text-xs text-gray-500">
+                          AI:{' '}
+                          {item.mlSuggestion.action === 'approve'
+                            ? '建議核准'
+                            : item.mlSuggestion.action === 'reject'
+                              ? '建議拒絕'
+                              : '需要調查'}
                         </div>
                       )}
                     </div>
 
                     {/* 狀態 */}
                     <div className="col-span-2">
-                      <Badge 
+                      <Badge
                         variant={getStatusVariant(item.status)}
                         size="sm"
-                        className="flex items-center space-x-1 w-fit"
+                        className="flex w-fit items-center space-x-1"
                       >
                         {getStatusIcon(item.status)}
                         <span>{getStatusText(item.status)}</span>
                       </Badge>
                       {item.processingTime && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {item.processingTime}s
-                        </div>
+                        <div className="mt-1 text-xs text-gray-500">{item.processingTime}s</div>
                       )}
                     </div>
 
@@ -520,7 +569,7 @@ export default function ReconciliationWorkspace() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      
+
                       {(item.status === 'discrepancy' || item.status === 'manual_review') && (
                         <>
                           <Button
@@ -555,7 +604,8 @@ export default function ReconciliationWorkspace() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              顯示 {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} 
+              顯示 {(currentPage - 1) * itemsPerPage + 1} -{' '}
+              {Math.min(currentPage * itemsPerPage, filteredData.length)}
               筆，共 {filteredData.length} 筆
             </div>
             <div className="flex items-center space-x-2">
@@ -599,7 +649,7 @@ export default function ReconciliationWorkspace() {
             {/* 基本資訊 */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">訂單資訊</h4>
+                <h4 className="mb-2 font-medium text-gray-900">訂單資訊</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">訂單編號:</span>
@@ -615,9 +665,9 @@ export default function ReconciliationWorkspace() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">發票資訊</h4>
+                <h4 className="mb-2 font-medium text-gray-900">發票資訊</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">發票編號:</span>
@@ -629,7 +679,11 @@ export default function ReconciliationWorkspace() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">差異金額:</span>
-                    <span className={selectedItem.discrepancyAmount !== 0 ? 'text-red-600' : 'text-green-600'}>
+                    <span
+                      className={
+                        selectedItem.discrepancyAmount !== 0 ? 'text-red-600' : 'text-green-600'
+                      }
+                    >
                       {selectedItem.discrepancyAmount > 0 ? '+' : ''}
                       NT$ {selectedItem.discrepancyAmount.toLocaleString()}
                     </span>
@@ -640,38 +694,47 @@ export default function ReconciliationWorkspace() {
 
             {/* ML 建議 */}
             {selectedItem.mlSuggestion && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2 flex items-center">
-                  <Brain className="h-4 w-4 mr-1" />
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <h4 className="mb-2 flex items-center font-medium text-blue-900">
+                  <Brain className="mr-1 h-4 w-4" />
                   AI 分析建議
                 </h4>
-                <div className="text-sm text-blue-800 space-y-2">
+                <div className="space-y-2 text-sm text-blue-800">
                   <div>
                     <span className="font-medium">建議動作: </span>
-                    <Badge variant={
-                      selectedItem.mlSuggestion.action === 'approve' ? 'success' :
-                      selectedItem.mlSuggestion.action === 'reject' ? 'destructive' : 'warning'
-                    }>
-                      {selectedItem.mlSuggestion.action === 'approve' ? '核准' :
-                       selectedItem.mlSuggestion.action === 'reject' ? '拒絕' : '調查'}
+                    <Badge
+                      variant={
+                        selectedItem.mlSuggestion.action === 'approve'
+                          ? 'success'
+                          : selectedItem.mlSuggestion.action === 'reject'
+                            ? 'destructive'
+                            : 'warning'
+                      }
+                    >
+                      {selectedItem.mlSuggestion.action === 'approve'
+                        ? '核准'
+                        : selectedItem.mlSuggestion.action === 'reject'
+                          ? '拒絕'
+                          : '調查'}
                     </Badge>
                   </div>
                   <div>{selectedItem.mlSuggestion.reason}</div>
-                  {selectedItem.mlSuggestion.alternativeMatches && selectedItem.mlSuggestion.alternativeMatches.length > 0 && (
-                    <div>
-                      <span className="font-medium">替代匹配: </span>
-                      {selectedItem.mlSuggestion.alternativeMatches.join(', ')}
-                    </div>
-                  )}
+                  {selectedItem.mlSuggestion.alternativeMatches &&
+                    selectedItem.mlSuggestion.alternativeMatches.length > 0 && (
+                      <div>
+                        <span className="font-medium">替代匹配: </span>
+                        {selectedItem.mlSuggestion.alternativeMatches.join(', ')}
+                      </div>
+                    )}
                 </div>
               </div>
             )}
 
             {/* 項目明細 */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">項目明細</h4>
-              <div className="border border-gray-200 rounded-lg overflow-hidden">
-                <div className="bg-gray-50 px-4 py-2 grid grid-cols-6 gap-4 text-sm font-medium text-gray-700">
+              <h4 className="mb-3 font-medium text-gray-900">項目明細</h4>
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="grid grid-cols-6 gap-4 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   <div>品項名稱</div>
                   <div>訂單數量</div>
                   <div>發票數量</div>
@@ -679,8 +742,11 @@ export default function ReconciliationWorkspace() {
                   <div>發票單價</div>
                   <div>匹配狀態</div>
                 </div>
-                {selectedItem.items.map((item) => (
-                  <div key={item.id} className="px-4 py-3 grid grid-cols-6 gap-4 text-sm border-t border-gray-100">
+                {selectedItem.items.map(item => (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-6 gap-4 border-t border-gray-100 px-4 py-3 text-sm"
+                  >
                     <div className="font-medium">{item.name}</div>
                     <div>{item.orderQty}</div>
                     <div className={item.orderQty !== item.invoiceQty ? 'text-red-600' : ''}>
@@ -710,7 +776,7 @@ export default function ReconciliationWorkspace() {
         onConfirm={handleConfirmAction}
         title={confirmAction === 'approve' ? '確認核准' : '確認拒絕'}
         description={
-          confirmAction === 'approve' 
+          confirmAction === 'approve'
             ? `您確定要核准訂單 ${selectedItem?.orderNumber} 的對帳結果嗎？`
             : `您確定要拒絕訂單 ${selectedItem?.orderNumber} 的對帳結果嗎？`
         }

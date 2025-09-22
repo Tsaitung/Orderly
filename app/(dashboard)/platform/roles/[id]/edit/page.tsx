@@ -21,19 +21,19 @@ export default function EditRolePage({ params }: EditRolePageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link 
+          <Link
             href={`/platform/roles/${params.id}`}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center text-gray-600 transition-colors hover:text-gray-900"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
+            <ArrowLeft className="mr-2 h-5 w-5" />
             返回角色詳情
           </Link>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <Link
             href={`/platform/roles/${params.id}`}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
           >
             取消編輯
           </Link>
@@ -43,9 +43,7 @@ export default function EditRolePage({ params }: EditRolePageProps) {
       <div className="max-w-4xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">編輯角色</h1>
-          <p className="text-gray-600 mt-1">
-            修改角色資訊、權限配置和進階設定
-          </p>
+          <p className="mt-1 text-gray-600">修改角色資訊、權限配置和進階設定</p>
         </div>
 
         <RoleForm mode="edit" roleId={params.id} />

@@ -3,7 +3,12 @@
  * Replaces insecure mock implementation with production-ready database access
  */
 
-import { secureDatabase, DatabaseError, SecurityError, ValidationError } from './security/database-service'
+import {
+  secureDatabase,
+  DatabaseError,
+  SecurityError,
+  ValidationError,
+} from './security/database-service'
 import { SecurityLogger } from './security/security-logger'
 
 const logger = SecurityLogger.getInstance()
@@ -52,9 +57,17 @@ export interface Invoice {
 // Repository pattern for type-safe database operations
 export interface Repository<T> {
   findFirst(where: Partial<T>, userId?: string): Promise<T | null>
-  findMany(where: Partial<T>, options?: { limit?: number; offset?: number }, userId?: string): Promise<T[]>
+  findMany(
+    where: Partial<T>,
+    options?: { limit?: number; offset?: number },
+    userId?: string
+  ): Promise<T[]>
   create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>, userId?: string): Promise<T>
-  update(id: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, userId?: string): Promise<T>
+  update(
+    id: string,
+    data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>,
+    userId?: string
+  ): Promise<T>
   delete(id: string, userId?: string): Promise<void>
 }
 
@@ -69,26 +82,25 @@ class SecureRepository<T> implements Repository<T> {
     try {
       const whereClause = this.buildWhereClause(where)
       const sql = `SELECT * FROM ${this.tableName} WHERE ${whereClause.sql} LIMIT 1`
-      
-      const result = await secureDatabase.query<T>(
-        sql,
-        whereClause.params,
-        { userId, correlationId: crypto.randomUUID() }
-      )
-      
+
+      const result = await secureDatabase.query<T>(sql, whereClause.params, {
+        userId,
+        correlationId: crypto.randomUUID(),
+      })
+
       return result.rows[0] || null
     } catch (error) {
       logger.error('repository_find_first_error', {
         table: this.tableName,
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId
+        userId,
       })
       throw new DatabaseError(`Failed to find ${this.tableName}`, { originalError: error })
     }
   }
 
   async findMany(
-    where: Partial<T>, 
+    where: Partial<T>,
     options: { limit?: number; offset?: number } = {},
     userId?: string
   ): Promise<T[]> {
@@ -96,19 +108,18 @@ class SecureRepository<T> implements Repository<T> {
       const { limit = 100, offset = 0 } = options
       const whereClause = this.buildWhereClause(where)
       const sql = `SELECT * FROM ${this.tableName} WHERE ${whereClause.sql} LIMIT $${whereClause.params.length + 1} OFFSET $${whereClause.params.length + 2}`
-      
-      const result = await secureDatabase.query<T>(
-        sql,
-        [...whereClause.params, limit, offset],
-        { userId, correlationId: crypto.randomUUID() }
-      )
-      
+
+      const result = await secureDatabase.query<T>(sql, [...whereClause.params, limit, offset], {
+        userId,
+        correlationId: crypto.randomUUID(),
+      })
+
       return result.rows
     } catch (error) {
       logger.error('repository_find_many_error', {
         table: this.tableName,
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId
+        userId,
       })
       throw new DatabaseError(`Failed to find ${this.tableName} records`, { originalError: error })
     }
@@ -119,59 +130,61 @@ class SecureRepository<T> implements Repository<T> {
       const id = this.idGenerator()
       const now = new Date()
       const fullData = { id, ...data, createdAt: now, updatedAt: now }
-      
+
       const columns = Object.keys(fullData).join(', ')
-      const placeholders = Object.keys(fullData).map((_, i) => `$${i + 1}`).join(', ')
+      const placeholders = Object.keys(fullData)
+        .map((_, i) => `$${i + 1}`)
+        .join(', ')
       const values = Object.values(fullData)
-      
+
       const sql = `INSERT INTO ${this.tableName} (${columns}) VALUES (${placeholders}) RETURNING *`
-      
-      const result = await secureDatabase.query<T>(
-        sql,
-        values,
-        { userId, correlationId: crypto.randomUUID() }
-      )
-      
+
+      const result = await secureDatabase.query<T>(sql, values, {
+        userId,
+        correlationId: crypto.randomUUID(),
+      })
+
       return result.rows[0]
     } catch (error) {
       logger.error('repository_create_error', {
         table: this.tableName,
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId
+        userId,
       })
       throw new DatabaseError(`Failed to create ${this.tableName}`, { originalError: error })
     }
   }
 
   async update(
-    id: string, 
-    data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, 
+    id: string,
+    data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>,
     userId?: string
   ): Promise<T> {
     try {
       const updateData = { ...data, updatedAt: new Date() }
-      const setClause = Object.keys(updateData).map((key, i) => `${key} = $${i + 2}`).join(', ')
+      const setClause = Object.keys(updateData)
+        .map((key, i) => `${key} = $${i + 2}`)
+        .join(', ')
       const values = [id, ...Object.values(updateData)]
-      
+
       const sql = `UPDATE ${this.tableName} SET ${setClause} WHERE id = $1 RETURNING *`
-      
-      const result = await secureDatabase.query<T>(
-        sql,
-        values,
-        { userId, correlationId: crypto.randomUUID() }
-      )
-      
+
+      const result = await secureDatabase.query<T>(sql, values, {
+        userId,
+        correlationId: crypto.randomUUID(),
+      })
+
       if (result.rows.length === 0) {
         throw new ValidationError(`${this.tableName} with id ${id} not found`)
       }
-      
+
       return result.rows[0]
     } catch (error) {
       logger.error('repository_update_error', {
         table: this.tableName,
         id,
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId
+        userId,
       })
       throw new DatabaseError(`Failed to update ${this.tableName}`, { originalError: error })
     }
@@ -180,13 +193,12 @@ class SecureRepository<T> implements Repository<T> {
   async delete(id: string, userId?: string): Promise<void> {
     try {
       const sql = `DELETE FROM ${this.tableName} WHERE id = $1`
-      
-      const result = await secureDatabase.query(
-        sql,
-        [id],
-        { userId, correlationId: crypto.randomUUID() }
-      )
-      
+
+      const result = await secureDatabase.query(sql, [id], {
+        userId,
+        correlationId: crypto.randomUUID(),
+      })
+
       if (result.rowCount === 0) {
         throw new ValidationError(`${this.tableName} with id ${id} not found`)
       }
@@ -195,7 +207,7 @@ class SecureRepository<T> implements Repository<T> {
         table: this.tableName,
         id,
         error: error instanceof Error ? error.message : 'Unknown error',
-        userId
+        userId,
       })
       throw new DatabaseError(`Failed to delete ${this.tableName}`, { originalError: error })
     }
@@ -204,17 +216,17 @@ class SecureRepository<T> implements Repository<T> {
   private buildWhereClause(where: Partial<T>): { sql: string; params: any[] } {
     const conditions: string[] = []
     const params: any[] = []
-    
+
     Object.entries(where).forEach(([key, value], index) => {
       if (value !== undefined) {
         conditions.push(`${key} = $${index + 1}`)
         params.push(value)
       }
     })
-    
+
     return {
       sql: conditions.length > 0 ? conditions.join(' AND ') : '1=1',
-      params
+      params,
     }
   }
 }
@@ -240,7 +252,7 @@ export const prisma = {
     const query = sql.join('?')
     const result = await secureDatabase.query(query, params)
     return result.rowCount || 0
-  }
+  },
 }
 
 // Database connection health check
@@ -249,7 +261,7 @@ export async function checkDatabaseConnection(): Promise<boolean> {
     return await secureDatabase.healthCheck()
   } catch (error) {
     logger.error('database_connection_check_failed', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     })
     return false
   }
@@ -261,11 +273,11 @@ export async function initializeDatabase(): Promise<void> {
     await secureDatabase.initialize()
     logger.info('database_initialized', {
       host: process.env.DATABASE_HOST || 'localhost',
-      database: process.env.DATABASE_NAME || 'orderly'
+      database: process.env.DATABASE_NAME || 'orderly',
     })
   } catch (error) {
     logger.error('database_initialization_failed', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     })
     throw error
   }
@@ -278,7 +290,7 @@ export async function closeDatabaseConnection(): Promise<void> {
     logger.info('database_connection_closed', {})
   } catch (error) {
     logger.error('database_close_error', {
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     })
   }
 }

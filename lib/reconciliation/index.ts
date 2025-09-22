@@ -33,11 +33,11 @@ export interface ReconciliationEngine {
     deliveries: any[]
     invoices: any[]
   }) => Promise<ReconciliationResult>
-  
+
   getReconciliationStatus: (id: string) => Promise<ReconciliationResult | null>
-  
+
   approveReconciliation: (id: string) => Promise<boolean>
-  
+
   disputeReconciliation: (id: string, reason: string) => Promise<boolean>
 }
 
@@ -45,11 +45,11 @@ export interface ReconciliationEngine {
 export const reconciliationEngine: ReconciliationEngine = {
   async processReconciliation(data: ReconciliationInput): Promise<ReconciliationResult> {
     const { orders, deliveries, invoices } = data
-    
+
     // 模擬處理邏輯
     const matches = await matchingAlgorithm.findMatches(orders, deliveries, invoices)
     const confidence = confidenceScoring.calculateConfidence(matches)
-    
+
     const result: ReconciliationResult = {
       id: `reconciliation_${Date.now()}`,
       status: confidence > 0.9 ? 'auto_matched' : 'manual_review',
@@ -58,25 +58,25 @@ export const reconciliationEngine: ReconciliationEngine = {
         orderId: `order_${index + 1}`,
         deliveryId: `delivery_${index + 1}`,
         invoiceId: `invoice_${index + 1}`,
-        confidence: confidence
+        confidence: confidence,
       })),
-      createdAt: new Date()
+      createdAt: new Date(),
     }
-    
+
     if (confidence < 0.7) {
       result.discrepancies = [
         {
           type: 'quantity',
           field: 'quantity',
           expected: 100,
-          actual: 95
-        }
+          actual: 95,
+        },
       ]
     }
-    
+
     return result
   },
-  
+
   async getReconciliationStatus(id: string): Promise<ReconciliationResult> {
     // 模擬查詢
     return {
@@ -84,19 +84,19 @@ export const reconciliationEngine: ReconciliationEngine = {
       status: 'auto_matched' as const,
       confidence: 0.95,
       matches: [],
-      createdAt: new Date()
+      createdAt: new Date(),
     }
   },
-  
+
   async approveReconciliation(id: string): Promise<boolean> {
     console.log(`Approving reconciliation: ${id}`)
     return true
   },
-  
+
   async disputeReconciliation(id: string, reason: string): Promise<boolean> {
     console.log(`Disputing reconciliation: ${id}, reason: ${reason}`)
     return true
-  }
+  },
 }
 
 // 導出其他模組

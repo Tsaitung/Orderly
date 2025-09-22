@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { 
+import {
   Shield,
   Plus,
   Minus,
@@ -15,7 +15,7 @@ import {
   Settings,
   Eye,
   Edit3,
-  Trash2
+  Trash2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -69,19 +69,79 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // 模擬權限資料
       const mockPermissions: Permission[] = [
-        { id: 'order_read', name: '檢視訂單', description: '檢視訂單資訊', category: 'general', level: 'read' },
-        { id: 'order_write', name: '管理訂單', description: '建立、編輯訂單', category: 'general', level: 'write' },
-        { id: 'supplier_read', name: '檢視供應商', description: '檢視供應商資訊', category: 'supplier', level: 'read' },
-        { id: 'supplier_write', name: '管理供應商', description: '編輯供應商資訊', category: 'supplier', level: 'write' },
-        { id: 'financial_read', name: '檢視財務', description: '檢視財務報表', category: 'general', level: 'read' },
-        { id: 'financial_write', name: '管理財務', description: '編輯財務資料', category: 'general', level: 'write' },
-        { id: 'user_read', name: '檢視使用者', description: '檢視使用者清單', category: 'platform', level: 'read' },
-        { id: 'user_write', name: '管理使用者', description: '編輯使用者資料', category: 'platform', level: 'write' },
-        { id: 'user_admin', name: '使用者管理員', description: '完整使用者管理權限', category: 'platform', level: 'admin' },
-        { id: 'system_admin', name: '系統管理員', description: '系統級管理權限', category: 'platform', level: 'admin' }
+        {
+          id: 'order_read',
+          name: '檢視訂單',
+          description: '檢視訂單資訊',
+          category: 'general',
+          level: 'read',
+        },
+        {
+          id: 'order_write',
+          name: '管理訂單',
+          description: '建立、編輯訂單',
+          category: 'general',
+          level: 'write',
+        },
+        {
+          id: 'supplier_read',
+          name: '檢視供應商',
+          description: '檢視供應商資訊',
+          category: 'supplier',
+          level: 'read',
+        },
+        {
+          id: 'supplier_write',
+          name: '管理供應商',
+          description: '編輯供應商資訊',
+          category: 'supplier',
+          level: 'write',
+        },
+        {
+          id: 'financial_read',
+          name: '檢視財務',
+          description: '檢視財務報表',
+          category: 'general',
+          level: 'read',
+        },
+        {
+          id: 'financial_write',
+          name: '管理財務',
+          description: '編輯財務資料',
+          category: 'general',
+          level: 'write',
+        },
+        {
+          id: 'user_read',
+          name: '檢視使用者',
+          description: '檢視使用者清單',
+          category: 'platform',
+          level: 'read',
+        },
+        {
+          id: 'user_write',
+          name: '管理使用者',
+          description: '編輯使用者資料',
+          category: 'platform',
+          level: 'write',
+        },
+        {
+          id: 'user_admin',
+          name: '使用者管理員',
+          description: '完整使用者管理權限',
+          category: 'platform',
+          level: 'admin',
+        },
+        {
+          id: 'system_admin',
+          name: '系統管理員',
+          description: '系統級管理權限',
+          category: 'platform',
+          level: 'admin',
+        },
       ]
 
       const mockRoles: Role[] = [
@@ -91,7 +151,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
           description: '餐廳的完整管理權限',
           type: 'restaurant',
           permissions: ['order_read', 'order_write', 'supplier_read', 'financial_read'],
-          isSystemRole: true
+          isSystemRole: true,
         },
         {
           id: 'restaurant_staff',
@@ -99,7 +159,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
           description: '餐廳的基本操作權限',
           type: 'restaurant',
           permissions: ['order_read', 'supplier_read'],
-          isSystemRole: true
+          isSystemRole: true,
         },
         {
           id: 'supplier_admin',
@@ -107,7 +167,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
           description: '供應商的完整管理權限',
           type: 'supplier',
           permissions: ['order_read', 'supplier_write', 'financial_read'],
-          isSystemRole: true
+          isSystemRole: true,
         },
         {
           id: 'platform_admin',
@@ -115,25 +175,54 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
           description: '平台的管理權限',
           type: 'platform',
           permissions: ['user_read', 'user_write', 'system_admin'],
-          isSystemRole: true
-        }
+          isSystemRole: true,
+        },
       ]
 
       const mockUserRoles = ['restaurant_admin']
-      
+
       const mockUserPermissions: UserPermission[] = [
-        { permissionId: 'order_read', source: 'role', sourceId: 'restaurant_admin', sourceName: '餐廳管理員', granted: true },
-        { permissionId: 'order_write', source: 'role', sourceId: 'restaurant_admin', sourceName: '餐廳管理員', granted: true },
-        { permissionId: 'supplier_read', source: 'role', sourceId: 'restaurant_admin', sourceName: '餐廳管理員', granted: true },
-        { permissionId: 'financial_read', source: 'role', sourceId: 'restaurant_admin', sourceName: '餐廳管理員', granted: true },
-        { permissionId: 'financial_write', source: 'direct', sourceId: 'direct', sourceName: '直接授權', granted: true }
+        {
+          permissionId: 'order_read',
+          source: 'role',
+          sourceId: 'restaurant_admin',
+          sourceName: '餐廳管理員',
+          granted: true,
+        },
+        {
+          permissionId: 'order_write',
+          source: 'role',
+          sourceId: 'restaurant_admin',
+          sourceName: '餐廳管理員',
+          granted: true,
+        },
+        {
+          permissionId: 'supplier_read',
+          source: 'role',
+          sourceId: 'restaurant_admin',
+          sourceName: '餐廳管理員',
+          granted: true,
+        },
+        {
+          permissionId: 'financial_read',
+          source: 'role',
+          sourceId: 'restaurant_admin',
+          sourceName: '餐廳管理員',
+          granted: true,
+        },
+        {
+          permissionId: 'financial_write',
+          source: 'direct',
+          sourceId: 'direct',
+          sourceName: '直接授權',
+          granted: true,
+        },
       ]
 
       setPermissions(mockPermissions)
       setRoles(mockRoles)
       setUserRoles(mockUserRoles)
       setUserPermissions(mockUserPermissions)
-      
     } catch (err) {
       console.error('載入權限資料失敗:', err)
     } finally {
@@ -150,19 +239,23 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
   }
 
   const handleDirectPermissionToggle = (permissionId: string, granted: boolean) => {
-    const existing = userPermissions.find(up => up.permissionId === permissionId && up.source === 'direct')
-    
+    const existing = userPermissions.find(
+      up => up.permissionId === permissionId && up.source === 'direct'
+    )
+
     if (granted && !existing) {
       const newPermission: UserPermission = {
         permissionId,
         source: 'direct',
         sourceId: 'direct',
         sourceName: '直接授權',
-        granted: true
+        granted: true,
       }
       setUserPermissions([...userPermissions, newPermission])
     } else if (!granted && existing) {
-      setUserPermissions(userPermissions.filter(up => !(up.permissionId === permissionId && up.source === 'direct')))
+      setUserPermissions(
+        userPermissions.filter(up => !(up.permissionId === permissionId && up.source === 'direct'))
+      )
     }
   }
 
@@ -170,7 +263,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
     const sources = userPermissions.filter(up => up.permissionId === permissionId)
     return {
       granted: sources.some(s => s.granted),
-      sources
+      sources,
     }
   }
 
@@ -190,11 +283,26 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
   const getLevelBadge = (level: Permission['level']) => {
     switch (level) {
       case 'read':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800"><Eye className="h-3 w-3 mr-1" />檢視</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+            <Eye className="mr-1 h-3 w-3" />
+            檢視
+          </Badge>
+        )
       case 'write':
-        return <Badge variant="outline" className="bg-orange-100 text-orange-800"><Edit3 className="h-3 w-3 mr-1" />編輯</Badge>
+        return (
+          <Badge variant="outline" className="bg-orange-100 text-orange-800">
+            <Edit3 className="mr-1 h-3 w-3" />
+            編輯
+          </Badge>
+        )
       case 'admin':
-        return <Badge variant="outline" className="bg-red-100 text-red-800"><Lock className="h-3 w-3 mr-1" />管理員</Badge>
+        return (
+          <Badge variant="outline" className="bg-red-100 text-red-800">
+            <Lock className="mr-1 h-3 w-3" />
+            管理員
+          </Badge>
+        )
       default:
         return <Badge variant="secondary">未知</Badge>
     }
@@ -202,8 +310,8 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
     )
   }
@@ -237,10 +345,10 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
         <Card className="border-yellow-200 bg-yellow-50">
           <CardContent className="pt-4">
             <div className="flex">
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="mr-2 mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
               <div>
                 <h4 className="font-medium text-yellow-800">權限衝突警告</h4>
-                <p className="text-sm text-yellow-700 mt-1">
+                <p className="mt-1 text-sm text-yellow-700">
                   檢測到 {conflicts.length} 個權限衝突，請檢查設定。
                 </p>
               </div>
@@ -254,7 +362,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Shield className="h-5 w-5 mr-2" />
+              <Shield className="mr-2 h-5 w-5" />
               權限矩陣
             </CardTitle>
           </CardHeader>
@@ -263,19 +371,19 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
               <table className="min-w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4">權限</th>
-                    <th className="text-left py-3 px-4">類別</th>
-                    <th className="text-left py-3 px-4">等級</th>
-                    <th className="text-center py-3 px-4">授權狀態</th>
-                    <th className="text-left py-3 px-4">來源</th>
+                    <th className="px-4 py-3 text-left">權限</th>
+                    <th className="px-4 py-3 text-left">類別</th>
+                    <th className="px-4 py-3 text-left">等級</th>
+                    <th className="px-4 py-3 text-center">授權狀態</th>
+                    <th className="px-4 py-3 text-left">來源</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {permissions.map((permission) => {
+                  {permissions.map(permission => {
                     const { granted, sources } = hasPermission(permission.id)
                     return (
                       <tr key={permission.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
+                        <td className="px-4 py-3">
                           <div className="flex items-center">
                             {getPermissionIcon(permission)}
                             <div className="ml-3">
@@ -284,20 +392,18 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="px-4 py-3">
                           <Badge variant="outline">{permission.category}</Badge>
                         </td>
-                        <td className="py-3 px-4">
-                          {getLevelBadge(permission.level)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="px-4 py-3">{getLevelBadge(permission.level)}</td>
+                        <td className="px-4 py-3 text-center">
                           {granted ? (
-                            <Check className="h-5 w-5 text-green-600 mx-auto" />
+                            <Check className="mx-auto h-5 w-5 text-green-600" />
                           ) : (
-                            <X className="h-5 w-5 text-red-600 mx-auto" />
+                            <X className="mx-auto h-5 w-5 text-red-600" />
                           )}
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="px-4 py-3">
                           <div className="space-y-1">
                             {sources.map((source, index) => (
                               <Badge key={index} variant="outline" className="mr-1">
@@ -321,26 +427,31 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
 
       {/* 角色管理視圖 */}
       {activeView === 'roles' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle>可用角色</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {roles.map((role) => {
+              {roles.map(role => {
                 const isAssigned = userRoles.includes(role.id)
                 return (
-                  <div key={role.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={role.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
                     <div className="flex-1">
                       <div className="flex items-center">
                         <h4 className="font-medium">{role.name}</h4>
                         {role.isSystemRole && (
-                          <Badge variant="outline" className="ml-2">系統角色</Badge>
+                          <Badge variant="outline" className="ml-2">
+                            系統角色
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mt-1">{role.description}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {role.permissions.slice(0, 3).map((permId) => {
+                      <p className="mt-1 text-sm text-gray-500">{role.description}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {role.permissions.slice(0, 3).map(permId => {
                           const perm = permissions.find(p => p.id === permId)
                           return perm ? (
                             <Badge key={permId} variant="outline" className="text-xs">
@@ -358,7 +469,7 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
                     <div className="ml-4">
                       <Checkbox
                         checked={isAssigned}
-                        onCheckedChange={(checked) => handleRoleToggle(role.id, checked as boolean)}
+                        onCheckedChange={checked => handleRoleToggle(role.id, checked as boolean)}
                       />
                     </div>
                   </div>
@@ -374,12 +485,15 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
             <CardContent>
               {userRoles.length > 0 ? (
                 <div className="space-y-3">
-                  {userRoles.map((roleId) => {
+                  {userRoles.map(roleId => {
                     const role = roles.find(r => r.id === roleId)
                     if (!role) return null
-                    
+
                     return (
-                      <div key={roleId} className="p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                      <div
+                        key={roleId}
+                        className="rounded-lg border border-primary-200 bg-primary-50 p-3"
+                      >
                         <div className="flex items-center justify-between">
                           <h4 className="font-medium text-primary-900">{role.name}</h4>
                           <Button
@@ -390,8 +504,8 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
                             <Minus className="h-4 w-4" />
                           </Button>
                         </div>
-                        <p className="text-sm text-primary-700 mt-1">{role.description}</p>
-                        <div className="text-xs text-primary-600 mt-2">
+                        <p className="mt-1 text-sm text-primary-700">{role.description}</p>
+                        <div className="mt-2 text-xs text-primary-600">
                           包含 {role.permissions.length} 個權限
                         </div>
                       </div>
@@ -399,8 +513,8 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
                   })}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <div className="py-8 text-center text-gray-500">
+                  <Users className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <p>尚未分配任何角色</p>
                 </div>
               )}
@@ -416,35 +530,36 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
             <CardTitle className="flex items-center justify-between">
               <span>直接權限分配</span>
               <Badge variant="outline">
-                <Info className="h-3 w-3 mr-1" />
+                <Info className="mr-1 h-3 w-3" />
                 繞過角色直接授權
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {permissions.map((permission) => {
+              {permissions.map(permission => {
                 const directPermission = userPermissions.find(
                   up => up.permissionId === permission.id && up.source === 'direct'
                 )
                 const hasDirectPermission = Boolean(directPermission)
-                
+
                 return (
-                  <div key={permission.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={permission.id}
+                    className="flex items-center justify-between rounded-lg border p-3"
+                  >
                     <div className="flex items-center">
                       {getPermissionIcon(permission)}
                       <div className="ml-3">
                         <div className="font-medium">{permission.name}</div>
                         <div className="text-sm text-gray-500">{permission.description}</div>
                       </div>
-                      <div className="ml-4">
-                        {getLevelBadge(permission.level)}
-                      </div>
+                      <div className="ml-4">{getLevelBadge(permission.level)}</div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         checked={hasDirectPermission}
-                        onCheckedChange={(checked) => 
+                        onCheckedChange={checked =>
                           handleDirectPermissionToggle(permission.id, checked as boolean)
                         }
                       />
@@ -464,12 +579,8 @@ export function PermissionManager({ userId }: PermissionManagerProps) {
 
       {/* 操作按鈕 */}
       <div className="flex justify-end space-x-3">
-        <Button variant="outline">
-          重置變更
-        </Button>
-        <Button>
-          儲存權限設定
-        </Button>
+        <Button variant="outline">重置變更</Button>
+        <Button>儲存權限設定</Button>
       </div>
     </div>
   )

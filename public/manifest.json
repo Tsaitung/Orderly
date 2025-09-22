@@ -19,7 +19,7 @@
       "label": "Orderly 首頁桌面版截圖"
     },
     {
-      "src": "/screenshots/mobile-restaurant.png", 
+      "src": "/screenshots/mobile-restaurant.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
@@ -54,7 +54,7 @@
       ]
     },
     {
-      "name": "供應商管理", 
+      "name": "供應商管理",
       "short_name": "供應商",
       "description": "進入供應商管理介面",
       "url": "/supplier",

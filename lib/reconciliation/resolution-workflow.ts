@@ -88,20 +88,22 @@ export class DiscrepancyResolutionEngine {
       discrepancyPattern: {
         type: ['quantity'],
         severityRange: ['low'],
-        conditions: { variance: { $lte: 2 } }
+        conditions: { variance: { $lte: 2 } },
       },
-      actions: [{
-        id: 'auto_adjust_quantity',
-        type: 'auto_adjust',
-        description: '自動調整數量記錄，接受實際送貨數量',
-        parameters: { adjustField: 'acceptedQuantity', source: 'delivered' },
-        confidence: 0.95,
-        estimatedTime: 1
-      }],
+      actions: [
+        {
+          id: 'auto_adjust_quantity',
+          type: 'auto_adjust',
+          description: '自動調整數量記錄，接受實際送貨數量',
+          parameters: { adjustField: 'acceptedQuantity', source: 'delivered' },
+          confidence: 0.95,
+          estimatedTime: 1,
+        },
+      ],
       priority: 1,
       isActive: true,
       successRate: 0.98,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     },
     {
       id: 'price_promotional_adjustment',
@@ -109,23 +111,25 @@ export class DiscrepancyResolutionEngine {
       discrepancyPattern: {
         type: ['price'],
         severityRange: ['medium'],
-        conditions: { 
+        conditions: {
           variance: { $gte: 3, $lte: 15 },
-          priceDirection: 'lower'
-        }
+          priceDirection: 'lower',
+        },
       },
-      actions: [{
-        id: 'verify_promotion',
-        type: 'manual_review',
-        description: '核對是否有促銷活動或合約價格調整',
-        confidence: 0.8,
-        estimatedTime: 15,
-        requiredApproval: ['purchasing_manager']
-      }],
+      actions: [
+        {
+          id: 'verify_promotion',
+          type: 'manual_review',
+          description: '核對是否有促銷活動或合約價格調整',
+          confidence: 0.8,
+          estimatedTime: 15,
+          requiredApproval: ['purchasing_manager'],
+        },
+      ],
       priority: 2,
       isActive: true,
       successRate: 0.85,
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     },
     {
       id: 'critical_discrepancy_escalation',
@@ -133,51 +137,53 @@ export class DiscrepancyResolutionEngine {
       discrepancyPattern: {
         type: ['price', 'quantity', 'product'],
         severityRange: ['critical'],
-        conditions: {}
+        conditions: {},
       },
-      actions: [{
-        id: 'immediate_escalation',
-        type: 'escalate',
-        description: '立即升級至主管處理',
-        confidence: 1.0,
-        estimatedTime: 30,
-        requiredApproval: ['finance_manager', 'purchasing_director']
-      }],
+      actions: [
+        {
+          id: 'immediate_escalation',
+          type: 'escalate',
+          description: '立即升級至主管處理',
+          confidence: 1.0,
+          estimatedTime: 30,
+          requiredApproval: ['finance_manager', 'purchasing_director'],
+        },
+      ],
       priority: 0,
       isActive: true,
       successRate: 0.92,
-      lastUpdated: new Date()
-    }
+      lastUpdated: new Date(),
+    },
   ]
 
   private static readonly ESCALATION_RULES: EscalationRule[] = [
     {
       id: 'high_value_discrepancy',
       triggerConditions: {
-        discrepancyValue: 10000
+        discrepancyValue: 10000,
       },
       escalateTo: ['finance_manager'],
       notificationTemplate: 'high_value_alert',
-      priority: 'high'
+      priority: 'high',
     },
     {
       id: 'resolution_timeout',
       triggerConditions: {
-        timeExceeded: 120 // 2小時
+        timeExceeded: 120, // 2小時
       },
       escalateTo: ['operations_manager'],
       notificationTemplate: 'timeout_alert',
-      priority: 'medium'
+      priority: 'medium',
     },
     {
       id: 'vip_customer_issue',
       triggerConditions: {
-        customerTier: 'vip'
+        customerTier: 'vip',
       },
       escalateTo: ['account_manager', 'customer_success_manager'],
       notificationTemplate: 'vip_customer_alert',
-      priority: 'high'
-    }
+      priority: 'high',
+    },
   ]
 
   /**
@@ -189,7 +195,7 @@ export class DiscrepancyResolutionEngine {
     for (const discrepancy of matchResult.discrepancies) {
       // 查找匹配的解決模板
       const matchingTemplates = this.findMatchingTemplates(discrepancy, matchResult)
-      
+
       if (matchingTemplates.length > 0) {
         // 選擇優先級最高的模板
         const selectedTemplate = matchingTemplates.sort((a, b) => a.priority - b.priority)[0]
@@ -209,7 +215,10 @@ export class DiscrepancyResolutionEngine {
   /**
    * 尋找匹配的解決模板
    */
-  private findMatchingTemplates(discrepancy: Discrepancy, matchResult: MatchResult): ResolutionTemplate[] {
+  private findMatchingTemplates(
+    discrepancy: Discrepancy,
+    matchResult: MatchResult
+  ): ResolutionTemplate[] {
     return DiscrepancyResolutionEngine.RESOLUTION_TEMPLATES.filter(template => {
       // 檢查差異類型
       if (!template.discrepancyPattern.type.includes(discrepancy.type)) {
@@ -222,7 +231,11 @@ export class DiscrepancyResolutionEngine {
       }
 
       // 檢查條件
-      return this.evaluateConditions(template.discrepancyPattern.conditions, discrepancy, matchResult)
+      return this.evaluateConditions(
+        template.discrepancyPattern.conditions,
+        discrepancy,
+        matchResult
+      )
     })
   }
 
@@ -230,8 +243,8 @@ export class DiscrepancyResolutionEngine {
    * 評估條件是否符合
    */
   private evaluateConditions(
-    conditions: Record<string, any>, 
-    discrepancy: Discrepancy, 
+    conditions: Record<string, any>,
+    discrepancy: Discrepancy,
     matchResult: MatchResult
   ): boolean {
     for (const [key, condition] of Object.entries(conditions)) {
@@ -261,14 +274,14 @@ export class DiscrepancyResolutionEngine {
     if (typeof condition === 'number') {
       return value === condition
     }
-    
+
     if (typeof condition === 'object') {
       if (condition.$gte !== undefined && value < condition.$gte) return false
       if (condition.$lte !== undefined && value > condition.$lte) return false
       if (condition.$gt !== undefined && value <= condition.$gt) return false
       if (condition.$lt !== undefined && value >= condition.$lt) return false
     }
-    
+
     return true
   }
 
@@ -281,7 +294,7 @@ export class DiscrepancyResolutionEngine {
       type: 'manual_review',
       description: `人工審查${discrepancy.description}`,
       confidence: 0.5,
-      estimatedTime: 30
+      estimatedTime: 30,
     }
 
     // 根據差異類型和嚴重程度調整
@@ -292,13 +305,13 @@ export class DiscrepancyResolutionEngine {
           type: 'escalate',
           description: `緊急處理：${discrepancy.description}`,
           estimatedTime: 15,
-          requiredApproval: ['finance_manager']
+          requiredApproval: ['finance_manager'],
         }
       case 'high':
         return {
           ...baseAction,
           estimatedTime: 20,
-          requiredApproval: ['purchasing_manager']
+          requiredApproval: ['purchasing_manager'],
         }
       case 'low':
         if (discrepancy.autoResolvable) {
@@ -307,7 +320,7 @@ export class DiscrepancyResolutionEngine {
             type: 'auto_adjust',
             description: `自動調整：${discrepancy.description}`,
             confidence: 0.8,
-            estimatedTime: 2
+            estimatedTime: 2,
           }
         }
         break
@@ -321,24 +334,33 @@ export class DiscrepancyResolutionEngine {
    */
   private deduplicateActions(actions: ResolutionAction[]): ResolutionAction[] {
     const unique = new Map<string, ResolutionAction>()
-    
+
     for (const action of actions) {
       const key = `${action.type}_${action.description}`
       if (!unique.has(key) || unique.get(key)!.confidence < action.confidence) {
         unique.set(key, action)
       }
     }
-    
+
     return Array.from(unique.values())
   }
 
   /**
    * 優先級排序
    */
-  private prioritizeActions(actions: ResolutionAction[], matchResult: MatchResult): ResolutionAction[] {
+  private prioritizeActions(
+    actions: ResolutionAction[],
+    matchResult: MatchResult
+  ): ResolutionAction[] {
     return actions.sort((a, b) => {
       // 1. 緊急程度
-      const urgencyOrder = { 'escalate': 0, 'dispute': 1, 'manual_review': 2, 'auto_adjust': 3, 'auto_approve': 4 }
+      const urgencyOrder = {
+        escalate: 0,
+        dispute: 1,
+        manual_review: 2,
+        auto_adjust: 3,
+        auto_approve: 4,
+      }
       const urgencyDiff = urgencyOrder[a.type] - urgencyOrder[b.type]
       if (urgencyDiff !== 0) return urgencyDiff
 
@@ -360,21 +382,21 @@ export class DiscrepancyResolutionEngine {
   ): Promise<ResolutionWorkflow> {
     const actions = await this.analyzeDiscrepancies(matchResult)
     const priority = this.calculateWorkflowPriority(matchResult)
-    
+
     const steps: WorkflowStep[] = []
 
     // 1. 驗證步驟
     steps.push({
       stepId: 'validation',
       stepType: 'validation',
-      status: 'pending'
+      status: 'pending',
     })
 
     // 2. 分析步驟
     steps.push({
       stepId: 'analysis',
       stepType: 'analysis',
-      status: 'pending'
+      status: 'pending',
     })
 
     // 3. 為每個動作創建步驟
@@ -383,14 +405,14 @@ export class DiscrepancyResolutionEngine {
         steps.push({
           stepId: `action_${index}`,
           stepType: 'action',
-          status: 'pending'
+          status: 'pending',
         })
       } else {
         steps.push({
           stepId: `approval_${index}`,
           stepType: 'approval',
           status: 'pending',
-          assignedTo: action.requiredApproval?.[0]
+          assignedTo: action.requiredApproval?.[0],
         })
       }
     }
@@ -399,7 +421,7 @@ export class DiscrepancyResolutionEngine {
     steps.push({
       stepId: 'notification',
       stepType: 'notification',
-      status: 'pending'
+      status: 'pending',
     })
 
     const workflow: ResolutionWorkflow = {
@@ -412,7 +434,7 @@ export class DiscrepancyResolutionEngine {
       steps,
       appliedRules: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     }
 
     // 儲存到數據庫
@@ -424,8 +446,12 @@ export class DiscrepancyResolutionEngine {
   /**
    * 計算工作流優先級
    */
-  private calculateWorkflowPriority(matchResult: MatchResult): 'low' | 'medium' | 'high' | 'urgent' {
-    const hasHighSeverity = matchResult.discrepancies.some(d => d.severity === 'high' || d.severity === 'critical')
+  private calculateWorkflowPriority(
+    matchResult: MatchResult
+  ): 'low' | 'medium' | 'high' | 'urgent' {
+    const hasHighSeverity = matchResult.discrepancies.some(
+      d => d.severity === 'high' || d.severity === 'critical'
+    )
     const hasCriticalSeverity = matchResult.discrepancies.some(d => d.severity === 'critical')
     const highValueOrder = matchResult.orderItem.lineTotal > 10000
 
@@ -502,7 +528,7 @@ export class DiscrepancyResolutionEngine {
     return {
       isValid: true,
       validatedAt: new Date(),
-      checks: ['data_integrity', 'business_rules', 'approval_chain']
+      checks: ['data_integrity', 'business_rules', 'approval_chain'],
     }
   }
 
@@ -515,7 +541,7 @@ export class DiscrepancyResolutionEngine {
       analysisComplete: true,
       riskLevel: 'medium',
       recommendedActions: ['auto_adjust'],
-      analysedAt: new Date()
+      analysedAt: new Date(),
     }
   }
 
@@ -527,7 +553,7 @@ export class DiscrepancyResolutionEngine {
     return {
       actionExecuted: true,
       executedAt: new Date(),
-      result: 'success'
+      result: 'success',
     }
   }
 
@@ -539,7 +565,7 @@ export class DiscrepancyResolutionEngine {
     return {
       notificationsSent: ['email', 'system'],
       sentAt: new Date(),
-      recipients: ['purchasing_manager']
+      recipients: ['purchasing_manager'],
     }
   }
 
@@ -577,7 +603,10 @@ export class DiscrepancyResolutionEngine {
   /**
    * 儲存工作流到數據庫
    */
-  private async saveWorkflow(workflow: ResolutionWorkflow, actions: ResolutionAction[]): Promise<void> {
+  private async saveWorkflow(
+    workflow: ResolutionWorkflow,
+    actions: ResolutionAction[]
+  ): Promise<void> {
     // 這裡可以實現將工作流儲存到資料庫的邏輯
     // 由於原始資料庫 schema 中沒有專門的工作流表，可以儲存在 WorkflowTask 中
     try {
@@ -586,10 +615,10 @@ export class DiscrepancyResolutionEngine {
           type: 'reconciliation_resolution',
           data: {
             workflow,
-            actions
+            actions,
           },
-          scheduledAt: new Date()
-        }
+          scheduledAt: new Date(),
+        },
       })
     } catch (error) {
       console.error('Failed to save workflow:', error)
@@ -606,9 +635,9 @@ export class DiscrepancyResolutionEngine {
           type: 'reconciliation_resolution',
           data: {
             path: ['workflow', 'id'],
-            equals: workflowId
-          }
-        }
+            equals: workflowId,
+          },
+        },
       })
 
       return task ? (task.data as any).workflow : null
@@ -628,18 +657,18 @@ export class DiscrepancyResolutionEngine {
           type: 'reconciliation_resolution',
           data: {
             path: ['workflow', 'id'],
-            equals: workflow.id
-          }
+            equals: workflow.id,
+          },
         },
         data: {
           data: {
             workflow: {
               ...workflow,
-              updatedAt: new Date()
-            }
+              updatedAt: new Date(),
+            },
           },
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       })
     } catch (error) {
       console.error('Failed to update workflow:', error)
@@ -655,20 +684,21 @@ export class DiscrepancyResolutionEngine {
         where: {
           type: 'reconciliation_resolution',
           status: {
-            in: ['pending', 'running']
-          }
+            in: ['pending', 'running'],
+          },
         },
         orderBy: {
-          createdAt: 'asc'
-        }
+          createdAt: 'asc',
+        },
       })
 
       return tasks
         .map(task => (task.data as any).workflow)
-        .filter(workflow => 
-          !assignedTo || 
-          workflow.assignedTo === assignedTo ||
-          workflow.steps.some((step: WorkflowStep) => step.assignedTo === assignedTo)
+        .filter(
+          workflow =>
+            !assignedTo ||
+            workflow.assignedTo === assignedTo ||
+            workflow.steps.some((step: WorkflowStep) => step.assignedTo === assignedTo)
         )
     } catch (error) {
       console.error('Failed to get pending workflows:', error)

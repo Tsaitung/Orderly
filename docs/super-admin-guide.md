@@ -7,6 +7,7 @@ The Orderly platform includes a comprehensive super admin system that provides e
 ## Features
 
 ### 🔑 Core Capabilities
+
 - **Temporary Elevated Access**: Time-limited super admin privileges (default: 24 hours)
 - **Automatic Expiration**: Privileges automatically revoke when expired
 - **Security Logging**: All super admin actions are logged for audit purposes
@@ -14,6 +15,7 @@ The Orderly platform includes a comprehensive super admin system that provides e
 - **Role-Based Access**: Integrates with existing user role system
 
 ### 🛡️ Security Features
+
 - **Environment Protection**: Blocked in production unless explicitly enabled
 - **Reason Tracking**: All super admin access requires justification
 - **Audit Trail**: Complete logging of creation, usage, and revocation
@@ -36,6 +38,7 @@ role                UserRole  -- includes 'platform_admin'
 ## API Endpoints
 
 ### Create Super Admin
+
 ```
 POST /auth/super-admin
 Content-Type: application/json
@@ -50,6 +53,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -68,11 +72,13 @@ Content-Type: application/json
 ```
 
 ### List Super Admins
+
 ```
 GET /auth/super-admins
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -101,6 +107,7 @@ GET /auth/super-admins
 ```
 
 ### Revoke Super Admin
+
 ```
 DELETE /auth/super-admin/:userId
 Content-Type: application/json
@@ -111,6 +118,7 @@ Content-Type: application/json
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -129,6 +137,7 @@ Content-Type: application/json
 ## CLI Scripts
 
 ### Interactive Creation Script
+
 ```bash
 # Run interactive super admin creation
 ./scripts/create-super-admin.sh
@@ -138,6 +147,7 @@ node scripts/create-super-admin.js
 ```
 
 The script will prompt for:
+
 - Email address
 - Password (minimum 8 characters)
 - Full name
@@ -145,6 +155,7 @@ The script will prompt for:
 - Duration in hours (optional)
 
 ### Environment Variables
+
 ```bash
 # Required for database connection
 DATABASE_URL="postgresql://user:password@localhost:5432/orderly"
@@ -159,6 +170,7 @@ JWT_SECRET="your-jwt-secret"
 ## Usage Examples
 
 ### Development Setup
+
 ```bash
 # 1. Ensure database is running
 docker-compose up -d postgres
@@ -175,6 +187,7 @@ curl -X POST http://localhost:3001/auth/register \
 ```
 
 ### API Usage
+
 ```javascript
 // Create super admin via API
 const response = await fetch('/auth/super-admin', {
@@ -185,17 +198,18 @@ const response = await fetch('/auth/super-admin', {
     password: 'DevPassword123!',
     name: 'Developer Admin',
     reason: 'Initial platform setup',
-    duration: 48
-  })
-});
+    duration: 48,
+  }),
+})
 
-const data = await response.json();
-console.log('Super admin created:', data.data.user.id);
+const data = await response.json()
+console.log('Super admin created:', data.data.user.id)
 ```
 
 ## Security Best Practices
 
 ### 🔒 Production Safety
+
 1. **Never enable** `ALLOW_SUPER_ADMIN_CREATION=true` in production without strong justification
 2. **Always use** strong passwords (minimum 12 characters, mixed case, numbers, symbols)
 3. **Set short durations** for super admin access (24-48 hours maximum)
@@ -203,19 +217,22 @@ console.log('Super admin created:', data.data.user.id);
 5. **Revoke immediately** when access is no longer needed
 
 ### 🔍 Monitoring & Auditing
+
 - All super admin actions are logged with user ID, timestamp, and IP address
 - Regular audit of super admin access logs
 - Monitor for expired accounts that haven't been cleaned up
 - Alert on super admin creation in production environments
 
 ### 🚨 Emergency Procedures
+
 If unauthorized super admin access is detected:
 
 1. **Immediate Response**:
+
    ```bash
    # List all super admins
    curl -X GET http://localhost:3001/auth/super-admins
-   
+
    # Revoke specific super admin
    curl -X DELETE http://localhost:3001/auth/super-admin/USER_ID \
      -H "Content-Type: application/json" \
@@ -235,14 +252,15 @@ If unauthorized super admin access is detected:
 ## Technical Implementation
 
 ### Automatic Expiration
+
 The system automatically checks for expired super admin accounts when listing super admins:
 
 ```typescript
 // Check and update expired super admins
-const now = new Date();
-const expiredAdmins = superAdmins.filter(admin => 
-  admin.superUserExpiresAt && admin.superUserExpiresAt < now
-);
+const now = new Date()
+const expiredAdmins = superAdmins.filter(
+  admin => admin.superUserExpiresAt && admin.superUserExpiresAt < now
+)
 
 if (expiredAdmins.length > 0) {
   await prisma.user.updateMany({
@@ -252,18 +270,19 @@ if (expiredAdmins.length > 0) {
       superUserExpiresAt: null,
       superUserReason: null,
     },
-  });
+  })
 }
 ```
 
 ### Organization Management
+
 Super admin users are automatically assigned to a "Platform Administration" organization:
 
 ```typescript
 // Create platform organization if it doesn't exist
 let platformOrg = await prisma.organization.findFirst({
   where: { name: 'Platform Administration' },
-});
+})
 
 if (!platformOrg) {
   platformOrg = await prisma.organization.create({
@@ -272,7 +291,7 @@ if (!platformOrg) {
       type: 'restaurant',
       settings: { description: 'Platform administration and developer access' },
     },
-  });
+  })
 }
 ```
 
@@ -298,6 +317,7 @@ if (!platformOrg) {
    - Check the response to see if upgrade was successful
 
 ### Debug Mode
+
 For troubleshooting, you can enable debug logging:
 
 ```bash

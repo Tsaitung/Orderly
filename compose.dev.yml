@@ -17,6 +17,7 @@ services:
       - "8000:8000"
     environment:
       ENVIRONMENT: development
+      PORT: 8000
 
   user-service:
     build:
@@ -24,6 +25,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3001
 
   order-service:
     build:
@@ -31,6 +33,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3002
 
   product-service:
     build:
@@ -38,6 +41,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3003
 
   acceptance-service:
     build:
@@ -45,6 +49,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3004
 
   notification-service:
     build:
@@ -52,6 +57,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3006
 
   customer-hierarchy-service:
     build:
@@ -59,6 +65,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3007
 
   supplier-service:
     build:
@@ -66,6 +73,7 @@ services:
       dockerfile: Dockerfile
     environment:
       ENVIRONMENT: development
+      PORT: 3008
 
   # Admin tools (optional)
   pgadmin:

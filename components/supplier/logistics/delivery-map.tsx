@@ -14,7 +14,7 @@ import {
   ZoomOut,
   Layers,
   Maximize,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react'
 
 // 模擬配送地圖數據
@@ -23,7 +23,7 @@ const deliveryVehicles = [
     id: 'VH-001',
     driverName: '張大明',
     phone: '0912-345-678',
-    currentLocation: { lat: 25.0330, lng: 121.5654, address: '台北市大安區忠孝東路' },
+    currentLocation: { lat: 25.033, lng: 121.5654, address: '台北市大安區忠孝東路' },
     destination: { lat: 25.0478, lng: 121.5319, address: '台北市中山區南京東路' },
     status: 'delivering',
     progress: 65,
@@ -32,11 +32,11 @@ const deliveryVehicles = [
     customerName: '大樂司餐廳',
     deliveryTime: '14:30',
     route: [
-      { lat: 25.0330, lng: 121.5654 },
-      { lat: 25.0350, lng: 121.5620 },
-      { lat: 25.0420, lng: 121.5480 },
-      { lat: 25.0478, lng: 121.5319 }
-    ]
+      { lat: 25.033, lng: 121.5654 },
+      { lat: 25.035, lng: 121.562 },
+      { lat: 25.042, lng: 121.548 },
+      { lat: 25.0478, lng: 121.5319 },
+    ],
   },
   {
     id: 'VH-002',
@@ -50,7 +50,7 @@ const deliveryVehicles = [
     orderId: 'ORD-2025-002',
     customerName: '稻舍餐廳',
     deliveryTime: '15:00',
-    route: []
+    route: [],
   },
   {
     id: 'VH-003',
@@ -64,15 +64,15 @@ const deliveryVehicles = [
     orderId: 'ORD-2025-003',
     customerName: '樂多多火鍋',
     deliveryTime: '已完成',
-    route: []
-  }
+    route: [],
+  },
 ]
 
 const mapLayers = [
   { id: 'satellite', name: '衛星地圖', active: false },
   { id: 'traffic', name: '交通狀況', active: true },
   { id: 'routes', name: '配送路線', active: true },
-  { id: 'zones', name: '配送區域', active: false }
+  { id: 'zones', name: '配送區域', active: false },
 ]
 
 export default function DeliveryMap() {
@@ -87,7 +87,7 @@ export default function DeliveryMap() {
       delivering: 'bg-blue-500',
       delivered: 'bg-green-500',
       delayed: 'bg-red-500',
-      returning: 'bg-purple-500'
+      returning: 'bg-purple-500',
     }
     return statusMap[status as keyof typeof statusMap] || 'bg-gray-500'
   }
@@ -98,22 +98,20 @@ export default function DeliveryMap() {
       delivering: '配送中',
       delivered: '已送達',
       delayed: '延遲',
-      returning: '返程中'
+      returning: '返程中',
     }
     return statusMap[status as keyof typeof statusMap] || '未知'
   }
 
   const toggleLayer = (layerId: string) => {
-    setActiveLayers(prev => 
-      prev.includes(layerId) 
-        ? prev.filter(id => id !== layerId)
-        : [...prev, layerId]
+    setActiveLayers(prev =>
+      prev.includes(layerId) ? prev.filter(id => id !== layerId) : [...prev, layerId]
     )
   }
 
   return (
     <Card className={`${isFullscreen ? 'fixed inset-4 z-50' : ''} transition-all duration-300`}>
-      <div className="p-4 border-b">
+      <div className="border-b p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <MapPin className="h-5 w-5 text-blue-600" />
@@ -122,7 +120,7 @@ export default function DeliveryMap() {
               {deliveryVehicles.filter(v => v.status === 'delivering').length} 車配送中
             </Badge>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
               <RefreshCw className="h-4 w-4" />
@@ -133,11 +131,7 @@ export default function DeliveryMap() {
             <Button variant="outline" size="sm">
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setIsFullscreen(!isFullscreen)}>
               <Maximize className="h-4 w-4" />
             </Button>
           </div>
@@ -146,14 +140,16 @@ export default function DeliveryMap() {
 
       <div className="relative">
         {/* 地圖區域 (模擬) */}
-        <div className={`bg-gray-100 flex items-center justify-center relative ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-96'}`}>
+        <div
+          className={`relative flex items-center justify-center bg-gray-100 ${isFullscreen ? 'h-[calc(100vh-8rem)]' : 'h-96'}`}
+        >
           {/* 地圖背景 */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50">
             {/* 模擬街道網格 */}
-            <svg className="absolute inset-0 w-full h-full opacity-20">
+            <svg className="absolute inset-0 h-full w-full opacity-20">
               <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#374151" strokeWidth="1"/>
+                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#374151" strokeWidth="1" />
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#grid)" />
@@ -164,21 +160,25 @@ export default function DeliveryMap() {
           {deliveryVehicles.map((vehicle, index) => (
             <div
               key={vehicle.id}
-              className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 ${
-                selectedVehicle === vehicle.id ? 'scale-125 z-10' : 'hover:scale-110'
+              className={`absolute -translate-x-1/2 -translate-y-1/2 transform cursor-pointer transition-all duration-200 ${
+                selectedVehicle === vehicle.id ? 'z-10 scale-125' : 'hover:scale-110'
               }`}
               style={{
                 left: `${20 + index * 25}%`,
-                top: `${30 + index * 15}%`
+                top: `${30 + index * 15}%`,
               }}
               onClick={() => setSelectedVehicle(vehicle.id)}
             >
               <div className="relative">
-                <div className={`w-8 h-8 rounded-full ${getStatusColor(vehicle.status)} flex items-center justify-center shadow-lg`}>
+                <div
+                  className={`h-8 w-8 rounded-full ${getStatusColor(vehicle.status)} flex items-center justify-center shadow-lg`}
+                >
                   <Truck className="h-4 w-4 text-white" />
                 </div>
-                <div className={`absolute -top-2 -right-2 w-4 h-4 ${getStatusColor(vehicle.status)} rounded-full border-2 border-white`}>
-                  <div className="w-full h-full rounded-full animate-ping opacity-75"></div>
+                <div
+                  className={`absolute -right-2 -top-2 h-4 w-4 ${getStatusColor(vehicle.status)} rounded-full border-2 border-white`}
+                >
+                  <div className="h-full w-full animate-ping rounded-full opacity-75"></div>
                 </div>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function DeliveryMap() {
 
           {/* 配送路線 (模擬) */}
           {activeLayers.includes('routes') && (
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+            <svg className="pointer-events-none absolute inset-0 h-full w-full">
               <path
                 d="M 20% 30% Q 30% 20% 45% 45%"
                 stroke="#3B82F6"
@@ -195,32 +195,27 @@ export default function DeliveryMap() {
                 strokeDasharray="10,5"
                 className="animate-pulse"
               />
-              <path
-                d="M 45% 45% Q 60% 60% 70% 75%"
-                stroke="#10B981"
-                strokeWidth="3"
-                fill="none"
-              />
+              <path d="M 45% 45% Q 60% 60% 70% 75%" stroke="#10B981" strokeWidth="3" fill="none" />
             </svg>
           )}
 
           {/* 地圖中心顯示 */}
           <div className="text-center text-gray-500">
-            <MapPin className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+            <MapPin className="mx-auto mb-2 h-12 w-12 text-gray-400" />
             <p className="text-sm">台北市配送區域</p>
             <p className="text-xs">點擊車輛查看詳細資訊</p>
           </div>
         </div>
 
         {/* 圖層控制 */}
-        <div className="absolute top-4 left-4 bg-white rounded-lg shadow-md p-3">
-          <div className="flex items-center space-x-2 mb-2">
+        <div className="absolute left-4 top-4 rounded-lg bg-white p-3 shadow-md">
+          <div className="mb-2 flex items-center space-x-2">
             <Layers className="h-4 w-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">圖層</span>
           </div>
           <div className="space-y-2">
-            {mapLayers.map((layer) => (
-              <label key={layer.id} className="flex items-center space-x-2 cursor-pointer">
+            {mapLayers.map(layer => (
+              <label key={layer.id} className="flex cursor-pointer items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={activeLayers.includes(layer.id)}
@@ -235,11 +230,11 @@ export default function DeliveryMap() {
 
         {/* 選中車輛詳情 */}
         {selectedVehicle && (
-          <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm">
+          <div className="absolute bottom-4 right-4 max-w-sm rounded-lg bg-white p-4 shadow-lg">
             {(() => {
               const vehicle = deliveryVehicles.find(v => v.id === selectedVehicle)
               if (!vehicle) return null
-              
+
               return (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -251,7 +246,7 @@ export default function DeliveryMap() {
                       ×
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">司機</span>
@@ -259,9 +254,14 @@ export default function DeliveryMap() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">狀態</span>
-                      <Badge 
-                        variant={vehicle.status === 'delivering' ? 'info' : 
-                                vehicle.status === 'delivered' ? 'success' : 'warning'}
+                      <Badge
+                        variant={
+                          vehicle.status === 'delivering'
+                            ? 'info'
+                            : vehicle.status === 'delivered'
+                              ? 'success'
+                              : 'warning'
+                        }
                         size="sm"
                       >
                         {getStatusLabel(vehicle.status)}
@@ -287,9 +287,9 @@ export default function DeliveryMap() {
                         <span className="text-gray-600">配送進度</span>
                         <span className="font-medium">{vehicle.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                      <div className="h-2 w-full rounded-full bg-gray-200">
+                        <div
+                          className="h-2 rounded-full bg-blue-600 transition-all duration-300"
                           style={{ width: `${vehicle.progress}%` }}
                         ></div>
                       </div>
@@ -298,11 +298,11 @@ export default function DeliveryMap() {
 
                   <div className="flex space-x-2 pt-2">
                     <Button size="sm" variant="outline" className="flex-1">
-                      <Navigation className="h-3 w-3 mr-1" />
+                      <Navigation className="mr-1 h-3 w-3" />
                       導航
                     </Button>
                     <Button size="sm" variant="outline" className="flex-1">
-                      <Clock className="h-3 w-3 mr-1" />
+                      <Clock className="mr-1 h-3 w-3" />
                       追蹤
                     </Button>
                   </div>
@@ -314,7 +314,7 @@ export default function DeliveryMap() {
       </div>
 
       {/* 快速統計 */}
-      <div className="p-4 border-t bg-gray-50">
+      <div className="border-t bg-gray-50 p-4">
         <div className="grid grid-cols-4 gap-4 text-center">
           <div>
             <div className="text-lg font-bold text-blue-600">
@@ -335,9 +335,7 @@ export default function DeliveryMap() {
             <div className="text-xs text-gray-600">準備中</div>
           </div>
           <div>
-            <div className="text-lg font-bold text-purple-600">
-              {deliveryVehicles.length}
-            </div>
+            <div className="text-lg font-bold text-purple-600">{deliveryVehicles.length}</div>
             <div className="text-xs text-gray-600">總車輛</div>
           </div>
         </div>

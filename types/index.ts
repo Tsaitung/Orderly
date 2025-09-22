@@ -17,9 +17,9 @@ export interface User extends BaseEntity {
   metadata?: Record<string, unknown>
 }
 
-export type UserRole = 
+export type UserRole =
   | 'restaurant_admin'
-  | 'restaurant_manager' 
+  | 'restaurant_manager'
   | 'restaurant_operator'
   | 'supplier_admin'
   | 'supplier_manager'
@@ -92,7 +92,7 @@ export interface Order extends BaseEntity {
   createdBy: string
 }
 
-export type OrderStatus = 
+export type OrderStatus =
   | 'draft'
   | 'submitted'
   | 'confirmed'
@@ -193,7 +193,13 @@ export interface AcceptancePhoto {
   metadata?: Record<string, any>
 }
 
-export type AcceptancePhotoType = 'overview' | 'item_detail' | 'quality_issue' | 'packaging' | 'temperature' | 'signature'
+export type AcceptancePhotoType =
+  | 'overview'
+  | 'item_detail'
+  | 'quality_issue'
+  | 'packaging'
+  | 'temperature'
+  | 'signature'
 
 export interface AcceptanceDiscrepancy {
   id: string
@@ -210,7 +216,7 @@ export interface AcceptanceDiscrepancy {
   resolutionNotes?: string
 }
 
-export type AcceptanceDiscrepancyType = 
+export type AcceptanceDiscrepancyType =
   | 'quantity_short'
   | 'quantity_over'
   | 'quality_issue'
@@ -247,7 +253,7 @@ export interface AcceptanceWorkflow {
   escalatedTo?: string
 }
 
-export type AcceptanceWorkflowStep = 
+export type AcceptanceWorkflowStep =
   | 'awaiting_delivery'
   | 'delivery_arrived'
   | 'quality_check'
@@ -360,7 +366,7 @@ export interface Reconciliation extends BaseEntity {
   approvedAt?: Date
 }
 
-export type ReconciliationStatus = 
+export type ReconciliationStatus =
   | 'pending'
   | 'processing'
   | 'review_required'
@@ -389,7 +395,7 @@ export interface Discrepancy {
   notes?: string
 }
 
-export type DiscrepancyType = 
+export type DiscrepancyType =
   | 'quantity_mismatch'
   | 'price_difference'
   | 'missing_item'
@@ -480,7 +486,7 @@ export interface Notification extends BaseEntity {
   priority: 'low' | 'medium' | 'high' | 'urgent'
 }
 
-export type NotificationType = 
+export type NotificationType =
   | 'order_confirmed'
   | 'order_shipped'
   | 'order_delivered'
@@ -695,7 +701,16 @@ export interface TableColumn<T = Record<string, unknown>> {
 export interface FormField {
   name: string
   label: string
-  type: 'text' | 'email' | 'password' | 'number' | 'select' | 'textarea' | 'checkbox' | 'radio' | 'date'
+  type:
+    | 'text'
+    | 'email'
+    | 'password'
+    | 'number'
+    | 'select'
+    | 'textarea'
+    | 'checkbox'
+    | 'radio'
+    | 'date'
   required?: boolean
   placeholder?: string
   options?: { label: string; value: string | number }[]

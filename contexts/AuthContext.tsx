@@ -15,7 +15,13 @@ export interface Organization {
 export interface User {
   id: string
   email: string
-  role: 'restaurant_admin' | 'restaurant_manager' | 'restaurant_operator' | 'supplier_admin' | 'supplier_manager' | 'platform_admin'
+  role:
+    | 'restaurant_admin'
+    | 'restaurant_manager'
+    | 'restaurant_operator'
+    | 'supplier_admin'
+    | 'supplier_manager'
+    | 'platform_admin'
   organizationId: string
   name: string
   avatar?: string
@@ -34,21 +40,21 @@ export interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  
+
   // Organization management
   organizations: Organization[]
   currentOrganization: Organization | null
-  
+
   // Super user view switching
   viewMode: ViewMode
-  
+
   // Actions
   login: (credentials: LoginFormData) => Promise<{ success: boolean; error?: string }>
   logout: () => void
   switchToOrganizationView: (organizationId: string) => Promise<boolean>
   exitViewMode: () => void
   refreshOrganizations: () => Promise<void>
-  
+
   // Helper functions
   canAccessPlatform: () => boolean
   canViewAsOrganization: () => boolean
@@ -69,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>({
-    isViewingAs: false
+    isViewingAs: false,
   })
 
   // Initialize authentication state
@@ -88,9 +94,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
             organizationId: 'platform',
             name: '平台管理員',
             avatar: '/avatars/admin.png',
-            isActive: true
+            isActive: true,
           }
-          
+
           setUser(mockUser)
           setIsAuthenticated(true)
           await loadOrganizations()
@@ -106,7 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           organizationId: storedData.organizationId,
           name: storedData.email.split('@')[0] || 'User',
           avatar: '/avatars/default.png',
-          isActive: true
+          isActive: true,
         }
 
         setUser(user)
@@ -148,28 +154,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
           id: 'restaurant-001',
           name: '美味餐廳',
           type: 'restaurant',
-          isActive: true
+          isActive: true,
         },
         {
-          id: 'restaurant-002', 
+          id: 'restaurant-002',
           name: '快樂小館',
           type: 'restaurant',
-          isActive: true
+          isActive: true,
         },
         {
           id: 'supplier-001',
           name: '新鮮供應商',
           type: 'supplier',
-          isActive: true
+          isActive: true,
         },
         {
           id: 'supplier-002',
           name: '優質食材行',
           type: 'supplier',
-          isActive: true
-        }
+          isActive: true,
+        },
       ]
-      
+
       setOrganizations(mockOrganizations)
     } catch (error) {
       console.error('Failed to load organizations:', error)
@@ -184,9 +190,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         id: organizationId,
         name: '用戶組織',
         type: 'restaurant', // This would be determined by API
-        isActive: true
+        isActive: true,
       }
-      
+
       setCurrentOrganization(mockOrganization)
     } catch (error) {
       console.error('Failed to load user organization:', error)
@@ -194,17 +200,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   // Login function with secure storage and validation
-  const login = async (credentials: LoginFormData): Promise<{ success: boolean; error?: string }> => {
+  const login = async (
+    credentials: LoginFormData
+  ): Promise<{ success: boolean; error?: string }> => {
     try {
       setIsLoading(true)
-      
+
       // Validate input
       const validation = AuthValidation.validateLogin(credentials)
       if (!validation.success) {
         const firstError = Object.values(validation.errors)[0]
         return { success: false, error: firstError }
       }
-      
+
       // Call authentication API
       // Hit our Next.js API route to set httpOnly cookies for middleware-based auth
       const response = await fetch(`/api/auth/login`, {
@@ -234,28 +242,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
           organizationId: data.user.organization.id,
           organizationType: data.user.organization.type,
           rememberMe: validation.data.rememberMe,
-          expiresIn: validation.data.rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60
+          expiresIn: validation.data.rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60,
         })
-        
+
         const user: User = {
           id: data.user.id,
           email: data.user.email,
           role: data.user.role,
           organizationId: data.user.organization.id,
           name: data.user.name || data.user.email.split('@')[0],
-          isActive: true
+          isActive: true,
         }
-        
+
         setUser(user)
         setIsAuthenticated(true)
-        
+
         // Load organizations if platform admin
         if (user.role === 'platform_admin') {
           await loadOrganizations()
         } else {
           await loadUserOrganization(user.organizationId)
         }
-        
+
         return { success: true }
       } else {
         return { success: false, error: data.message || '登入失敗' }
@@ -294,7 +302,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isViewingAs: true,
         targetOrganizationId: organizationId,
         targetRole: targetOrg.type,
-        originalPath: window.location.pathname
+        originalPath: window.location.pathname,
       })
 
       setCurrentOrganization(targetOrg)
@@ -309,7 +317,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const exitViewMode = () => {
     setViewMode({ isViewingAs: false })
     setCurrentOrganization(null)
-    
+
     // Navigate back to platform or original path
     const returnPath = viewMode.originalPath || '/platform'
     window.location.href = returnPath
@@ -335,19 +343,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (viewMode.isViewingAs && viewMode.targetRole) {
       return viewMode.targetRole
     }
-    
+
     if (user?.role === 'platform_admin') {
       return 'platform'
     }
-    
+
     if (user?.role?.startsWith('restaurant_')) {
       return 'restaurant'
     }
-    
+
     if (user?.role?.startsWith('supplier_')) {
       return 'supplier'
     }
-    
+
     return 'admin'
   }
 
@@ -355,7 +363,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (viewMode.isViewingAs && viewMode.targetOrganizationId) {
       return viewMode.targetOrganizationId
     }
-    
+
     return user?.organizationId || null
   }
 
@@ -374,14 +382,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     canAccessPlatform,
     canViewAsOrganization,
     getCurrentRole,
-    getCurrentOrganizationId
+    getCurrentOrganizationId,
   }
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 // Custom hook to use auth context

@@ -21,7 +21,7 @@ const sizeClasses = {
   md: 'max-w-lg',
   lg: 'max-w-2xl',
   xl: 'max-w-4xl',
-  full: 'max-w-full mx-4'
+  full: 'max-w-full mx-4',
 }
 
 export function AccessibleModal({
@@ -33,18 +33,21 @@ export function AccessibleModal({
   size = 'md',
   closeOnBackdropClick = true,
   closeOnEscape = true,
-  className
+  className,
 }: ModalProps) {
   const modalRef = React.useRef<HTMLDivElement>(null)
   const titleId = React.useId()
   const descriptionId = React.useId()
 
   // 處理背景點擊
-  const handleBackdropClick = React.useCallback((event: React.MouseEvent) => {
-    if (closeOnBackdropClick && event.target === event.currentTarget) {
-      onClose()
-    }
-  }, [closeOnBackdropClick, onClose])
+  const handleBackdropClick = React.useCallback(
+    (event: React.MouseEvent) => {
+      if (closeOnBackdropClick && event.target === event.currentTarget) {
+        onClose()
+      }
+    },
+    [closeOnBackdropClick, onClose]
+  )
 
   // 處理 ESC 鍵
   React.useEffect(() => {
@@ -76,10 +79,7 @@ export function AccessibleModal({
       onClick={handleBackdropClick}
     >
       {/* 背景遮罩 */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        aria-hidden="true"
-      />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
 
       {/* 模態框內容 */}
       <div
@@ -89,31 +89,25 @@ export function AccessibleModal({
         aria-labelledby={titleId}
         aria-describedby={description ? descriptionId : undefined}
         className={cn(
-          'relative bg-white rounded-lg shadow-xl w-full',
+          'relative w-full rounded-lg bg-white shadow-xl',
           sizeClasses[size],
           className
         )}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {/* 標題列 */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between border-b border-gray-200 p-6">
           <div>
-            <h2 
-              id={titleId}
-              className="text-xl font-semibold text-gray-900"
-            >
+            <h2 id={titleId} className="text-xl font-semibold text-gray-900">
               {title}
             </h2>
             {description && (
-              <p 
-                id={descriptionId}
-                className="mt-1 text-sm text-gray-600"
-              >
+              <p id={descriptionId} className="mt-1 text-sm text-gray-600">
                 {description}
               </p>
             )}
           </div>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -126,9 +120,7 @@ export function AccessibleModal({
         </div>
 
         {/* 內容區域 */}
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   )
@@ -158,7 +150,7 @@ export function ModalTrigger({ children, modal }: ModalTriggerProps) {
   // 克隆模態框並注入狀態
   const modalWithProps = React.cloneElement(modal, {
     isOpen,
-    onClose: closeModal
+    onClose: closeModal,
   })
 
   // 始終使用 cloneElement 方式，避免按鈕嵌套問題
@@ -169,8 +161,8 @@ export function ModalTrigger({ children, modal }: ModalTriggerProps) {
         onClick: openModal,
         className: cn(
           (children as React.ReactElement).props.className,
-          "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A47864]"
-        )
+          'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#A47864]'
+        ),
       })}
       {modalWithProps}
     </>
@@ -197,7 +189,7 @@ export function ConfirmDialog({
   description,
   confirmText = '確認',
   cancelText = '取消',
-  variant = 'default'
+  variant = 'default',
 }: ConfirmDialogProps) {
   const handleConfirm = React.useCallback(() => {
     onConfirm()
@@ -215,11 +207,8 @@ export function ConfirmDialog({
     >
       <div className="space-y-4">
         <div className="space-y-4">
-          <div className="flex gap-3 justify-end">
-            <Button
-              variant="outline"
-              onClick={onClose}
-            >
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={onClose}>
               {cancelText}
             </Button>
             <Button
@@ -246,7 +235,7 @@ interface LoadingDialogProps {
 export function LoadingDialog({
   isOpen,
   title = '處理中',
-  message = '請稍候，正在處理您的請求...'
+  message = '請稍候，正在處理您的請求...',
 }: LoadingDialogProps) {
   return (
     <AccessibleModal
@@ -258,7 +247,7 @@ export function LoadingDialog({
       closeOnEscape={false}
     >
       <div className="flex items-center space-x-4">
-        <div className="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
         <p className="text-gray-600">{message}</p>
       </div>
     </AccessibleModal>
@@ -289,12 +278,15 @@ export function FormDialog({
   submitText = '確認',
   cancelText = '取消',
   isSubmitting = false,
-  size = 'md'
+  size = 'md',
 }: FormDialogProps) {
-  const handleSubmit = React.useCallback((event: React.FormEvent) => {
-    event.preventDefault()
-    onSubmit?.()
-  }, [onSubmit])
+  const handleSubmit = React.useCallback(
+    (event: React.FormEvent) => {
+      event.preventDefault()
+      onSubmit?.()
+    },
+    [onSubmit]
+  )
 
   return (
     <AccessibleModal
@@ -305,26 +297,14 @@ export function FormDialog({
       size={size}
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="space-y-4">
-          {children}
-        </div>
+        <div className="space-y-4">{children}</div>
 
         {onSubmit && (
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
+          <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               {cancelText}
             </Button>
-            <Button
-              type="submit"
-              variant="brand"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="brand" loading={isSubmitting} disabled={isSubmitting}>
               {submitText}
             </Button>
           </div>
@@ -332,6 +312,34 @@ export function FormDialog({
       </form>
     </AccessibleModal>
   )
+}
+
+// Modal compound components for styled modal API
+interface AccessibleModalContentProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function AccessibleModalContent({ className, children }: AccessibleModalContentProps) {
+  return <div className={cn('space-y-4', className)}>{children}</div>
+}
+
+interface AccessibleModalHeaderProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function AccessibleModalHeader({ className, children }: AccessibleModalHeaderProps) {
+  return <div className={cn('border-b border-gray-200 pb-4', className)}>{children}</div>
+}
+
+interface AccessibleModalTitleProps {
+  className?: string
+  children: React.ReactNode
+}
+
+export function AccessibleModalTitle({ className, children }: AccessibleModalTitleProps) {
+  return <h2 className={cn('text-lg font-semibold text-gray-900', className)}>{children}</h2>
 }
 
 export default AccessibleModal

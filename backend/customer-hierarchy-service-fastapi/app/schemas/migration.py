@@ -7,7 +7,7 @@ This module provides two sets of schemas:
   API v2 endpoints under `app/api/v2/endpoints/migration.py`
 """
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from enum import Enum
 
@@ -132,7 +132,8 @@ class MigrationRollbackRequestSchema(BaseModel):
     rollback_reason: str = Field(..., min_length=1, max_length=500, description="Reason for rollback")
     force_rollback: bool = Field(default=False, description="Force rollback even if there are dependencies")
     
-    @validator('rollback_reason')
+    @field_validator('rollback_reason')
+    @classmethod
     def validate_rollback_reason(cls, v):
         if not v or not v.strip():
             raise ValueError("Rollback reason cannot be empty")

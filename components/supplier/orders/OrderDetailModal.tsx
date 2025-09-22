@@ -24,15 +24,15 @@ import {
   Edit,
   Save,
   X,
-  Loader
+  Loader,
 } from 'lucide-react'
 
 interface OrderDetailModalProps {
-  orderId: string | null;
-  organizationId?: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onStatusUpdate?: (orderId: string, status: OrderStatus, notes?: string) => void;
+  orderId: string | null
+  organizationId?: string
+  isOpen: boolean
+  onClose: () => void
+  onStatusUpdate?: (orderId: string, status: OrderStatus, notes?: string) => void
 }
 
 const STATUS_TRANSITIONS = {
@@ -43,64 +43,73 @@ const STATUS_TRANSITIONS = {
   in_transit: ['delivered', 'disputed'],
   delivered: ['disputed'],
   cancelled: [],
-  disputed: ['resolved']
-};
+  disputed: ['resolved'],
+}
 
 // 狀態文案與樣式改由 '@/lib/status' 集中提供
 
-export default function OrderDetailModal({ 
-  orderId, 
-  organizationId, 
-  isOpen, 
-  onClose, 
-  onStatusUpdate 
+export default function OrderDetailModal({
+  orderId,
+  organizationId,
+  isOpen,
+  onClose,
+  onStatusUpdate,
 }: OrderDetailModalProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [statusNotes, setStatusNotes] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null);
+  const [isEditing, setIsEditing] = useState(false)
+  const [statusNotes, setStatusNotes] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | null>(null)
 
-  const { 
-    order, 
-    loading, 
-    error, 
-    updateStatus, 
-    isUpdating 
-  } = useSupplierOrder(organizationId, orderId || undefined);
+  const { order, loading, error, updateStatus, isUpdating } = useSupplierOrder(
+    organizationId,
+    orderId || undefined
+  )
 
-  if (!isOpen || !orderId) return null;
+  if (!isOpen || !orderId) return null
 
   const handleStatusUpdate = async () => {
-    if (!selectedStatus || !order) return;
-    
+    if (!selectedStatus || !order) return
+
     try {
-      await updateStatus({ status: selectedStatus, notes: statusNotes });
-      onStatusUpdate?.(order.id, selectedStatus, statusNotes);
-      setIsEditing(false);
-      setSelectedStatus(null);
-      setStatusNotes('');
+      await updateStatus({ status: selectedStatus, notes: statusNotes })
+      onStatusUpdate?.(order.id, selectedStatus, statusNotes)
+      setIsEditing(false)
+      setSelectedStatus(null)
+      setStatusNotes('')
     } catch (error) {
-      console.error('Failed to update order status:', error);
+      console.error('Failed to update order status:', error)
     }
-  };
+  }
 
   const getAvailableStatusTransitions = (currentStatus: OrderStatus) => {
-    return STATUS_TRANSITIONS[currentStatus] || [];
-  };
+    return STATUS_TRANSITIONS[currentStatus] || []
+  }
 
   if (loading) {
     return (
-      <AccessibleModal isOpen={isOpen} onClose={onClose} title="載入訂單詳情" size="xl" className="max-h-[90vh] overflow-y-auto">
+      <AccessibleModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="載入訂單詳情"
+        size="xl"
+        className="max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-center py-8">
           <Loader className="h-8 w-8 animate-spin text-gray-400" />
           <span className="ml-3 text-gray-600">載入訂單詳情中...</span>
         </div>
       </AccessibleModal>
-    );
+    )
   }
 
   if (error || !order) {
     return (
-      <AccessibleModal isOpen={isOpen} onClose={onClose} title="無法載入訂單詳情" size="xl" className="max-h-[90vh] overflow-y-auto">
+      <AccessibleModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title="無法載入訂單詳情"
+        size="xl"
+        className="max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center space-x-3 py-8">
           <AlertTriangle className="h-6 w-6 text-red-600" />
           <div>
@@ -109,15 +118,21 @@ export default function OrderDetailModal({
           </div>
         </div>
       </AccessibleModal>
-    );
+    )
   }
 
   const currentMeta = getOrderStatusMeta(order.status)
-  const StatusIcon = currentMeta.Icon;
-  const availableTransitions = getAvailableStatusTransitions(order.status);
+  const StatusIcon = currentMeta.Icon
+  const availableTransitions = getAvailableStatusTransitions(order.status)
 
   return (
-    <AccessibleModal isOpen={isOpen} onClose={onClose} title={`訂單詳情 - ${order.order_number}`} size="xl" className="max-h-[90vh] overflow-y-auto">
+    <AccessibleModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`訂單詳情 - ${order.order_number}`}
+      size="xl"
+      className="max-h-[90vh] overflow-y-auto"
+    >
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -133,12 +148,12 @@ export default function OrderDetailModal({
             >
               {isEditing ? (
                 <>
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="mr-2 h-4 w-4" />
                   取消
                 </>
               ) : (
                 <>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="mr-2 h-4 w-4" />
                   更新狀態
                 </>
               )}
@@ -148,9 +163,9 @@ export default function OrderDetailModal({
 
         <div className="space-y-6">
           {/* Order Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <Card className="p-4">
-              <div className="flex items-center space-x-3 mb-2">
+              <div className="mb-2 flex items-center space-x-3">
                 <User className="h-5 w-5 text-gray-600" />
                 <h3 className="font-medium">客戶資訊</h3>
               </div>
@@ -161,7 +176,7 @@ export default function OrderDetailModal({
             </Card>
 
             <Card className="p-4">
-              <div className="flex items-center space-x-3 mb-2">
+              <div className="mb-2 flex items-center space-x-3">
                 <Calendar className="h-5 w-5 text-gray-600" />
                 <h3 className="font-medium">配送資訊</h3>
               </div>
@@ -178,7 +193,7 @@ export default function OrderDetailModal({
             </Card>
 
             <Card className="p-4">
-              <div className="flex items-center space-x-3 mb-2">
+              <div className="mb-2 flex items-center space-x-3">
                 <DollarSign className="h-5 w-5 text-gray-600" />
                 <h3 className="font-medium">金額資訊</h3>
               </div>
@@ -186,27 +201,23 @@ export default function OrderDetailModal({
                 <p className="text-lg font-semibold text-green-600">
                   {formatCurrency(order.total_amount_ntd)}
                 </p>
-                <p className="text-sm text-gray-600">
-                  共 {order.item_count} 項商品
-                </p>
+                <p className="text-sm text-gray-600">共 {order.item_count} 項商品</p>
               </div>
             </Card>
           </div>
 
           {/* Status Update Section */}
           {isEditing && (
-            <Card className="p-4 border-blue-200 bg-blue-50">
-              <h3 className="font-medium mb-3">更新訂單狀態</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border-blue-200 bg-blue-50 p-4">
+              <h3 className="mb-3 font-medium">更新訂單狀態</h3>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    新狀態
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">新狀態</label>
                   <select
                     value={selectedStatus || ''}
-                    onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    onChange={e => setSelectedStatus(e.target.value as OrderStatus)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2"
                   >
                     <option value="">選擇新狀態</option>
                     {availableTransitions.map(status => {
@@ -219,43 +230,40 @@ export default function OrderDetailModal({
                     })}
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     備註 (選填)
                   </label>
                   <Textarea
                     value={statusNotes}
-                    onChange={(e) => setStatusNotes(e.target.value)}
+                    onChange={e => setStatusNotes(e.target.value)}
                     placeholder="狀態更新備註..."
                     rows={2}
                   />
                 </div>
               </div>
-              
-              <div className="flex justify-end space-x-2 mt-4">
+
+              <div className="mt-4 flex justify-end space-x-2">
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setIsEditing(false);
-                    setSelectedStatus(null);
-                    setStatusNotes('');
+                    setIsEditing(false)
+                    setSelectedStatus(null)
+                    setStatusNotes('')
                   }}
                 >
                   取消
                 </Button>
-                <Button
-                  onClick={handleStatusUpdate}
-                  disabled={!selectedStatus || isUpdating}
-                >
+                <Button onClick={handleStatusUpdate} disabled={!selectedStatus || isUpdating}>
                   {isUpdating ? (
                     <>
-                      <Loader className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
                       更新中...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="mr-2 h-4 w-4" />
                       確認更新
                     </>
                   )}
@@ -266,21 +274,21 @@ export default function OrderDetailModal({
 
           {/* Order Items */}
           <Card className="p-4">
-            <h3 className="font-medium mb-3">訂單明細</h3>
+            <h3 className="mb-3 font-medium">訂單明細</h3>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
                       商品
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
                       數量
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
                       單價
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
                       小計
                     </th>
                   </tr>
@@ -297,9 +305,7 @@ export default function OrderDetailModal({
                       <td className="px-3 py-2">
                         {item.quantity} {item.unit}
                       </td>
-                      <td className="px-3 py-2">
-                        {formatCurrency(item.unit_price_ntd)}
-                      </td>
+                      <td className="px-3 py-2">{formatCurrency(item.unit_price_ntd)}</td>
                       <td className="px-3 py-2 font-medium">
                         {formatCurrency(item.total_price_ntd)}
                       </td>
@@ -314,8 +320,8 @@ export default function OrderDetailModal({
                 </tbody>
               </table>
             </div>
-            
-            <div className="border-t pt-3 mt-3">
+
+            <div className="mt-3 border-t pt-3">
               <div className="flex justify-end">
                 <div className="text-right">
                   <p className="text-lg font-semibold">
@@ -327,17 +333,19 @@ export default function OrderDetailModal({
           </Card>
 
           {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Delivery Address */}
             {order.delivery_address && (
               <Card className="p-4">
-                <div className="flex items-center space-x-3 mb-2">
+                <div className="mb-2 flex items-center space-x-3">
                   <MapPin className="h-5 w-5 text-gray-600" />
                   <h3 className="font-medium">配送地址</h3>
                 </div>
-                <div className="text-sm space-y-1">
+                <div className="space-y-1 text-sm">
                   <p>{order.delivery_address.street}</p>
-                  <p>{order.delivery_address.city} {order.delivery_address.postal_code}</p>
+                  <p>
+                    {order.delivery_address.city} {order.delivery_address.postal_code}
+                  </p>
                   {order.delivery_address.contact_person && (
                     <p>聯絡人：{order.delivery_address.contact_person}</p>
                   )}
@@ -351,7 +359,7 @@ export default function OrderDetailModal({
             {/* Notes */}
             {order.notes && (
               <Card className="p-4">
-                <div className="flex items-center space-x-3 mb-2">
+                <div className="mb-2 flex items-center space-x-3">
                   <FileText className="h-5 w-5 text-gray-600" />
                   <h3 className="font-medium">訂單備註</h3>
                 </div>
@@ -363,15 +371,15 @@ export default function OrderDetailModal({
           {/* Status History */}
           {order.status_history && order.status_history.length > 0 && (
             <Card className="p-4">
-              <h3 className="font-medium mb-3">狀態歷史</h3>
+              <h3 className="mb-3 font-medium">狀態歷史</h3>
               <div className="space-y-3">
                 {order.status_history.map((entry, index) => {
                   const meta = getOrderStatusMeta(entry.status)
-                  const StatusIcon = meta.Icon;
-                  
+                  const StatusIcon = meta.Icon
+
                   return (
-                    <div key={index} className="flex items-start space-x-3 p-3 border rounded-md">
-                      <StatusIcon className="h-5 w-5 mt-0.5" />
+                    <div key={index} className="flex items-start space-x-3 rounded-md border p-3">
+                      <StatusIcon className="mt-0.5 h-5 w-5" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium">{meta.label}</span>
@@ -379,17 +387,13 @@ export default function OrderDetailModal({
                             {formatDate(new Date(entry.timestamp))}
                           </span>
                         </div>
-                        {entry.notes && (
-                          <p className="text-sm text-gray-600 mt-1">{entry.notes}</p>
-                        )}
+                        {entry.notes && <p className="mt-1 text-sm text-gray-600">{entry.notes}</p>}
                         {entry.updated_by && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            操作人：{entry.updated_by}
-                          </p>
+                          <p className="mt-1 text-xs text-gray-500">操作人：{entry.updated_by}</p>
                         )}
                       </div>
                     </div>
-                  );
+                  )
                 })}
               </div>
             </Card>
@@ -397,5 +401,5 @@ export default function OrderDetailModal({
         </div>
       </div>
     </AccessibleModal>
-  );
+  )
 }

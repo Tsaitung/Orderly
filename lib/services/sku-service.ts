@@ -60,11 +60,12 @@ interface UpdateSKUData {
 class SimpleCache {
   private cache = new Map<string, { data: unknown; timestamp: number; ttl: number }>()
 
-  set(key: string, data: unknown, ttlMs: number = 300000): void { // 預設 5 分鐘 TTL
+  set(key: string, data: unknown, ttlMs: number = 300000): void {
+    // 預設 5 分鐘 TTL
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
-      ttl: ttlMs
+      ttl: ttlMs,
     })
   }
 
@@ -137,18 +138,14 @@ export class SKUService {
   /**
    * 防止重複請求的裝飾器
    */
-  private static dedupeRequest<T>(
-    key: string,
-    requestFn: () => Promise<T>
-  ): Promise<T> {
+  private static dedupeRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
     if (this.requestQueue.has(key)) {
       return this.requestQueue.get(key)!
     }
 
-    const promise = requestFn()
-      .finally(() => {
-        this.requestQueue.delete(key)
-      })
+    const promise = requestFn().finally(() => {
+      this.requestQueue.delete(key)
+    })
 
     this.requestQueue.set(key, promise)
     return promise
@@ -157,11 +154,7 @@ export class SKUService {
   /**
    * 基礎 API 請求方法，包含錯誤處理和重試機制
    */
-  private static async request<T>(
-    url: string,
-    options: RequestInit = {},
-    retries = 3
-  ): Promise<T> {
+  private static async request<T>(url: string, options: RequestInit = {}, retries = 3): Promise<T> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 10000) // 10秒超時
 
@@ -184,7 +177,7 @@ export class SKUService {
       return await response.json()
     } catch (error) {
       clearTimeout(timeoutId)
-      
+
       if (retries > 0 && error instanceof Error) {
         // 網路錯誤或超時，進行重試
         if (error.name === 'AbortError' || error.message.includes('fetch')) {
@@ -192,7 +185,7 @@ export class SKUService {
           return this.request<T>(url, options, retries - 1)
         }
       }
-      
+
       throw error
     }
   }
@@ -202,7 +195,7 @@ export class SKUService {
    */
   static async searchSKUs(params: SKUSearchParams = {}): Promise<any> {
     const cacheKey = `skus:search:${JSON.stringify(params)}`
-    
+
     // 檢查快取
     const cached = cache.get(cacheKey)
     if (cached) {
@@ -218,13 +211,13 @@ export class SKUService {
     })
 
     const url = `${this.baseUrl}/products/skus/search?${searchParams.toString()}`
-    
+
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<any>(url)
-      
+
       // 快取結果（搜尋結果快取較短時間）
       cache.set(cacheKey, result, 120000) // 2 分鐘
-      
+
       return result
     })
   }
@@ -234,7 +227,7 @@ export class SKUService {
    */
   static async getSKUDetails(skuId: string): Promise<SKUSearchResult | null> {
     const cacheKey = `sku:${skuId}`
-    
+
     // 檢查快取
     const cached = cache.get(cacheKey)
     if (cached) {
@@ -242,13 +235,13 @@ export class SKUService {
     }
 
     const url = `${this.baseUrl}/products/skus/${skuId}`
-    
+
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<SKUSearchResult>(url)
-      
+
       // SKU 詳情快取較長時間
       cache.set(cacheKey, result, 600000) // 10 分鐘
-      
+
       return result
     })
   }
@@ -256,12 +249,9 @@ export class SKUService {
   /**
    * 獲取供應商比較資料
    */
-  static async getSupplierComparison(
-    skuId: string, 
-    params: SupplierComparisonParams = {}
-  ) {
+  static async getSupplierComparison(skuId: string, params: SupplierComparisonParams = {}) {
     const cacheKey = `suppliers:${skuId}:${JSON.stringify(params)}`
-    
+
     // 檢查快取
     const cached = cache.get(cacheKey)
     if (cached) {
@@ -276,13 +266,13 @@ export class SKUService {
     })
 
     const url = `${this.baseUrl}/products/skus/${skuId}/suppliers/compare?${searchParams.toString()}`
-    
+
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request(url)
-      
+
       // 供應商資料快取中等時間
       cache.set(cacheKey, result, 300000) // 5 分鐘
-      
+
       return result
     })
   }
@@ -290,12 +280,9 @@ export class SKUService {
   /**
    * 獲取定價分析
    */
-  static async getPricingAnalysis(
-    skuId: string, 
-    params: PricingAnalysisParams
-  ) {
+  static async getPricingAnalysis(skuId: string, params: PricingAnalysisParams) {
     const cacheKey = `pricing:${skuId}:${params.quantity}`
-    
+
     // 檢查快取
     const cached = cache.get(cacheKey)
     if (cached) {
@@ -303,13 +290,13 @@ export class SKUService {
     }
 
     const url = `${this.baseUrl}/products/skus/${skuId}/suppliers/pricing-analysis?quantity=${params.quantity}`
-    
+
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request(url)
-      
+
       // 定價分析快取較短時間（價格可能變動）
       cache.set(cacheKey, result, 180000) // 3 分鐘
-      
+
       return result
     })
   }
@@ -319,7 +306,7 @@ export class SKUService {
    */
   static async getBatches(filters: BatchFilters = {}): Promise<BatchInfo[]> {
     const cacheKey = `batches:${JSON.stringify(filters)}`
-    
+
     // 檢查快取
     const cached = cache.get(cacheKey)
     if (cached) {
@@ -334,13 +321,13 @@ export class SKUService {
     })
 
     const url = `${this.baseUrl}/products/skus/batches?${searchParams.toString()}`
-    
+
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<BatchInfo[]>(url)
-      
+
       // 批次資料快取較短時間
       cache.set(cacheKey, result, 60000) // 1 分鐘
-      
+
       return result
     })
   }
@@ -348,18 +335,21 @@ export class SKUService {
   /**
    * 批量創建 SKU
    */
-  static async batchCreateSKUs(productId: string, skus: CreateSKUData[]): Promise<SKUSearchResult[]> {
+  static async batchCreateSKUs(
+    productId: string,
+    skus: CreateSKUData[]
+  ): Promise<SKUSearchResult[]> {
     const url = `${this.baseUrl}/products/products/${productId}/skus/batch`
-    
+
     const result = await this.request<SKUSearchResult[]>(url, {
       method: 'POST',
-      body: JSON.stringify({ skus })
+      body: JSON.stringify({ skus }),
     })
 
     // 創建後清理相關快取
     this.clearCacheByPattern('skus:')
     this.clearCacheByPattern(`product:${productId}`)
-    
+
     return result
   }
 
@@ -368,10 +358,10 @@ export class SKUService {
    */
   static async updateSKU(skuId: string, data: UpdateSKUData): Promise<SKUSearchResult> {
     const url = `${this.baseUrl}/products/skus/${skuId}`
-    
+
     const result = await this.request<SKUSearchResult>(url, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     })
 
     // 更新後清理相關快取
@@ -379,7 +369,7 @@ export class SKUService {
     cache.delete(`sku:${skuId}`)
     this.clearCacheByPattern(`suppliers:${skuId}`)
     this.clearCacheByPattern(`pricing:${skuId}`)
-    
+
     return result
   }
 
@@ -388,9 +378,9 @@ export class SKUService {
    */
   static async deleteSKU(skuId: string): Promise<boolean> {
     const url = `${this.baseUrl}/products/skus/${skuId}`
-    
+
     const result = await this.request<boolean>(url, {
-      method: 'DELETE'
+      method: 'DELETE',
     })
 
     // 刪除後清理相關快取
@@ -398,7 +388,7 @@ export class SKUService {
     cache.delete(`sku:${skuId}`)
     this.clearCacheByPattern(`suppliers:${skuId}`)
     this.clearCacheByPattern(`pricing:${skuId}`)
-    
+
     return result
   }
 
@@ -407,7 +397,7 @@ export class SKUService {
    */
   private static clearCacheByPattern(pattern: string) {
     const keysToDelete: string[] = []
-    
+
     // 注意：這個實作僅適用於我們的簡單快取
     // 在生產環境中，可能需要使用更專業的快取解決方案
     cache['cache'].forEach((_, key) => {
@@ -415,7 +405,7 @@ export class SKUService {
         keysToDelete.push(key)
       }
     })
-    
+
     keysToDelete.forEach(key => cache.delete(key))
   }
 
@@ -433,7 +423,7 @@ export class SKUService {
     try {
       // 預載入活躍 SKU 列表（不指定搜尋條件）
       await this.searchSKUs({ is_active: true, page_size: 20 })
-      
+
       // 可以根據使用模式預載入其他常用資料
     } catch (error) {
       console.warn('預載入資料失敗:', error)
@@ -469,18 +459,18 @@ export function useSKUSearch() {
   const [results, setResults] = React.useState<SKUSearchResult[]>([])
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  
+
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
-  
+
   // Use ref to track if component is mounted to prevent memory leaks
   const mountedRef = React.useRef(true)
-  
+
   React.useEffect(() => {
     return () => {
       mountedRef.current = false
     }
   }, [])
-  
+
   const search = React.useCallback(async () => {
     if (!debouncedSearchTerm && !Object.values(filters).some(v => v)) {
       if (mountedRef.current) {
@@ -494,14 +484,14 @@ export function useSKUSearch() {
         setLoading(true)
         setError(null)
       }
-      
+
       const searchParams: SKUSearchParams = {
         ...(debouncedSearchTerm ? { search: debouncedSearchTerm } : {}),
-        ...filters
+        ...filters,
       }
-      
+
       const result = await SKUService.searchSKUs(searchParams)
-      
+
       // Only update state if component is still mounted
       if (mountedRef.current) {
         setResults(result?.data || [])
@@ -530,7 +520,7 @@ export function useSKUSearch() {
     results,
     loading,
     error,
-    refresh: search
+    refresh: search,
   }
 }
 

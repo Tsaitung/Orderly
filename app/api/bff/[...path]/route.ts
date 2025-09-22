@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // 智能環境檢測 - Cloud Run 友好
-const BACKEND_URL = process.env.NODE_ENV === 'production'
-  ? process.env.NEXT_PUBLIC_BACKEND_URL  // Cloud Run URL
-  : (process.env.BACKEND_URL || 'http://localhost:8000')
+const BACKEND_URL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.NEXT_PUBLIC_BACKEND_URL // Cloud Run URL
+    : process.env.BACKEND_URL || 'http://localhost:8000'
 
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
-  CUSTOMER_HIERARCHY_SERVICE_URL: process.env.CUSTOMER_HIERARCHY_SERVICE_URL || 'http://localhost:3007',
+  CUSTOMER_HIERARCHY_SERVICE_URL:
+    process.env.CUSTOMER_HIERARCHY_SERVICE_URL || 'http://localhost:3007',
   PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003',
   ORDER_SERVICE_URL: process.env.ORDER_SERVICE_URL || 'http://localhost:3002',
   ACCEPTANCE_SERVICE_URL: process.env.ACCEPTANCE_SERVICE_URL || 'http://localhost:3004',
@@ -40,7 +42,7 @@ function getDirectServiceUrl(path: string): string | null {
   if (path.startsWith('v1/notifications') || path.startsWith('notifications')) {
     return LOCAL_SERVICE_URLS.NOTIFICATION_SERVICE_URL
   }
-  
+
   return null
 }
 
@@ -48,22 +50,22 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const subPath = params.path?.join('/') || ''
   const url = new URL(req.url)
   const qs = url.search ? url.search : ''
-  
+
   // 優先使用 API Gateway（Cloud Run 友好）
   let target = `${BACKEND_URL}/api/${subPath}${qs}`
   let routingStrategy: 'gateway' | 'direct' = 'gateway'
   const directServiceUrl = getDirectServiceUrl(subPath)
-  
+
   // 本地開發環境：如果 Gateway 不可用，嘗試直連服務
   if (process.env.NODE_ENV !== 'production') {
     try {
       // 快速檢測 Gateway 是否可用（不等待響應）
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 100) // 100ms 超時
-      
-      await fetch(`${BACKEND_URL}/health`, { 
+
+      await fetch(`${BACKEND_URL}/health`, {
         signal: controller.signal,
-        method: 'HEAD' 
+        method: 'HEAD',
       })
       // Gateway 可用，保持使用 Gateway
     } catch {
@@ -74,7 +76,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
       }
     }
   }
-  
+
   console.log(`[BFF] ${req.method} ${subPath} -> ${target} (${routingStrategy})`)
 
   const method = req.method
@@ -107,10 +109,13 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   try {
     console.log(`[BFF] Making request to: ${target}`)
     console.log(`[BFF] Request headers:`, JSON.stringify(headers, null, 2))
-    
+
     let res = await fetch(target, init)
     console.log(`[BFF] Response status: ${res.status}`)
-    console.log(`[BFF] Response headers:`, JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2))
+    console.log(
+      `[BFF] Response headers:`,
+      JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2)
+    )
 
     // 在本地開發環境中，若 Gateway 回傳錯誤，對特定資源（如 products/skus）自動回退直連服務
     const isLocal = process.env.NODE_ENV !== 'production'
@@ -121,7 +126,9 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
 
     if (isLocal && isGateway && isServerError && canDirect && isProductDomain) {
       const fallbackTarget = `${directServiceUrl}/api/${subPath}${qs}`
-      console.warn(`[BFF] Gateway returned ${res.status}. Falling back to direct service: ${fallbackTarget}`)
+      console.warn(
+        `[BFF] Gateway returned ${res.status}. Falling back to direct service: ${fallbackTarget}`
+      )
       try {
         const fallbackRes = await fetch(fallbackTarget, init)
         console.log(`[BFF] Fallback response status: ${fallbackRes.status}`)
@@ -133,27 +140,27 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
         console.error('[BFF] Fallback fetch failed:', fallbackErr)
       }
     }
-    
+
     const respHeaders = new Headers()
     res.headers.forEach((v, k) => {
-      if (["content-encoding", "transfer-encoding", "connection"].includes(k.toLowerCase())) return
+      if (['content-encoding', 'transfer-encoding', 'connection'].includes(k.toLowerCase())) return
       respHeaders.set(k, v)
     })
 
     const data = await res.arrayBuffer()
-    
+
     // Log response body for debugging (only for errors)
     if (res.status >= 400) {
       const textData = new TextDecoder().decode(data)
       console.error(`[BFF] Error response body:`, textData)
     }
-    
+
     return new NextResponse(data, { status: res.status, headers: respHeaders })
   } catch (error: any) {
     console.error(`[BFF] Error fetching ${target}:`, {
       message: error.message,
       cause: error.cause,
-      stack: error.stack
+      stack: error.stack,
     })
 
     // 本地環境：主要請求失敗時，嘗試對產品域名執行直連回退
@@ -167,7 +174,8 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
         const fallbackRes = await fetch(fallbackTarget, init)
         const respHeaders = new Headers()
         fallbackRes.headers.forEach((v, k) => {
-          if (["content-encoding", "transfer-encoding", "connection"].includes(k.toLowerCase())) return
+          if (['content-encoding', 'transfer-encoding', 'connection'].includes(k.toLowerCase()))
+            return
           respHeaders.set(k, v)
         })
         const data = await fallbackRes.arrayBuffer()
@@ -176,28 +184,29 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
         console.error('[BFF] Fallback fetch also failed:', {
           message: fallbackErr.message,
           cause: fallbackErr.cause,
-          stack: fallbackErr.stack
+          stack: fallbackErr.stack,
         })
       }
     }
 
     // 如果是本地開發且服務不可用，返回友好的錯誤信息
     if (process.env.NODE_ENV !== 'production' && error.cause?.code === 'ECONNREFUSED') {
-      const serviceName = routingStrategy === 'direct' ? target.split('//')[1].split('/')[0] : 'API Gateway'
+      const serviceName =
+        routingStrategy === 'direct' ? target.split('//')[1].split('/')[0] : 'API Gateway'
       return new NextResponse(
         JSON.stringify({
           error: 'Service Unavailable',
           message: `${serviceName} is not running. Please start the required service.`,
           path: subPath,
-          target: target
+          target: target,
         }),
-        { 
+        {
           status: 503,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       )
     }
-    
+
     // 其他錯誤
     return new NextResponse(
       JSON.stringify({
@@ -206,14 +215,21 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
         path: subPath,
         target: target,
         errorType: error.constructor.name,
-        errorMessage: error.message
+        errorMessage: error.message,
       }),
-      { 
+      {
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       }
     )
   }
 }
 
-export { handler as GET, handler as POST, handler as PUT, handler as PATCH, handler as DELETE, handler as OPTIONS }
+export {
+  handler as GET,
+  handler as POST,
+  handler as PUT,
+  handler as PATCH,
+  handler as DELETE,
+  handler as OPTIONS,
+}

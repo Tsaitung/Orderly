@@ -2,11 +2,11 @@
 
 import React from 'react'
 import { useRouter } from 'next/navigation'
-import { 
-  Save, 
-  X, 
-  Shield, 
-  AlertCircle, 
+import {
+  Save,
+  X,
+  Shield,
+  AlertCircle,
   CheckCircle2,
   Clock,
   Globe,
@@ -15,7 +15,7 @@ import {
   Copy,
   FileText,
   Users,
-  Building2
+  Building2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -54,7 +54,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
   const [saving, setSaving] = React.useState(false)
   const [errors, setErrors] = React.useState<Record<string, string>>({})
   const [showAdvanced, setShowAdvanced] = React.useState(false)
-  
+
   const [formData, setFormData] = React.useState<RoleFormData>({
     name: '',
     code: '',
@@ -82,7 +82,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       // 模擬載入現有角色資料
       const mockRole = {
         id: '1',
@@ -98,9 +98,9 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
         validTo: '2025-12-31',
         ipRestrictions: ['192.168.1.0/24'],
         dataScope: 'own_organization' as const,
-        maxUserCount: 50
+        maxUserCount: 50,
       }
-      
+
       setFormData(mockRole)
     } catch (err) {
       console.error('載入角色資料失敗:', err)
@@ -109,18 +109,17 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
     }
   }
 
-
   const handleInputChange = (field: keyof RoleFormData, value: any) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
-    
+
     // 清除對應的錯誤
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
-        [field]: ''
+        [field]: '',
       }))
     }
   }
@@ -128,60 +127,60 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
   const handlePermissionChange = (permissions: string[]) => {
     setFormData(prev => ({
       ...prev,
-      permissions
+      permissions,
     }))
   }
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.name.trim()) {
       newErrors.name = '角色名稱為必填項'
     }
-    
+
     if (!formData.code.trim()) {
       newErrors.code = '角色代碼為必填項'
     } else if (!/^[A-Z_][A-Z0-9_]*$/.test(formData.code)) {
       newErrors.code = '角色代碼只能包含大寫字母、數字和底線，且必須以字母或底線開頭'
     }
-    
+
     if (!formData.description.trim()) {
       newErrors.description = '角色描述為必填項'
     }
-    
+
     if (formData.permissions.length === 0) {
       newErrors.permissions = '至少需要選擇一個權限'
     }
-    
+
     if (formData.priority < 0 || formData.priority > 100) {
       newErrors.priority = '優先級必須在 0-100 之間'
     }
-    
+
     if (formData.validFrom && formData.validTo) {
       if (new Date(formData.validFrom) >= new Date(formData.validTo)) {
         newErrors.validTo = '結束時間必須晚於開始時間'
       }
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     try {
       setSaving(true)
-      
+
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       console.log('儲存角色:', formData)
-      
+
       // 導航回角色列表
       router.push('/platform/roles')
     } catch (err) {
@@ -200,7 +199,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, newTag.trim()],
       }))
       setNewTag('')
     }
@@ -209,7 +208,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
     }))
   }
 
@@ -217,7 +216,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
     if (newIpRestriction.trim() && !formData.ipRestrictions.includes(newIpRestriction.trim())) {
       setFormData(prev => ({
         ...prev,
-        ipRestrictions: [...prev.ipRestrictions, newIpRestriction.trim()]
+        ipRestrictions: [...prev.ipRestrictions, newIpRestriction.trim()],
       }))
       setNewIpRestriction('')
     }
@@ -226,10 +225,9 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
   const removeIpRestriction = (ipToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      ipRestrictions: prev.ipRestrictions.filter(ip => ip !== ipToRemove)
+      ipRestrictions: prev.ipRestrictions.filter(ip => ip !== ipToRemove),
     }))
   }
-
 
   const generateCode = () => {
     if (formData.name) {
@@ -243,46 +241,43 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-
       {/* 基本資訊 */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Shield className="h-5 w-5 mr-2" />
+            <Shield className="mr-2 h-5 w-5" />
             基本資訊
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="name">角色名稱 *</Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={e => handleInputChange('name', e.target.value)}
                 placeholder="請輸入角色名稱"
                 className={errors.name ? 'border-red-500' : ''}
               />
-              {errors.name && (
-                <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
             </div>
-            
+
             <div>
               <Label htmlFor="code">角色代碼 *</Label>
               <div className="flex space-x-2">
                 <Input
                   id="code"
                   value={formData.code}
-                  onChange={(e) => handleInputChange('code', e.target.value.toUpperCase())}
+                  onChange={e => handleInputChange('code', e.target.value.toUpperCase())}
                   placeholder="ROLE_EXAMPLE"
                   className={errors.code ? 'border-red-500' : ''}
                 />
@@ -290,9 +285,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
                   自動生成
                 </Button>
               </div>
-              {errors.code && (
-                <p className="text-sm text-red-500 mt-1">{errors.code}</p>
-              )}
+              {errors.code && <p className="mt-1 text-sm text-red-500">{errors.code}</p>}
             </div>
           </div>
 
@@ -301,31 +294,31 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              onChange={e => handleInputChange('description', e.target.value)}
               placeholder="請輸入角色描述"
               rows={3}
               className={errors.description ? 'border-red-500' : ''}
             />
             {errors.description && (
-              <p className="text-sm text-red-500 mt-1">{errors.description}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.description}</p>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
               <Label htmlFor="type">角色類型 *</Label>
               <select
                 id="type"
                 value={formData.type}
-                onChange={(e) => handleInputChange('type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white"
+                onChange={e => handleInputChange('type', e.target.value)}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
               >
                 <option value="platform">平台角色</option>
                 <option value="restaurant">餐廳角色</option>
                 <option value="supplier">供應商角色</option>
               </select>
             </div>
-            
+
             <div>
               <Label htmlFor="priority">優先級 (0-100)</Label>
               <Input
@@ -334,19 +327,17 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
                 min="0"
                 max="100"
                 value={formData.priority}
-                onChange={(e) => handleInputChange('priority', parseInt(e.target.value))}
+                onChange={e => handleInputChange('priority', parseInt(e.target.value))}
                 className={errors.priority ? 'border-red-500' : ''}
               />
-              {errors.priority && (
-                <p className="text-sm text-red-500 mt-1">{errors.priority}</p>
-              )}
+              {errors.priority && <p className="mt-1 text-sm text-red-500">{errors.priority}</p>}
             </div>
-            
-            <div className="flex items-center space-x-2 mt-6">
+
+            <div className="mt-6 flex items-center space-x-2">
               <Switch
                 id="isActive"
                 checked={formData.isActive}
-                onCheckedChange={(checked) => handleInputChange('isActive', checked)}
+                onCheckedChange={checked => handleInputChange('isActive', checked)}
               />
               <Label htmlFor="isActive">啟用角色</Label>
             </div>
@@ -355,18 +346,18 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
           {/* 標籤管理 */}
           <div>
             <Label>角色標籤</Label>
-            <div className="flex items-center space-x-2 mt-2">
+            <div className="mt-2 flex items-center space-x-2">
               <Input
                 value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
+                onChange={e => setNewTag(e.target.value)}
                 placeholder="輸入標籤"
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTag())}
               />
               <Button type="button" variant="outline" onClick={addTag}>
                 新增
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               {formData.tags.map(tag => (
                 <Badge key={tag} variant="secondary" className="flex items-center space-x-1">
                   <span>{tag}</span>
@@ -388,7 +379,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Settings className="h-5 w-5 mr-2" />
+            <Settings className="mr-2 h-5 w-5" />
             權限配置
           </CardTitle>
         </CardHeader>
@@ -398,20 +389,18 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
             roleType={formData.type}
             onChange={handlePermissionChange}
           />
-          {errors.permissions && (
-            <p className="text-sm text-red-500 mt-2">{errors.permissions}</p>
-          )}
+          {errors.permissions && <p className="mt-2 text-sm text-red-500">{errors.permissions}</p>}
         </CardContent>
       </Card>
 
       {/* 進階設定 */}
       <Card>
         <CardHeader>
-          <CardTitle 
-            className="flex items-center cursor-pointer"
+          <CardTitle
+            className="flex cursor-pointer items-center"
             onClick={() => setShowAdvanced(!showAdvanced)}
           >
-            <Settings className="h-5 w-5 mr-2" />
+            <Settings className="mr-2 h-5 w-5" />
             進階設定
             <Button type="button" variant="ghost" size="sm" className="ml-auto">
               {showAdvanced ? '收起' : '展開'}
@@ -421,14 +410,14 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
         {showAdvanced && (
           <CardContent className="space-y-4">
             {/* 有效期限 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="validFrom">生效日期</Label>
                 <Input
                   id="validFrom"
                   type="date"
                   value={formData.validFrom || ''}
-                  onChange={(e) => handleInputChange('validFrom', e.target.value)}
+                  onChange={e => handleInputChange('validFrom', e.target.value)}
                 />
               </div>
               <div>
@@ -437,12 +426,10 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
                   id="validTo"
                   type="date"
                   value={formData.validTo || ''}
-                  onChange={(e) => handleInputChange('validTo', e.target.value)}
+                  onChange={e => handleInputChange('validTo', e.target.value)}
                   className={errors.validTo ? 'border-red-500' : ''}
                 />
-                {errors.validTo && (
-                  <p className="text-sm text-red-500 mt-1">{errors.validTo}</p>
-                )}
+                {errors.validTo && <p className="mt-1 text-sm text-red-500">{errors.validTo}</p>}
               </div>
             </div>
 
@@ -451,8 +438,8 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
               <Label>資料存取範圍</Label>
               <select
                 value={formData.dataScope}
-                onChange={(e) => handleInputChange('dataScope', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white mt-2"
+                onChange={e => handleInputChange('dataScope', e.target.value)}
+                className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2"
               >
                 <option value="all">全部資料</option>
                 <option value="own_organization">所屬組織</option>
@@ -469,7 +456,12 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
                 type="number"
                 min="1"
                 value={formData.maxUserCount || ''}
-                onChange={(e) => handleInputChange('maxUserCount', e.target.value ? parseInt(e.target.value) : undefined)}
+                onChange={e =>
+                  handleInputChange(
+                    'maxUserCount',
+                    e.target.value ? parseInt(e.target.value) : undefined
+                  )
+                }
                 placeholder="不限制"
               />
             </div>
@@ -477,20 +469,23 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
             {/* IP 限制 */}
             <div>
               <Label>IP 存取限制</Label>
-              <div className="flex items-center space-x-2 mt-2">
+              <div className="mt-2 flex items-center space-x-2">
                 <Input
                   value={newIpRestriction}
-                  onChange={(e) => setNewIpRestriction(e.target.value)}
+                  onChange={e => setNewIpRestriction(e.target.value)}
                   placeholder="例如: 192.168.1.0/24"
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addIpRestriction())}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addIpRestriction())}
                 />
                 <Button type="button" variant="outline" onClick={addIpRestriction}>
                   新增
                 </Button>
               </div>
-              <div className="space-y-2 mt-2">
+              <div className="mt-2 space-y-2">
                 {formData.ipRestrictions.map(ip => (
-                  <div key={ip} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                  <div
+                    key={ip}
+                    className="flex items-center justify-between rounded bg-gray-50 p-2"
+                  >
                     <span className="text-sm">{ip}</span>
                     <button
                       type="button"
@@ -512,7 +507,7 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-4">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
               <span className="text-red-700">{errors.submit}</span>
             </div>
           </CardContent>
@@ -520,28 +515,19 @@ export function RoleForm({ mode, roleId }: RoleFormProps) {
       )}
 
       {/* 操作按鈕 */}
-      <div className="flex justify-end space-x-4 pt-6 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={saving}
-        >
+      <div className="flex justify-end space-x-4 border-t pt-6">
+        <Button type="button" variant="outline" onClick={handleCancel} disabled={saving}>
           取消
         </Button>
-        <Button
-          type="submit"
-          disabled={saving}
-          className="flex items-center"
-        >
+        <Button type="submit" disabled={saving} className="flex items-center">
           {saving ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
               儲存中...
             </>
           ) : (
             <>
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               {mode === 'create' ? '建立角色' : '儲存變更'}
             </>
           )}

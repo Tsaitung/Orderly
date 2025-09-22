@@ -7,7 +7,7 @@ import PerformanceMetrics from '@/components/dashboard/performance-metrics'
 
 export const metadata: Metadata = {
   title: '儀表板總覽 - 餐廳管理 | Orderly',
-  description: '餐廳營運指標總覽，包含訂單狀態、對帳進度和績效分析'
+  description: '餐廳營運指標總覽，包含訂單狀態、對帳進度和績效分析',
 }
 
 export default function RestaurantDashboardPage() {
@@ -16,12 +16,8 @@ export default function RestaurantDashboardPage() {
       {/* 頁面標題區塊 */}
       <div className="compact-spacing">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            儀表板總覽
-          </h1>
-          <p className="text-gray-600 mt-2">
-            查看餐廳營運狀況、訂單處理進度和重要業務指標
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">儀表板總覽</h1>
+          <p className="mt-2 text-gray-600">查看餐廳營運狀況、訂單處理進度和重要業務指標</p>
         </div>
       </div>
 
@@ -32,7 +28,7 @@ export default function RestaurantDashboardPage() {
       <QuickActions />
 
       {/* 主要內容網格 */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 md:gap-5 lg:gap-6 xl:grid-cols-3">
         {/* 對帳狀態 (佔 2/3 寬度) */}
         <div className="xl:col-span-2">
           <ReconciliationStatus />

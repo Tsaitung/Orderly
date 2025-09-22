@@ -16,7 +16,7 @@ import {
   CheckCircle,
   Clock,
   Battery,
-  Thermometer
+  Thermometer,
 } from 'lucide-react'
 
 // 模擬車輛數據
@@ -31,7 +31,7 @@ const vehicles = [
       phone: '0912-345-678',
       licenseExpiry: new Date('2025-12-15'),
       workingHours: 8.5,
-      rating: 4.8
+      rating: 4.8,
     },
     status: 'delivering',
     location: '台北市大安區',
@@ -41,7 +41,7 @@ const vehicles = [
     odometer: 156789,
     nextMaintenance: new Date('2025-10-15'),
     assignments: 3,
-    lastUpdate: new Date()
+    lastUpdate: new Date(),
   },
   {
     id: 'VH-002',
@@ -53,7 +53,7 @@ const vehicles = [
       phone: '0987-654-321',
       licenseExpiry: new Date('2026-03-20'),
       workingHours: 6.2,
-      rating: 4.6
+      rating: 4.6,
     },
     status: 'loading',
     location: '配送中心',
@@ -63,7 +63,7 @@ const vehicles = [
     odometer: 98456,
     nextMaintenance: new Date('2025-09-25'),
     assignments: 5,
-    lastUpdate: new Date()
+    lastUpdate: new Date(),
   },
   {
     id: 'VH-003',
@@ -75,7 +75,7 @@ const vehicles = [
       phone: '0923-456-789',
       licenseExpiry: new Date('2025-11-08'),
       workingHours: 2.3,
-      rating: 4.9
+      rating: 4.9,
     },
     status: 'delivered',
     location: '台中市西屯區',
@@ -85,7 +85,7 @@ const vehicles = [
     odometer: 203567,
     nextMaintenance: new Date('2025-11-30'),
     assignments: 2,
-    lastUpdate: new Date()
+    lastUpdate: new Date(),
   },
   {
     id: 'VH-004',
@@ -101,8 +101,8 @@ const vehicles = [
     odometer: 145230,
     nextMaintenance: new Date('2025-09-20'),
     assignments: 0,
-    lastUpdate: new Date()
-  }
+    lastUpdate: new Date(),
+  },
 ]
 
 export default function VehicleManagement() {
@@ -115,7 +115,7 @@ export default function VehicleManagement() {
       delivered: { label: '已送達', variant: 'success' as const, color: 'text-green-600' },
       idle: { label: '待命中', variant: 'outline' as const, color: 'text-gray-600' },
       maintenance: { label: '維修中', variant: 'destructive' as const, color: 'text-red-600' },
-      returning: { label: '返程中', variant: 'info' as const, color: 'text-purple-600' }
+      returning: { label: '返程中', variant: 'info' as const, color: 'text-purple-600' },
     }
     return statusMap[status as keyof typeof statusMap] || statusMap.idle
   }
@@ -133,18 +133,22 @@ export default function VehicleManagement() {
   }
 
   const isMaintenanceUrgent = (nextMaintenance: Date) => {
-    const daysUntil = Math.ceil((nextMaintenance.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    const daysUntil = Math.ceil(
+      (nextMaintenance.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    )
     return daysUntil <= 7
   }
 
   const isLicenseExpiring = (expiryDate: Date) => {
-    const daysUntil = Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    const daysUntil = Math.ceil(
+      (expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    )
     return daysUntil <= 30
   }
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Truck className="h-5 w-5 text-blue-600" />
           <h3 className="font-medium text-gray-900">車輛管理</h3>
@@ -158,7 +162,7 @@ export default function VehicleManagement() {
       </div>
 
       <div className="space-y-4">
-        {vehicles.map((vehicle) => {
+        {vehicles.map(vehicle => {
           const statusInfo = getStatusInfo(vehicle.status)
           const fuelStatus = getFuelStatus(vehicle.fuel)
           const tempStatus = getTemperatureStatus(vehicle.temperature)
@@ -167,23 +171,21 @@ export default function VehicleManagement() {
           return (
             <div
               key={vehicle.id}
-              className={`border rounded-lg transition-all duration-200 ${
+              className={`rounded-lg border transition-all duration-200 ${
                 isExpanded ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:shadow-sm'
               }`}
             >
               <div className="p-4">
-                <div 
-                  className="flex items-center justify-between cursor-pointer"
+                <div
+                  className="flex cursor-pointer items-center justify-between"
                   onClick={() => setSelectedVehicle(isExpanded ? null : vehicle.id)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
                       <Truck className="h-5 w-5 text-gray-600" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">
-                        {vehicle.plateNumber}
-                      </div>
+                      <div className="font-medium text-gray-900">{vehicle.plateNumber}</div>
                       <div className="text-sm text-gray-500">
                         {vehicle.type} • {vehicle.capacity}
                       </div>
@@ -195,16 +197,14 @@ export default function VehicleManagement() {
                       <Badge variant={statusInfo.variant} size="sm">
                         {statusInfo.label}
                       </Badge>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {vehicle.location}
-                      </div>
+                      <div className="mt-1 text-xs text-gray-500">{vehicle.location}</div>
                     </div>
-                    
+
                     {/* 燃油指示器 */}
                     <div className="flex items-center space-x-2">
                       <Fuel className="h-4 w-4 text-gray-400" />
-                      <div className="w-12 bg-gray-200 rounded-full h-2">
-                        <div 
+                      <div className="h-2 w-12 rounded-full bg-gray-200">
+                        <div
                           className={`h-2 rounded-full ${fuelStatus.bgColor}`}
                           style={{ width: `${vehicle.fuel}%` }}
                         ></div>
@@ -218,12 +218,12 @@ export default function VehicleManagement() {
 
                 {/* 展開的詳細信息 */}
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t space-y-4">
+                  <div className="mt-4 space-y-4 border-t pt-4">
                     {/* 司機信息 */}
                     {vehicle.driver ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">司機資訊</h4>
+                          <h4 className="mb-2 text-sm font-medium text-gray-700">司機資訊</h4>
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
                               <User className="h-4 w-4 text-gray-400" />
@@ -233,13 +233,15 @@ export default function VehicleManagement() {
                                   <span
                                     key={i}
                                     className={`text-xs ${
-                                      i < Math.floor(vehicle.driver!.rating) ? 'text-yellow-400' : 'text-gray-300'
+                                      i < Math.floor(vehicle.driver!.rating)
+                                        ? 'text-yellow-400'
+                                        : 'text-gray-300'
                                     }`}
                                   >
                                     ★
                                   </span>
                                 ))}
-                                <span className="text-xs text-gray-500 ml-1">
+                                <span className="ml-1 text-xs text-gray-500">
                                   {vehicle.driver.rating}
                                 </span>
                               </div>
@@ -250,7 +252,9 @@ export default function VehicleManagement() {
                             </div>
                             <div className="flex items-center space-x-2">
                               <Clock className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm">工時: {vehicle.driver.workingHours}小時</span>
+                              <span className="text-sm">
+                                工時: {vehicle.driver.workingHours}小時
+                              </span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Calendar className="h-4 w-4 text-gray-400" />
@@ -265,14 +269,14 @@ export default function VehicleManagement() {
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-medium text-gray-700 mb-2">車輛狀態</h4>
+                          <h4 className="mb-2 text-sm font-medium text-gray-700">車輛狀態</h4>
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
                               <Battery className="h-4 w-4 text-gray-400" />
                               <span className="text-sm">電瓶: {vehicle.battery}%</span>
-                              <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                                <div 
-                                  className="bg-green-500 h-1.5 rounded-full"
+                              <div className="h-1.5 w-16 rounded-full bg-gray-200">
+                                <div
+                                  className="h-1.5 rounded-full bg-green-500"
                                   style={{ width: `${vehicle.battery}%` }}
                                 ></div>
                               </div>
@@ -280,9 +284,7 @@ export default function VehicleManagement() {
                             {vehicle.temperature !== null && (
                               <div className="flex items-center space-x-2">
                                 <Thermometer className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm">
-                                  溫度: {vehicle.temperature}°C
-                                </span>
+                                <span className="text-sm">溫度: {vehicle.temperature}°C</span>
                                 <span className={`text-xs font-medium ${tempStatus.color}`}>
                                   {tempStatus.status}
                                 </span>
@@ -290,7 +292,9 @@ export default function VehicleManagement() {
                             )}
                             <div className="flex items-center space-x-2">
                               <MapPin className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm">里程: {vehicle.odometer.toLocaleString()} km</span>
+                              <span className="text-sm">
+                                里程: {vehicle.odometer.toLocaleString()} km
+                              </span>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Wrench className="h-4 w-4 text-gray-400" />
@@ -305,15 +309,15 @@ export default function VehicleManagement() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-4 text-gray-500">
-                        <User className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <div className="py-4 text-center text-gray-500">
+                        <User className="mx-auto mb-2 h-8 w-8 text-gray-400" />
                         <p className="text-sm">無指派司機</p>
                       </div>
                     )}
 
                     {/* 今日任務 */}
                     <div>
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">今日任務</h4>
+                      <h4 className="mb-2 text-sm font-medium text-gray-700">今日任務</h4>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-600">
                           配送任務: {vehicle.assignments} 筆
@@ -335,25 +339,24 @@ export default function VehicleManagement() {
                     </div>
 
                     {/* 警告提醒 */}
-                    {(vehicle.fuel < 30 || 
-                      isMaintenanceUrgent(vehicle.nextMaintenance) || 
+                    {(vehicle.fuel < 30 ||
+                      isMaintenanceUrgent(vehicle.nextMaintenance) ||
                       (vehicle.driver && isLicenseExpiring(vehicle.driver.licenseExpiry)) ||
                       (vehicle.temperature !== null && tempStatus.status === '異常')) && (
-                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
                         <div className="flex items-start space-x-2">
-                          <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
+                          <AlertTriangle className="mt-0.5 h-4 w-4 text-orange-600" />
                           <div>
                             <h5 className="text-sm font-medium text-orange-900">需要注意</h5>
-                            <ul className="text-sm text-orange-800 mt-1 space-y-1">
-                              {vehicle.fuel < 30 && (
-                                <li>• 燃油不足，請安排加油</li>
-                              )}
+                            <ul className="mt-1 space-y-1 text-sm text-orange-800">
+                              {vehicle.fuel < 30 && <li>• 燃油不足，請安排加油</li>}
                               {isMaintenanceUrgent(vehicle.nextMaintenance) && (
                                 <li>• 即將到期保養，請安排維修</li>
                               )}
-                              {vehicle.driver && isLicenseExpiring(vehicle.driver.licenseExpiry) && (
-                                <li>• 司機駕照即將到期</li>
-                              )}
+                              {vehicle.driver &&
+                                isLicenseExpiring(vehicle.driver.licenseExpiry) && (
+                                  <li>• 司機駕照即將到期</li>
+                                )}
                               {vehicle.temperature !== null && tempStatus.status === '異常' && (
                                 <li>• 冷藏溫度異常，請檢查設備</li>
                               )}
@@ -371,28 +374,28 @@ export default function VehicleManagement() {
       </div>
 
       {/* 車隊概況 */}
-      <div className="mt-6 pt-4 border-t">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">車隊概況</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div className="p-3 bg-blue-50 rounded-lg">
+      <div className="mt-6 border-t pt-4">
+        <h4 className="mb-3 text-sm font-medium text-gray-700">車隊概況</h4>
+        <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
+          <div className="rounded-lg bg-blue-50 p-3">
             <div className="text-lg font-bold text-blue-600">
               {vehicles.filter(v => v.status === 'delivering').length}
             </div>
             <div className="text-xs text-gray-600">配送中</div>
           </div>
-          <div className="p-3 bg-green-50 rounded-lg">
+          <div className="rounded-lg bg-green-50 p-3">
             <div className="text-lg font-bold text-green-600">
               {vehicles.filter(v => v.driver !== null).length}
             </div>
             <div className="text-xs text-gray-600">有司機</div>
           </div>
-          <div className="p-3 bg-orange-50 rounded-lg">
+          <div className="rounded-lg bg-orange-50 p-3">
             <div className="text-lg font-bold text-orange-600">
               {vehicles.filter(v => v.fuel < 30).length}
             </div>
             <div className="text-xs text-gray-600">需加油</div>
           </div>
-          <div className="p-3 bg-red-50 rounded-lg">
+          <div className="rounded-lg bg-red-50 p-3">
             <div className="text-lg font-bold text-red-600">
               {vehicles.filter(v => v.status === 'maintenance').length}
             </div>

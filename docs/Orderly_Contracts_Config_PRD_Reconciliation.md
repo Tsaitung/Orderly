@@ -5,6 +5,7 @@
 ---
 
 ## 目錄
+
 1. 全域設定（Global Config）
 2. 合約基本（Contract Template）
 3. 費用行項（Fee Line）
@@ -24,6 +25,7 @@
 ---
 
 # 1. 全域設定（Global Config）
+
 每個系統層級的預設值與 guardrails，影響所有新建立合約與計算引擎。
 
 - `default_transaction_fee_pct` (numeric, default=0.008)
@@ -73,6 +75,7 @@
 ---
 
 # 2. 合約基本（Contract Template）
+
 合約元資料與生效管理，支援版本控制與範圍指定。
 
 - `contract_code` (string)
@@ -106,6 +109,7 @@
 ---
 
 # 3. 費用行項（Fee Line）
+
 合約中可自由新增多個費用項，模型必須可擴充與可複用。
 
 - `fee_line_id` (uuid)
@@ -145,6 +149,7 @@
 ---
 
 # 4. 餐廳方案設定（Restaurant Plan）
+
 控制餐廳端 SaaS 權益與收費邏輯。
 
 - `plan_type` (enum: free / pro / enterprise)
@@ -176,6 +181,7 @@
 ---
 
 # 5. 供應商設定（Supplier Settings）
+
 供應商面向的預設與可選服務。
 
 - `supplier_default_transaction_fee_pct` (numeric, default inherits global)
@@ -201,6 +207,7 @@
 ---
 
 # 6. Savings-share 與基線（Savings / Baseline）
+
 用於成效分成的量化與驗證配置。
 
 - `baseline_method` (enum: historical_avg / custom_period / manual_value)
@@ -232,6 +239,7 @@
 ---
 
 # 7. 計算／公式管理（Formula Editor）
+
 控制系統允許的可視化公式與測試。
 
 - `allowed_variables` (list)
@@ -250,6 +258,7 @@
 ---
 
 # 8. 對帳（Reconciliation-only）
+
 系統僅作對帳，不產生發票。此節替代傳統「開票與對帳」章節，並包含新增對帳專用參數。
 
 - `reconciliation_enabled` (bool)
@@ -303,6 +312,7 @@
 ---
 
 # 9. 對象覆寫（Party / Overrides）
+
 管理合約覆寫規則與批次套用功能。
 
 - `party_override_allowed` (bool)
@@ -317,6 +327,7 @@
 ---
 
 # 10. 例外與稽核（Exceptions / Audit）
+
 例外處理與稽核相關參數。
 
 - `exception_queue_threshold_amount` (numeric)
@@ -337,6 +348,7 @@
 ---
 
 # 11. 權限與審批（RBAC）
+
 角色與權限控制。
 
 - `roles` (list: ADMIN, FINANCE, SALES, SUPPLIER_USER, RESTAURANT_USER)
@@ -354,6 +366,7 @@
 ---
 
 # 12. 通知與外部整合（Integration）
+
 外部系統與通知機制。
 
 - `notification_templates` (list)
@@ -377,6 +390,7 @@
 ---
 
 # 13. 模擬與報表（Simulation / Reports）
+
 用於 dry-run 與 KPI 報表的預設與權限。
 
 - `simulation_enabled` (bool)
@@ -397,6 +411,7 @@
 ---
 
 # 14. 監控指標（Monitoring）
+
 KPI 與告警門檻設置。
 
 - `kpi_definitions` (json)
@@ -411,6 +426,7 @@ KPI 與告警門檻設置。
 ---
 
 # 15. 其他系統參數
+
 平台運維與精算行為的最後一層控制參數。
 
 - `maintenance_window` (cron)
@@ -428,4 +444,5 @@ KPI 與告警門檻設置。
 ---
 
 # 附註
+
 - 本文件聚焦於「管理介面參數」與「對帳導向」的設計邏輯。未包含細節前端 UI mock 或 JSON Schema。如需我將該內容輸出為 CSV 欄位清單、JSON Schema 或前端表單欄位定義（含 type/validation），我可以立刻產出。

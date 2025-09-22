@@ -2,14 +2,14 @@
  * React hooks for platform supplier management
  */
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { 
+import {
   platformSupplierService,
   type SupplierCard,
   type SupplierDetail,
   type SupplierStats,
   type SupplierListResponse,
   type SupplierFilterParams,
-  type SupplierUpdateRequest
+  type SupplierUpdateRequest,
 } from '@/lib/api/platform-supplier-service'
 
 export interface UseSupplierStatsResult {
@@ -71,7 +71,7 @@ export function useSupplierStats(): UseSupplierStatsResult {
     stats,
     loading,
     error,
-    refetch: fetchStats
+    refetch: fetchStats,
   }
 }
 
@@ -91,16 +91,16 @@ export function useSuppliers(initialFilters: SupplierFilterParams = {}): UseSupp
     page_size: 20,
     sort_by: 'created_at',
     sort_order: 'desc',
-    ...initialFilters
+    ...initialFilters,
   })
 
   const fetchSuppliers = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const data = await platformSupplierService.getSuppliers(filters)
-      
+
       setSuppliers(data.suppliers)
       setTotal(data.total)
       setPage(data.page)
@@ -123,7 +123,7 @@ export function useSuppliers(initialFilters: SupplierFilterParams = {}): UseSupp
       ...prev,
       ...newFilters,
       // Reset to page 1 when filters change (except when explicitly setting page)
-      page: newFilters.page !== undefined ? newFilters.page : 1
+      page: newFilters.page !== undefined ? newFilters.page : 1,
     }))
   }, [])
 
@@ -132,7 +132,7 @@ export function useSuppliers(initialFilters: SupplierFilterParams = {}): UseSupp
       page: 1,
       page_size: 20,
       sort_by: 'created_at',
-      sort_order: 'desc'
+      sort_order: 'desc',
     })
   }, [])
 
@@ -147,7 +147,7 @@ export function useSuppliers(initialFilters: SupplierFilterParams = {}): UseSupp
     refetch: fetchSuppliers,
     updateFilters,
     resetFilters,
-    filters
+    filters,
   }
 }
 
@@ -183,26 +183,32 @@ export function useSupplierDetail(supplierId: string | null): UseSupplierDetailR
     fetchSupplier()
   }, [fetchSupplier])
 
-  const updateStatus = useCallback(async (updateData: SupplierUpdateRequest): Promise<boolean> => {
-    if (!supplierId) return false
+  const updateStatus = useCallback(
+    async (updateData: SupplierUpdateRequest): Promise<boolean> => {
+      if (!supplierId) return false
 
-    try {
-      const updatedSupplier = await platformSupplierService.updateSupplierStatus(supplierId, updateData)
-      setSupplier(updatedSupplier)
-      return true
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update supplier status')
-      console.error('Failed to update supplier status:', err)
-      return false
-    }
-  }, [supplierId])
+      try {
+        const updatedSupplier = await platformSupplierService.updateSupplierStatus(
+          supplierId,
+          updateData
+        )
+        setSupplier(updatedSupplier)
+        return true
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update supplier status')
+        console.error('Failed to update supplier status:', err)
+        return false
+      }
+    },
+    [supplierId]
+  )
 
   return {
     supplier,
     loading,
     error,
     refetch: fetchSupplier,
-    updateStatus
+    updateStatus,
   }
 }
 
@@ -253,7 +259,7 @@ export function useSupplierSearch() {
     results,
     loading,
     error,
-    search: debouncedSearch
+    search: debouncedSearch,
   }
 }
 
@@ -291,7 +297,7 @@ export function useSuppliersNeedingAttention() {
     data,
     loading,
     error,
-    refetch: fetchData
+    refetch: fetchData,
   }
 }
 
@@ -325,6 +331,6 @@ export function useActivityDistribution() {
     distribution,
     loading,
     error,
-    refetch: fetchDistribution
+    refetch: fetchDistribution,
   }
 }

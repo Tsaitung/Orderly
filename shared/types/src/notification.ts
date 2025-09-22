@@ -20,4 +20,3 @@ export interface Notification {
     amount?: number
   }
 }
-

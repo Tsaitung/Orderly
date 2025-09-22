@@ -1,6 +1,7 @@
 # Technical Architecture - Authentication & Authorization System
 
 ## Document Information
+
 - **Version**: 1.0
 - **Date**: 2025-09-19
 - **Status**: Final Architecture Specification
@@ -11,9 +12,11 @@
 ## 1. Executive Summary
 
 ### 1.1 Architecture Overview
+
 The authentication system extends the existing User Service (port 3001) with enhanced security features, MFA support, and super user capabilities. It integrates with the API Gateway for distributed authentication across all microservices.
 
 ### 1.2 Technology Stack
+
 - **Authentication**: JWT (RS256) with asymmetric keys
 - **Password Hashing**: Argon2id
 - **Session Management**: Redis with sliding windows
@@ -23,6 +26,7 @@ The authentication system extends the existing User Service (port 3001) with enh
 - **Audit Logging**: Structured JSON to centralized log system
 
 ### 1.3 Key Design Decisions
+
 1. **Extend User Service** instead of creating new service (reduce complexity)
 2. **RS256 JWT** for stateless authentication with public key verification
 3. **Redis Sessions** for real-time revocation and device tracking
@@ -136,28 +140,28 @@ model User {
   passwordHash          String?
   organizationId        String
   role                  UserRole
-  
+
   // Authentication fields
   emailVerified         Boolean   @default(false)
   emailVerifiedAt       DateTime?
   phoneNumber           String?
   phoneVerified         Boolean   @default(false)
   phoneVerifiedAt       DateTime?
-  
+
   // MFA fields
   mfaEnabled            Boolean   @default(false)
   mfaMethod             MfaMethod?
   mfaSecret             String?   // Encrypted TOTP secret
   mfaBackupCodes        String[]  // Encrypted backup codes
   mfaEnforcedAt         DateTime?
-  
+
   // Super user fields
   isSuperUser           Boolean   @default(false)
   superUserActivatedAt  DateTime?
   superUserExpiresAt    DateTime?
   superUserActivatedBy  String?
   superUserReason       String?
-  
+
   // Security fields
   passwordChangedAt     DateTime?
   passwordResetToken    String?
@@ -167,22 +171,22 @@ model User {
   lastLoginAt           DateTime?
   lastLoginIp           String?
   lastLoginUserAgent    String?
-  
+
   // Session management
   tokenVersion          Int       @default(0) // Increment to invalidate all tokens
   activeSessions        Session[]
-  
+
   // Compliance
   termsAcceptedAt       DateTime?
   privacyAcceptedAt     DateTime?
   marketingConsent      Boolean   @default(false)
-  
+
   // Metadata
   isActive              Boolean   @default(true)
   metadata              Json      @default("{}")
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-  
+
   // Relations
   organization          Organization      @relation(fields: [organizationId], references: [id])
   passwordHistory       PasswordHistory[]
@@ -190,7 +194,7 @@ model User {
   auditLogs             AuditLog[]
   notifications         Notification[]
   securityQuestions     SecurityQuestion[]
-  
+
   @@index([email])
   @@index([organizationId])
   @@index([isSuperUser])
@@ -209,30 +213,30 @@ model Session {
   userId          String
   sessionToken    String    @unique
   refreshToken    String    @unique
-  
+
   // Device information
   deviceId        String?
   deviceName      String?
   deviceType      String?   // mobile, desktop, tablet
-  
+
   // Session metadata
   ipAddress       String
   userAgent       String
   location        String?   // Geo-located city/country
-  
+
   // Token management
   accessTokenJti  String    @unique // JWT ID for revocation
   isActive        Boolean   @default(true)
   lastActivity    DateTime  @default(now())
-  
+
   // Expiration
   expiresAt       DateTime
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+
   // Relations
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@index([sessionToken])
   @@index([refreshToken])
@@ -245,9 +249,9 @@ model PasswordHistory {
   userId          String
   passwordHash    String
   createdAt       DateTime  @default(now())
-  
+
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([userId])
   @@map("password_history")
 }
@@ -256,24 +260,24 @@ model LoginAttempt {
   id              String    @id @default(cuid())
   email           String
   userId          String?
-  
+
   // Attempt details
   success         Boolean
   failureReason   String?   // invalid_password, account_locked, mfa_failed
-  
+
   // Request metadata
   ipAddress       String
   userAgent       String
   location        String?
-  
+
   // Security analysis
   riskScore       Float?    @default(0) // 0-100
   suspicious      Boolean   @default(false)
-  
+
   createdAt       DateTime  @default(now())
-  
+
   user            User?     @relation(fields: [userId], references: [id])
-  
+
   @@index([email])
   @@index([userId])
   @@index([ipAddress])
@@ -286,28 +290,28 @@ model SecurityQuestion {
   userId          String
   question        String
   answerHash      String    // Hashed answer
-  
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("security_questions")
 }
 
 model Organization {
   // ... existing fields ...
-  
+
   // Verification fields
   verificationLevel     Int       @default(1) // 1: Email, 2: Phone, 3: Business
   businessVerified      Boolean   @default(false)
   verifiedAt            DateTime?
   verificationDocuments Json      @default("[]")
-  
+
   // Compliance
   complianceStatus      String    @default("pending")
   riskScore             Float     @default(0)
-  
+
   @@map("organizations")
 }
 ```
@@ -331,14 +335,14 @@ Request:
   "email": string,
   "phoneNumber": string,
   "password": string,
-  
+
   // Step 2: Business Details
   "restaurantType": "fine_dining" | "fast_casual" | "qsr" | "cafe" | "other",
   "locationCount": number,
   "monthlyPurchaseVolume": number,
   "supplierCount": number,
   "industrySegment": string,
-  
+
   // Step 3: Verification
   "termsAccepted": boolean,
   "privacyAccepted": boolean,
@@ -666,31 +670,25 @@ Headers: {
   "exp": 1234567890, // 15 minutes
   "iat": 1234567890,
   "jti": "jwt_unique_id", // For revocation
-  
+
   // User Claims
   "userId": "user_cuid123",
   "email": "user@restaurant.com",
   "organizationId": "org_cuid456",
   "organizationType": "restaurant",
-  
+
   // Role & Permissions
   "role": "restaurant_admin",
-  "permissions": [
-    "orders:create",
-    "orders:read",
-    "orders:update",
-    "products:read",
-    "billing:read"
-  ],
-  
+  "permissions": ["orders:create", "orders:read", "orders:update", "products:read", "billing:read"],
+
   // Super User Claims (when activated)
   "isSuperUser": false,
   "superUserExpiresAt": null,
-  
+
   // Session Claims
   "sessionId": "session_cuid789",
   "tokenVersion": 1, // For mass revocation
-  
+
   // Security Claims
   "mfaVerified": true,
   "verificationLevel": 3
@@ -723,27 +721,27 @@ Headers: {
   "sessionId": "session_cuid789",
   "userId": "user_cuid123",
   "organizationId": "org_cuid456",
-  
+
   // Token Management
   "accessTokenJti": "jwt_unique_id",
   "refreshTokenFamily": "family_id",
   "tokenVersion": 1,
-  
+
   // Device Information
   "deviceId": "device_fingerprint",
   "deviceName": "Chrome on MacOS",
   "deviceType": "desktop",
-  
+
   // Session Metadata
   "ipAddress": "203.0.113.0",
   "userAgent": "Mozilla/5.0...",
   "location": "Taipei, Taiwan",
-  
+
   // Activity Tracking
   "createdAt": "2025-01-01T00:00:00Z",
   "lastActivity": "2025-01-01T00:15:00Z",
   "expiresAt": "2025-01-01T07:15:00Z",
-  
+
   // Security Flags
   "isActive": true,
   "mfaVerified": true,
@@ -789,43 +787,43 @@ Headers: {
 ```typescript
 // TOTP Configuration
 const TOTP_CONFIG = {
-  issuer: "Orderly Platform",
-  algorithm: "SHA256",
+  issuer: 'Orderly Platform',
+  algorithm: 'SHA256',
   digits: 6,
   period: 30, // seconds
   window: 1, // Accept codes from ±1 time windows
-  qrCodeSize: 200
-};
+  qrCodeSize: 200,
+}
 
 // Generate TOTP Secret
 function generateTOTPSecret(user: User): TOTPSecret {
   const secret = speakeasy.generateSecret({
     name: `Orderly:${user.email}`,
     issuer: TOTP_CONFIG.issuer,
-    length: 32
-  });
-  
+    length: 32,
+  })
+
   // Encrypt secret before storing
-  const encrypted = encrypt(secret.base32, process.env.ENCRYPTION_KEY);
-  
+  const encrypted = encrypt(secret.base32, process.env.ENCRYPTION_KEY)
+
   return {
     secret: encrypted,
     qrCode: secret.otpauth_url,
-    backupCodes: generateBackupCodes(8)
-  };
+    backupCodes: generateBackupCodes(8),
+  }
 }
 
 // Verify TOTP Code
 function verifyTOTPCode(user: User, code: string): boolean {
-  const decrypted = decrypt(user.mfaSecret, process.env.ENCRYPTION_KEY);
-  
+  const decrypted = decrypt(user.mfaSecret, process.env.ENCRYPTION_KEY)
+
   return speakeasy.totp.verify({
     secret: decrypted,
     encoding: 'base32',
     token: code,
     window: TOTP_CONFIG.window,
-    algorithm: TOTP_CONFIG.algorithm
-  });
+    algorithm: TOTP_CONFIG.algorithm,
+  })
 }
 ```
 
@@ -834,42 +832,45 @@ function verifyTOTPCode(user: User, code: string): boolean {
 ```typescript
 // OTP Generation
 function generateOTP(length: number = 6): string {
-  return crypto.randomInt(0, Math.pow(10, length))
-    .toString()
-    .padStart(length, '0');
+  return crypto.randomInt(0, Math.pow(10, length)).toString().padStart(length, '0')
 }
 
 // Store OTP in Redis
 async function storeOTP(userId: string, type: 'SMS' | 'EMAIL'): Promise<string> {
-  const code = generateOTP();
-  const key = `otp:${type.toLowerCase()}:${userId}`;
-  
-  await redis.setex(key, 600, JSON.stringify({ // 10 minutes
-    code,
-    attempts: 0,
-    createdAt: new Date().toISOString()
-  }));
-  
-  return code;
+  const code = generateOTP()
+  const key = `otp:${type.toLowerCase()}:${userId}`
+
+  await redis.setex(
+    key,
+    600,
+    JSON.stringify({
+      // 10 minutes
+      code,
+      attempts: 0,
+      createdAt: new Date().toISOString(),
+    })
+  )
+
+  return code
 }
 
 // Send OTP
 async function sendOTP(user: User, type: 'SMS' | 'EMAIL'): Promise<void> {
-  const code = await storeOTP(user.id, type);
-  
+  const code = await storeOTP(user.id, type)
+
   if (type === 'SMS') {
     await twilioClient.messages.create({
       body: `Your Orderly verification code is: ${code}`,
       to: user.phoneNumber,
-      from: process.env.TWILIO_PHONE_NUMBER
-    });
+      from: process.env.TWILIO_PHONE_NUMBER,
+    })
   } else {
     await sendEmail({
       to: user.email,
       subject: 'Orderly Verification Code',
       template: 'otp',
-      data: { code, expiresIn: '10 minutes' }
-    });
+      data: { code, expiresIn: '10 minutes' },
+    })
   }
 }
 ```
@@ -887,62 +888,62 @@ const RATE_LIMITS = {
   '/api/auth/login': {
     window: 900, // 15 minutes
     max: 5,
-    blockDuration: 1800 // 30 minutes after max attempts
+    blockDuration: 1800, // 30 minutes after max attempts
   },
   '/api/auth/register': {
     window: 3600, // 1 hour
     max: 3,
-    blockDuration: 3600
+    blockDuration: 3600,
   },
   '/api/auth/password/forgot': {
     window: 3600,
     max: 3,
-    blockDuration: 7200
+    blockDuration: 7200,
   },
   '/api/auth/mfa/verify': {
     window: 300, // 5 minutes
     max: 5,
-    blockDuration: 900
+    blockDuration: 900,
   },
-  
+
   // General API endpoints
-  'default': {
+  default: {
     window: 60, // 1 minute
     max: 100, // 100 requests per minute
-    blockDuration: 300
+    blockDuration: 300,
   },
-  
+
   // Super user has higher limits
-  'super_user': {
+  super_user: {
     window: 60,
     max: 1000,
-    blockDuration: 0 // Never block super users
-  }
-};
+    blockDuration: 0, // Never block super users
+  },
+}
 
 // Rate Limiter Implementation
 class RateLimiter {
   async checkLimit(userId: string, endpoint: string): Promise<RateLimitResult> {
-    const config = RATE_LIMITS[endpoint] || RATE_LIMITS.default;
-    const key = `ratelimit:${userId}:${endpoint}`;
-    
-    const current = await redis.get(key);
+    const config = RATE_LIMITS[endpoint] || RATE_LIMITS.default
+    const key = `ratelimit:${userId}:${endpoint}`
+
+    const current = await redis.get(key)
     if (!current) {
-      await redis.setex(key, config.window, 1);
-      return { allowed: true, remaining: config.max - 1 };
+      await redis.setex(key, config.window, 1)
+      return { allowed: true, remaining: config.max - 1 }
     }
-    
-    const count = parseInt(current);
+
+    const count = parseInt(current)
     if (count >= config.max) {
       // Block the user
       if (config.blockDuration > 0) {
-        await redis.setex(`blocked:${userId}:${endpoint}`, config.blockDuration, 'true');
+        await redis.setex(`blocked:${userId}:${endpoint}`, config.blockDuration, 'true')
       }
-      return { allowed: false, remaining: 0, retryAfter: config.blockDuration };
+      return { allowed: false, remaining: 0, retryAfter: config.blockDuration }
     }
-    
-    await redis.incr(key);
-    return { allowed: true, remaining: config.max - count - 1 };
+
+    await redis.incr(key)
+    return { allowed: true, remaining: config.max - count - 1 }
   }
 }
 ```
@@ -954,15 +955,15 @@ class RateLimiter {
 const securityHeaders = {
   // HSTS
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  
+
   // Prevent Clickjacking
   'X-Frame-Options': 'DENY',
   'Content-Security-Policy': "frame-ancestors 'none'",
-  
+
   // XSS Protection
   'X-Content-Type-Options': 'nosniff',
   'X-XSS-Protection': '1; mode=block',
-  
+
   // CSP
   'Content-Security-Policy': [
     "default-src 'self'",
@@ -973,15 +974,15 @@ const securityHeaders = {
     "connect-src 'self' https://api.orderly.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
-    "form-action 'self'"
+    "form-action 'self'",
   ].join('; '),
-  
+
   // Referrer Policy
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Permissions Policy
-  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
-};
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+}
 ```
 
 ### 8.3 Threat Detection
@@ -990,54 +991,55 @@ const securityHeaders = {
 // Suspicious Activity Detection
 class ThreatDetector {
   async analyzLoginAttempt(attempt: LoginAttempt): Promise<ThreatAnalysis> {
-    const riskScore = 0;
-    const signals = [];
-    
+    const riskScore = 0
+    const signals = []
+
     // Check for brute force
-    const recentAttempts = await this.getRecentAttempts(attempt.email, 3600);
+    const recentAttempts = await this.getRecentAttempts(attempt.email, 3600)
     if (recentAttempts > 10) {
-      riskScore += 30;
-      signals.push('possible_brute_force');
+      riskScore += 30
+      signals.push('possible_brute_force')
     }
-    
+
     // Check for credential stuffing
-    const uniqueIPs = await this.getUniqueIPs(attempt.email, 3600);
+    const uniqueIPs = await this.getUniqueIPs(attempt.email, 3600)
     if (uniqueIPs > 5) {
-      riskScore += 40;
-      signals.push('multiple_ip_addresses');
+      riskScore += 40
+      signals.push('multiple_ip_addresses')
     }
-    
+
     // Check for impossible travel
-    const lastLogin = await this.getLastLogin(attempt.userId);
+    const lastLogin = await this.getLastLogin(attempt.userId)
     if (lastLogin) {
-      const timeDiff = Date.now() - lastLogin.timestamp;
-      const distance = geoDistance(lastLogin.location, attempt.location);
-      const speed = distance / (timeDiff / 3600000); // km/h
-      
-      if (speed > 900) { // Faster than commercial flight
-        riskScore += 50;
-        signals.push('impossible_travel');
+      const timeDiff = Date.now() - lastLogin.timestamp
+      const distance = geoDistance(lastLogin.location, attempt.location)
+      const speed = distance / (timeDiff / 3600000) // km/h
+
+      if (speed > 900) {
+        // Faster than commercial flight
+        riskScore += 50
+        signals.push('impossible_travel')
       }
     }
-    
+
     // Check for known bad IPs
     if (await this.isBlacklistedIP(attempt.ipAddress)) {
-      riskScore += 70;
-      signals.push('blacklisted_ip');
+      riskScore += 70
+      signals.push('blacklisted_ip')
     }
-    
+
     // Check for Tor/VPN
     if (await this.isTorOrVPN(attempt.ipAddress)) {
-      riskScore += 20;
-      signals.push('tor_vpn_detected');
+      riskScore += 20
+      signals.push('tor_vpn_detected')
     }
-    
+
     return {
       riskScore: Math.min(riskScore, 100),
       signals,
       requiresAdditionalVerification: riskScore > 50,
-      shouldBlock: riskScore > 80
-    };
+      shouldBlock: riskScore > 80,
+    }
   }
 }
 ```
@@ -1050,44 +1052,40 @@ class ThreatDetector {
 
 ```typescript
 // API Gateway Auth Middleware Enhancement
-export const enhancedAuthMiddleware = async (
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-) => {
+export const enhancedAuthMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const token = extractToken(req);
+    const token = extractToken(req)
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: 'No token provided' })
     }
-    
+
     // Verify JWT with public key (RS256)
-    const publicKey = await getPublicKey();
+    const publicKey = await getPublicKey()
     const decoded = jwt.verify(token, publicKey, {
       algorithms: ['RS256'],
       issuer: 'https://api.orderly.com',
-      audience: 'https://api.orderly.com'
-    }) as JWTPayload;
-    
+      audience: 'https://api.orderly.com',
+    }) as JWTPayload
+
     // Check token blacklist
     if (await isTokenBlacklisted(decoded.jti)) {
-      return res.status(401).json({ error: 'Token revoked' });
+      return res.status(401).json({ error: 'Token revoked' })
     }
-    
+
     // Verify session in Redis
-    const session = await getSession(decoded.sessionId);
+    const session = await getSession(decoded.sessionId)
     if (!session || !session.isActive) {
-      return res.status(401).json({ error: 'Session expired' });
+      return res.status(401).json({ error: 'Session expired' })
     }
-    
+
     // Check token version (for mass revocation)
     if (decoded.tokenVersion !== session.tokenVersion) {
-      return res.status(401).json({ error: 'Token version mismatch' });
+      return res.status(401).json({ error: 'Token version mismatch' })
     }
-    
+
     // Update session activity
-    await updateSessionActivity(decoded.sessionId);
-    
+    await updateSessionActivity(decoded.sessionId)
+
     // Attach user context
     req.user = {
       id: decoded.userId,
@@ -1097,27 +1095,27 @@ export const enhancedAuthMiddleware = async (
       permissions: decoded.permissions,
       isSuperUser: decoded.isSuperUser,
       sessionId: decoded.sessionId,
-      verificationLevel: decoded.verificationLevel
-    };
-    
+      verificationLevel: decoded.verificationLevel,
+    }
+
     // Add security headers
-    res.setHeader('X-User-ID', decoded.userId);
-    res.setHeader('X-Session-ID', decoded.sessionId);
-    
-    next();
+    res.setHeader('X-User-ID', decoded.userId)
+    res.setHeader('X-Session-ID', decoded.sessionId)
+
+    next()
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'Token expired',
-        code: 'TOKEN_EXPIRED'
-      });
+        code: 'TOKEN_EXPIRED',
+      })
     }
-    
-    return res.status(401).json({ 
-      error: 'Authentication failed' 
-    });
+
+    return res.status(401).json({
+      error: 'Authentication failed',
+    })
   }
-};
+}
 ```
 
 ### 9.2 Microservice Communication
@@ -1125,46 +1123,46 @@ export const enhancedAuthMiddleware = async (
 ```typescript
 // Service-to-Service Authentication
 class ServiceAuth {
-  private serviceTokens = new Map<string, string>();
-  
+  private serviceTokens = new Map<string, string>()
+
   async getServiceToken(targetService: string): Promise<string> {
     // Check cache
-    const cached = this.serviceTokens.get(targetService);
+    const cached = this.serviceTokens.get(targetService)
     if (cached && !this.isExpired(cached)) {
-      return cached;
+      return cached
     }
-    
+
     // Generate new service token
     const token = jwt.sign(
       {
         service: 'api-gateway',
         target: targetService,
-        permissions: ['internal:all']
+        permissions: ['internal:all'],
       },
       process.env.SERVICE_SECRET,
       {
         expiresIn: '1h',
-        algorithm: 'HS256'
+        algorithm: 'HS256',
       }
-    );
-    
-    this.serviceTokens.set(targetService, token);
-    return token;
+    )
+
+    this.serviceTokens.set(targetService, token)
+    return token
   }
-  
+
   // Add to internal service calls
   async callService(service: string, path: string, options: RequestOptions) {
-    const token = await this.getServiceToken(service);
-    
+    const token = await this.getServiceToken(service)
+
     return fetch(`${service}${path}`, {
       ...options,
       headers: {
         ...options.headers,
         'X-Service-Token': token,
         'X-Correlation-ID': req.correlationId,
-        'X-User-Context': JSON.stringify(req.user)
-      }
-    });
+        'X-User-Context': JSON.stringify(req.user),
+      },
+    })
   }
 }
 ```
@@ -1185,34 +1183,34 @@ class SuperUserManager {
   ): Promise<SuperUserActivation> {
     // Validate requesting user
     if (!this.canActivateSuperUser(requestingUser)) {
-      throw new ForbiddenError('User not authorized for super user activation');
+      throw new ForbiddenError('User not authorized for super user activation')
     }
-    
+
     // Check if already super user
     if (requestingUser.isSuperUser && requestingUser.superUserExpiresAt > new Date()) {
-      throw new ConflictError('Super user mode already active');
+      throw new ConflictError('Super user mode already active')
     }
-    
+
     // Require dual approval for extended duration
     if (duration > 1 && !approverId) {
-      throw new ValidationError('Dual approval required for extended super user access');
+      throw new ValidationError('Dual approval required for extended super user access')
     }
-    
+
     // Verify approver if provided
     if (approverId) {
-      const approver = await getUserById(approverId);
+      const approver = await getUserById(approverId)
       if (!this.canApproveSuperUser(approver)) {
-        throw new ForbiddenError('Approver not authorized');
+        throw new ForbiddenError('Approver not authorized')
       }
-      
+
       // Send approval request
-      await this.sendApprovalRequest(requestingUser, approver, reason, duration);
-      return { status: 'pending_approval' };
+      await this.sendApprovalRequest(requestingUser, approver, reason, duration)
+      return { status: 'pending_approval' }
     }
-    
+
     // Activate super user
-    const expiresAt = new Date(Date.now() + duration * 3600000);
-    
+    const expiresAt = new Date(Date.now() + duration * 3600000)
+
     await prisma.user.update({
       where: { id: requestingUser.id },
       data: {
@@ -1220,10 +1218,10 @@ class SuperUserManager {
         superUserActivatedAt: new Date(),
         superUserExpiresAt: expiresAt,
         superUserActivatedBy: approverId || 'self',
-        superUserReason: reason
-      }
-    });
-    
+        superUserReason: reason,
+      },
+    })
+
     // Audit log
     await this.auditLog({
       action: 'super_user_activated',
@@ -1232,32 +1230,29 @@ class SuperUserManager {
         reason,
         duration,
         expiresAt,
-        approverId
-      }
-    });
-    
+        approverId,
+      },
+    })
+
     // Send notifications
-    await this.notifySecurityTeam(requestingUser, reason, duration);
-    
+    await this.notifySecurityTeam(requestingUser, reason, duration)
+
     // Generate new token with super user claims
-    const newToken = await this.generateSuperUserToken(requestingUser);
-    
+    const newToken = await this.generateSuperUserToken(requestingUser)
+
     return {
       status: 'activated',
       expiresAt,
-      newAccessToken: newToken
-    };
+      newAccessToken: newToken,
+    }
   }
-  
+
   private canActivateSuperUser(user: User): boolean {
-    return user.role === 'platform_admin' && 
-           user.mfaEnabled && 
-           user.verificationLevel === 3;
+    return user.role === 'platform_admin' && user.mfaEnabled && user.verificationLevel === 3
   }
-  
+
   private canApproveSuperUser(user: User): boolean {
-    return user.role === 'platform_admin' && 
-           !user.isSuperUser; // Cannot approve if already super user
+    return user.role === 'platform_admin' && !user.isSuperUser // Cannot approve if already super user
   }
 }
 ```
@@ -1274,51 +1269,52 @@ class SuperUserAuditLogger {
       action: action.type,
       entityType: action.entityType,
       entityId: action.entityId,
-      
+
       // Enhanced metadata for super users
       metadata: {
         ...action.metadata,
         isSuperUserAction: user.isSuperUser,
         superUserReason: user.superUserReason,
-        organizationsCrossed: action.crossOrganizationAccess ? 
-          action.organizationIds : [],
+        organizationsCrossed: action.crossOrganizationAccess ? action.organizationIds : [],
         dataClassification: action.dataClassification,
-        complianceFlags: action.complianceFlags
+        complianceFlags: action.complianceFlags,
       },
-      
+
       // Request context
       ipAddress: action.ipAddress,
       userAgent: action.userAgent,
       correlationId: action.correlationId,
-      
+
       // Timestamps
-      createdAt: new Date()
-    };
-    
+      createdAt: new Date(),
+    }
+
     // Store in database
-    await prisma.auditLog.create({ data: auditEntry });
-    
+    await prisma.auditLog.create({ data: auditEntry })
+
     // Send to SIEM
-    await this.sendToSIEM(auditEntry);
-    
+    await this.sendToSIEM(auditEntry)
+
     // Real-time alerting for sensitive actions
     if (this.isSensitiveAction(action)) {
-      await this.alertSecurityTeam(auditEntry);
+      await this.alertSecurityTeam(auditEntry)
     }
   }
-  
+
   private isSensitiveAction(action: AuditAction): boolean {
     const sensitiveActions = [
       'user_data_export',
       'bulk_data_modification',
       'permission_override',
       'cross_org_access',
-      'system_configuration_change'
-    ];
-    
-    return sensitiveActions.includes(action.type) ||
-           action.affectedRecords > 100 ||
-           action.dataClassification === 'sensitive';
+      'system_configuration_change',
+    ]
+
+    return (
+      sensitiveActions.includes(action.type) ||
+      action.affectedRecords > 100 ||
+      action.dataClassification === 'sensitive'
+    )
   }
 }
 ```
@@ -1332,59 +1328,59 @@ class SuperUserAuditLogger {
 ```typescript
 interface AuditEvent {
   // Event Identification
-  id: string;
-  timestamp: string;
-  eventType: AuditEventType;
-  
+  id: string
+  timestamp: string
+  eventType: AuditEventType
+
   // Actor Information
   actor: {
-    userId?: string;
-    email?: string;
-    role?: string;
-    organizationId?: string;
-    isSuperUser: boolean;
-    sessionId?: string;
-    ipAddress: string;
-    userAgent: string;
-    location?: string;
-  };
-  
+    userId?: string
+    email?: string
+    role?: string
+    organizationId?: string
+    isSuperUser: boolean
+    sessionId?: string
+    ipAddress: string
+    userAgent: string
+    location?: string
+  }
+
   // Target Information
   target: {
-    type: string; // user, order, product, etc.
-    id: string;
-    organizationId?: string;
-    previousState?: any;
-    newState?: any;
-  };
-  
+    type: string // user, order, product, etc.
+    id: string
+    organizationId?: string
+    previousState?: any
+    newState?: any
+  }
+
   // Action Details
   action: {
-    type: string; // create, update, delete, read, approve
-    method: string; // HTTP method
-    endpoint: string;
-    parameters?: Record<string, any>;
-    result: 'success' | 'failure';
-    errorMessage?: string;
-  };
-  
+    type: string // create, update, delete, read, approve
+    method: string // HTTP method
+    endpoint: string
+    parameters?: Record<string, any>
+    result: 'success' | 'failure'
+    errorMessage?: string
+  }
+
   // Context
   context: {
-    correlationId: string;
-    traceId?: string;
-    spanId?: string;
-    parentSpanId?: string;
-    serviceName: string;
-    environment: string;
-  };
-  
+    correlationId: string
+    traceId?: string
+    spanId?: string
+    parentSpanId?: string
+    serviceName: string
+    environment: string
+  }
+
   // Compliance & Security
   compliance: {
-    dataClassification: 'public' | 'internal' | 'confidential' | 'restricted';
-    regulatoryFlags: string[]; // GDPR, HIPAA, etc.
-    retentionPeriod: number; // days
-    encryptionRequired: boolean;
-  };
+    dataClassification: 'public' | 'internal' | 'confidential' | 'restricted'
+    regulatoryFlags: string[] // GDPR, HIPAA, etc.
+    retentionPeriod: number // days
+    encryptionRequired: boolean
+  }
 }
 
 enum AuditEventType {
@@ -1397,32 +1393,32 @@ enum AuditEventType {
   MFA_ENABLE = 'mfa.enable',
   MFA_DISABLE = 'mfa.disable',
   MFA_VERIFY = 'mfa.verify',
-  
-  // Authorization Events  
+
+  // Authorization Events
   PERMISSION_GRANT = 'permission.grant',
   PERMISSION_REVOKE = 'permission.revoke',
   ROLE_ASSIGN = 'role.assign',
   SUPER_USER_ACTIVATE = 'super_user.activate',
   SUPER_USER_DEACTIVATE = 'super_user.deactivate',
-  
+
   // Security Events
   SUSPICIOUS_ACTIVITY = 'security.suspicious',
   RATE_LIMIT_EXCEEDED = 'security.rate_limit',
   INVALID_TOKEN = 'security.invalid_token',
   SESSION_HIJACK_ATTEMPT = 'security.session_hijack',
-  
+
   // Data Events
   DATA_CREATE = 'data.create',
   DATA_READ = 'data.read',
   DATA_UPDATE = 'data.update',
   DATA_DELETE = 'data.delete',
   DATA_EXPORT = 'data.export',
-  
+
   // Business Events
   ORDER_CREATE = 'order.create',
   ORDER_APPROVE = 'order.approve',
   PAYMENT_PROCESS = 'payment.process',
-  RECONCILIATION_COMPLETE = 'reconciliation.complete'
+  RECONCILIATION_COMPLETE = 'reconciliation.complete',
 }
 ```
 
@@ -1430,30 +1426,30 @@ enum AuditEventType {
 
 ```typescript
 class AuditPipeline {
-  private queue: Queue;
-  private storage: AuditStorage;
-  private analyzer: SecurityAnalyzer;
-  
+  private queue: Queue
+  private storage: AuditStorage
+  private analyzer: SecurityAnalyzer
+
   async process(event: AuditEvent): Promise<void> {
     // Step 1: Validate and enrich
-    const enriched = await this.enrich(event);
-    
+    const enriched = await this.enrich(event)
+
     // Step 2: Store immediately (write-through)
-    await this.storage.write(enriched);
-    
+    await this.storage.write(enriched)
+
     // Step 3: Queue for analysis (async)
     await this.queue.push({
       type: 'audit_analysis',
-      data: enriched
-    });
-    
+      data: enriched,
+    })
+
     // Step 4: Real-time security analysis
-    const threat = await this.analyzer.analyze(enriched);
+    const threat = await this.analyzer.analyze(enriched)
     if (threat.severity === 'critical') {
-      await this.handleCriticalThreat(threat);
+      await this.handleCriticalThreat(threat)
     }
   }
-  
+
   private async enrich(event: AuditEvent): Promise<EnrichedAuditEvent> {
     return {
       ...event,
@@ -1461,19 +1457,19 @@ class AuditPipeline {
         geoLocation: await this.getGeoLocation(event.actor.ipAddress),
         deviceFingerprint: await this.getDeviceFingerprint(event.actor.userAgent),
         riskScore: await this.calculateRiskScore(event),
-        anomalyFlags: await this.detectAnomalies(event)
-      }
-    };
+        anomalyFlags: await this.detectAnomalies(event),
+      },
+    }
   }
-  
+
   private async handleCriticalThreat(threat: ThreatAnalysis): Promise<void> {
     // Immediate actions
     await Promise.all([
       this.lockUserAccount(threat.userId),
       this.revokeAllSessions(threat.userId),
       this.notifySecurityTeam(threat),
-      this.createIncident(threat)
-    ]);
+      this.createIncident(threat),
+    ])
   }
 }
 ```
@@ -1487,58 +1483,54 @@ class AuditPipeline {
 ```typescript
 // Multi-layer Cache Architecture
 class AuthCache {
-  private l1Cache: NodeCache; // In-memory cache (process level)
-  private l2Cache: Redis;      // Distributed cache
-  
+  private l1Cache: NodeCache // In-memory cache (process level)
+  private l2Cache: Redis // Distributed cache
+
   // Cache Configuration
   private readonly TTL = {
-    publicKey: 3600,      // 1 hour
-    userProfile: 300,     // 5 minutes
-    permissions: 600,     // 10 minutes
-    session: 900,         // 15 minutes
-    rateLimit: 60        // 1 minute
-  };
-  
+    publicKey: 3600, // 1 hour
+    userProfile: 300, // 5 minutes
+    permissions: 600, // 10 minutes
+    session: 900, // 15 minutes
+    rateLimit: 60, // 1 minute
+  }
+
   async getUser(userId: string): Promise<User | null> {
     // L1 Cache Check
-    const l1Result = this.l1Cache.get<User>(`user:${userId}`);
-    if (l1Result) return l1Result;
-    
+    const l1Result = this.l1Cache.get<User>(`user:${userId}`)
+    if (l1Result) return l1Result
+
     // L2 Cache Check
-    const l2Result = await this.l2Cache.get(`user:${userId}`);
+    const l2Result = await this.l2Cache.get(`user:${userId}`)
     if (l2Result) {
-      const user = JSON.parse(l2Result);
-      this.l1Cache.set(`user:${userId}`, user, this.TTL.userProfile);
-      return user;
+      const user = JSON.parse(l2Result)
+      this.l1Cache.set(`user:${userId}`, user, this.TTL.userProfile)
+      return user
     }
-    
+
     // Database Fetch
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { organization: true }
-    });
-    
+      include: { organization: true },
+    })
+
     if (user) {
       // Write-through caching
-      await this.l2Cache.setex(
-        `user:${userId}`,
-        this.TTL.userProfile,
-        JSON.stringify(user)
-      );
-      this.l1Cache.set(`user:${userId}`, user, this.TTL.userProfile);
+      await this.l2Cache.setex(`user:${userId}`, this.TTL.userProfile, JSON.stringify(user))
+      this.l1Cache.set(`user:${userId}`, user, this.TTL.userProfile)
     }
-    
-    return user;
+
+    return user
   }
-  
+
   async invalidateUser(userId: string): Promise<void> {
     // Invalidate all layers
-    this.l1Cache.del(`user:${userId}`);
-    await this.l2Cache.del(`user:${userId}`);
-    
+    this.l1Cache.del(`user:${userId}`)
+    await this.l2Cache.del(`user:${userId}`)
+
     // Invalidate related caches
-    await this.l2Cache.del(`permissions:${userId}`);
-    await this.l2Cache.del(`sessions:${userId}:*`);
+    await this.l2Cache.del(`permissions:${userId}`)
+    await this.l2Cache.del(`sessions:${userId}:*`)
   }
 }
 ```
@@ -1555,7 +1547,7 @@ CREATE INDEX idx_login_attempts_email_time ON login_attempts(email, created_at D
 CREATE INDEX idx_audit_logs_user_time ON audit_logs(user_id, created_at DESC);
 
 -- Partial indexes for super users
-CREATE INDEX idx_users_super_active ON users(id) 
+CREATE INDEX idx_users_super_active ON users(id)
   WHERE is_super_user = true AND super_user_expires_at > NOW();
 
 -- Composite indexes for common queries
@@ -1606,23 +1598,23 @@ CREATE INDEX idx_users_verification ON users(email_verified, phone_verified, org
 ```typescript
 // User Migration Script
 async function migrateUsers(): Promise<void> {
-  const batchSize = 100;
-  let offset = 0;
-  
+  const batchSize = 100
+  let offset = 0
+
   while (true) {
     const users = await prisma.user.findMany({
       skip: offset,
       take: batchSize,
-      where: { passwordHash: null }
-    });
-    
-    if (users.length === 0) break;
-    
+      where: { passwordHash: null },
+    })
+
+    if (users.length === 0) break
+
     for (const user of users) {
       // Generate secure password
-      const tempPassword = generateSecurePassword();
-      const hash = await argon2.hash(tempPassword, ARGON2_CONFIG);
-      
+      const tempPassword = generateSecurePassword()
+      const hash = await argon2.hash(tempPassword, ARGON2_CONFIG)
+
       // Update user
       await prisma.user.update({
         where: { id: user.id },
@@ -1631,23 +1623,23 @@ async function migrateUsers(): Promise<void> {
           passwordChangedAt: new Date(),
           tokenVersion: 1,
           emailVerified: false,
-          phoneVerified: false
-        }
-      });
-      
+          phoneVerified: false,
+        },
+      })
+
       // Send password reset email
-      await sendPasswordResetEmail(user.email, tempPassword);
-      
+      await sendPasswordResetEmail(user.email, tempPassword)
+
       // Audit log
       await auditLog({
         action: 'user_migration',
         userId: user.id,
-        metadata: { migrationBatch: offset / batchSize }
-      });
+        metadata: { migrationBatch: offset / batchSize },
+      })
     }
-    
-    offset += batchSize;
-    console.log(`Migrated ${offset} users...`);
+
+    offset += batchSize
+    console.log(`Migrated ${offset} users...`)
   }
 }
 ```
@@ -1665,46 +1657,46 @@ const AUTH_METRICS = {
   'auth.login.duration': histogram({
     name: 'auth_login_duration_seconds',
     help: 'Login request duration',
-    buckets: [0.1, 0.5, 1, 2, 5]
+    buckets: [0.1, 0.5, 1, 2, 5],
   }),
-  
+
   // Success/Failure Rates
   'auth.login.success': counter({
     name: 'auth_login_success_total',
-    help: 'Successful login attempts'
+    help: 'Successful login attempts',
   }),
-  
+
   'auth.login.failure': counter({
     name: 'auth_login_failure_total',
     help: 'Failed login attempts',
-    labelNames: ['reason']
+    labelNames: ['reason'],
   }),
-  
+
   // MFA Metrics
   'auth.mfa.enrolled': gauge({
     name: 'auth_mfa_enrolled_users',
-    help: 'Number of users with MFA enabled'
+    help: 'Number of users with MFA enabled',
   }),
-  
+
   // Security Metrics
   'auth.suspicious.activity': counter({
     name: 'auth_suspicious_activity_total',
     help: 'Suspicious authentication attempts',
-    labelNames: ['type']
+    labelNames: ['type'],
   }),
-  
+
   // Session Metrics
   'auth.sessions.active': gauge({
     name: 'auth_sessions_active',
-    help: 'Number of active sessions'
+    help: 'Number of active sessions',
   }),
-  
+
   // Super User Metrics
   'auth.superuser.activations': counter({
     name: 'auth_superuser_activations_total',
-    help: 'Super user mode activations'
-  })
-};
+    help: 'Super user mode activations',
+  }),
+}
 ```
 
 ### 14.2 Alert Rules
@@ -1718,28 +1710,28 @@ groups:
         expr: rate(auth_login_failure_total[5m]) > 10
         for: 5m
         annotations:
-          summary: "High failed login rate detected"
-          description: "Failed login rate is {{ $value }} per second"
-      
+          summary: 'High failed login rate detected'
+          description: 'Failed login rate is {{ $value }} per second'
+
       - alert: SuperUserActivation
         expr: increase(auth_superuser_activations_total[1m]) > 0
         annotations:
-          summary: "Super user mode activated"
-          description: "User {{ $labels.user_id }} activated super user mode"
-      
+          summary: 'Super user mode activated'
+          description: 'User {{ $labels.user_id }} activated super user mode'
+
       - alert: SuspiciousActivity
         expr: rate(auth_suspicious_activity_total[5m]) > 5
         for: 5m
         annotations:
-          summary: "Suspicious authentication activity detected"
-          description: "Type: {{ $labels.type }}, Rate: {{ $value }}"
-      
+          summary: 'Suspicious authentication activity detected'
+          description: 'Type: {{ $labels.type }}, Rate: {{ $value }}'
+
       - alert: MFAAdoptionLow
         expr: auth_mfa_enrolled_users / auth_total_users < 0.6
         for: 24h
         annotations:
-          summary: "MFA adoption below target"
-          description: "Only {{ $value | humanizePercentage }} of users have MFA enabled"
+          summary: 'MFA adoption below target'
+          description: 'Only {{ $value | humanizePercentage }} of users have MFA enabled'
 ```
 
 ---
@@ -1817,62 +1809,58 @@ describe('AuthService', () => {
     it('should successfully authenticate valid credentials', async () => {
       const result = await authService.login({
         email: 'test@example.com',
-        password: 'ValidPassword123!'
-      });
-      
-      expect(result.success).toBe(true);
-      expect(result.tokens.accessToken).toBeDefined();
-      expect(result.tokens.refreshToken).toBeDefined();
-    });
-    
+        password: 'ValidPassword123!',
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.tokens.accessToken).toBeDefined()
+      expect(result.tokens.refreshToken).toBeDefined()
+    })
+
     it('should enforce rate limiting after 5 failed attempts', async () => {
       for (let i = 0; i < 5; i++) {
         await authService.login({
           email: 'test@example.com',
-          password: 'WrongPassword'
-        });
+          password: 'WrongPassword',
+        })
       }
-      
+
       const result = await authService.login({
         email: 'test@example.com',
-        password: 'ValidPassword123!'
-      });
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('RATE_LIMIT_EXCEEDED');
-    });
-  });
-});
+        password: 'ValidPassword123!',
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('RATE_LIMIT_EXCEEDED')
+    })
+  })
+})
 
 // Integration Test Example
 describe('Auth API Integration', () => {
   it('should complete full authentication flow with MFA', async () => {
     // Step 1: Login
-    const loginRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: 'mfa@example.com',
-        password: 'SecurePassword123!'
-      });
-    
-    expect(loginRes.status).toBe(200);
-    expect(loginRes.body.requiresMfa).toBe(true);
-    
-    const challengeToken = loginRes.body.challengeToken;
-    
+    const loginRes = await request(app).post('/api/auth/login').send({
+      email: 'mfa@example.com',
+      password: 'SecurePassword123!',
+    })
+
+    expect(loginRes.status).toBe(200)
+    expect(loginRes.body.requiresMfa).toBe(true)
+
+    const challengeToken = loginRes.body.challengeToken
+
     // Step 2: Verify MFA
-    const mfaCode = await getMFACodeFromTestHelper();
-    const mfaRes = await request(app)
-      .post('/api/auth/mfa/verify')
-      .send({
-        challengeToken,
-        code: mfaCode
-      });
-    
-    expect(mfaRes.status).toBe(200);
-    expect(mfaRes.body.data.tokens.accessToken).toBeDefined();
-  });
-});
+    const mfaCode = await getMFACodeFromTestHelper()
+    const mfaRes = await request(app).post('/api/auth/mfa/verify').send({
+      challengeToken,
+      code: mfaCode,
+    })
+
+    expect(mfaRes.status).toBe(200)
+    expect(mfaRes.body.data.tokens.accessToken).toBeDefined()
+  })
+})
 ```
 
 ---

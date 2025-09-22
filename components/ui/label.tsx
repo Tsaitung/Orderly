@@ -9,27 +9,26 @@ const labelVariants = cva(
     variants: {
       variant: {
         default: 'text-gray-900',
-        muted: 'text-gray-600', 
+        muted: 'text-gray-600',
         error: 'text-red-600',
-        success: 'text-green-600'
+        success: 'text-green-600',
       },
       size: {
         default: 'text-sm',
         sm: 'text-xs',
-        lg: 'text-base'
-      }
+        lg: 'text-base',
+      },
     },
     defaultVariants: {
       variant: 'default',
-      size: 'default'
-    }
+      size: 'default',
+    },
   }
 )
 
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
 >(({ className, variant, size, ...props }, ref) => (
   <LabelPrimitive.Root
     ref={ref}

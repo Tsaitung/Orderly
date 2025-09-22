@@ -11,12 +11,12 @@ import {
   ERPOrderSchema,
   ERPProductSchema,
   ERPInventorySchema,
-  ERPCustomerSchema
+  ERPCustomerSchema,
 } from '../erp-adapter-interface'
 
 /**
  * SAP Business One ERP 適配器
- * 
+ *
  * 支援功能:
  * - Service Layer API 集成
  * - 訂單同步 (銷售訂單/採購訂單)
@@ -33,44 +33,44 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   // SAP B1 特定配置
   private readonly defaultFieldMapping = {
     // 訂單欄位對應
-    'orderNumber': 'DocNum',
-    'externalId': 'DocEntry',
-    'customerCode': 'CardCode',
-    'orderDate': 'DocDate',
-    'deliveryDate': 'DocDeliveryDate',
-    'totalAmount': 'DocTotal',
-    'status': 'DocumentStatus',
-    'notes': 'Comments',
-    
+    orderNumber: 'DocNum',
+    externalId: 'DocEntry',
+    customerCode: 'CardCode',
+    orderDate: 'DocDate',
+    deliveryDate: 'DocDeliveryDate',
+    totalAmount: 'DocTotal',
+    status: 'DocumentStatus',
+    notes: 'Comments',
+
     // 產品欄位對應
-    'code': 'ItemCode',
-    'name': 'ItemName',
-    'basePrice': 'StandardPrice',
-    'unit': 'InventoryUOM',
-    'isActive': 'Valid',
-    'category': 'ItemsGroupCode',
-    
+    code: 'ItemCode',
+    name: 'ItemName',
+    basePrice: 'StandardPrice',
+    unit: 'InventoryUOM',
+    isActive: 'Valid',
+    category: 'ItemsGroupCode',
+
     // 庫存欄位對應
-    'productCode': 'ItemCode',
-    'availableQuantity': 'OnHand',
-    'reservedQuantity': 'Committed',
-    
+    productCode: 'ItemCode',
+    availableQuantity: 'OnHand',
+    reservedQuantity: 'Committed',
+
     // 客戶欄位對應
-    'code': 'CardCode',
-    'name': 'CardName',
-    'contactPerson': 'ContactPerson',
-    'email': 'EmailAddress',
-    'phone': 'Phone1',
-    'isActive': 'Valid'
+    code: 'CardCode',
+    name: 'CardName',
+    contactPerson: 'ContactPerson',
+    email: 'EmailAddress',
+    phone: 'Phone1',
+    isActive: 'Valid',
   }
 
   constructor(config: ERPConnectionConfig) {
     super(config)
-    
+
     // 合併欄位對應
     this.config.fieldMapping = {
       ...this.defaultFieldMapping,
-      ...this.config.fieldMapping
+      ...this.config.fieldMapping,
     }
   }
 
@@ -79,11 +79,11 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       const loginData = {
         CompanyDB: this.config.settings.companyDatabase || '',
         UserName: this.config.authentication.credentials.username,
-        Password: this.config.authentication.credentials.password
+        Password: this.config.authentication.credentials.password,
       }
 
       const response = await this.makeRequest('POST', '/Login', loginData)
-      
+
       if (response.SessionId) {
         this.sessionId = response.SessionId
         this.sessionTimeout = new Date(Date.now() + 30 * 60 * 1000) // 30分鐘有效期
@@ -107,11 +107,11 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       } catch (error) {
         console.error('Logout error:', error)
       }
-      
+
       this.sessionId = undefined
       this.sessionTimeout = undefined
     }
-    
+
     this.isConnected = false
   }
 
@@ -133,7 +133,7 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   getConnectionStatus(): { connected: boolean; lastError?: string } {
     return {
       connected: this.isConnected && !!this.sessionId && !this.isSessionExpired(),
-      lastError: this.lastError
+      lastError: this.lastError,
     }
   }
 
@@ -184,8 +184,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       }
 
       const response = await this.makeRequest('GET', `/Orders${query}`)
-      
-      const orders: ERPOrder[] = response.value?.map((sapOrder: any) => this.mapSAPOrderToStandard(sapOrder)) || []
+
+      const orders: ERPOrder[] =
+        response.value?.map((sapOrder: any) => this.mapSAPOrderToStandard(sapOrder)) || []
 
       return {
         success: true,
@@ -194,13 +195,13 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
           totalCount: response['@odata.count'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get orders'
+        error: error instanceof Error ? error.message : 'Failed to get orders',
       }
     }
   }
@@ -208,41 +209,44 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async createOrder(order: ERPOrder): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const sapOrder = this.mapStandardOrderToSAP(order)
       const response = await this.makeRequest('POST', '/Orders', sapOrder)
-      
+
       const createdOrder = this.mapSAPOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: createdOrder
+        data: createdOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create order'
+        error: error instanceof Error ? error.message : 'Failed to create order',
       }
     }
   }
 
-  async updateOrder(externalId: string, updates: Partial<ERPOrder>): Promise<ERPApiResponse<ERPOrder>> {
+  async updateOrder(
+    externalId: string,
+    updates: Partial<ERPOrder>
+  ): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const sapUpdates = this.mapStandardOrderToSAP(updates as ERPOrder)
       const response = await this.makeRequest('PATCH', `/Orders(${externalId})`, sapUpdates)
-      
+
       const updatedOrder = this.mapSAPOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedOrder
+        data: updatedOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update order'
+        error: error instanceof Error ? error.message : 'Failed to update order',
       }
     }
   }
@@ -250,17 +254,17 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async deleteOrder(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // SAP B1 通常不允許刪除訂單，而是取消
       await this.makeRequest('PATCH', `/Orders(${externalId})`, {
-        DocumentStatus: 'bost_Close'
+        DocumentStatus: 'bost_Close',
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete order'
+        error: error instanceof Error ? error.message : 'Failed to delete order',
       }
     }
   }
@@ -268,18 +272,18 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async getOrderById(externalId: string): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/Orders(${externalId})`)
       const order = this.mapSAPOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: order
+        data: order,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get order'
+        error: error instanceof Error ? error.message : 'Failed to get order',
       }
     }
   }
@@ -307,7 +311,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       }
 
       if (options?.lastModifiedAfter) {
-        filters.push(`UpdateDate ge '${this.formatDateForERP(options.lastModifiedAfter).split('T')[0]}'`)
+        filters.push(
+          `UpdateDate ge '${this.formatDateForERP(options.lastModifiedAfter).split('T')[0]}'`
+        )
       }
 
       if (filters.length > 0) {
@@ -325,8 +331,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       }
 
       const response = await this.makeRequest('GET', `/Items${query}`)
-      
-      const products: ERPProduct[] = response.value?.map((sapItem: any) => this.mapSAPItemToStandard(sapItem)) || []
+
+      const products: ERPProduct[] =
+        response.value?.map((sapItem: any) => this.mapSAPItemToStandard(sapItem)) || []
 
       return {
         success: true,
@@ -335,13 +342,13 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
           totalCount: response['@odata.count'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get products'
+        error: error instanceof Error ? error.message : 'Failed to get products',
       }
     }
   }
@@ -349,41 +356,44 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async createProduct(product: ERPProduct): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const sapItem = this.mapStandardItemToSAP(product)
       const response = await this.makeRequest('POST', '/Items', sapItem)
-      
+
       const createdProduct = this.mapSAPItemToStandard(response)
-      
+
       return {
         success: true,
-        data: createdProduct
+        data: createdProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create product'
+        error: error instanceof Error ? error.message : 'Failed to create product',
       }
     }
   }
 
-  async updateProduct(externalId: string, updates: Partial<ERPProduct>): Promise<ERPApiResponse<ERPProduct>> {
+  async updateProduct(
+    externalId: string,
+    updates: Partial<ERPProduct>
+  ): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const sapUpdates = this.mapStandardItemToSAP(updates as ERPProduct)
       const response = await this.makeRequest('PATCH', `/Items('${externalId}')`, sapUpdates)
-      
+
       const updatedProduct = this.mapSAPItemToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedProduct
+        data: updatedProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update product'
+        error: error instanceof Error ? error.message : 'Failed to update product',
       }
     }
   }
@@ -391,17 +401,17 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async deleteProduct(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // SAP B1 標記為無效而不是刪除
       await this.makeRequest('PATCH', `/Items('${externalId}')`, {
-        Valid: 'N'
+        Valid: 'N',
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete product'
+        error: error instanceof Error ? error.message : 'Failed to delete product',
       }
     }
   }
@@ -409,18 +419,18 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async getProductById(externalId: string): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/Items('${externalId}')`)
       const product = this.mapSAPItemToStandard(response)
-      
+
       return {
         success: true,
-        data: product
+        data: product,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get product'
+        error: error instanceof Error ? error.message : 'Failed to get product',
       }
     }
   }
@@ -452,17 +462,19 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
 
       const query = filter ? `?${filter}` : ''
       const response = await this.makeRequest('GET', `/ItemWarehouseInfoCollection${query}`)
-      
-      const inventory: ERPInventory[] = response.value?.map((sapInventory: any) => this.mapSAPInventoryToStandard(sapInventory)) || []
+
+      const inventory: ERPInventory[] =
+        response.value?.map((sapInventory: any) => this.mapSAPInventoryToStandard(sapInventory)) ||
+        []
 
       return {
         success: true,
-        data: inventory
+        data: inventory,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get inventory'
+        error: error instanceof Error ? error.message : 'Failed to get inventory',
       }
     }
   }
@@ -470,27 +482,31 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async updateInventory(updates: ERPInventory[]): Promise<ERPApiResponse<ERPInventory[]>> {
     try {
       await this.ensureConnected()
-      
+
       const results: ERPInventory[] = []
-      
+
       for (const update of updates) {
         try {
           const sapUpdate = this.mapStandardInventoryToSAP(update)
-          const response = await this.makeRequest('PATCH', `/ItemWarehouseInfoCollection(ItemCode='${update.productCode}',WarehouseCode='01')`, sapUpdate)
+          const response = await this.makeRequest(
+            'PATCH',
+            `/ItemWarehouseInfoCollection(ItemCode='${update.productCode}',WarehouseCode='01')`,
+            sapUpdate
+          )
           results.push(this.mapSAPInventoryToStandard(response))
         } catch (error) {
           console.error(`Failed to update inventory for ${update.productCode}:`, error)
         }
       }
-      
+
       return {
         success: true,
-        data: results
+        data: results,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update inventory'
+        error: error instanceof Error ? error.message : 'Failed to update inventory',
       }
     }
   }
@@ -513,7 +529,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       }
 
       if (options?.lastModifiedAfter) {
-        filters.push(`UpdateDate ge '${this.formatDateForERP(options.lastModifiedAfter).split('T')[0]}'`)
+        filters.push(
+          `UpdateDate ge '${this.formatDateForERP(options.lastModifiedAfter).split('T')[0]}'`
+        )
       }
 
       if (filters.length > 0) {
@@ -531,8 +549,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
       }
 
       const response = await this.makeRequest('GET', `/BusinessPartners${query}`)
-      
-      const customers: ERPCustomer[] = response.value?.map((sapCustomer: any) => this.mapSAPCustomerToStandard(sapCustomer)) || []
+
+      const customers: ERPCustomer[] =
+        response.value?.map((sapCustomer: any) => this.mapSAPCustomerToStandard(sapCustomer)) || []
 
       return {
         success: true,
@@ -541,13 +560,13 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
           totalCount: response['@odata.count'],
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: !!response['@odata.nextLink']
-        }
+          hasMore: !!response['@odata.nextLink'],
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customers'
+        error: error instanceof Error ? error.message : 'Failed to get customers',
       }
     }
   }
@@ -555,41 +574,48 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async createCustomer(customer: ERPCustomer): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const sapCustomer = this.mapStandardCustomerToSAP(customer)
       const response = await this.makeRequest('POST', '/BusinessPartners', sapCustomer)
-      
+
       const createdCustomer = this.mapSAPCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: createdCustomer
+        data: createdCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create customer'
+        error: error instanceof Error ? error.message : 'Failed to create customer',
       }
     }
   }
 
-  async updateCustomer(externalId: string, updates: Partial<ERPCustomer>): Promise<ERPApiResponse<ERPCustomer>> {
+  async updateCustomer(
+    externalId: string,
+    updates: Partial<ERPCustomer>
+  ): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const sapUpdates = this.mapStandardCustomerToSAP(updates as ERPCustomer)
-      const response = await this.makeRequest('PATCH', `/BusinessPartners('${externalId}')`, sapUpdates)
-      
+      const response = await this.makeRequest(
+        'PATCH',
+        `/BusinessPartners('${externalId}')`,
+        sapUpdates
+      )
+
       const updatedCustomer = this.mapSAPCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedCustomer
+        data: updatedCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update customer'
+        error: error instanceof Error ? error.message : 'Failed to update customer',
       }
     }
   }
@@ -597,18 +623,18 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
   async getCustomerById(externalId: string): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/BusinessPartners('${externalId}')`)
       const customer = this.mapSAPCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: customer
+        data: customer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customer'
+        error: error instanceof Error ? error.message : 'Failed to get customer',
       }
     }
   }
@@ -629,8 +655,8 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
         endTime: new Date(),
         duration: 0,
         syncDirection: options.syncDirection,
-        batchSize: options.batchSize
-      }
+        batchSize: options.batchSize,
+      },
     }
 
     try {
@@ -639,13 +665,13 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
     } catch (error) {
       result.errors.push({
         recordId: 'sync',
-        error: error instanceof Error ? error.message : 'Sync failed'
+        error: error instanceof Error ? error.message : 'Sync failed',
       })
     }
 
     result.metadata.endTime = new Date()
     result.metadata.duration = result.metadata.endTime.getTime() - startTime.getTime()
-    
+
     return result
   }
 
@@ -676,7 +702,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateOrders(updates: Array<{ externalId: string; data: Partial<ERPOrder> }>): Promise<ERPApiResponse<ERPOrder[]>> {
+  async batchUpdateOrders(
+    updates: Array<{ externalId: string; data: Partial<ERPOrder> }>
+  ): Promise<ERPApiResponse<ERPOrder[]>> {
     const results: ERPOrder[] = []
     for (const update of updates) {
       const result = await this.updateOrder(update.externalId, update.data)
@@ -698,7 +726,9 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateProducts(updates: Array<{ externalId: string; data: Partial<ERPProduct> }>): Promise<ERPApiResponse<ERPProduct[]>> {
+  async batchUpdateProducts(
+    updates: Array<{ externalId: string; data: Partial<ERPProduct> }>
+  ): Promise<ERPApiResponse<ERPProduct[]>> {
     const results: ERPProduct[] = []
     for (const update of updates) {
       const result = await this.updateProduct(update.externalId, update.data)
@@ -725,12 +755,12 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
 
   private mapOrderStatusToSAP(orderlyStatus: string): string {
     const statusMap: Record<string, string> = {
-      'draft': 'bost_Open',
-      'confirmed': 'bost_Open',
-      'shipped': 'bost_Open',
-      'delivered': 'bost_Open',
-      'completed': 'bost_Close',
-      'cancelled': 'bost_Close'
+      draft: 'bost_Open',
+      confirmed: 'bost_Open',
+      shipped: 'bost_Open',
+      delivered: 'bost_Open',
+      completed: 'bost_Close',
+      cancelled: 'bost_Close',
     }
     return statusMap[orderlyStatus] || 'bost_Open'
   }
@@ -767,11 +797,15 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
     return this.mapFieldsToERP(customer, this.config.fieldMapping)
   }
 
-  protected async makeRequest(method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', endpoint: string, data?: any): Promise<any> {
+  protected async makeRequest(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    endpoint: string,
+    data?: any
+  ): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'Orderly-SAP-B1-Adapter/2.0'
+      'User-Agent': 'Orderly-SAP-B1-Adapter/2.0',
     }
 
     // 添加 SAP B1 Session Cookie
@@ -784,7 +818,7 @@ export class SAPBusinessOneAdapter extends ERPAdapterInterface {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {

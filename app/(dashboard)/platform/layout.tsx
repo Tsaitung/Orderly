@@ -18,19 +18,17 @@ interface PlatformLayoutProps {
 export default function PlatformLayout({ children }: PlatformLayoutProps) {
   return (
     <AuthGuard requiredRole="platform_admin">
-      <div className="min-h-screen bg-gray-50 theme-platform">
+      <div className="theme-platform min-h-screen bg-gray-50">
         {/* Platform Header */}
         <PlatformHeader />
-        
+
         <div className="flex">
           {/* Sidebar */}
           <PlatformSidebar />
-          
+
           {/* Main Content */}
-          <main className="flex-1 lg:ml-64 pt-16">
-            <div className="p-6 space-y-6">
-              {children}
-            </div>
+          <main className="flex-1 pt-16 lg:ml-64">
+            <div className="space-y-6 p-6">{children}</div>
           </main>
         </div>
       </div>

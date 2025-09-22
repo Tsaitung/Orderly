@@ -3,6 +3,7 @@
 This repo now uses PostgreSQL with SQLAlchemy ORM and Alembic migrations across all environments. The previous Node ORM has been fully removed.
 
 ## Local Development
+
 - Run Postgres via Docker Compose:
   - `docker-compose up -d postgres`
 - Create database/user if needed:
@@ -12,6 +13,7 @@ This repo now uses PostgreSQL with SQLAlchemy ORM and Alembic migrations across 
   - Services: `backend/user-service-fastapi/.env`, `backend/order-service-fastapi/.env`, `backend/product-service-fastapi/.env`
 
 ## Staging/Production (Cloud SQL)
+
 - Preferred: connect via Cloud SQL Unix sockets.
 - Required env vars (examples):
   - `ENVIRONMENT=staging|production`
@@ -23,13 +25,15 @@ This repo now uses PostgreSQL with SQLAlchemy ORM and Alembic migrations across 
   - SQLAlchemy (Python, asyncpg): `postgresql+asyncpg://orderly:<password>@/orderly?host=/cloudsql/<PROJECT:REGION:INSTANCE>`
 
 ## Migration
+
 - Run Alembic migrations per service:
   - `cd backend/user-service-fastapi && alembic upgrade head && cd -`
   - `cd backend/order-service-fastapi && alembic upgrade head && cd -`
   - `cd backend/product-service-fastapi && alembic upgrade head && cd -`
-  
+
 To create new migrations:
-  - Modify SQLAlchemy models under `app/models` then run `alembic revision --autogenerate -m "<message>"` in the respective service directory, followed by `alembic upgrade head`.
+
+- Modify SQLAlchemy models under `app/models` then run `alembic revision --autogenerate -m "<message>"` in the respective service directory, followed by `alembic upgrade head`.
 
 ## Database Management Tools
 
@@ -52,6 +56,7 @@ python scripts/database/database_manager.py clean --test-data
 ```
 
 **Features:**
+
 - ✅ **Data Export**: Export suppliers, customers, categories, SKUs to JSON
 - ✅ **Data Import**: Import to any environment with duplicate detection
 - ✅ **Test Data Creation**: Generate realistic test customers with Taiwan addresses/tax IDs
@@ -71,6 +76,7 @@ python scripts/database/seed_from_real_data.py --clean
 ```
 
 **Features:**
+
 - ✅ Based on real production data for business logic accuracy
 - ✅ Maintains complete foreign key relationships and data dependencies
 - ✅ Supports repeated execution with intelligent duplicate skipping
@@ -79,6 +85,7 @@ python scripts/database/seed_from_real_data.py --clean
 ### Data Management Workflows
 
 **Development → Testing → Production Flow:**
+
 ```bash
 # 1. Export from production
 python scripts/database/database_manager.py export --database-url "postgresql+asyncpg://prod:pass@prod:5432/orderly"
@@ -94,6 +101,7 @@ python scripts/database/database_manager.py clean --test-data --export-files
 ```
 
 **Quick Environment Reset:**
+
 ```bash
 # One-command reset: clean old data + create new test data
 python scripts/database/database_manager.py clean --test-data && \
@@ -103,6 +111,7 @@ python scripts/database/database_manager.py create-test-customers --force
 > 📚 **Complete Documentation**: See `scripts/database/README.md` for detailed usage, troubleshooting, and best practices.
 
 ## Operational Recommendations
+
 - Use managed secrets for passwords (GitHub Actions, Cloud Secret Manager).
 - Enable automated backups and PITR on Cloud SQL.
 - Consider PgBouncer for connection pooling if needed.

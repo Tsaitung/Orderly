@@ -38,7 +38,7 @@ export function AccessibleFormField({
   error,
   className,
   leftIcon,
-  rightIcon
+  rightIcon,
 }: FormFieldProps) {
   const fieldId = React.useId()
   const errorId = `${fieldId}-error`
@@ -55,16 +55,10 @@ export function AccessibleFormField({
   return (
     <div className={cn('space-y-2', className)}>
       {/* 標籤 */}
-      <label
-        htmlFor={fieldId}
-        className="block text-sm font-medium text-gray-700"
-      >
+      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
         {label}
         {required && (
-          <span 
-            className="text-red-500 ml-1" 
-            aria-label="必填欄位"
-          >
+          <span className="ml-1 text-red-500" aria-label="必填欄位">
             *
           </span>
         )}
@@ -79,7 +73,7 @@ export function AccessibleFormField({
         disabled={disabled}
         placeholder={placeholder}
         value={value}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={e => onChange?.(e.target.value)}
         onBlur={onBlur}
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
@@ -91,22 +85,14 @@ export function AccessibleFormField({
 
       {/* 幫助文字 */}
       {helperText && !error && (
-        <p
-          id={helperTextId}
-          className="text-sm text-gray-600"
-        >
+        <p id={helperTextId} className="text-sm text-gray-600">
           {helperText}
         </p>
       )}
 
       {/* 錯誤訊息 */}
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-red-600"
-          role="alert"
-          aria-live="polite"
-        >
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -150,7 +136,7 @@ export function AccessibleSelect({
   placeholder,
   helperText,
   error,
-  className
+  className,
 }: AccessibleSelectProps) {
   const fieldId = React.useId()
   const errorId = `${fieldId}-error`
@@ -166,16 +152,10 @@ export function AccessibleSelect({
   return (
     <div className={cn('space-y-2', className)}>
       {/* 標籤 */}
-      <label
-        htmlFor={fieldId}
-        className="block text-sm font-medium text-gray-700"
-      >
+      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
         {label}
         {required && (
-          <span 
-            className="text-red-500 ml-1" 
-            aria-label="必填欄位"
-          >
+          <span className="ml-1 text-red-500" aria-label="必填欄位">
             *
           </span>
         )}
@@ -186,17 +166,17 @@ export function AccessibleSelect({
         id={fieldId}
         name={name}
         value={value || ''}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={e => onChange?.(e.target.value)}
         onBlur={onBlur}
         required={required}
         disabled={disabled}
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
         className={cn(
-          'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
-          'focus:outline-none focus:ring-2 focus:ring-[primary-500] focus:border-[primary-500]',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
-          error && 'border-red-500 focus:ring-red-500 focus:border-red-500'
+          'block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm',
+          'focus:border-[primary-500] focus:outline-none focus:ring-2 focus:ring-[primary-500]',
+          'disabled:cursor-not-allowed disabled:bg-gray-100',
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
         )}
       >
         {placeholder && (
@@ -204,12 +184,8 @@ export function AccessibleSelect({
             {placeholder}
           </option>
         )}
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-            disabled={option.disabled}
-          >
+        {options.map(option => (
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}
@@ -217,22 +193,14 @@ export function AccessibleSelect({
 
       {/* 幫助文字 */}
       {helperText && !error && (
-        <p
-          id={helperTextId}
-          className="text-sm text-gray-600"
-        >
+        <p id={helperTextId} className="text-sm text-gray-600">
           {helperText}
         </p>
       )}
 
       {/* 錯誤訊息 */}
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-red-600"
-          role="alert"
-          aria-live="polite"
-        >
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -272,7 +240,7 @@ export function AccessibleTextarea({
   error,
   rows = 3,
   maxLength,
-  className
+  className,
 }: AccessibleTextareaProps) {
   const fieldId = React.useId()
   const errorId = `${fieldId}-error`
@@ -293,16 +261,10 @@ export function AccessibleTextarea({
   return (
     <div className={cn('space-y-2', className)}>
       {/* 標籤 */}
-      <label
-        htmlFor={fieldId}
-        className="block text-sm font-medium text-gray-700"
-      >
+      <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700">
         {label}
         {required && (
-          <span 
-            className="text-red-500 ml-1" 
-            aria-label="必填欄位"
-          >
+          <span className="ml-1 text-red-500" aria-label="必填欄位">
             *
           </span>
         )}
@@ -313,7 +275,7 @@ export function AccessibleTextarea({
         id={fieldId}
         name={name}
         value={value || ''}
-        onChange={(e) => onChange?.(e.target.value)}
+        onChange={e => onChange?.(e.target.value)}
         onBlur={onBlur}
         required={required}
         disabled={disabled}
@@ -323,43 +285,31 @@ export function AccessibleTextarea({
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
         className={cn(
-          'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm',
-          'focus:outline-none focus:ring-2 focus:ring-[primary-500] focus:border-[primary-500]',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
+          'block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm',
+          'focus:border-[primary-500] focus:outline-none focus:ring-2 focus:ring-[primary-500]',
+          'disabled:cursor-not-allowed disabled:bg-gray-100',
           'resize-vertical',
-          error && 'border-red-500 focus:ring-red-500 focus:border-red-500'
+          error && 'border-red-500 focus:border-red-500 focus:ring-red-500'
         )}
       />
 
       {/* 字數統計 */}
       {showCounter && (
-        <div
-          id={countId}
-          className="text-xs text-gray-500 text-right"
-          aria-live="polite"
-        >
+        <div id={countId} className="text-right text-xs text-gray-500" aria-live="polite">
           {currentLength} / {maxLength} 字
         </div>
       )}
 
       {/* 幫助文字 */}
       {helperText && !error && (
-        <p
-          id={helperTextId}
-          className="text-sm text-gray-600"
-        >
+        <p id={helperTextId} className="text-sm text-gray-600">
           {helperText}
         </p>
       )}
 
       {/* 錯誤訊息 */}
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-red-600"
-          role="alert"
-          aria-live="polite"
-        >
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -391,7 +341,7 @@ export function AccessibleCheckbox({
   disabled = false,
   helperText,
   error,
-  className
+  className,
 }: AccessibleCheckboxProps) {
   const fieldId = React.useId()
   const errorId = `${fieldId}-error`
@@ -413,28 +363,22 @@ export function AccessibleCheckbox({
           name={name}
           type="checkbox"
           checked={checked}
-          onChange={(e) => onChange?.(e.target.checked)}
+          onChange={e => onChange?.(e.target.checked)}
           required={required}
           disabled={disabled}
           aria-describedby={describedBy}
           aria-invalid={error ? 'true' : 'false'}
           className={cn(
-            'mt-0.5 h-4 w-4 text-[primary-500] border-gray-300 rounded',
+            'mt-0.5 h-4 w-4 rounded border-gray-300 text-[primary-500]',
             'focus:ring-2 focus:ring-[primary-500] focus:ring-offset-2',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
+            'disabled:cursor-not-allowed disabled:opacity-50',
             error && 'border-red-500'
           )}
         />
-        <label
-          htmlFor={fieldId}
-          className="text-sm text-gray-700 cursor-pointer"
-        >
+        <label htmlFor={fieldId} className="cursor-pointer text-sm text-gray-700">
           {label}
           {required && (
-            <span 
-              className="text-red-500 ml-1" 
-              aria-label="必填欄位"
-            >
+            <span className="ml-1 text-red-500" aria-label="必填欄位">
               *
             </span>
           )}
@@ -443,22 +387,14 @@ export function AccessibleCheckbox({
 
       {/* 幫助文字 */}
       {helperText && !error && (
-        <p
-          id={helperTextId}
-          className="text-sm text-gray-600 ml-7"
-        >
+        <p id={helperTextId} className="ml-7 text-sm text-gray-600">
           {helperText}
         </p>
       )}
 
       {/* 錯誤訊息 */}
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-red-600 ml-7"
-          role="alert"
-          aria-live="polite"
-        >
+        <p id={errorId} className="ml-7 text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -500,7 +436,7 @@ export function AccessibleRadioGroup({
   helperText,
   error,
   orientation = 'vertical',
-  className
+  className,
 }: AccessibleRadioGroupProps) {
   const groupId = React.useId()
   const errorId = `${groupId}-error`
@@ -519,10 +455,7 @@ export function AccessibleRadioGroup({
       <legend className="block text-sm font-medium text-gray-700">
         {label}
         {required && (
-          <span 
-            className="text-red-500 ml-1" 
-            aria-label="必填欄位"
-          >
+          <span className="ml-1 text-red-500" aria-label="必填欄位">
             *
           </span>
         )}
@@ -533,12 +466,9 @@ export function AccessibleRadioGroup({
         role="radiogroup"
         aria-describedby={describedBy}
         aria-invalid={error ? 'true' : 'false'}
-        className={cn(
-          'space-y-2',
-          orientation === 'horizontal' && 'flex space-x-4 space-y-0'
-        )}
+        className={cn('space-y-2', orientation === 'horizontal' && 'flex space-x-4 space-y-0')}
       >
-        {options.map((option) => {
+        {options.map(option => {
           const optionId = `${groupId}-${option.value}`
           return (
             <div key={option.value} className="flex items-center space-x-2">
@@ -548,20 +478,17 @@ export function AccessibleRadioGroup({
                 type="radio"
                 value={option.value}
                 checked={value === option.value}
-                onChange={(e) => onChange?.(e.target.value)}
+                onChange={e => onChange?.(e.target.value)}
                 required={required}
                 disabled={disabled || option.disabled}
                 className={cn(
-                  'h-4 w-4 text-[primary-500] border-gray-300',
+                  'h-4 w-4 border-gray-300 text-[primary-500]',
                   'focus:ring-2 focus:ring-[primary-500] focus:ring-offset-2',
-                  'disabled:opacity-50 disabled:cursor-not-allowed',
+                  'disabled:cursor-not-allowed disabled:opacity-50',
                   error && 'border-red-500'
                 )}
               />
-              <label
-                htmlFor={optionId}
-                className="text-sm text-gray-700 cursor-pointer"
-              >
+              <label htmlFor={optionId} className="cursor-pointer text-sm text-gray-700">
                 {option.label}
               </label>
             </div>
@@ -571,22 +498,14 @@ export function AccessibleRadioGroup({
 
       {/* 幫助文字 */}
       {helperText && !error && (
-        <p
-          id={helperTextId}
-          className="text-sm text-gray-600"
-        >
+        <p id={helperTextId} className="text-sm text-gray-600">
           {helperText}
         </p>
       )}
 
       {/* 錯誤訊息 */}
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-red-600"
-          role="alert"
-          aria-live="polite"
-        >
+        <p id={errorId} className="text-sm text-red-600" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -614,21 +533,16 @@ export function FormActions({
   cancelText = '取消',
   isSubmitting = false,
   submitDisabled = false,
-  className
+  className,
 }: FormActionsProps) {
   return (
-    <div className={cn('flex gap-3 justify-end', className)}>
+    <div className={cn('flex justify-end gap-3', className)}>
       {onCancel && (
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
           {cancelText}
         </Button>
       )}
-      
+
       {onSubmit && (
         <Button
           type="submit"

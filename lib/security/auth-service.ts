@@ -14,19 +14,23 @@ import { z } from 'zod'
 // Input validation schemas
 const LoginSchema = z.object({
   email: z.string().email().min(1, 'Email is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
 const RegisterSchema = z.object({
   email: z.string().email().min(1, 'Email is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
-           'Password must contain uppercase, lowercase, number and special character'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      'Password must contain uppercase, lowercase, number and special character'
+    ),
   organizationName: z.string().min(1, 'Organization name is required'),
   organizationType: z.enum(['restaurant', 'supplier']),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  phone: z.string().optional()
+  phone: z.string().optional(),
 })
 
 export interface AuthUser {
@@ -114,7 +118,9 @@ class SecureAuthService {
   private validateRegisterInput(input: unknown): z.infer<typeof RegisterSchema> {
     const result = RegisterSchema.safeParse(input)
     if (!result.success) {
-      throw new Error(`Invalid registration input: ${result.error.errors.map(e => e.message).join(', ')}`)
+      throw new Error(
+        `Invalid registration input: ${result.error.errors.map(e => e.message).join(', ')}`
+      )
     }
     return result.data
   }
@@ -122,7 +128,11 @@ class SecureAuthService {
   /**
    * Authenticate user with email and password
    */
-  public async login(credentials: unknown, ipAddress?: string, userAgent?: string): Promise<AuthResult> {
+  public async login(
+    credentials: unknown,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<AuthResult> {
     try {
       // Validate input
       const { email, password } = this.validateLoginInput(credentials)
@@ -133,7 +143,7 @@ class SecureAuthService {
       this.logger.info('login_attempt', {
         email: sanitizedEmail,
         ipAddress,
-        userAgent
+        userAgent,
       })
 
       // Call user service to authenticate
@@ -143,9 +153,9 @@ class SecureAuthService {
         headers: {
           'Content-Type': 'application/json',
           'X-Forwarded-For': ipAddress || '',
-          'User-Agent': userAgent || ''
+          'User-Agent': userAgent || '',
         },
-        body: JSON.stringify({ email: sanitizedEmail, password })
+        body: JSON.stringify({ email: sanitizedEmail, password }),
       })
 
       const data = await response.json()
@@ -154,12 +164,12 @@ class SecureAuthService {
         this.logger.warn('login_failed', {
           email: sanitizedEmail,
           ipAddress,
-          reason: data?.error || 'Invalid credentials'
+          reason: data?.error || 'Invalid credentials',
         })
         return {
           success: false,
           error: 'Invalid email or password',
-          errorCode: 'INVALID_CREDENTIALS'
+          errorCode: 'INVALID_CREDENTIALS',
         }
       }
 
@@ -176,14 +186,14 @@ class SecureAuthService {
         email: user.email,
         organizationId: user.organization.id,
         role: user.role,
-        organizationType: user.organization.type
+        organizationType: user.organization.type,
       })
 
       this.logger.info('login_success', {
         userId: user.id,
         email: sanitizedEmail,
         organizationId: user.organization.id,
-        ipAddress
+        ipAddress,
       })
 
       return {
@@ -193,20 +203,19 @@ class SecureAuthService {
           email: user.email,
           organizationId: user.organization.id,
           role: user.role,
-          organizationType: user.organization.type
+          organizationType: user.organization.type,
         },
-        tokens
+        tokens,
       }
-
     } catch (error) {
       this.logger.error('login_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        ipAddress
+        ipAddress,
       })
       return {
         success: false,
         error: 'Authentication failed',
-        errorCode: 'AUTH_ERROR'
+        errorCode: 'AUTH_ERROR',
       }
     }
   }
@@ -214,7 +223,11 @@ class SecureAuthService {
   /**
    * Register new user
    */
-  public async register(userData: unknown, ipAddress?: string, userAgent?: string): Promise<AuthResult> {
+  public async register(
+    userData: unknown,
+    ipAddress?: string,
+    userAgent?: string
+  ): Promise<AuthResult> {
     try {
       // Validate input
       const validatedData = this.validateRegisterInput(userData)
@@ -225,7 +238,7 @@ class SecureAuthService {
       this.logger.info('registration_attempt', {
         email: sanitizedEmail,
         organizationType: validatedData.organizationType,
-        ipAddress
+        ipAddress,
       })
 
       // Call user service to register
@@ -235,14 +248,14 @@ class SecureAuthService {
         headers: {
           'Content-Type': 'application/json',
           'X-Forwarded-For': ipAddress || '',
-          'User-Agent': userAgent || ''
+          'User-Agent': userAgent || '',
         },
         body: JSON.stringify({
           email: sanitizedEmail,
           password: validatedData.password,
           organizationName: validatedData.organizationName,
-          organizationType: validatedData.organizationType
-        })
+          organizationType: validatedData.organizationType,
+        }),
       })
 
       const result = await response.json()
@@ -251,12 +264,12 @@ class SecureAuthService {
         this.logger.warn('registration_failed', {
           email: sanitizedEmail,
           reason: result?.error || 'Registration failed',
-          ipAddress
+          ipAddress,
         })
         return {
           success: false,
           error: result?.error || 'Registration failed',
-          errorCode: 'REGISTRATION_FAILED'
+          errorCode: 'REGISTRATION_FAILED',
         }
       }
 
@@ -273,14 +286,14 @@ class SecureAuthService {
         email: user.email,
         organizationId: user.organization.id,
         role: user.role,
-        organizationType: user.organization.type
+        organizationType: user.organization.type,
       })
 
       this.logger.info('registration_success', {
         userId: user.id,
         email: sanitizedEmail,
         organizationId: user.organization.id,
-        ipAddress
+        ipAddress,
       })
 
       return {
@@ -290,20 +303,19 @@ class SecureAuthService {
           email: user.email,
           organizationId: user.organization.id,
           role: user.role,
-          organizationType: user.organization.type
+          organizationType: user.organization.type,
         },
-        tokens
+        tokens,
       }
-
     } catch (error) {
       this.logger.error('registration_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        ipAddress
+        ipAddress,
       })
       return {
         success: false,
         error: 'Registration failed',
-        errorCode: 'REGISTRATION_ERROR'
+        errorCode: 'REGISTRATION_ERROR',
       }
     }
   }
@@ -314,11 +326,11 @@ class SecureAuthService {
   public async verifyAuth(token: string, ipAddress?: string): Promise<SecurityContext | null> {
     try {
       const payload = await this.jwtService.verifyToken(token)
-      
+
       if (!payload || payload.type !== 'access') {
         this.logger.warn('token_verification_failed', {
           reason: 'Invalid or expired token',
-          ipAddress
+          ipAddress,
         })
         return null
       }
@@ -330,12 +342,12 @@ class SecureAuthService {
         organizationType: payload.organizationType,
         sessionId: payload.jti,
         ipAddress,
-        userAgent: undefined
+        userAgent: undefined,
       }
     } catch (error) {
       this.logger.warn('token_verification_error', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        ipAddress
+        ipAddress,
       })
       return null
     }
@@ -349,7 +361,7 @@ class SecureAuthService {
       return await this.jwtService.refreshAccessToken(refreshToken)
     } catch (error) {
       this.logger.warn('token_refresh_failed', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
       return null
     }
@@ -365,7 +377,7 @@ class SecureAuthService {
         this.jwtService.revokeToken(payload.jti)
         this.logger.info('logout_success', {
           userId: payload.sub,
-          sessionId: payload.jti
+          sessionId: payload.jti,
         })
       }
 
@@ -377,7 +389,7 @@ class SecureAuthService {
       }
     } catch (error) {
       this.logger.error('logout_error', {
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       })
     }
   }
@@ -392,20 +404,26 @@ class SecureAuthService {
         const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null
 
         if (!token) {
-          return NextResponse.json({
-            success: false,
-            error: 'Missing authentication token',
-            errorCode: 'MISSING_TOKEN'
-          }, { status: 401 })
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Missing authentication token',
+              errorCode: 'MISSING_TOKEN',
+            },
+            { status: 401 }
+          )
         }
 
         const context = await this.verifyAuth(token, req.ip)
         if (!context) {
-          return NextResponse.json({
-            success: false,
-            error: 'Invalid or expired token',
-            errorCode: 'INVALID_TOKEN'
-          }, { status: 401 })
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Invalid or expired token',
+              errorCode: 'INVALID_TOKEN',
+            },
+            { status: 401 }
+          )
         }
 
         // Check role permissions
@@ -413,13 +431,16 @@ class SecureAuthService {
           this.logger.warn('insufficient_permissions', {
             userId: context.userId,
             role: context.role,
-            requiredRoles: allowedRoles
+            requiredRoles: allowedRoles,
           })
-          return NextResponse.json({
-            success: false,
-            error: 'Insufficient permissions',
-            errorCode: 'INSUFFICIENT_PERMISSIONS'
-          }, { status: 403 })
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Insufficient permissions',
+              errorCode: 'INSUFFICIENT_PERMISSIONS',
+            },
+            { status: 403 }
+          )
         }
 
         // Attach security context to request
@@ -428,13 +449,16 @@ class SecureAuthService {
         return null // Continue processing
       } catch (error) {
         this.logger.error('auth_middleware_error', {
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         })
-        return NextResponse.json({
-          success: false,
-          error: 'Authentication error',
-          errorCode: 'AUTH_ERROR'
-        }, { status: 500 })
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Authentication error',
+            errorCode: 'AUTH_ERROR',
+          },
+          { status: 500 }
+        )
       }
     }
   }
@@ -455,13 +479,13 @@ class SecureAuthService {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict' as const,
       maxAge: 15 * 60, // 15 minutes (access token lifetime)
-      path: '/'
+      path: '/',
     }
 
     response.cookies.set('orderly-access-token', tokens.accessToken, cookieOptions)
     response.cookies.set('orderly-refresh-token', tokens.refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      maxAge: 7 * 24 * 60 * 60, // 7 days
     })
   }
 

@@ -12,7 +12,7 @@ export default function SuppliersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">供應商管理</h1>
-          <p className="text-gray-600 mt-1">
+          <p className="mt-1 text-gray-600">
             管理和監控平台上的所有供應商，包括資料維護、績效分析和合約管理
           </p>
         </div>

@@ -11,6 +11,7 @@
 井然 Orderly 采用现代化 **Next.js 14+ App Router 模块化单体架构**，专注于餐饮供应链自动化对账和 ERP 深度整合。系统设计目标是在30分钟内完成对账处理，支持10,000并发用户，确保99.5%可用性。
 
 ### 核心价值定位
+
 - **对账自动化**: 90%减少人工对账时间，从8小时降至30分钟
 - **ERP 无缝整合**: 支持主流ERP系统的API连接和数据同步
 - **实时协作**: 餐厅-供应商端到端订单生命周期管理
@@ -72,20 +73,20 @@
 
 ### Technology Stack Decisions
 
-| Layer | Technology | Rationale |
-|-------|------------|-----------|
-| **Frontend Framework** | Next.js 14+ (App Router) | Server Components performance, built-in API routes, excellent TypeScript support |
-| **UI Components** | React 18 + Radix UI | Modern patterns with built-in accessibility |
-| **Styling** | TailwindCSS + CSS Modules | Utility-first with component-level isolation |
-| **State Management** | Zustand + React Query | Lightweight state with powerful server state management |
-| **Database** | PostgreSQL 15+ | ACID compliance, JSON support, excellent performance |
-| **ORM** | SQLAlchemy 2.x + Alembic | Pythonic ORM, explicit migrations |
-| **Cache** | Redis 7+ | High-performance caching, session management |
-| **Queue** | BullMQ | Reliable reconciliation job processing |
-| **File Storage** | Google Cloud Storage | Scalable document/image storage |
-| **Search** | PostgreSQL FTS + Meilisearch | Built-in full-text search + dedicated search engine |
-| **Monitoring** | DataDog + Sentry | APM and error tracking |
-| **Infrastructure** | Google Cloud Platform | Regional proximity, managed services |
+| Layer                  | Technology                   | Rationale                                                                        |
+| ---------------------- | ---------------------------- | -------------------------------------------------------------------------------- |
+| **Frontend Framework** | Next.js 14+ (App Router)     | Server Components performance, built-in API routes, excellent TypeScript support |
+| **UI Components**      | React 18 + Radix UI          | Modern patterns with built-in accessibility                                      |
+| **Styling**            | TailwindCSS + CSS Modules    | Utility-first with component-level isolation                                     |
+| **State Management**   | Zustand + React Query        | Lightweight state with powerful server state management                          |
+| **Database**           | PostgreSQL 15+               | ACID compliance, JSON support, excellent performance                             |
+| **ORM**                | SQLAlchemy 2.x + Alembic     | Pythonic ORM, explicit migrations                                                |
+| **Cache**              | Redis 7+                     | High-performance caching, session management                                     |
+| **Queue**              | BullMQ                       | Reliable reconciliation job processing                                           |
+| **File Storage**       | Google Cloud Storage         | Scalable document/image storage                                                  |
+| **Search**             | PostgreSQL FTS + Meilisearch | Built-in full-text search + dedicated search engine                              |
+| **Monitoring**         | DataDog + Sentry             | APM and error tracking                                                           |
+| **Infrastructure**     | Google Cloud Platform        | Regional proximity, managed services                                             |
 
 ---
 
@@ -99,20 +100,21 @@
 // lib/reconciliation/engine.ts
 interface ReconciliationEngine {
   // 自动匹配算法
-  autoMatch(orders: Order[], deliveries: Delivery[]): MatchResult[];
-  
+  autoMatch(orders: Order[], deliveries: Delivery[]): MatchResult[]
+
   // 置信度评分 (0-1.0)
-  calculateConfidence(matches: MatchResult[]): number;
-  
+  calculateConfidence(matches: MatchResult[]): number
+
   // 差异检测
-  detectDiscrepancies(matches: MatchResult[]): Discrepancy[];
-  
+  detectDiscrepancies(matches: MatchResult[]): Discrepancy[]
+
   // 自动解决策略
-  autoResolve(discrepancies: Discrepancy[]): Resolution[];
+  autoResolve(discrepancies: Discrepancy[]): Resolution[]
 }
 ```
 
 **Key Features**:
+
 - **智能匹配算法**: 基于订单号、商品代码、数量、金额的多维度匹配
 - **置信度评分**: ML模型评估对账结果可信度，>95%自动通过
 - **异常检测**: 价格偏差、数量短缺、品质问题的自动识别
@@ -125,24 +127,25 @@ interface ReconciliationEngine {
 ```typescript
 // lib/erp/adapter-interface.ts
 interface ERPAdapter {
-  name: string;
-  version: string;
-  
+  name: string
+  version: string
+
   // 数据映射
-  mapOrder(order: Order): ERPOrder;
-  mapProduct(product: Product): ERPProduct;
-  mapReconciliation(recon: Reconciliation): ERPReconciliation;
-  
+  mapOrder(order: Order): ERPOrder
+  mapProduct(product: Product): ERPProduct
+  mapReconciliation(recon: Reconciliation): ERPReconciliation
+
   // 双向同步
-  sendData(data: any): Promise<ERPResponse>;
-  receiveWebhook(payload: any): Promise<void>;
-  
+  sendData(data: any): Promise<ERPResponse>
+  receiveWebhook(payload: any): Promise<void>
+
   // 健康检查
-  healthCheck(): Promise<boolean>;
+  healthCheck(): Promise<boolean>
 }
 ```
 
 **Supported ERP Systems**:
+
 - **鼎新 Digiwin**: 台湾中小企业主流ERP
 - **Microsoft Dynamics 365**: 国际企业级ERP
 - **SAP Business One**: 中大型企业ERP
@@ -156,22 +159,22 @@ interface ERPAdapter {
 // lib/orders/lifecycle.ts
 enum OrderStatus {
   draft = 'draft',
-  submitted = 'submitted', 
+  submitted = 'submitted',
   confirmed = 'confirmed',
   preparing = 'preparing',
   shipped = 'shipped',
   delivered = 'delivered',
   accepted = 'accepted',
   completed = 'completed',
-  cancelled = 'cancelled'
+  cancelled = 'cancelled',
 }
 
 interface OrderWorkflow {
-  createOrder(data: CreateOrderRequest): Promise<Order>;
-  confirmOrder(orderId: string, confirmData: ConfirmOrderData): Promise<Order>;
-  shipOrder(orderId: string, shipData: ShipOrderData): Promise<Order>;
-  acceptDelivery(orderId: string, acceptData: AcceptanceData): Promise<Order>;
-  triggerReconciliation(orderId: string): Promise<Reconciliation>;
+  createOrder(data: CreateOrderRequest): Promise<Order>
+  confirmOrder(orderId: string, confirmData: ConfirmOrderData): Promise<Order>
+  shipOrder(orderId: string, shipData: ShipOrderData): Promise<Order>
+  acceptDelivery(orderId: string, acceptData: AcceptanceData): Promise<Order>
+  triggerReconciliation(orderId: string): Promise<Reconciliation>
 }
 ```
 
@@ -182,17 +185,17 @@ interface OrderWorkflow {
 ```typescript
 // lib/auth/multi-tenant.ts
 interface TenantContext {
-  organizationId: string;
-  userRole: UserRole;
-  permissions: Permission[];
+  organizationId: string
+  userRole: UserRole
+  permissions: Permission[]
 }
 
 // Database Row-Level Security
 const RLS_POLICIES = {
   restaurant_data: 'restaurant_id = current_setting("app.organization_id")::uuid',
   supplier_data: 'supplier_id = current_setting("app.organization_id")::uuid',
-  cross_tenant: 'organization_id IN (SELECT id FROM authorized_orgs())'
-};
+  cross_tenant: 'organization_id IN (SELECT id FROM authorized_orgs())',
+}
 ```
 
 ---
@@ -201,13 +204,13 @@ const RLS_POLICIES = {
 
 ### Performance Metrics
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **API Response Time** | P95 < 300ms | All REST endpoints |
+| Metric                        | Target       | Measurement                |
+| ----------------------------- | ------------ | -------------------------- |
+| **API Response Time**         | P95 < 300ms  | All REST endpoints         |
 | **Reconciliation Processing** | < 30 minutes | For monthly reconciliation |
-| **Database Query Time** | P99 < 100ms | Core business queries |
-| **Cache Hit Rate** | > 85% | Redis cache effectiveness |
-| **UI Response Time** | < 200ms | Client-side interactions |
+| **Database Query Time**       | P99 < 100ms  | Core business queries      |
+| **Cache Hit Rate**            | > 85%        | Redis cache effectiveness  |
+| **UI Response Time**          | < 200ms      | Client-side interactions   |
 
 ### Scalability Architecture
 
@@ -216,11 +219,11 @@ const RLS_POLICIES = {
 scaling:
   min_instances: 2
   max_instances: 100
-  
+
   triggers:
     - metric: cpu_utilization
       target: 60%
-    - metric: memory_utilization  
+    - metric: memory_utilization
       target: 70%
     - metric: request_count_per_instance
       target: 1000
@@ -240,18 +243,18 @@ database:
 ```typescript
 // Multi-layer Cache Strategy
 interface CacheStrategy {
-  L1: InMemoryCache;    // 10ms access time
-  L2: RedisCache;       // 50ms access time  
-  L3: DatabaseCache;    // 100ms+ access time
+  L1: InMemoryCache // 10ms access time
+  L2: RedisCache // 50ms access time
+  L3: DatabaseCache // 100ms+ access time
 }
 
 // Cache Invalidation
 const CACHE_TTL = {
-  products: 3600,           // 1 hour
-  price_tables: 1800,       // 30 minutes
-  user_sessions: 86400,     // 24 hours
-  reconciliation_results: 7200  // 2 hours
-};
+  products: 3600, // 1 hour
+  price_tables: 1800, // 30 minutes
+  user_sessions: 86400, // 24 hours
+  reconciliation_results: 7200, // 2 hours
+}
 ```
 
 ---
@@ -263,18 +266,18 @@ const CACHE_TTL = {
 ```typescript
 // JWT-based Authentication
 interface AuthTokens {
-  accessToken: string;   // 1 hour expiry
-  refreshToken: string;  // 7 days expiry
-  scope: string[];       // Permission scopes
+  accessToken: string // 1 hour expiry
+  refreshToken: string // 7 days expiry
+  scope: string[] // Permission scopes
 }
 
 // Role-Based Access Control
 const PERMISSIONS = {
-  'restaurant_admin': ['orders:*', 'reconciliation:*', 'users:manage'],
-  'restaurant_manager': ['orders:read', 'orders:create', 'reconciliation:read'],
-  'supplier_admin': ['orders:read', 'orders:confirm', 'products:*'],
-  'platform_admin': ['*']
-};
+  restaurant_admin: ['orders:*', 'reconciliation:*', 'users:manage'],
+  restaurant_manager: ['orders:read', 'orders:create', 'reconciliation:read'],
+  supplier_admin: ['orders:read', 'orders:confirm', 'products:*'],
+  platform_admin: ['*'],
+}
 ```
 
 ### Data Protection
@@ -282,20 +285,20 @@ const PERMISSIONS = {
 ```typescript
 // Encryption at Rest
 interface EncryptionService {
-  encryptPII(data: string): Promise<string>;
-  decryptPII(encrypted: string): Promise<string>;
-  encryptSensitiveData(data: any, keyId: string): Promise<EncryptedData>;
+  encryptPII(data: string): Promise<string>
+  decryptPII(encrypted: string): Promise<string>
+  encryptSensitiveData(data: any, keyId: string): Promise<EncryptedData>
 }
 
 // Audit Trail
 interface AuditLog {
-  entityType: string;
-  entityId: string;
-  action: 'create' | 'update' | 'delete' | 'approve';
-  userId: string;
-  changes: Record<string, any>;
-  ipAddress: string;
-  timestamp: Date;
+  entityType: string
+  entityId: string
+  action: 'create' | 'update' | 'delete' | 'approve'
+  userId: string
+  changes: Record<string, any>
+  ipAddress: string
+  timestamp: Date
 }
 ```
 
@@ -308,25 +311,25 @@ interface AuditLog {
 ```typescript
 // Adapter Registry Pattern
 class ERPAdapterRegistry {
-  private adapters = new Map<string, ERPAdapter>();
-  
-  register(name: string, adapter: ERPAdapter): void;
-  get(name: string): ERPAdapter;
-  
+  private adapters = new Map<string, ERPAdapter>()
+
+  register(name: string, adapter: ERPAdapter): void
+  get(name: string): ERPAdapter
+
   async syncToERP(orgId: string, data: any): Promise<ERPResponse> {
-    const org = await this.getOrganization(orgId);
-    const adapter = this.get(org.erpConfig.type);
-    return adapter.sendData(data);
+    const org = await this.getOrganization(orgId)
+    const adapter = this.get(org.erpConfig.type)
+    return adapter.sendData(data)
   }
 }
 
 // Webhook Event System
 interface WebhookEvent {
-  event_type: string;
-  organization_id: string;
-  data: any;
-  timestamp: Date;
-  signature: string;
+  event_type: string
+  organization_id: string
+  data: any
+  timestamp: Date
+  signature: string
 }
 ```
 
@@ -335,14 +338,14 @@ interface WebhookEvent {
 ```typescript
 // Middleware Pipeline
 const apiMiddleware = compose(
-  rateLimiter(),     // Rate limiting
-  authenticate(),    // JWT validation
-  authorize(),       // Permission check
-  validate(),        // Request validation
-  transform(),       // Data transformation
-  cache(),          // Response caching
-  audit()           // Audit logging
-);
+  rateLimiter(), // Rate limiting
+  authenticate(), // JWT validation
+  authorize(), // Permission check
+  validate(), // Request validation
+  transform(), // Data transformation
+  cache(), // Response caching
+  audit() // Audit logging
+)
 ```
 
 ---
@@ -355,15 +358,15 @@ const apiMiddleware = compose(
 # Google Cloud Platform Regions
 regions:
   primary:
-    location: asia-east1      # Taiwan
+    location: asia-east1 # Taiwan
     services: [cloud-run, cloud-sql, redis, storage]
-    
-  secondary: 
+
+  secondary:
     location: asia-southeast1 # Singapore
     services: [cloud-run, cloud-sql-replica, redis]
-    
+
   disaster_recovery:
-    location: us-central1     # Iowa
+    location: us-central1 # Iowa
     services: [cloud-sql-standby, storage-backup]
 ```
 
@@ -387,16 +390,16 @@ slo:
     target: 99.9%
     error_budget: 0.1%
     measurement_window: 30d
-    
+
   performance:
     api_response_time:
       target: 300ms (P95)
       measurement_window: 24h
-      
+
     reconciliation_processing:
       target: 30min (P99)
       measurement_window: 1h
-      
+
   business_metrics:
     reconciliation_accuracy:
       target: 99.5%
@@ -418,7 +421,7 @@ slo:
 ```
 /app
   /api              # API routes (Next.js App Router)
-  /(app)            # Application pages  
+  /(app)            # Application pages
   /components       # React components
 /lib
   /modules          # Business logic modules
@@ -445,30 +448,35 @@ slo:
 ## Migration Roadmap
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 - [ ] Next.js application setup with module structure
 - [ ] Database layer (SQLAlchemy + Alembic) with PostgreSQL
-- [ ] Authentication & authorization system  
+- [ ] Authentication & authorization system
 - [ ] Redis cache infrastructure
 
 ### Phase 2: Core Modules (Weeks 3-4)
+
 - [ ] User management module
 - [ ] Product catalog module
 - [ ] Order management system
 - [ ] Reconciliation engine foundation
 
 ### Phase 3: Integration (Weeks 5-6)
+
 - [ ] ERP adapter framework
 - [ ] Webhook delivery system
 - [ ] Notification service
 - [ ] File upload/processing
 
-### Phase 4: Migration (Weeks 7-8) 
+### Phase 4: Migration (Weeks 7-8)
+
 - [ ] Data migration scripts
 - [ ] API compatibility layer
 - [ ] Traffic routing configuration
 - [ ] Rollback procedures
 
 ### Phase 5: Optimization (Weeks 9-10)
+
 - [ ] Performance tuning
 - [ ] Load testing
 - [ ] Security audit
@@ -479,30 +487,35 @@ slo:
 ## Key Design Principles
 
 ### 1. Domain-Driven Design
+
 - Bounded contexts for each business domain
-- Aggregate roots for consistency boundaries  
+- Aggregate roots for consistency boundaries
 - Loose coupling through domain events
 - Repository pattern for data access
 
 ### 2. API Design
+
 - RESTful conventions with OpenAPI 3.0 spec
 - Consistent error response format
 - Pagination for list endpoints
 - Versioning strategy (header-based)
 
 ### 3. Performance Optimization
+
 - Query optimization with proper indexing
 - Multi-layer caching strategy
 - Connection pooling for database access
 - Background job processing for heavy operations
 
 ### 4. Security Best Practices
+
 - Zero-trust security model
 - Encryption at rest and in transit
 - Regular security audits and penetration testing
 - Principle of least privilege access
 
 This technical architecture provides a solid foundation for the 井然 Orderly platform, balancing simplicity with enterprise requirements while ensuring scalability, maintainability, and performance to support the critical automated reconciliation and ERP integration capabilities.
+
 # Technical Architecture Summary
 
 Note: The repository has migrated from a legacy Node ORM to SQLAlchemy + Alembic on FastAPI services. Any prior legacy ORM references are deprecated and will be updated progressively.

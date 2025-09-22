@@ -1,6 +1,6 @@
 /**
  * WCAG 2.1 AA 無障礙工具函數
- * 
+ *
  * 提供符合 WCAG 2.1 AA 標準的各種輔助功能，包括：
  * - 顏色對比度檢查
  * - 鍵盤導航支援
@@ -41,7 +41,7 @@ export class ColorContrastChecker {
     const l2 = this.getRelativeLuminance(color2)
     const lighter = Math.max(l1, l2)
     const darker = Math.min(l1, l2)
-    
+
     return (lighter + 0.05) / (darker + 0.05)
   }
 
@@ -70,14 +70,17 @@ export class ColorContrastChecker {
     return {
       r: parseInt(result[1]!, 16),
       g: parseInt(result[2]!, 16),
-      b: parseInt(result[3]!, 16)
+      b: parseInt(result[3]!, 16),
     }
   }
 
   /**
    * 獲取建議的顏色調整
    */
-  static getSuggestedColors(foreground: string, background: string): {
+  static getSuggestedColors(
+    foreground: string,
+    background: string
+  ): {
     isCompliant: boolean
     currentRatio: number
     suggestions: {
@@ -98,8 +101,8 @@ export class ColorContrastChecker {
         darkerForeground: this.adjustBrightness(foreground, -20),
         lighterForeground: this.adjustBrightness(foreground, 20),
         darkerBackground: this.adjustBrightness(background, -20),
-        lighterBackground: this.adjustBrightness(background, 20)
-      }
+        lighterBackground: this.adjustBrightness(background, 20),
+      },
     }
   }
 
@@ -111,7 +114,7 @@ export class ColorContrastChecker {
     if (!rgb) return hex
 
     const adjust = (value: number) => {
-      const adjusted = value + (255 * percent / 100)
+      const adjusted = value + (255 * percent) / 100
       return Math.max(0, Math.min(255, Math.round(adjusted)))
     }
 
@@ -146,7 +149,7 @@ export class KeyboardNavigationManager {
     '[contenteditable="true"]',
     'audio[controls]',
     'video[controls]',
-    'summary'
+    'summary',
   ].join(', ')
 
   /**
@@ -156,7 +159,7 @@ export class KeyboardNavigationManager {
     this.trapContainer = container
     this.updateFocusableElements()
     this.setupEventListeners()
-    
+
     // 設置初始焦點
     if (this.focusableElements.length > 0) {
       const first = this.focusableElements[0]
@@ -182,7 +185,9 @@ export class KeyboardNavigationManager {
     if (!this.trapContainer) return
 
     const nodes = Array.from(
-      this.trapContainer.querySelectorAll<HTMLElement>(KeyboardNavigationManager.FOCUSABLE_SELECTORS)
+      this.trapContainer.querySelectorAll<HTMLElement>(
+        KeyboardNavigationManager.FOCUSABLE_SELECTORS
+      )
     )
     this.focusableElements = nodes.filter(el => this.isVisible(el))
   }
@@ -192,9 +197,9 @@ export class KeyboardNavigationManager {
    */
   private isVisible(element: HTMLElement): boolean {
     const style = window.getComputedStyle(element)
-    return style.display !== 'none' && 
-           style.visibility !== 'hidden' && 
-           element.offsetParent !== null
+    return (
+      style.display !== 'none' && style.visibility !== 'hidden' && element.offsetParent !== null
+    )
   }
 
   /**
@@ -248,7 +253,7 @@ export class KeyboardNavigationManager {
   private handleArrowNavigation(event: KeyboardEvent): void {
     const currentElement = document.activeElement as HTMLElement
     const currentIndex = this.focusableElements.indexOf(currentElement)
-    
+
     if (currentIndex === -1) return
 
     let nextIndex: number
@@ -268,9 +273,11 @@ export class KeyboardNavigationManager {
    */
   private handleEscapeKey(event: KeyboardEvent): void {
     // 觸發自定義事件，讓父組件處理
-    this.trapContainer?.dispatchEvent(new CustomEvent('escapeKey', { 
-      detail: { originalEvent: event }
-    }))
+    this.trapContainer?.dispatchEvent(
+      new CustomEvent('escapeKey', {
+        detail: { originalEvent: event },
+      })
+    )
   }
 
   /**
@@ -369,7 +376,7 @@ export class ScreenReaderAnnouncer {
   announceUrgent(message: string): void {
     if (this.liveRegion) {
       this.liveRegion.textContent = message
-      
+
       // 清除消息避免重複公告
       setTimeout(() => {
         if (this.liveRegion) {
@@ -385,7 +392,7 @@ export class ScreenReaderAnnouncer {
   announcePolite(message: string): void {
     if (this.politeRegion) {
       this.politeRegion.textContent = message
-      
+
       // 清除消息避免重複公告
       setTimeout(() => {
         if (this.politeRegion) {
@@ -462,7 +469,10 @@ export class FocusManager {
   /**
    * 管理模態框焦點
    */
-  manageModalFocus(modalElement: HTMLElement, triggerElement?: HTMLElement): {
+  manageModalFocus(
+    modalElement: HTMLElement,
+    triggerElement?: HTMLElement
+  ): {
     destroy: () => void
   } {
     // 保存觸發元素
@@ -487,7 +497,7 @@ export class FocusManager {
       destroy: () => {
         keyboardManager.destroyFocusTrap()
         modalElement.removeEventListener('escapeKey', handleEscape)
-      }
+      },
     }
   }
 }
@@ -513,15 +523,20 @@ export class AriaLabelGenerator {
     'aria-required'?: boolean
   } {
     const { fieldName, isRequired, hasError, errorMessage, helperText, description } = config
-    
+
     let ariaLabel = fieldName
     if (isRequired) {
       ariaLabel += '，必填欄位'
     }
 
     const describedByIds: string[] = []
-    const attributes: { 'aria-label': string; 'aria-describedby'?: string; 'aria-invalid'?: boolean; 'aria-required'?: boolean } = {
-      'aria-label': ariaLabel
+    const attributes: {
+      'aria-label': string
+      'aria-describedby'?: string
+      'aria-invalid'?: boolean
+      'aria-required'?: boolean
+    } = {
+      'aria-label': ariaLabel,
     }
 
     if (isRequired) {
@@ -566,7 +581,7 @@ export class AriaLabelGenerator {
     'aria-busy'?: boolean
   } {
     const { action, target, state, hasIcon, iconDescription } = config
-    
+
     let ariaLabel = action
     if (target) {
       ariaLabel += target
@@ -577,7 +592,7 @@ export class AriaLabelGenerator {
     }
 
     const attributes: any = {
-      'aria-label': ariaLabel
+      'aria-label': ariaLabel,
     }
 
     switch (state) {
@@ -610,14 +625,23 @@ export class AriaLabelGenerator {
   /**
    * 生成導航連結的 ARIA 標籤
    */
-  static generateNavigationLabel(linkText: string, isCurrent?: boolean, hasSubmenu?: boolean): {
+  static generateNavigationLabel(
+    linkText: string,
+    isCurrent?: boolean,
+    hasSubmenu?: boolean
+  ): {
     'aria-label': string
     'aria-current'?: string
     'aria-haspopup'?: boolean
     'aria-expanded'?: boolean
   } {
-    const attributes: { 'aria-label': string; 'aria-current'?: string; 'aria-haspopup'?: boolean; 'aria-expanded'?: boolean } = {
-      'aria-label': linkText
+    const attributes: {
+      'aria-label': string
+      'aria-current'?: string
+      'aria-haspopup'?: boolean
+      'aria-expanded'?: boolean
+    } = {
+      'aria-label': linkText,
     }
 
     if (isCurrent) {
@@ -668,12 +692,15 @@ export class AccessibilityValidator {
     })
 
     // 檢查表單標籤
-    const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input, select, textarea')
+    const inputs = document.querySelectorAll<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >('input, select, textarea')
     inputs.forEach((input, index) => {
-      const hasLabel = input.hasAttribute('aria-label') || 
-                      input.hasAttribute('aria-labelledby') ||
-                      document.querySelector(`label[for="${input.id}"]`)
-      
+      const hasLabel =
+        input.hasAttribute('aria-label') ||
+        input.hasAttribute('aria-labelledby') ||
+        document.querySelector(`label[for="${input.id}"]`)
+
       if (!hasLabel) {
         warnings.push(`第 ${index + 1} 個表單欄位缺少標籤`)
       }
@@ -695,7 +722,7 @@ export class AccessibilityValidator {
     return {
       isValid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     }
   }
 
@@ -713,32 +740,34 @@ export class AccessibilityValidator {
     }>
   } {
     const issues: any[] = []
-    
+
     // 檢查所有文字元素的對比度
-    const textElements = document.querySelectorAll<HTMLElement>('p, span, div, a, button, h1, h2, h3, h4, h5, h6, label')
-    
+    const textElements = document.querySelectorAll<HTMLElement>(
+      'p, span, div, a, button, h1, h2, h3, h4, h5, h6, label'
+    )
+
     textElements.forEach(element => {
       const computed = window.getComputedStyle(element as Element)
       const foreground = computed.color
       const background = computed.backgroundColor
-      
+
       if (foreground && background && background !== 'rgba(0, 0, 0, 0)') {
         const ratio = ColorContrastChecker.getContrastRatio(
           this.rgbToHex(foreground),
           this.rgbToHex(background)
         )
-        
+
         const fontSize = parseFloat(computed.fontSize)
         const isLargeText = fontSize >= 18 || (fontSize >= 14 && computed.fontWeight === 'bold')
         const required = isLargeText ? 3 : 4.5
-        
+
         if (ratio < required) {
           issues.push({
             element,
             foreground,
             background,
             ratio: Math.round(ratio * 100) / 100,
-            required
+            required,
           })
         }
       }
@@ -746,7 +775,7 @@ export class AccessibilityValidator {
 
     return {
       isValid: issues.length === 0,
-      issues
+      issues,
     }
   }
 
@@ -756,7 +785,7 @@ export class AccessibilityValidator {
   private static rgbToHex(rgb: string): string {
     const match = rgb.match(/\d+/g)
     if (!match || match.length < 3) return '#000000'
-    
+
     const [r, g, b] = match.map(Number) as unknown as [number, number, number]
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`
   }
@@ -805,7 +834,7 @@ export class AccessibilityEventHandler {
 
       let nextIndex = currentIndex
       const isHorizontal = orientation === 'horizontal'
-      
+
       switch (event.key) {
         case isHorizontal ? 'ArrowRight' : 'ArrowDown':
           nextIndex = (currentIndex + 1) % elements.length
@@ -838,5 +867,5 @@ export default {
   FocusManager,
   AriaLabelGenerator,
   AccessibilityValidator,
-  AccessibilityEventHandler
+  AccessibilityEventHandler,
 }

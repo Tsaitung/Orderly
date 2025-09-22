@@ -1,16 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { 
-  ChevronDown, 
-  ChefHat, 
-  Truck, 
-  Building2,
-  Check,
-  Search,
-  Eye,
-  ArrowLeft
-} from 'lucide-react'
+import { ChevronDown, ChefHat, Truck, Building2, Check, Search, Eye, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth, Organization } from '@/contexts/AuthContext'
@@ -22,21 +13,21 @@ interface OrganizationSwitcherProps {
   variant?: 'dropdown' | 'compact' | 'full'
 }
 
-export function OrganizationSwitcher({ 
-  className, 
+export function OrganizationSwitcher({
+  className,
   showLabel = true,
-  variant = 'dropdown' 
+  variant = 'dropdown',
 }: OrganizationSwitcherProps) {
-  const { 
-    user, 
-    organizations, 
+  const {
+    user,
+    organizations,
     currentOrganization,
-    viewMode, 
+    viewMode,
     canViewAsOrganization,
     switchToOrganizationView,
-    exitViewMode 
+    exitViewMode,
   } = useAuth()
-  
+
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -46,8 +37,8 @@ export function OrganizationSwitcher({
   }
 
   // Filter organizations based on search
-  const filteredOrganizations = organizations.filter(org => 
-    org.name.toLowerCase().includes(searchQuery.toLowerCase()) && org.isActive
+  const filteredOrganizations = organizations.filter(
+    org => org.name.toLowerCase().includes(searchQuery.toLowerCase()) && org.isActive
   )
 
   const handleOrganizationSelect = async (organizationId: string) => {
@@ -85,13 +76,13 @@ export function OrganizationSwitcher({
   // Compact variant for mobile/small spaces
   if (variant === 'compact') {
     return (
-      <div className={cn("relative", className)}>
+      <div className={cn('relative', className)}>
         {viewMode.isViewingAs ? (
           <Button
             variant="outline"
             size="sm"
             onClick={handleExitView}
-            className="flex items-center space-x-2 bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+            className="flex items-center space-x-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">退出</span>
@@ -109,21 +100,21 @@ export function OrganizationSwitcher({
         )}
 
         {isOpen && !viewMode.isViewingAs && (
-          <div className="absolute top-full right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-            <div className="p-3 border-b border-gray-200">
+          <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-gray-200 bg-white shadow-lg">
+            <div className="border-b border-gray-200 p-3">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <input
                   type="text"
                   placeholder="搜尋組織..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-gray-200 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <div className="max-h-64 overflow-y-auto">
-              {filteredOrganizations.map((org) => (
+              {filteredOrganizations.map(org => (
                 <OrganizationItem
                   key={org.id}
                   organization={org}
@@ -132,9 +123,7 @@ export function OrganizationSwitcher({
                 />
               ))}
               {filteredOrganizations.length === 0 && (
-                <div className="p-4 text-center text-gray-500 text-sm">
-                  沒有找到符合條件的組織
-                </div>
+                <div className="p-4 text-center text-sm text-gray-500">沒有找到符合條件的組織</div>
               )}
             </div>
           </div>
@@ -145,22 +134,25 @@ export function OrganizationSwitcher({
 
   // Full dropdown variant
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       <Button
         variant="outline"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center justify-between min-w-48",
-          viewMode.isViewingAs && "bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+          'flex min-w-48 items-center justify-between',
+          viewMode.isViewingAs &&
+            'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100'
         )}
       >
         <div className="flex items-center space-x-2">
-          {React.createElement(getCurrentIcon(), { 
+          {React.createElement(getCurrentIcon(), {
             className: cn(
-              "h-4 w-4",
-              viewMode.isViewingAs && currentOrganization?.type === 'restaurant' && "text-amber-600",
-              viewMode.isViewingAs && currentOrganization?.type === 'supplier' && "text-blue-600"
-            )
+              'h-4 w-4',
+              viewMode.isViewingAs &&
+                currentOrganization?.type === 'restaurant' &&
+                'text-amber-600',
+              viewMode.isViewingAs && currentOrganization?.type === 'supplier' && 'text-blue-600'
+            ),
           })}
           <div className="text-left">
             {showLabel && (
@@ -171,38 +163,37 @@ export function OrganizationSwitcher({
             <div className="font-medium">{getCurrentDisplayName()}</div>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           {viewMode.isViewingAs && (
-            <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800">
+            <Badge variant="secondary" className="bg-orange-100 text-xs text-orange-800">
               檢視模式
             </Badge>
           )}
-          <ChevronDown className={cn(
-            "h-4 w-4 transition-transform",
-            isOpen && "transform rotate-180"
-          )} />
+          <ChevronDown
+            className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180 transform')}
+          />
         </div>
       </Button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full min-w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full min-w-80 rounded-lg border border-gray-200 bg-white shadow-lg">
           {/* Header */}
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="font-medium text-gray-900 mb-3">
+          <div className="border-b border-gray-200 p-4">
+            <h3 className="mb-3 font-medium text-gray-900">
               {viewMode.isViewingAs ? '檢視模式管理' : '選擇要檢視的組織'}
             </h3>
-            
+
             {viewMode.isViewingAs ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-3">
                   <div className="flex items-center space-x-3">
-                    {React.createElement(getCurrentIcon(), { 
+                    {React.createElement(getCurrentIcon(), {
                       className: cn(
-                        "h-5 w-5",
-                        currentOrganization?.type === 'restaurant' && "text-amber-600",
-                        currentOrganization?.type === 'supplier' && "text-blue-600"
-                      )
+                        'h-5 w-5',
+                        currentOrganization?.type === 'restaurant' && 'text-amber-600',
+                        currentOrganization?.type === 'supplier' && 'text-blue-600'
+                      ),
                     })}
                     <div>
                       <p className="font-medium text-orange-800">{getCurrentDisplayName()}</p>
@@ -217,23 +208,21 @@ export function OrganizationSwitcher({
                     onClick={handleExitView}
                     className="border-orange-300 text-orange-700 hover:bg-orange-100"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    <ArrowLeft className="mr-1 h-4 w-4" />
                     退出
                   </Button>
                 </div>
-                <div className="text-sm text-gray-600">
-                  切換到其他組織或退出檢視模式
-                </div>
+                <div className="text-sm text-gray-600">切換到其他組織或退出檢視模式</div>
               </div>
             ) : (
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <input
                   type="text"
                   placeholder="搜尋組織名稱..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-gray-200 py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             )}
@@ -243,7 +232,7 @@ export function OrganizationSwitcher({
           <div className="max-h-72 overflow-y-auto">
             {!viewMode.isViewingAs && (
               <>
-                {filteredOrganizations.map((org) => (
+                {filteredOrganizations.map(org => (
                   <OrganizationItem
                     key={org.id}
                     organization={org}
@@ -254,7 +243,7 @@ export function OrganizationSwitcher({
                 ))}
                 {filteredOrganizations.length === 0 && (
                   <div className="p-6 text-center text-gray-500">
-                    <Building2 className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <Building2 className="mx-auto mb-2 h-8 w-8 text-gray-300" />
                     <p>沒有找到符合條件的組織</p>
                     <p className="text-sm">請嘗試調整搜尋條件</p>
                   </div>
@@ -264,11 +253,11 @@ export function OrganizationSwitcher({
 
             {viewMode.isViewingAs && (
               <div className="p-4">
-                <h4 className="font-medium text-gray-900 mb-3">切換到其他組織</h4>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <h4 className="mb-3 font-medium text-gray-900">切換到其他組織</h4>
+                <div className="max-h-48 space-y-2 overflow-y-auto">
                   {organizations
                     .filter(org => org.id !== currentOrganization?.id)
-                    .map((org) => (
+                    .map(org => (
                       <OrganizationItem
                         key={org.id}
                         organization={org}
@@ -293,31 +282,35 @@ interface OrganizationItemProps {
   showDetails?: boolean
 }
 
-function OrganizationItem({ 
-  organization, 
-  onSelect, 
+function OrganizationItem({
+  organization,
+  onSelect,
   isSelected = false,
-  showDetails = false 
+  showDetails = false,
 }: OrganizationItemProps) {
   const Icon = organization.type === 'restaurant' ? ChefHat : Truck
-  
+
   return (
     <div
       onClick={onSelect}
       className={cn(
-        "flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer transition-colors",
-        isSelected && "bg-blue-50"
+        'flex cursor-pointer items-center justify-between p-3 transition-colors hover:bg-gray-50',
+        isSelected && 'bg-blue-50'
       )}
     >
       <div className="flex items-center space-x-3">
-        <div className={cn(
-          "p-2 rounded-full",
-          organization.type === 'restaurant' ? 'bg-amber-100' : 'bg-blue-100'
-        )}>
-          <Icon className={cn(
-            "h-4 w-4",
-            organization.type === 'restaurant' ? 'text-amber-600' : 'text-blue-600'
-          )} />
+        <div
+          className={cn(
+            'rounded-full p-2',
+            organization.type === 'restaurant' ? 'bg-amber-100' : 'bg-blue-100'
+          )}
+        >
+          <Icon
+            className={cn(
+              'h-4 w-4',
+              organization.type === 'restaurant' ? 'text-amber-600' : 'text-blue-600'
+            )}
+          />
         </div>
         <div>
           <p className="font-medium text-gray-900">{organization.name}</p>
@@ -328,7 +321,7 @@ function OrganizationItem({
           )}
         </div>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         {isSelected && <Check className="h-4 w-4 text-blue-600" />}
         <Badge variant={organization.type === 'restaurant' ? 'default' : 'secondary'}>

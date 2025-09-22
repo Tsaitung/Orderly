@@ -22,13 +22,13 @@ export function Collapsible({
   open: controlledOpen,
   onOpenChange,
   children,
-  defaultOpen = false
+  defaultOpen = false,
 }: CollapsibleProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
-  
+
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
-  
+
   const handleOpenChange = (newOpen: boolean) => {
     if (onOpenChange) {
       onOpenChange(newOpen)
@@ -39,14 +39,12 @@ export function Collapsible({
 
   const contextValue: CollapsibleContextValue = {
     open,
-    onOpenChange: handleOpenChange
+    onOpenChange: handleOpenChange,
   }
 
   return (
     <CollapsibleContext.Provider value={contextValue}>
-      <div data-state={open ? 'open' : 'closed'}>
-        {children}
-      </div>
+      <div data-state={open ? 'open' : 'closed'}>{children}</div>
     </CollapsibleContext.Provider>
   )
 }
@@ -58,13 +56,13 @@ interface CollapsibleTriggerProps {
   className?: string
 }
 
-export function CollapsibleTrigger({ 
-  asChild = false, 
-  children, 
-  className = '' 
+export function CollapsibleTrigger({
+  asChild = false,
+  children,
+  className = '',
 }: CollapsibleTriggerProps) {
   const context = useContext(CollapsibleContext)
-  
+
   if (!context) {
     throw new Error('CollapsibleTrigger must be used within a Collapsible')
   }
@@ -84,7 +82,7 @@ export function CollapsibleTrigger({
       },
       'aria-expanded': open,
       'data-state': open ? 'open' : 'closed',
-      className: `${children.props.className || ''} ${className}`.trim()
+      className: `${children.props.className || ''} ${className}`.trim(),
     })
   }
 
@@ -108,15 +106,15 @@ interface CollapsibleContentProps {
   forceMount?: boolean
 }
 
-export function CollapsibleContent({ 
-  children, 
+export function CollapsibleContent({
+  children,
   className = '',
-  forceMount = false 
+  forceMount = false,
 }: CollapsibleContentProps) {
   const context = useContext(CollapsibleContext)
   const [height, setHeight] = useState<number | undefined>(undefined)
   const contentRef = useRef<HTMLDivElement>(null)
-  
+
   if (!context) {
     throw new Error('CollapsibleContent must be used within a Collapsible')
   }
@@ -150,12 +148,10 @@ export function CollapsibleContent({
       style={{
         height: height !== undefined ? `${height}px` : undefined,
         overflow: 'hidden',
-        transition: 'height 0.2s ease-out'
+        transition: 'height 0.2s ease-out',
       }}
     >
-      <div style={{ padding: open ? undefined : 0 }}>
-        {children}
-      </div>
+      <div style={{ padding: open ? undefined : 0 }}>{children}</div>
     </div>
   )
 }
@@ -166,5 +162,5 @@ export {
   type CollapsibleContextValue,
   type CollapsibleProps,
   type CollapsibleTriggerProps,
-  type CollapsibleContentProps
+  type CollapsibleContentProps,
 }

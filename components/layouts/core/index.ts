@@ -12,7 +12,7 @@ export type {
   UserInfo,
   ThemeConfig,
   DashboardLayoutProps,
-  DashboardContextType
+  DashboardContextType,
 } from './DashboardConfig'
 
 export {
@@ -20,7 +20,7 @@ export {
   SPACING_CONFIG,
   BREAKPOINTS,
   LAYOUT_SIZES,
-  LAYOUT_CLASSES
+  LAYOUT_CLASSES,
 } from './DashboardConfig'
 
 // Custom Hooks
@@ -28,5 +28,5 @@ export {
   useDashboard,
   useDashboardTheme,
   useDashboardSpacing,
-  useDashboardNavigation
+  useDashboardNavigation,
 } from './DashboardProvider'

@@ -2,7 +2,7 @@
 Customer Location schemas (地點)
 """
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from .common import (
     BaseResponseSchema, FilterSchema, PaginationSchema, 
     AddressSchema, ContactSchema, CoordinatesSchema, WeeklyOperatingHoursSchema
@@ -33,13 +33,15 @@ class LocationCreateSchema(BaseModel):
     extra_data: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional extra_data")
     notes: Optional[str] = Field(None, max_length=1000, description="Notes")
     
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def validate_name(cls, v):
         if not v or not v.strip():
             raise ValueError("Location name cannot be empty")
         return v.strip()
     
-    @validator('code')
+    @field_validator('code')
+    @classmethod
     def validate_code(cls, v):
         if v is not None:
             v = v.strip().upper()

@@ -11,12 +11,12 @@ import {
   ERPOrderSchema,
   ERPProductSchema,
   ERPInventorySchema,
-  ERPCustomerSchema
+  ERPCustomerSchema,
 } from '../erp-adapter-interface'
 
 /**
  * Oracle NetSuite ERP 適配器
- * 
+ *
  * 支援功能:
  * - RESTlets/SuiteScript API 集成
  * - 訂單同步 (銷售訂單/採購訂單)
@@ -33,46 +33,46 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   // NetSuite 特定配置
   private readonly defaultFieldMapping = {
     // 訂單欄位對應
-    'orderNumber': 'tranid',
-    'externalId': 'internalid',
-    'customerCode': 'entity',
-    'orderDate': 'trandate',
-    'deliveryDate': 'shipdate',
-    'totalAmount': 'total',
-    'status': 'orderstatus',
-    'notes': 'memo',
-    
+    orderNumber: 'tranid',
+    externalId: 'internalid',
+    customerCode: 'entity',
+    orderDate: 'trandate',
+    deliveryDate: 'shipdate',
+    totalAmount: 'total',
+    status: 'orderstatus',
+    notes: 'memo',
+
     // 產品欄位對應
-    'code': 'itemid',
-    'name': 'displayname',
-    'basePrice': 'baseprice',
-    'unit': 'unitstype',
-    'isActive': 'isinactive',
-    'category': 'class',
-    'description': 'salesdescription',
-    
+    code: 'itemid',
+    name: 'displayname',
+    basePrice: 'baseprice',
+    unit: 'unitstype',
+    isActive: 'isinactive',
+    category: 'class',
+    description: 'salesdescription',
+
     // 庫存欄位對應
-    'productCode': 'item',
-    'availableQuantity': 'quantityavailable',
-    'reservedQuantity': 'quantitycommitted',
-    'location': 'location',
-    
+    productCode: 'item',
+    availableQuantity: 'quantityavailable',
+    reservedQuantity: 'quantitycommitted',
+    location: 'location',
+
     // 客戶欄位對應
-    'code': 'entityid',
-    'name': 'companyname',
-    'contactPerson': 'contact',
-    'email': 'email',
-    'phone': 'phone',
-    'isActive': 'isinactive'
+    code: 'entityid',
+    name: 'companyname',
+    contactPerson: 'contact',
+    email: 'email',
+    phone: 'phone',
+    isActive: 'isinactive',
   }
 
   constructor(config: ERPConnectionConfig) {
     super(config)
-    
+
     // 合併欄位對應
     this.config.fieldMapping = {
       ...this.defaultFieldMapping,
-      ...this.config.fieldMapping
+      ...this.config.fieldMapping,
     }
   }
 
@@ -82,14 +82,18 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
         grant_type: 'client_credentials',
         client_id: this.config.authentication.credentials.clientId,
         client_secret: this.config.authentication.credentials.clientSecret,
-        scope: 'restlets,rest_webservices'
+        scope: 'restlets,rest_webservices',
       }
 
-      const response = await this.makeOAuthRequest('POST', '/services/rest/auth/oauth2/v1/token', tokenData)
-      
+      const response = await this.makeOAuthRequest(
+        'POST',
+        '/services/rest/auth/oauth2/v1/token',
+        tokenData
+      )
+
       if (response.access_token) {
         this.accessToken = response.access_token
-        this.tokenExpiry = new Date(Date.now() + (response.expires_in * 1000))
+        this.tokenExpiry = new Date(Date.now() + response.expires_in * 1000)
         this.isConnected = true
         this.lastError = undefined
         return true
@@ -127,7 +131,7 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   getConnectionStatus(): { connected: boolean; lastError?: string } {
     return {
       connected: this.isConnected && !!this.accessToken && !this.isTokenExpired(),
-      lastError: this.lastError
+      lastError: this.lastError,
     }
   }
 
@@ -163,24 +167,25 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       let query = '/services/rest/record/v1/salesorder'
       if (filters.length > 0 || Object.keys(pagination).length > 0) {
         const queryParams = new URLSearchParams()
-        
+
         if (filters.length > 0) {
           queryParams.append('q', filters.join(' AND '))
         }
-        
+
         if (pagination.limit) queryParams.append('limit', pagination.limit.toString())
         if (pagination.offset) queryParams.append('offset', pagination.offset.toString())
-        
+
         query += `?${queryParams.toString()}`
       }
 
       const response = await this.makeRequest('GET', query)
-      
-      const orders: ERPOrder[] = response.items?.map((nsOrder: any) => this.mapNetSuiteOrderToStandard(nsOrder)) || []
+
+      const orders: ERPOrder[] =
+        response.items?.map((nsOrder: any) => this.mapNetSuiteOrderToStandard(nsOrder)) || []
 
       return {
         success: true,
@@ -189,13 +194,13 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
           totalCount: response.totalResults,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get orders'
+        error: error instanceof Error ? error.message : 'Failed to get orders',
       }
     }
   }
@@ -203,41 +208,52 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async createOrder(order: ERPOrder): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const nsOrder = this.mapStandardOrderToNetSuite(order)
-      const response = await this.makeRequest('POST', '/services/rest/record/v1/salesorder', nsOrder)
-      
+      const response = await this.makeRequest(
+        'POST',
+        '/services/rest/record/v1/salesorder',
+        nsOrder
+      )
+
       const createdOrder = this.mapNetSuiteOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: createdOrder
+        data: createdOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create order'
+        error: error instanceof Error ? error.message : 'Failed to create order',
       }
     }
   }
 
-  async updateOrder(externalId: string, updates: Partial<ERPOrder>): Promise<ERPApiResponse<ERPOrder>> {
+  async updateOrder(
+    externalId: string,
+    updates: Partial<ERPOrder>
+  ): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
+
       const nsUpdates = this.mapStandardOrderToNetSuite(updates as ERPOrder)
-      const response = await this.makeRequest('PATCH', `/services/rest/record/v1/salesorder/${externalId}`, nsUpdates)
-      
+      const response = await this.makeRequest(
+        'PATCH',
+        `/services/rest/record/v1/salesorder/${externalId}`,
+        nsUpdates
+      )
+
       const updatedOrder = this.mapNetSuiteOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedOrder
+        data: updatedOrder,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update order'
+        error: error instanceof Error ? error.message : 'Failed to update order',
       }
     }
   }
@@ -245,14 +261,14 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async deleteOrder(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       await this.makeRequest('DELETE', `/services/rest/record/v1/salesorder/${externalId}`)
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete order'
+        error: error instanceof Error ? error.message : 'Failed to delete order',
       }
     }
   }
@@ -260,18 +276,21 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async getOrderById(externalId: string): Promise<ERPApiResponse<ERPOrder>> {
     try {
       await this.ensureConnected()
-      
-      const response = await this.makeRequest('GET', `/services/rest/record/v1/salesorder/${externalId}`)
+
+      const response = await this.makeRequest(
+        'GET',
+        `/services/rest/record/v1/salesorder/${externalId}`
+      )
       const order = this.mapNetSuiteOrderToStandard(response)
-      
+
       return {
         success: true,
-        data: order
+        data: order,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get order'
+        error: error instanceof Error ? error.message : 'Failed to get order',
       }
     }
   }
@@ -302,24 +321,25 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       let query = '/services/rest/record/v1/item'
       if (filters.length > 0 || Object.keys(pagination).length > 0) {
         const queryParams = new URLSearchParams()
-        
+
         if (filters.length > 0) {
           queryParams.append('q', filters.join(' AND '))
         }
-        
+
         if (pagination.limit) queryParams.append('limit', pagination.limit.toString())
         if (pagination.offset) queryParams.append('offset', pagination.offset.toString())
-        
+
         query += `?${queryParams.toString()}`
       }
 
       const response = await this.makeRequest('GET', query)
-      
-      const products: ERPProduct[] = response.items?.map((nsItem: any) => this.mapNetSuiteItemToStandard(nsItem)) || []
+
+      const products: ERPProduct[] =
+        response.items?.map((nsItem: any) => this.mapNetSuiteItemToStandard(nsItem)) || []
 
       return {
         success: true,
@@ -328,13 +348,13 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
           totalCount: response.totalResults,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get products'
+        error: error instanceof Error ? error.message : 'Failed to get products',
       }
     }
   }
@@ -342,41 +362,48 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async createProduct(product: ERPProduct): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const nsItem = this.mapStandardItemToNetSuite(product)
       const response = await this.makeRequest('POST', '/services/rest/record/v1/item', nsItem)
-      
+
       const createdProduct = this.mapNetSuiteItemToStandard(response)
-      
+
       return {
         success: true,
-        data: createdProduct
+        data: createdProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create product'
+        error: error instanceof Error ? error.message : 'Failed to create product',
       }
     }
   }
 
-  async updateProduct(externalId: string, updates: Partial<ERPProduct>): Promise<ERPApiResponse<ERPProduct>> {
+  async updateProduct(
+    externalId: string,
+    updates: Partial<ERPProduct>
+  ): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const nsUpdates = this.mapStandardItemToNetSuite(updates as ERPProduct)
-      const response = await this.makeRequest('PATCH', `/services/rest/record/v1/item/${externalId}`, nsUpdates)
-      
+      const response = await this.makeRequest(
+        'PATCH',
+        `/services/rest/record/v1/item/${externalId}`,
+        nsUpdates
+      )
+
       const updatedProduct = this.mapNetSuiteItemToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedProduct
+        data: updatedProduct,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update product'
+        error: error instanceof Error ? error.message : 'Failed to update product',
       }
     }
   }
@@ -384,17 +411,17 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async deleteProduct(externalId: string): Promise<ERPApiResponse<void>> {
     try {
       await this.ensureConnected()
-      
+
       // NetSuite 標記為無效而不是刪除
       await this.makeRequest('PATCH', `/services/rest/record/v1/item/${externalId}`, {
-        isinactive: true
+        isinactive: true,
       })
-      
+
       return { success: true }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete product'
+        error: error instanceof Error ? error.message : 'Failed to delete product',
       }
     }
   }
@@ -402,18 +429,18 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async getProductById(externalId: string): Promise<ERPApiResponse<ERPProduct>> {
     try {
       await this.ensureConnected()
-      
+
       const response = await this.makeRequest('GET', `/services/rest/record/v1/item/${externalId}`)
       const product = this.mapNetSuiteItemToStandard(response)
-      
+
       return {
         success: true,
-        data: product
+        data: product,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get product'
+        error: error instanceof Error ? error.message : 'Failed to get product',
       }
     }
   }
@@ -444,17 +471,20 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
       }
 
       const response = await this.makeRequest('GET', query)
-      
-      const inventory: ERPInventory[] = response.items?.map((nsInventory: any) => this.mapNetSuiteInventoryToStandard(nsInventory)) || []
+
+      const inventory: ERPInventory[] =
+        response.items?.map((nsInventory: any) =>
+          this.mapNetSuiteInventoryToStandard(nsInventory)
+        ) || []
 
       return {
         success: true,
-        data: inventory
+        data: inventory,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get inventory'
+        error: error instanceof Error ? error.message : 'Failed to get inventory',
       }
     }
   }
@@ -462,27 +492,31 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async updateInventory(updates: ERPInventory[]): Promise<ERPApiResponse<ERPInventory[]>> {
     try {
       await this.ensureConnected()
-      
+
       const results: ERPInventory[] = []
-      
+
       for (const update of updates) {
         try {
           const nsUpdate = this.mapStandardInventoryToNetSuite(update)
-          const response = await this.makeRequest('PATCH', `/services/rest/record/v1/inventoryitem/${update.productCode}`, nsUpdate)
+          const response = await this.makeRequest(
+            'PATCH',
+            `/services/rest/record/v1/inventoryitem/${update.productCode}`,
+            nsUpdate
+          )
           results.push(this.mapNetSuiteInventoryToStandard(response))
         } catch (error) {
           console.error(`Failed to update inventory for ${update.productCode}:`, error)
         }
       }
-      
+
       return {
         success: true,
-        data: results
+        data: results,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update inventory'
+        error: error instanceof Error ? error.message : 'Failed to update inventory',
       }
     }
   }
@@ -508,24 +542,26 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
       }
 
       const pagination = this.createPaginationParams(options?.pageSize, options?.pageNumber)
-      
+
       let query = '/services/rest/record/v1/customer'
       if (filters.length > 0 || Object.keys(pagination).length > 0) {
         const queryParams = new URLSearchParams()
-        
+
         if (filters.length > 0) {
           queryParams.append('q', filters.join(' AND '))
         }
-        
+
         if (pagination.limit) queryParams.append('limit', pagination.limit.toString())
         if (pagination.offset) queryParams.append('offset', pagination.offset.toString())
-        
+
         query += `?${queryParams.toString()}`
       }
 
       const response = await this.makeRequest('GET', query)
-      
-      const customers: ERPCustomer[] = response.items?.map((nsCustomer: any) => this.mapNetSuiteCustomerToStandard(nsCustomer)) || []
+
+      const customers: ERPCustomer[] =
+        response.items?.map((nsCustomer: any) => this.mapNetSuiteCustomerToStandard(nsCustomer)) ||
+        []
 
       return {
         success: true,
@@ -534,13 +570,13 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
           totalCount: response.totalResults,
           pageSize: options?.pageSize,
           currentPage: options?.pageNumber,
-          hasMore: response.hasMore
-        }
+          hasMore: response.hasMore,
+        },
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customers'
+        error: error instanceof Error ? error.message : 'Failed to get customers',
       }
     }
   }
@@ -548,41 +584,52 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async createCustomer(customer: ERPCustomer): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const nsCustomer = this.mapStandardCustomerToNetSuite(customer)
-      const response = await this.makeRequest('POST', '/services/rest/record/v1/customer', nsCustomer)
-      
+      const response = await this.makeRequest(
+        'POST',
+        '/services/rest/record/v1/customer',
+        nsCustomer
+      )
+
       const createdCustomer = this.mapNetSuiteCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: createdCustomer
+        data: createdCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create customer'
+        error: error instanceof Error ? error.message : 'Failed to create customer',
       }
     }
   }
 
-  async updateCustomer(externalId: string, updates: Partial<ERPCustomer>): Promise<ERPApiResponse<ERPCustomer>> {
+  async updateCustomer(
+    externalId: string,
+    updates: Partial<ERPCustomer>
+  ): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
+
       const nsUpdates = this.mapStandardCustomerToNetSuite(updates as ERPCustomer)
-      const response = await this.makeRequest('PATCH', `/services/rest/record/v1/customer/${externalId}`, nsUpdates)
-      
+      const response = await this.makeRequest(
+        'PATCH',
+        `/services/rest/record/v1/customer/${externalId}`,
+        nsUpdates
+      )
+
       const updatedCustomer = this.mapNetSuiteCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: updatedCustomer
+        data: updatedCustomer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update customer'
+        error: error instanceof Error ? error.message : 'Failed to update customer',
       }
     }
   }
@@ -590,18 +637,21 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
   async getCustomerById(externalId: string): Promise<ERPApiResponse<ERPCustomer>> {
     try {
       await this.ensureConnected()
-      
-      const response = await this.makeRequest('GET', `/services/rest/record/v1/customer/${externalId}`)
+
+      const response = await this.makeRequest(
+        'GET',
+        `/services/rest/record/v1/customer/${externalId}`
+      )
       const customer = this.mapNetSuiteCustomerToStandard(response)
-      
+
       return {
         success: true,
-        data: customer
+        data: customer,
       }
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to get customer'
+        error: error instanceof Error ? error.message : 'Failed to get customer',
       }
     }
   }
@@ -622,8 +672,8 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
         endTime: new Date(),
         duration: 0,
         syncDirection: options.syncDirection,
-        batchSize: options.batchSize
-      }
+        batchSize: options.batchSize,
+      },
     }
 
     try {
@@ -632,13 +682,13 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
     } catch (error) {
       result.errors.push({
         recordId: 'sync',
-        error: error instanceof Error ? error.message : 'Sync failed'
+        error: error instanceof Error ? error.message : 'Sync failed',
       })
     }
 
     result.metadata.endTime = new Date()
     result.metadata.duration = result.metadata.endTime.getTime() - startTime.getTime()
-    
+
     return result
   }
 
@@ -666,7 +716,9 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateOrders(updates: Array<{ externalId: string; data: Partial<ERPOrder> }>): Promise<ERPApiResponse<ERPOrder[]>> {
+  async batchUpdateOrders(
+    updates: Array<{ externalId: string; data: Partial<ERPOrder> }>
+  ): Promise<ERPApiResponse<ERPOrder[]>> {
     const results: ERPOrder[] = []
     for (const update of updates) {
       const result = await this.updateOrder(update.externalId, update.data)
@@ -688,7 +740,9 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
     return { success: true, data: results }
   }
 
-  async batchUpdateProducts(updates: Array<{ externalId: string; data: Partial<ERPProduct> }>): Promise<ERPApiResponse<ERPProduct[]>> {
+  async batchUpdateProducts(
+    updates: Array<{ externalId: string; data: Partial<ERPProduct> }>
+  ): Promise<ERPApiResponse<ERPProduct[]>> {
     const results: ERPProduct[] = []
     for (const update of updates) {
       const result = await this.updateProduct(update.externalId, update.data)
@@ -715,12 +769,12 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
 
   private mapOrderStatusToNetSuite(orderlyStatus: string): string {
     const statusMap: Record<string, string> = {
-      'draft': 'A',  // Pending Approval
-      'confirmed': 'B',  // Pending Fulfillment  
-      'shipped': 'C',  // Partially Fulfilled
-      'delivered': 'F',  // Pending Billing
-      'completed': 'G',  // Billed
-      'cancelled': 'H'   // Cancelled
+      draft: 'A', // Pending Approval
+      confirmed: 'B', // Pending Fulfillment
+      shipped: 'C', // Partially Fulfilled
+      delivered: 'F', // Pending Billing
+      completed: 'G', // Billed
+      cancelled: 'H', // Cancelled
     }
     return statusMap[orderlyStatus] || 'A'
   }
@@ -765,7 +819,7 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'Orderly-NetSuite-Adapter/2.0'
+      'User-Agent': 'Orderly-NetSuite-Adapter/2.0',
     }
 
     try {
@@ -773,7 +827,7 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
         method,
         headers,
         body: new URLSearchParams(data).toString(),
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {
@@ -787,11 +841,15 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
     }
   }
 
-  protected async makeRequest(method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH', endpoint: string, data?: any): Promise<any> {
+  protected async makeRequest(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    endpoint: string,
+    data?: any
+  ): Promise<any> {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'Orderly-NetSuite-Adapter/2.0'
+      'User-Agent': 'Orderly-NetSuite-Adapter/2.0',
     }
 
     // 添加 OAuth Bearer Token
@@ -804,7 +862,7 @@ export class OracleNetSuiteAdapter extends ERPAdapterInterface {
         method,
         headers,
         body: data ? JSON.stringify(data) : undefined,
-        signal: AbortSignal.timeout(this.config.settings.timeout)
+        signal: AbortSignal.timeout(this.config.settings.timeout),
       })
 
       if (!response.ok) {

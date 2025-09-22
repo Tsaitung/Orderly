@@ -54,12 +54,14 @@ python scripts/database/database_manager.py export --database-url "postgresql+as
 ```
 
 **導出內容：**
+
 - 📦 供應商資料（organizations + supplier_profiles）
 - 🏢 客戶階層資料（companies + locations + business_units）
 - 📂 品類資料（product_categories）
 - 🏷️ SKU 資料（product_skus）
 
 **輸出文件：**
+
 - `data/suppliers.json` - 供應商資料
 - `data/customers.json` - 客戶階層資料
 - `data/categories.json` - 品類資料
@@ -85,6 +87,7 @@ python scripts/database/database_manager.py create-test-customers --database-url
 ```
 
 **測試客戶特點：**
+
 - ✅ **公司客戶（75%）**: 使用8位統編，完整企業資訊
 - ✅ **自然人客戶（25%）**: 使用身分證字號格式
 - ✅ **完整階層**: 每個客戶都有1個地點和1個業務單位
@@ -106,11 +109,12 @@ python scripts/database/database_manager.py import --target "..." --types suppli
 # 可選的資料類型
 python scripts/database/database_manager.py import --target "..." --types suppliers
 python scripts/database/database_manager.py import --target "..." --types customers
-python scripts/database/database_manager.py import --target "..." --types categories  
+python scripts/database/database_manager.py import --target "..." --types categories
 python scripts/database/database_manager.py import --target "..." --types skus
 ```
 
 **安全特性：**
+
 - ✅ 自動檢測重複資料，跳過已存在的記錄
 - ✅ 保持外鍵關係和資料完整性
 - ✅ 交易式操作，失敗時自動回滾
@@ -150,12 +154,14 @@ python scripts/database/seed_from_real_data.py --force
 ```
 
 **包含的資料：**
+
 - 📦 9 個供應商（含檔案資訊）
 - 🏢 20 個客戶公司（含完整階層）
 - 📂 105 個品類（含層級關係）
 - 🏷️ 52 個 SKU（含定價資訊）
 
 **特色功能：**
+
 - ✅ 基於真實生產資料，保證業務邏輯正確性
 - ✅ 保持完整的外鍵關係和資料依賴
 - ✅ 支援重複執行，智能跳過已存在資料
@@ -166,6 +172,7 @@ python scripts/database/seed_from_real_data.py --force
 ### 資料庫連接
 
 **開發環境（預設）：**
+
 ```
 postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly
 ```
@@ -186,16 +193,16 @@ python scripts/database/database_manager.py export
 
 ### 標準測試客戶結構
 
-| 客戶類型 | 數量 | 識別號類型 | 階層結構 | 預算範圍 |
-|---------|------|-----------|----------|----------|
-| 公司客戶 | 15個 | 8位統編 | 公司→地點→業務單位 | 30K-100K/月 |
-| 自然人客戶 | 5個 | 身分證字號 | 個人→營業場所→營運部 | 10K-20K/月 |
+| 客戶類型   | 數量 | 識別號類型 | 階層結構             | 預算範圍    |
+| ---------- | ---- | ---------- | -------------------- | ----------- |
+| 公司客戶   | 15個 | 8位統編    | 公司→地點→業務單位   | 30K-100K/月 |
+| 自然人客戶 | 5個  | 身分證字號 | 個人→營業場所→營運部 | 10K-20K/月  |
 
 ### 資料完整性檢查
 
 ```sql
 -- 檢查測試客戶層級結構
-SELECT 
+SELECT
     cc.name AS company_name,
     cc.tax_id,
     cc.tax_id_type,
@@ -209,16 +216,16 @@ WHERE cc.created_by = 'test_script'
 ORDER BY cc.created_at;
 
 -- 檢查資料計數
-SELECT 
-    'companies' as type, COUNT(*) as count 
+SELECT
+    'companies' as type, COUNT(*) as count
 FROM customer_companies WHERE created_by = 'test_script'
 UNION ALL
-SELECT 
-    'locations' as type, COUNT(*) as count 
+SELECT
+    'locations' as type, COUNT(*) as count
 FROM customer_locations WHERE created_by = 'test_script'
 UNION ALL
-SELECT 
-    'business_units' as type, COUNT(*) as count 
+SELECT
+    'business_units' as type, COUNT(*) as count
 FROM business_units WHERE created_by = 'test_script';
 ```
 
@@ -254,16 +261,19 @@ python scripts/database/database_manager.py create-test-customers --force
 ## 🚨 注意事項
 
 ### 安全性
+
 - 🔒 **權限控制**: 確保資料庫用戶有適當的讀寫權限
 - 🔒 **連接安全**: 生產環境連接字串請使用環境變數
 - 🔒 **資料隔離**: 測試資料使用特殊標記，不會影響生產資料
 
 ### 效能最佳化
+
 - ⚡ **平行處理**: 導出/導入操作使用 asyncio 平行處理
 - ⚡ **批次操作**: 大量資料插入使用批次處理
 - ⚡ **重複檢查**: 智能跳過已存在資料，提升執行效率
 
 ### 資料一致性
+
 - ✅ **外鍵保護**: 嚴格維護表間關係
 - ✅ **交易安全**: 失敗時自動回滾，保證資料一致性
 - ✅ **版本相容**: 支援不同版本間的資料遷移
@@ -273,6 +283,7 @@ python scripts/database/database_manager.py create-test-customers --force
 ### 常見問題
 
 **1. 資料庫連接失敗**
+
 ```bash
 # 檢查資料庫服務狀態
 docker-compose ps
@@ -282,10 +293,11 @@ psql "postgresql://orderly:orderly_dev_password@localhost:5432/orderly" -c "SELE
 ```
 
 **2. 權限不足錯誤**
+
 ```sql
 -- 檢查用戶權限
-SELECT grantee, privilege_type 
-FROM information_schema.role_table_grants 
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
 WHERE table_name IN ('customer_companies', 'organizations');
 
 -- 授予必要權限
@@ -293,6 +305,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO orderly;
 ```
 
 **3. 資料重複錯誤**
+
 ```bash
 # 清理重複資料
 python scripts/database/database_manager.py clean --test-data
@@ -302,6 +315,7 @@ python scripts/database/database_manager.py create-test-customers --force
 ```
 
 **4. 導入失敗**
+
 ```bash
 # 檢查導出文件
 ls -la scripts/database/data/
@@ -323,6 +337,7 @@ DEBUG=1 python scripts/database/database_manager.py export
 ### 添加新的資料類型
 
 1. 在 `DatabaseManager` 類中添加新的導出方法：
+
 ```python
 async def export_new_data_type(self) -> List[Dict]:
     # 實現導出邏輯
@@ -340,7 +355,7 @@ async def export_new_data_type(self) -> List[Dict]:
 ## 📈 效能指標
 
 - **導出速度**: ~1000 記錄/秒
-- **導入速度**: ~800 記錄/秒  
+- **導入速度**: ~800 記錄/秒
 - **記憶體使用**: <100MB（1萬筆記錄）
 - **並行度**: 4個資料類型同時處理
 

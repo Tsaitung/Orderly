@@ -1,17 +1,17 @@
 'use client'
 
 import React from 'react'
-import { 
-  Shield, 
-  Search, 
-  Filter, 
-  Plus, 
-  Download, 
-  Settings, 
+import {
+  Shield,
+  Search,
+  Filter,
+  Plus,
+  Download,
+  Settings,
   Activity,
   Users,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -34,13 +34,13 @@ export function RoleManagement() {
   const [stats, setStats] = React.useState<RoleStats | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  
+
   // 搜尋和篩選狀態
   const [searchTerm, setSearchTerm] = React.useState('')
   const [selectedType, setSelectedType] = React.useState<string>('all')
   const [selectedStatus, setSelectedStatus] = React.useState<string>('all')
   const [selectedCategory, setSelectedCategory] = React.useState<string>('all')
-  
+
   // 批量操作狀態
   const [selectedRoles, setSelectedRoles] = React.useState<string[]>([])
   const [showBatchActions, setShowBatchActions] = React.useState(false)
@@ -54,7 +54,7 @@ export function RoleManagement() {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       setStats({
         totalRoles: 25,
         systemRoles: 12,
@@ -63,7 +63,7 @@ export function RoleManagement() {
         inactiveRoles: 3,
         platformRoles: 8,
         restaurantRoles: 10,
-        supplierRoles: 7
+        supplierRoles: 7,
       })
     } catch (err) {
       setError('載入角色統計資料失敗')
@@ -97,17 +97,17 @@ export function RoleManagement() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-500" />
           <p className="text-gray-600">{error}</p>
           <Button onClick={loadRoleStats} className="mt-4">
             重新載入
@@ -120,7 +120,7 @@ export function RoleManagement() {
   return (
     <div className="space-y-6">
       {/* 統計卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">總角色數</CardTitle>
@@ -133,7 +133,7 @@ export function RoleManagement() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">活躍角色</CardTitle>
@@ -142,7 +142,7 @@ export function RoleManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats?.activeRoles}</div>
             <p className="text-xs text-muted-foreground">
-              啟用率 {Math.round((stats?.activeRoles || 0) / (stats?.totalRoles || 1) * 100)}%
+              啟用率 {Math.round(((stats?.activeRoles || 0) / (stats?.totalRoles || 1)) * 100)}%
             </p>
           </CardContent>
         </Card>
@@ -155,7 +155,7 @@ export function RoleManagement() {
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats?.platformRoles}</div>
             <p className="text-xs text-muted-foreground">
-              佔總數 {Math.round((stats?.platformRoles || 0) / (stats?.totalRoles || 1) * 100)}%
+              佔總數 {Math.round(((stats?.platformRoles || 0) / (stats?.totalRoles || 1)) * 100)}%
             </p>
           </CardContent>
         </Card>
@@ -182,51 +182,51 @@ export function RoleManagement() {
           <CardTitle className="text-lg">搜尋與篩選</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋角色名稱、描述或標籤..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedType(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有類型</option>
                 <option value="platform">平台角色</option>
                 <option value="restaurant">餐廳角色</option>
                 <option value="supplier">供應商角色</option>
               </select>
-              
+
               <select
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有狀態</option>
                 <option value="active">啟用中</option>
                 <option value="inactive">已停用</option>
               </select>
-              
+
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="all">所有分類</option>
                 <option value="system">系統角色</option>
                 <option value="custom">自定義角色</option>
               </select>
-              
+
               <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="mr-2 h-4 w-4" />
                 進階篩選
               </Button>
             </div>
@@ -240,9 +240,7 @@ export function RoleManagement() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium">
-                  已選取 {selectedRoles.length} 個角色
-                </span>
+                <span className="text-sm font-medium">已選取 {selectedRoles.length} 個角色</span>
                 <div className="flex space-x-2">
                   <Button size="sm" onClick={handleBatchActivate}>
                     批量啟用
@@ -255,9 +253,9 @@ export function RoleManagement() {
                   </Button>
                 </div>
               </div>
-              <Button 
-                size="sm" 
-                variant="ghost" 
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => {
                   setSelectedRoles([])
                   setShowBatchActions(false)

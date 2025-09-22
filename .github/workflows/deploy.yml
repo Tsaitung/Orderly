@@ -257,7 +257,7 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         with:
           context: backend/${{ matrix.service }}
-          file: backend/${{ matrix.service }}/Dockerfile.cloudrun
+          file: backend/${{ matrix.service }}/Dockerfile
           push: true
           platforms: linux/amd64  # Specify platform for consistency
           tags: |

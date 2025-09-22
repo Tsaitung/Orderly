@@ -3,6 +3,7 @@
 Quick checks for user endpoints via the API Gateway and directly against the user-service.
 
 ## Prerequisites
+
 - Services running locally (user-service default `:3001`, api-gateway default `:3000`).
 - `curl` and `jq` installed.
 - A valid JWT from `POST /api/v1/users/login` for the `/me` endpoint.
@@ -31,6 +32,7 @@ Quick checks for user endpoints via the API Gateway and directly against the use
     ```
 
 ### Organizations (user-service)
+
 - Create organization
   - `POST /api/v1/users/organizations`
   - Example:
@@ -43,6 +45,7 @@ Quick checks for user endpoints via the API Gateway and directly against the use
   - `GET /api/v1/users/organizations`
 
 ### Products (product-service via gateway)
+
 - List products
   - `GET /api/v1/products`
   - Example: `BASE_URL=http://localhost:3000 TOKEN=<jwt> ./scripts/smoke/gateway-products.sh list`
@@ -57,6 +60,7 @@ Quick checks for user endpoints via the API Gateway and directly against the use
   - `GET|POST|PUT|DELETE /api/v1/products/categories[/:id]`
 
 ### Orders (order-service via gateway)
+
 - Create order
   - `POST /api/v1/orders`
   - Example: `BASE_URL=http://localhost:3000 TOKEN=<jwt> ./scripts/smoke/gateway-orders.sh create`
@@ -93,5 +97,6 @@ Quick checks for user endpoints via the API Gateway and directly against the use
     ```
 
 ## Notes
+
 - API Gateway TypeScript build currently reports type errors unrelated to these route changes; runtime usage is unaffected if you run with ts-node or a prior build. Direct service calls remain valid for local testing.
 - The user-service logs the generated reset token to stdout for testing.

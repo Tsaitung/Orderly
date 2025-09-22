@@ -1,19 +1,19 @@
 'use client'
 
 import React from 'react'
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  Shield, 
-  Users, 
-  Settings, 
-  Database, 
-  ShoppingCart, 
-  CreditCard, 
+import {
+  Search,
+  Filter,
+  Download,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Shield,
+  Users,
+  Settings,
+  Database,
+  ShoppingCart,
+  CreditCard,
   BarChart3,
   Eye,
   EyeOff,
@@ -23,7 +23,7 @@ import {
   Unlock,
   ChevronDown,
   ChevronRight,
-  Info
+  Info,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -75,8 +75,14 @@ export function PermissionMatrix() {
   const [categories, setCategories] = React.useState<PermissionCategory[]>([])
   const [loading, setLoading] = React.useState(true)
   const [searchTerm, setSearchTerm] = React.useState('')
-  const [selectedRoleTypes, setSelectedRoleTypes] = React.useState<string[]>(['platform', 'restaurant', 'supplier'])
-  const [selectedPermissionCategories, setSelectedPermissionCategories] = React.useState<string[]>([])
+  const [selectedRoleTypes, setSelectedRoleTypes] = React.useState<string[]>([
+    'platform',
+    'restaurant',
+    'supplier',
+  ])
+  const [selectedPermissionCategories, setSelectedPermissionCategories] = React.useState<string[]>(
+    []
+  )
   const [showSystemRoles, setShowSystemRoles] = React.useState(true)
   const [showInactiveRoles, setShowInactiveRoles] = React.useState(false)
   const [editMode, setEditMode] = React.useState(false)
@@ -92,7 +98,7 @@ export function PermissionMatrix() {
       setLoading(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       // 模擬角色資料
       const mockRoles: Role[] = [
         {
@@ -102,8 +108,19 @@ export function PermissionMatrix() {
           type: 'platform',
           isSystemRole: true,
           isActive: true,
-          permissions: ['user:create', 'user:read', 'user:update', 'user:delete', 'role:create', 'role:read', 'role:update', 'role:delete', 'system:read', 'system:update'],
-          userCount: 3
+          permissions: [
+            'user:create',
+            'user:read',
+            'user:update',
+            'user:delete',
+            'role:create',
+            'role:read',
+            'role:update',
+            'role:delete',
+            'system:read',
+            'system:update',
+          ],
+          userCount: 3,
         },
         {
           id: '2',
@@ -112,8 +129,15 @@ export function PermissionMatrix() {
           type: 'restaurant',
           isSystemRole: true,
           isActive: true,
-          permissions: ['order:create', 'order:read', 'order:update', 'product:read', 'user:read', 'report:read'],
-          userCount: 25
+          permissions: [
+            'order:create',
+            'order:read',
+            'order:update',
+            'product:read',
+            'user:read',
+            'report:read',
+          ],
+          userCount: 25,
         },
         {
           id: '3',
@@ -122,8 +146,15 @@ export function PermissionMatrix() {
           type: 'supplier',
           isSystemRole: true,
           isActive: true,
-          permissions: ['product:create', 'product:read', 'product:update', 'order:read', 'order:update', 'finance:read'],
-          userCount: 12
+          permissions: [
+            'product:create',
+            'product:read',
+            'product:update',
+            'order:read',
+            'order:update',
+            'finance:read',
+          ],
+          userCount: 12,
         },
         {
           id: '4',
@@ -133,7 +164,7 @@ export function PermissionMatrix() {
           isSystemRole: false,
           isActive: true,
           permissions: ['order:create', 'order:read', 'product:read'],
-          userCount: 45
+          userCount: 45,
         },
         {
           id: '5',
@@ -143,65 +174,266 @@ export function PermissionMatrix() {
           isSystemRole: false,
           isActive: false,
           permissions: ['finance:read', 'report:read'],
-          userCount: 0
-        }
+          userCount: 0,
+        },
       ]
-      
+
       // 模擬權限資料
       const mockPermissions: Permission[] = [
         // 使用者管理
-        { id: 'user:create', name: '建立使用者', description: '建立新的使用者帳號', category: 'user', action: 'create', module: 'user', isSystemPermission: false, riskLevel: 'medium' },
-        { id: 'user:read', name: '檢視使用者', description: '檢視使用者資訊和列表', category: 'user', action: 'read', module: 'user', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'user:update', name: '編輯使用者', description: '修改使用者資訊和設定', category: 'user', action: 'update', module: 'user', isSystemPermission: false, riskLevel: 'medium' },
-        { id: 'user:delete', name: '刪除使用者', description: '刪除使用者帳號', category: 'user', action: 'delete', module: 'user', isSystemPermission: false, riskLevel: 'high' },
-        
+        {
+          id: 'user:create',
+          name: '建立使用者',
+          description: '建立新的使用者帳號',
+          category: 'user',
+          action: 'create',
+          module: 'user',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'user:read',
+          name: '檢視使用者',
+          description: '檢視使用者資訊和列表',
+          category: 'user',
+          action: 'read',
+          module: 'user',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'user:update',
+          name: '編輯使用者',
+          description: '修改使用者資訊和設定',
+          category: 'user',
+          action: 'update',
+          module: 'user',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'user:delete',
+          name: '刪除使用者',
+          description: '刪除使用者帳號',
+          category: 'user',
+          action: 'delete',
+          module: 'user',
+          isSystemPermission: false,
+          riskLevel: 'high',
+        },
+
         // 角色權限管理
-        { id: 'role:create', name: '建立角色', description: '建立新的角色', category: 'role', action: 'create', module: 'role', isSystemPermission: true, riskLevel: 'high' },
-        { id: 'role:read', name: '檢視角色', description: '檢視角色和權限資訊', category: 'role', action: 'read', module: 'role', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'role:update', name: '編輯角色', description: '修改角色權限配置', category: 'role', action: 'update', module: 'role', isSystemPermission: true, riskLevel: 'high' },
-        { id: 'role:delete', name: '刪除角色', description: '刪除自定義角色', category: 'role', action: 'delete', module: 'role', isSystemPermission: true, riskLevel: 'high' },
-        
+        {
+          id: 'role:create',
+          name: '建立角色',
+          description: '建立新的角色',
+          category: 'role',
+          action: 'create',
+          module: 'role',
+          isSystemPermission: true,
+          riskLevel: 'high',
+        },
+        {
+          id: 'role:read',
+          name: '檢視角色',
+          description: '檢視角色和權限資訊',
+          category: 'role',
+          action: 'read',
+          module: 'role',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'role:update',
+          name: '編輯角色',
+          description: '修改角色權限配置',
+          category: 'role',
+          action: 'update',
+          module: 'role',
+          isSystemPermission: true,
+          riskLevel: 'high',
+        },
+        {
+          id: 'role:delete',
+          name: '刪除角色',
+          description: '刪除自定義角色',
+          category: 'role',
+          action: 'delete',
+          module: 'role',
+          isSystemPermission: true,
+          riskLevel: 'high',
+        },
+
         // 訂單管理
-        { id: 'order:create', name: '建立訂單', description: '建立新訂單', category: 'order', action: 'create', module: 'order', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'order:read', name: '檢視訂單', description: '檢視訂單詳情和列表', category: 'order', action: 'read', module: 'order', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'order:update', name: '編輯訂單', description: '修改訂單資訊', category: 'order', action: 'update', module: 'order', isSystemPermission: false, riskLevel: 'medium' },
-        { id: 'order:delete', name: '刪除訂單', description: '刪除訂單記錄', category: 'order', action: 'delete', module: 'order', isSystemPermission: false, riskLevel: 'high' },
-        
+        {
+          id: 'order:create',
+          name: '建立訂單',
+          description: '建立新訂單',
+          category: 'order',
+          action: 'create',
+          module: 'order',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'order:read',
+          name: '檢視訂單',
+          description: '檢視訂單詳情和列表',
+          category: 'order',
+          action: 'read',
+          module: 'order',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'order:update',
+          name: '編輯訂單',
+          description: '修改訂單資訊',
+          category: 'order',
+          action: 'update',
+          module: 'order',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'order:delete',
+          name: '刪除訂單',
+          description: '刪除訂單記錄',
+          category: 'order',
+          action: 'delete',
+          module: 'order',
+          isSystemPermission: false,
+          riskLevel: 'high',
+        },
+
         // 產品管理
-        { id: 'product:create', name: '建立產品', description: '新增產品到目錄', category: 'product', action: 'create', module: 'product', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'product:read', name: '檢視產品', description: '檢視產品資訊和目錄', category: 'product', action: 'read', module: 'product', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'product:update', name: '編輯產品', description: '修改產品資訊和價格', category: 'product', action: 'update', module: 'product', isSystemPermission: false, riskLevel: 'medium' },
-        { id: 'product:delete', name: '刪除產品', description: '從目錄中移除產品', category: 'product', action: 'delete', module: 'product', isSystemPermission: false, riskLevel: 'medium' },
-        
+        {
+          id: 'product:create',
+          name: '建立產品',
+          description: '新增產品到目錄',
+          category: 'product',
+          action: 'create',
+          module: 'product',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'product:read',
+          name: '檢視產品',
+          description: '檢視產品資訊和目錄',
+          category: 'product',
+          action: 'read',
+          module: 'product',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'product:update',
+          name: '編輯產品',
+          description: '修改產品資訊和價格',
+          category: 'product',
+          action: 'update',
+          module: 'product',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'product:delete',
+          name: '刪除產品',
+          description: '從目錄中移除產品',
+          category: 'product',
+          action: 'delete',
+          module: 'product',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+
         // 財務管理
-        { id: 'finance:read', name: '檢視財務', description: '檢視財務報表和數據', category: 'finance', action: 'read', module: 'finance', isSystemPermission: false, riskLevel: 'medium' },
-        { id: 'finance:update', name: '編輯財務', description: '修改財務資料', category: 'finance', action: 'update', module: 'finance', isSystemPermission: false, riskLevel: 'high' },
-        
+        {
+          id: 'finance:read',
+          name: '檢視財務',
+          description: '檢視財務報表和數據',
+          category: 'finance',
+          action: 'read',
+          module: 'finance',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'finance:update',
+          name: '編輯財務',
+          description: '修改財務資料',
+          category: 'finance',
+          action: 'update',
+          module: 'finance',
+          isSystemPermission: false,
+          riskLevel: 'high',
+        },
+
         // 報表分析
-        { id: 'report:read', name: '檢視報表', description: '檢視各類業務報表', category: 'report', action: 'read', module: 'report', isSystemPermission: false, riskLevel: 'low' },
-        { id: 'report:export', name: '匯出報表', description: '匯出報表資料', category: 'report', action: 'manage', module: 'report', isSystemPermission: false, riskLevel: 'medium' },
-        
+        {
+          id: 'report:read',
+          name: '檢視報表',
+          description: '檢視各類業務報表',
+          category: 'report',
+          action: 'read',
+          module: 'report',
+          isSystemPermission: false,
+          riskLevel: 'low',
+        },
+        {
+          id: 'report:export',
+          name: '匯出報表',
+          description: '匯出報表資料',
+          category: 'report',
+          action: 'manage',
+          module: 'report',
+          isSystemPermission: false,
+          riskLevel: 'medium',
+        },
+
         // 系統設定
-        { id: 'system:read', name: '檢視系統設定', description: '檢視系統配置', category: 'system', action: 'read', module: 'system', isSystemPermission: true, riskLevel: 'medium' },
-        { id: 'system:update', name: '修改系統設定', description: '修改系統配置參數', category: 'system', action: 'update', module: 'system', isSystemPermission: true, riskLevel: 'high' }
+        {
+          id: 'system:read',
+          name: '檢視系統設定',
+          description: '檢視系統配置',
+          category: 'system',
+          action: 'read',
+          module: 'system',
+          isSystemPermission: true,
+          riskLevel: 'medium',
+        },
+        {
+          id: 'system:update',
+          name: '修改系統設定',
+          description: '修改系統配置參數',
+          category: 'system',
+          action: 'update',
+          module: 'system',
+          isSystemPermission: true,
+          riskLevel: 'high',
+        },
       ]
-      
+
       // 按分類分組權限
-      const categoryGroups = mockPermissions.reduce((groups, permission) => {
-        const category = permission.category
-        if (!groups[category]) {
-          groups[category] = {
-            id: category,
-            name: getCategoryName(category),
-            icon: getCategoryIcon(category),
-            permissions: [],
-            collapsed: false
+      const categoryGroups = mockPermissions.reduce(
+        (groups, permission) => {
+          const category = permission.category
+          if (!groups[category]) {
+            groups[category] = {
+              id: category,
+              name: getCategoryName(category),
+              icon: getCategoryIcon(category),
+              permissions: [],
+              collapsed: false,
+            }
           }
-        }
-        groups[category].permissions.push(permission)
-        return groups
-      }, {} as Record<string, PermissionCategory>)
-      
+          groups[category].permissions.push(permission)
+          return groups
+        },
+        {} as Record<string, PermissionCategory>
+      )
+
       setRoles(mockRoles)
       setCategories(Object.values(categoryGroups))
       setSelectedPermissionCategories(Object.keys(categoryGroups))
@@ -220,7 +452,7 @@ export function PermissionMatrix() {
       product: '產品管理',
       finance: '財務管理',
       report: '報表分析',
-      system: '系統設定'
+      system: '系統設定',
     }
     return names[category as keyof typeof names] || category
   }
@@ -233,7 +465,7 @@ export function PermissionMatrix() {
       product: Database,
       finance: CreditCard,
       report: BarChart3,
-      system: Settings
+      system: Settings,
     }
     return icons[category as keyof typeof icons] || Shield
   }
@@ -241,8 +473,8 @@ export function PermissionMatrix() {
   const getRiskLevelColor = (level: string): string => {
     const colors = {
       low: 'text-green-600',
-      medium: 'text-yellow-600', 
-      high: 'text-red-600'
+      medium: 'text-yellow-600',
+      high: 'text-red-600',
     }
     return colors[level as keyof typeof colors] || 'text-gray-600'
   }
@@ -251,49 +483,55 @@ export function PermissionMatrix() {
     const colors = {
       platform: 'bg-blue-100 text-blue-800',
       restaurant: 'bg-orange-100 text-orange-800',
-      supplier: 'bg-green-100 text-green-800'
+      supplier: 'bg-green-100 text-green-800',
     }
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
 
   const toggleCategory = (categoryId: string) => {
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId ? { ...cat, collapsed: !cat.collapsed } : cat
-    ))
+    setCategories(prev =>
+      prev.map(cat => (cat.id === categoryId ? { ...cat, collapsed: !cat.collapsed } : cat))
+    )
   }
 
   const handlePermissionToggle = (roleId: string, permissionId: string, granted: boolean) => {
     if (!editMode) return
-    
+
     const role = roles.find(r => r.id === roleId)
     if (!role) return
-    
+
     const previousState = role.permissions.includes(permissionId)
-    
+
     // 更新角色權限
-    setRoles(prev => prev.map(r => 
-      r.id === roleId 
-        ? { 
-            ...r, 
-            permissions: granted 
-              ? [...r.permissions, permissionId]
-              : r.permissions.filter(p => p !== permissionId)
-          }
-        : r
-    ))
-    
+    setRoles(prev =>
+      prev.map(r =>
+        r.id === roleId
+          ? {
+              ...r,
+              permissions: granted
+                ? [...r.permissions, permissionId]
+                : r.permissions.filter(p => p !== permissionId),
+            }
+          : r
+      )
+    )
+
     // 記錄變更
-    const existingChangeIndex = changes.findIndex(c => c.roleId === roleId && c.permissionId === permissionId)
-    
+    const existingChangeIndex = changes.findIndex(
+      c => c.roleId === roleId && c.permissionId === permissionId
+    )
+
     if (existingChangeIndex >= 0) {
       // 如果回到原始狀態，移除變更記錄
       if (changes[existingChangeIndex].previousState === granted) {
         setChanges(prev => prev.filter((_, index) => index !== existingChangeIndex))
       } else {
         // 更新變更記錄
-        setChanges(prev => prev.map((change, index) => 
-          index === existingChangeIndex ? { ...change, granted } : change
-        ))
+        setChanges(prev =>
+          prev.map((change, index) =>
+            index === existingChangeIndex ? { ...change, granted } : change
+          )
+        )
       }
     } else {
       // 新增變更記錄
@@ -306,7 +544,7 @@ export function PermissionMatrix() {
       setSaving(true)
       // 模擬 API 調用
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
+
       console.log('儲存權限變更:', changes)
       setChanges([])
       setEditMode(false)
@@ -320,16 +558,18 @@ export function PermissionMatrix() {
   const cancelChanges = () => {
     // 撤銷所有變更
     changes.forEach(change => {
-      setRoles(prev => prev.map(r => 
-        r.id === change.roleId 
-          ? { 
-              ...r, 
-              permissions: change.previousState 
-                ? [...r.permissions, change.permissionId]
-                : r.permissions.filter(p => p !== change.permissionId)
-            }
-          : r
-      ))
+      setRoles(prev =>
+        prev.map(r =>
+          r.id === change.roleId
+            ? {
+                ...r,
+                permissions: change.previousState
+                  ? [...r.permissions, change.permissionId]
+                  : r.permissions.filter(p => p !== change.permissionId),
+              }
+            : r
+        )
+      )
     })
     setChanges([])
     setEditMode(false)
@@ -354,16 +594,17 @@ export function PermissionMatrix() {
     return true
   })
 
-  const filteredCategories = categories.filter(category => 
-    selectedPermissionCategories.includes(category.id)
-  ).map(category => ({
-    ...category,
-    permissions: category.permissions.filter(permission =>
-      !searchTerm || 
-      permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      permission.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }))
+  const filteredCategories = categories
+    .filter(category => selectedPermissionCategories.includes(category.id))
+    .map(category => ({
+      ...category,
+      permissions: category.permissions.filter(
+        permission =>
+          !searchTerm ||
+          permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          permission.description.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    }))
 
   const totalChanges = changes.length
   const hasConflicts = false // 模擬衝突檢測
@@ -371,8 +612,8 @@ export function PermissionMatrix() {
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-16 bg-gray-200 rounded"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="h-16 rounded bg-gray-200"></div>
+        <div className="h-64 rounded bg-gray-200"></div>
       </div>
     )
   }
@@ -387,50 +628,48 @@ export function PermissionMatrix() {
             <div className="flex items-center space-x-2">
               {hasConflicts && (
                 <Badge variant="destructive" className="flex items-center">
-                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  <AlertTriangle className="mr-1 h-3 w-3" />
                   發現衝突
                 </Badge>
               )}
-              {totalChanges > 0 && (
-                <Badge variant="secondary">
-                  {totalChanges} 項變更
-                </Badge>
-              )}
+              {totalChanges > 0 && <Badge variant="secondary">{totalChanges} 項變更</Badge>}
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* 搜尋和篩選 */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <div className="relative max-w-md flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
               <Input
                 placeholder="搜尋角色或權限..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <select
                 multiple
                 value={selectedRoleTypes}
-                onChange={(e) => setSelectedRoleTypes(Array.from(e.target.selectedOptions, option => option.value))}
-                className="px-3 py-2 border border-gray-300 rounded-md bg-white text-sm"
+                onChange={e =>
+                  setSelectedRoleTypes(Array.from(e.target.selectedOptions, option => option.value))
+                }
+                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
               >
                 <option value="platform">平台角色</option>
                 <option value="restaurant">餐廳角色</option>
                 <option value="supplier">供應商角色</option>
               </select>
-              
+
               <Button variant="outline" size="sm" onClick={checkConflicts}>
-                <AlertTriangle className="h-4 w-4 mr-2" />
+                <AlertTriangle className="mr-2 h-4 w-4" />
                 檢查衝突
               </Button>
-              
+
               <Button variant="outline" size="sm" onClick={exportMatrix}>
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
                 匯出Excel
               </Button>
             </div>
@@ -439,55 +678,44 @@ export function PermissionMatrix() {
           {/* 顯示選項 */}
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2">
-              <Switch
-                checked={showSystemRoles}
-                onCheckedChange={setShowSystemRoles}
-              />
+              <Switch checked={showSystemRoles} onCheckedChange={setShowSystemRoles} />
               <span className="text-sm">顯示系統角色</span>
             </div>
-            
+
             <div className="flex items-center space-x-2">
-              <Switch
-                checked={showInactiveRoles}
-                onCheckedChange={setShowInactiveRoles}
-              />
+              <Switch checked={showInactiveRoles} onCheckedChange={setShowInactiveRoles} />
               <span className="text-sm">顯示停用角色</span>
             </div>
           </div>
 
           {/* 編輯模式控制 */}
-          <div className="flex items-center justify-between pt-4 border-t">
+          <div className="flex items-center justify-between border-t pt-4">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={editMode}
-                  onCheckedChange={setEditMode}
-                />
+                <Switch checked={editMode} onCheckedChange={setEditMode} />
                 <span className="text-sm font-medium">編輯模式</span>
               </div>
-              
+
               {editMode && (
-                <div className="text-sm text-gray-600">
-                  點擊矩陣中的核取方塊來修改權限配置
-                </div>
+                <div className="text-sm text-gray-600">點擊矩陣中的核取方塊來修改權限配置</div>
               )}
             </div>
-            
+
             {totalChanges > 0 && (
               <div className="flex items-center space-x-2">
                 <Button variant="outline" size="sm" onClick={cancelChanges}>
-                  <RotateCcw className="h-4 w-4 mr-2" />
+                  <RotateCcw className="mr-2 h-4 w-4" />
                   取消變更
                 </Button>
                 <Button size="sm" onClick={saveChanges} disabled={saving}>
                   {saving ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                       儲存中...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="mr-2 h-4 w-4" />
                       儲存變更
                     </>
                   )}
@@ -503,15 +731,18 @@ export function PermissionMatrix() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-gray-50 sticky top-0 z-10">
+              <thead className="sticky top-0 z-10 bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-20 min-w-[200px]">
+                  <th className="sticky left-0 z-20 min-w-[200px] bg-gray-50 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     角色 / 權限
                   </th>
                   {filteredCategories.map(category => {
                     const IconComponent = category.icon
                     return (
-                      <th key={category.id} className="px-2 py-3 text-center border-l border-gray-200">
+                      <th
+                        key={category.id}
+                        className="border-l border-gray-200 px-2 py-3 text-center"
+                      >
                         <div className="flex flex-col items-center space-y-2">
                           <button
                             onClick={() => toggleCategory(category.id)}
@@ -530,15 +761,17 @@ export function PermissionMatrix() {
                               {category.permissions.map(permission => (
                                 <div
                                   key={permission.id}
-                                  className="flex flex-col items-center space-y-1 min-w-[80px]"
+                                  className="flex min-w-[80px] flex-col items-center space-y-1"
                                 >
                                   <TooltipProvider>
                                     <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <div className={`text-xs text-center px-2 py-1 rounded ${getRiskLevelColor(permission.riskLevel)} bg-white border cursor-pointer`}>
+                                        <div
+                                          className={`rounded px-2 py-1 text-center text-xs ${getRiskLevelColor(permission.riskLevel)} cursor-pointer border bg-white`}
+                                        >
                                           {permission.name}
                                           {permission.isSystemPermission && (
-                                            <Lock className="h-3 w-3 inline ml-1" />
+                                            <Lock className="ml-1 inline h-3 w-3" />
                                           )}
                                         </div>
                                       </TooltipTrigger>
@@ -557,13 +790,15 @@ export function PermissionMatrix() {
                   })}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {filteredRoles.map(role => (
                   <tr key={role.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white z-10 border-r border-gray-200">
+                    <td className="sticky left-0 z-10 whitespace-nowrap border-r border-gray-200 bg-white px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0">
-                          <div className={`px-2 py-1 rounded text-xs font-medium ${getRoleTypeColor(role.type)}`}>
+                          <div
+                            className={`rounded px-2 py-1 text-xs font-medium ${getRoleTypeColor(role.type)}`}
+                          >
                             {role.type}
                           </div>
                         </div>
@@ -572,12 +807,14 @@ export function PermissionMatrix() {
                             <span className="text-sm font-medium text-gray-900">{role.name}</span>
                             {role.isSystemRole && (
                               <Badge variant="outline" className="text-xs">
-                                <Shield className="h-3 w-3 mr-1" />
+                                <Shield className="mr-1 h-3 w-3" />
                                 系統
                               </Badge>
                             )}
                             {!role.isActive && (
-                              <Badge variant="secondary" className="text-xs">停用</Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                停用
+                              </Badge>
                             )}
                           </div>
                           <div className="text-xs text-gray-500">{role.userCount} 位使用者</div>
@@ -590,14 +827,25 @@ export function PermissionMatrix() {
                           <div className="flex space-x-2 px-2 py-4">
                             {category.permissions.map(permission => {
                               const hasPermission = role.permissions.includes(permission.id)
-                              const isChanged = changes.some(c => c.roleId === role.id && c.permissionId === permission.id)
-                              
+                              const isChanged = changes.some(
+                                c => c.roleId === role.id && c.permissionId === permission.id
+                              )
+
                               return (
                                 <div key={permission.id} className="flex justify-center">
                                   <Checkbox
                                     checked={hasPermission}
-                                    onCheckedChange={(checked) => handlePermissionToggle(role.id, permission.id, checked as boolean)}
-                                    disabled={!editMode || (permission.isSystemPermission && !role.isSystemRole)}
+                                    onCheckedChange={checked =>
+                                      handlePermissionToggle(
+                                        role.id,
+                                        permission.id,
+                                        checked as boolean
+                                      )
+                                    }
+                                    disabled={
+                                      !editMode ||
+                                      (permission.isSystemPermission && !role.isSystemRole)
+                                    }
                                     className={isChanged ? 'border-primary-500 bg-primary-50' : ''}
                                   />
                                 </div>
@@ -616,7 +864,7 @@ export function PermissionMatrix() {
       </Card>
 
       {/* 統計摘要 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -628,7 +876,7 @@ export function PermissionMatrix() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -642,7 +890,7 @@ export function PermissionMatrix() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
@@ -654,17 +902,21 @@ export function PermissionMatrix() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">衝突警告</p>
-                <p className={`text-2xl font-bold ${hasConflicts ? 'text-red-600' : 'text-green-600'}`}>
+                <p
+                  className={`text-2xl font-bold ${hasConflicts ? 'text-red-600' : 'text-green-600'}`}
+                >
                   {hasConflicts ? '1' : '0'}
                 </p>
               </div>
-              <AlertTriangle className={`h-8 w-8 ${hasConflicts ? 'text-red-400' : 'text-green-400'}`} />
+              <AlertTriangle
+                className={`h-8 w-8 ${hasConflicts ? 'text-red-400' : 'text-green-400'}`}
+              />
             </div>
           </CardContent>
         </Card>

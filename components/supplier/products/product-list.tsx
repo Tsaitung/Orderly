@@ -18,12 +18,12 @@ import {
   Star,
   ShoppingCart,
   Package,
-  Loader
+  Loader,
 } from 'lucide-react'
 
 interface ProductListProps {
-  searchParams: { [key: string]: string | string[] | undefined };
-  organizationId?: string;
+  searchParams: { [key: string]: string | string[] | undefined }
+  organizationId?: string
 }
 
 // 模擬產品數據
@@ -41,7 +41,7 @@ const mockProducts = [
       reserved: 25,
       available: 125,
       unit: 'kg',
-      alertLevel: 20
+      alertLevel: 20,
     },
     pricing: {
       base: 35,
@@ -49,16 +49,16 @@ const mockProducts = [
         { min: 1, max: 49, price: 35, label: '零售價' },
         { min: 50, max: 199, price: 32, label: '批發價' },
         { min: 200, max: 999, price: 28, label: '大宗價' },
-        { min: 1000, max: null, price: 25, label: '特惠價' }
-      ]
+        { min: 1000, max: null, price: 25, label: '特惠價' },
+      ],
     },
     performance: {
       rating: 4.5,
       reviews: 28,
       monthlySales: 450,
-      totalSold: 2150
+      totalSold: 2150,
     },
-    lastUpdated: new Date('2025-09-17')
+    lastUpdated: new Date('2025-09-17'),
   },
   {
     id: 'PROD-002',
@@ -73,7 +73,7 @@ const mockProducts = [
       reserved: 3,
       available: 5,
       unit: 'kg',
-      alertLevel: 10
+      alertLevel: 10,
     },
     pricing: {
       base: 680,
@@ -81,16 +81,16 @@ const mockProducts = [
         { min: 1, max: 9, price: 680, label: '零售價' },
         { min: 10, max: 49, price: 650, label: '批發價' },
         { min: 50, max: 199, price: 620, label: '大宗價' },
-        { min: 200, max: null, price: 580, label: '特惠價' }
-      ]
+        { min: 200, max: null, price: 580, label: '特惠價' },
+      ],
     },
     performance: {
       rating: 4.8,
       reviews: 156,
       monthlySales: 89,
-      totalSold: 567
+      totalSold: 567,
     },
-    lastUpdated: new Date('2025-09-18')
+    lastUpdated: new Date('2025-09-18'),
   },
   {
     id: 'PROD-003',
@@ -105,7 +105,7 @@ const mockProducts = [
       reserved: 0,
       available: 0,
       unit: 'kg',
-      alertLevel: 5
+      alertLevel: 5,
     },
     pricing: {
       base: 850,
@@ -113,16 +113,16 @@ const mockProducts = [
         { min: 1, max: 9, price: 850, label: '零售價' },
         { min: 10, max: 49, price: 820, label: '批發價' },
         { min: 50, max: 199, price: 780, label: '大宗價' },
-        { min: 200, max: null, price: 750, label: '特惠價' }
-      ]
+        { min: 200, max: null, price: 750, label: '特惠價' },
+      ],
     },
     performance: {
       rating: 4.3,
       reviews: 94,
       monthlySales: 78,
-      totalSold: 345
+      totalSold: 345,
     },
-    lastUpdated: new Date('2025-09-16')
+    lastUpdated: new Date('2025-09-16'),
   },
   {
     id: 'PROD-004',
@@ -137,7 +137,7 @@ const mockProducts = [
       reserved: 8,
       available: 37,
       unit: 'kg',
-      alertLevel: 10
+      alertLevel: 10,
     },
     pricing: {
       base: 2850,
@@ -145,74 +145,74 @@ const mockProducts = [
         { min: 1, max: 4, price: 2850, label: '零售價' },
         { min: 5, max: 19, price: 2750, label: '批發價' },
         { min: 20, max: 49, price: 2650, label: '大宗價' },
-        { min: 50, max: null, price: 2500, label: '特惠價' }
-      ]
+        { min: 50, max: null, price: 2500, label: '特惠價' },
+      ],
     },
     performance: {
       rating: 4.9,
       reviews: 203,
       monthlySales: 23,
-      totalSold: 156
+      totalSold: 156,
     },
-    lastUpdated: new Date('2025-09-18')
-  }
+    lastUpdated: new Date('2025-09-18'),
+  },
 ]
 
 export default function ProductList({ searchParams, organizationId }: ProductListProps) {
-  const { user } = useAuth();
-  const effectiveOrgId = organizationId || user?.organizationId;
-  
+  const { user } = useAuth()
+  const effectiveOrgId = organizationId || user?.organizationId
+
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null)
 
   // Use the product hook (currently placeholder)
-  const { 
-    products, 
-    loading, 
-    error, 
+  const {
+    products,
+    loading,
+    error,
     refetch,
     addProduct,
     updateProduct,
     removeProduct,
     isAdding,
     isUpdating,
-    isRemoving
-  } = useSupplierProducts(effectiveOrgId);
+    isRemoving,
+  } = useSupplierProducts(effectiveOrgId)
 
   // For now, use mock data as fallback since product service isn't implemented
-  const displayProducts = products.length > 0 ? products : mockProducts;
+  const displayProducts = products.length > 0 ? products : mockProducts
 
   // Show loading state
   if (loading) {
     return (
       <Card className="p-6">
-        <div className="flex items-center justify-center h-64">
+        <div className="flex h-64 items-center justify-center">
           <Loader className="h-8 w-8 animate-spin text-gray-400" />
           <span className="ml-2 text-gray-600">載入產品資料中...</span>
         </div>
       </Card>
-    );
+    )
   }
 
   // Show error state
   if (error) {
     return (
-      <Card className="p-6 border-red-200 bg-red-50">
+      <Card className="border-red-200 bg-red-50 p-6">
         <div className="flex items-center space-x-3">
           <AlertTriangle className="h-5 w-5 text-red-600" />
           <div>
             <h3 className="font-medium text-red-900">無法載入產品資料</h3>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-            <button 
+            <p className="mt-1 text-sm text-red-700">{error}</p>
+            <button
               onClick={refetch}
-              className="text-sm text-red-600 hover:text-red-800 underline mt-2"
+              className="mt-2 text-sm text-red-600 underline hover:text-red-800"
             >
               重新載入
             </button>
           </div>
         </div>
       </Card>
-    );
+    )
   }
 
   const getStockStatus = (stock: any) => {
@@ -230,10 +230,8 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
   }
 
   const toggleSelectProduct = (productId: string) => {
-    setSelectedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
+    setSelectedProducts(prev =>
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
     )
   }
 
@@ -248,20 +246,20 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
   return (
     <Card className="p-6">
       {/* 列表標題與批量操作 */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <h2 className="text-xl font-semibold text-gray-900">產品列表</h2>
           <Badge variant="outline">共 {displayProducts.length} 項產品</Badge>
           {products.length === 0 && (
-            <Badge variant="warning" size="sm">使用測試資料</Badge>
+            <Badge variant="warning" size="sm">
+              使用測試資料
+            </Badge>
           )}
         </div>
 
         {selectedProducts.length > 0 && (
           <div className="flex items-center space-x-3">
-            <span className="text-sm text-gray-600">
-              已選取 {selectedProducts.length} 項
-            </span>
+            <span className="text-sm text-gray-600">已選取 {selectedProducts.length} 項</span>
             <Button variant="outline" size="sm">
               批量編輯
             </Button>
@@ -276,12 +274,16 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
       </div>
 
       {/* 全選控制 */}
-      <div className="flex items-center space-x-4 mb-4 pb-4 border-b">
-        <label className="flex items-center space-x-2 cursor-pointer">
+      <div className="mb-4 flex items-center space-x-4 border-b pb-4">
+        <label className="flex cursor-pointer items-center space-x-2">
           <input
             type="checkbox"
             checked={selectedProducts.length === displayProducts.length}
-            onChange={selectedProducts.length === displayProducts.length ? clearSelection : selectAllProducts}
+            onChange={
+              selectedProducts.length === displayProducts.length
+                ? clearSelection
+                : selectAllProducts
+            }
             className="rounded text-blue-600"
           />
           <span className="text-sm text-gray-700">全選</span>
@@ -293,15 +295,15 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
 
       {/* 產品列表 */}
       <div className="space-y-4">
-        {displayProducts.map((product) => {
+        {displayProducts.map(product => {
           const stockStatus = getStockStatus(product.stock)
           const isExpanded = expandedProduct === product.id
           const isSelected = selectedProducts.includes(product.id)
 
           return (
-            <div 
-              key={product.id} 
-              className={`border rounded-lg transition-all duration-200 ${
+            <div
+              key={product.id}
+              className={`rounded-lg border transition-all duration-200 ${
                 isSelected ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:shadow-sm'
               }`}
             >
@@ -317,13 +319,13 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
 
                   {/* 產品圖片 */}
                   <div className="flex-shrink-0">
-                    <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100">
                       <ImageIcon className="h-6 w-6 text-gray-400" />
                     </div>
                   </div>
 
                   {/* 產品基本資訊 */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
+                  <div className="grid flex-1 grid-cols-1 items-center gap-4 md:grid-cols-6">
                     <div className="md:col-span-2">
                       <div className="font-medium text-gray-900">{product.name}</div>
                       <div className="text-sm text-gray-500">
@@ -354,7 +356,7 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
                         {stockStatus.label}
                       </Badge>
                       {product.stock.reserved > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="mt-1 text-xs text-gray-500">
                           已預留: {product.stock.reserved}
                         </div>
                       )}
@@ -362,7 +364,7 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
 
                     <div className="text-center">
                       <div className="flex items-center justify-center space-x-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                        <Star className="h-4 w-4 fill-current text-yellow-400" />
                         <span className="font-medium">{product.performance.rating}</span>
                       </div>
                       <div className="text-xs text-gray-500">
@@ -374,7 +376,7 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
                     </div>
 
                     <div className="text-center">
-                      <Badge 
+                      <Badge
                         variant={product.status === 'active' ? 'success' : 'warning'}
                         size="sm"
                       >
@@ -405,17 +407,21 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
               {/* 展開的詳細資訊 */}
               {isExpanded && (
                 <div className="border-t bg-gray-50 p-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     {/* 階梯定價 */}
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-3">階梯定價</h4>
+                      <h4 className="mb-3 font-medium text-gray-900">階梯定價</h4>
                       <div className="space-y-2">
                         {product.pricing.tiers.map((tier, index) => (
-                          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div
+                            key={index}
+                            className="flex items-center justify-between rounded border bg-white p-2"
+                          >
                             <div className="text-sm">
                               <span className="font-medium">{tier.label}</span>
-                              <span className="text-gray-500 ml-2">
-                                ({tier.min}{tier.max ? `-${tier.max}` : '+'} {product.stock.unit})
+                              <span className="ml-2 text-gray-500">
+                                ({tier.min}
+                                {tier.max ? `-${tier.max}` : '+'} {product.stock.unit})
                               </span>
                             </div>
                             <div className="font-semibold text-blue-600">
@@ -428,27 +434,27 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
 
                     {/* 庫存詳情與銷售數據 */}
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-3">庫存與銷售</h4>
+                      <h4 className="mb-3 font-medium text-gray-900">庫存與銷售</h4>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white p-3 rounded border">
+                        <div className="rounded border bg-white p-3">
                           <div className="text-sm text-gray-600">可售庫存</div>
                           <div className="font-semibold text-green-600">
                             {product.stock.available} {product.stock.unit}
                           </div>
                         </div>
-                        <div className="bg-white p-3 rounded border">
+                        <div className="rounded border bg-white p-3">
                           <div className="text-sm text-gray-600">已預留</div>
                           <div className="font-semibold text-orange-600">
                             {product.stock.reserved} {product.stock.unit}
                           </div>
                         </div>
-                        <div className="bg-white p-3 rounded border">
+                        <div className="rounded border bg-white p-3">
                           <div className="text-sm text-gray-600">月銷量</div>
                           <div className="font-semibold text-blue-600">
                             {product.performance.monthlySales}
                           </div>
                         </div>
-                        <div className="bg-white p-3 rounded border">
+                        <div className="rounded border bg-white p-3">
                           <div className="text-sm text-gray-600">總銷量</div>
                           <div className="font-semibold text-purple-600">
                             {product.performance.totalSold}
@@ -458,15 +464,14 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
 
                       {/* 庫存警告 */}
                       {product.stock.current <= product.stock.alertLevel && (
-                        <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded">
+                        <div className="mt-3 rounded border border-orange-200 bg-orange-50 p-3">
                           <div className="flex items-center space-x-2">
                             <AlertTriangle className="h-4 w-4 text-orange-600" />
-                            <span className="text-sm font-medium text-orange-800">
-                              庫存預警
-                            </span>
+                            <span className="text-sm font-medium text-orange-800">庫存預警</span>
                           </div>
-                          <p className="text-sm text-orange-700 mt-1">
-                            當前庫存 ({product.stock.current} {product.stock.unit}) 已低於警戒線 ({product.stock.alertLevel} {product.stock.unit})
+                          <p className="mt-1 text-sm text-orange-700">
+                            當前庫存 ({product.stock.current} {product.stock.unit}) 已低於警戒線 (
+                            {product.stock.alertLevel} {product.stock.unit})
                           </p>
                         </div>
                       )}
@@ -474,21 +479,21 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
                   </div>
 
                   {/* 快速操作 */}
-                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="mt-4 flex items-center justify-between border-t pt-4">
                     <div className="text-sm text-gray-500">
                       最後更新: {product.lastUpdated.toLocaleDateString('zh-TW')}
                     </div>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">
-                        <Copy className="h-4 w-4 mr-2" />
+                        <Copy className="mr-2 h-4 w-4" />
                         複製產品
                       </Button>
                       <Button variant="outline" size="sm">
-                        <TrendingUp className="h-4 w-4 mr-2" />
+                        <TrendingUp className="mr-2 h-4 w-4" />
                         銷售分析
                       </Button>
                       <Button variant="outline" size="sm">
-                        <Package className="h-4 w-4 mr-2" />
+                        <Package className="mr-2 h-4 w-4" />
                         庫存調整
                       </Button>
                     </div>
@@ -501,7 +506,7 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
       </div>
 
       {/* 分頁控制 */}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t">
+      <div className="mt-6 flex items-center justify-between border-t pt-4">
         <div className="text-sm text-gray-500">
           顯示第 1-{displayProducts.length} 項{products.length === 0 ? '（測試資料）' : ''}
         </div>
@@ -514,7 +519,7 @@ export default function ProductList({ searchParams, organizationId }: ProductLis
           </Button>
         </div>
         {products.length === 0 && (
-          <div className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+          <div className="rounded bg-orange-50 px-2 py-1 text-xs text-orange-600">
             產品服務開發中，目前顯示測試資料
           </div>
         )}

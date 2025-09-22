@@ -125,7 +125,7 @@ class PlatformSupplierService {
 
   private async apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
-    
+
     const defaultHeaders = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -161,7 +161,7 @@ class PlatformSupplierService {
    */
   async getSuppliers(params: SupplierFilterParams = {}): Promise<SupplierListResponse> {
     const searchParams = new URLSearchParams()
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         // Use param names directly - backend expects the same param names
@@ -171,7 +171,7 @@ class PlatformSupplierService {
 
     const queryString = searchParams.toString()
     const endpoint = `/suppliers${queryString ? `?${queryString}` : ''}`
-    
+
     return this.apiCall<SupplierListResponse>(endpoint)
   }
 
@@ -186,7 +186,7 @@ class PlatformSupplierService {
    * Update supplier status (platform admin function)
    */
   async updateSupplierStatus(
-    supplierId: string, 
+    supplierId: string,
     updateData: SupplierUpdateRequest
   ): Promise<SupplierDetail> {
     return this.apiCall<SupplierDetail>(`/suppliers/${supplierId}`, {
@@ -227,7 +227,7 @@ class PlatformSupplierService {
     return {
       high: Math.floor(stats.active_suppliers * 0.3),
       moderate: Math.floor(stats.active_suppliers * 0.5),
-      low: Math.floor(stats.active_suppliers * 0.2)
+      low: Math.floor(stats.active_suppliers * 0.2),
     }
   }
 
@@ -239,7 +239,7 @@ class PlatformSupplierService {
       sort_by: 'monthly_gmv',
       sort_order: 'desc',
       page_size: limit,
-      status: 'VERIFIED'
+      status: 'VERIFIED',
     })
     return response.suppliers
   }
@@ -255,14 +255,17 @@ class PlatformSupplierService {
     const [pending, lowPerf, inactive] = await Promise.all([
       this.getSuppliersByStatus('PENDING'),
       this.getSuppliers({ activity_level: 'low', page_size: 20 }),
-      this.getSuppliers({ activity_level: 'low', page_size: 10 })
+      this.getSuppliers({ activity_level: 'low', page_size: 10 }),
     ])
 
     return {
       pending_verification: pending,
       low_performance: lowPerf.suppliers.filter(s => s.fulfillment_rate < 90),
-      inactive: inactive.suppliers.filter(s => !s.last_order_date || 
-        new Date(s.last_order_date) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+      inactive: inactive.suppliers.filter(
+        s =>
+          !s.last_order_date ||
+          new Date(s.last_order_date) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      ),
     }
   }
 }
@@ -278,7 +281,7 @@ export type {
   SupplierListResponse,
   SupplierFilterParams,
   SupplierUpdateRequest,
-  SupplierActivityMetrics
+  SupplierActivityMetrics,
 }
 
 export default platformSupplierService

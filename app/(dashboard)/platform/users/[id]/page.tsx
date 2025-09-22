@@ -21,20 +21,20 @@ export default function UserDetailPage({ params }: UserDetailPageProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Link 
+          <Link
             href="/platform/users"
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center text-gray-600 transition-colors hover:text-gray-900"
           >
-            <ArrowLeft className="h-5 w-5 mr-2" />
+            <ArrowLeft className="mr-2 h-5 w-5" />
             返回使用者清單
           </Link>
         </div>
-        
+
         <div className="flex items-center space-x-3">
-          <button className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          <button className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50">
             編輯使用者
           </button>
-          <button className="px-4 py-2 text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50 transition-colors">
+          <button className="rounded-md border border-red-300 bg-white px-4 py-2 text-red-600 transition-colors hover:bg-red-50">
             停用帳號
           </button>
         </div>

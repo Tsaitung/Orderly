@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { 
+import {
   Users,
   Search,
   Filter,
@@ -13,7 +13,7 @@ import {
   XCircle,
   Mail,
   Phone,
-  Calendar
+  Calendar,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -33,7 +33,7 @@ const mockUsers = [
     lastLogin: '2025-09-18T08:30:00Z',
     joinedAt: '2024-12-15T10:00:00Z',
     orders: 245,
-    gmv: 1245000
+    gmv: 1245000,
   },
   {
     id: '2',
@@ -45,7 +45,7 @@ const mockUsers = [
     lastLogin: '2025-09-18T07:45:00Z',
     joinedAt: '2024-11-20T09:15:00Z',
     orders: 189,
-    gmv: 890000
+    gmv: 890000,
   },
   {
     id: '3',
@@ -57,7 +57,7 @@ const mockUsers = [
     lastLogin: null,
     joinedAt: '2025-09-17T14:20:00Z',
     orders: 0,
-    gmv: 0
+    gmv: 0,
   },
   {
     id: '4',
@@ -69,7 +69,7 @@ const mockUsers = [
     lastLogin: '2025-09-15T16:30:00Z',
     joinedAt: '2024-10-05T11:30:00Z',
     orders: 156,
-    gmv: 650000
+    gmv: 650000,
   },
   {
     id: '5',
@@ -81,7 +81,7 @@ const mockUsers = [
     lastLogin: '2025-09-18T09:15:00Z',
     joinedAt: '2024-09-12T08:45:00Z',
     orders: 203,
-    gmv: 1100000
+    gmv: 1100000,
   },
   {
     id: '6',
@@ -93,8 +93,8 @@ const mockUsers = [
     lastLogin: '2025-09-18T06:20:00Z',
     joinedAt: '2024-08-18T13:10:00Z',
     orders: 312,
-    gmv: 1890000
-  }
+    gmv: 1890000,
+  },
 ]
 
 interface UserTableProps {
@@ -108,24 +108,52 @@ function UserTable({ users, onEdit, onSuspend, onDelete }: UserTableProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge variant="success" size="sm">啟用</Badge>
+        return (
+          <Badge variant="success" size="sm">
+            啟用
+          </Badge>
+        )
       case 'pending':
-        return <Badge variant="warning" size="sm">待審核</Badge>
+        return (
+          <Badge variant="warning" size="sm">
+            待審核
+          </Badge>
+        )
       case 'suspended':
-        return <Badge variant="destructive" size="sm">停用</Badge>
+        return (
+          <Badge variant="destructive" size="sm">
+            停用
+          </Badge>
+        )
       default:
-        return <Badge variant="secondary" size="sm">{status}</Badge>
+        return (
+          <Badge variant="secondary" size="sm">
+            {status}
+          </Badge>
+        )
     }
   }
 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'restaurant':
-        return <Badge variant="info" size="sm">餐廳</Badge>
+        return (
+          <Badge variant="info" size="sm">
+            餐廳
+          </Badge>
+        )
       case 'supplier':
-        return <Badge variant="outline" size="sm">供應商</Badge>
+        return (
+          <Badge variant="outline" size="sm">
+            供應商
+          </Badge>
+        )
       default:
-        return <Badge variant="secondary" size="sm">{type}</Badge>
+        return (
+          <Badge variant="secondary" size="sm">
+            {type}
+          </Badge>
+        )
     }
   }
 
@@ -135,24 +163,24 @@ function UserTable({ users, onEdit, onSuspend, onDelete }: UserTableProps) {
   }
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-lg border border-gray-200">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 用戶資訊
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 類型
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 狀態
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 業務數據
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 最後登入
               </th>
               <th className="relative px-6 py-3">
@@ -160,43 +188,37 @@ function UserTable({ users, onEdit, onSuspend, onDelete }: UserTableProps) {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {users.map(user => (
               <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div>
                     <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Mail className="h-3 w-3 mr-1" />
+                    <div className="mt-1 flex items-center text-sm text-gray-500">
+                      <Mail className="mr-1 h-3 w-3" />
                       {user.email}
                     </div>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Phone className="h-3 w-3 mr-1" />
+                    <div className="mt-1 flex items-center text-sm text-gray-500">
+                      <Phone className="mr-1 h-3 w-3" />
                       {user.phone}
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getTypeBadge(user.type)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {getStatusBadge(user.status)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">{getTypeBadge(user.type)}</td>
+                <td className="whitespace-nowrap px-6 py-4">{getStatusBadge(user.status)}</td>
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="text-sm">
                     <div className="text-gray-900">訂單: {user.orders}</div>
-                    <div className="text-gray-500">
-                      GMV: NT$ {user.gmv.toLocaleString()}
-                    </div>
+                    <div className="text-gray-500">GMV: NT$ {user.gmv.toLocaleString()}</div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="h-3 w-3 mr-1" />
+                    <Calendar className="mr-1 h-3 w-3" />
                     {formatDate(user.lastLogin)}
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                   <div className="flex items-center space-x-2">
                     <Button
                       variant="ghost"
@@ -211,9 +233,9 @@ function UserTable({ users, onEdit, onSuspend, onDelete }: UserTableProps) {
                       size="sm"
                       onClick={() => onSuspend(user.id)}
                       className={cn(
-                        user.status === 'suspended' 
-                          ? "text-green-600 hover:text-green-700"
-                          : "text-yellow-600 hover:text-yellow-700"
+                        user.status === 'suspended'
+                          ? 'text-green-600 hover:text-green-700'
+                          : 'text-yellow-600 hover:text-yellow-700'
                       )}
                     >
                       {user.status === 'suspended' ? (
@@ -249,11 +271,12 @@ export function UserManagement() {
 
   const filteredUsers = React.useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesType = filterType === 'all' || user.type === filterType
       const matchesStatus = filterStatus === 'all' || user.status === filterStatus
-      
+
       return matchesSearch && matchesType && matchesStatus
     })
   }, [users, searchTerm, filterType, filterStatus])
@@ -264,11 +287,13 @@ export function UserManagement() {
   }
 
   const handleSuspend = (userId: string) => {
-    setUsers(prev => prev.map(user => 
-      user.id === userId 
-        ? { ...user, status: user.status === 'suspended' ? 'active' : 'suspended' }
-        : user
-    ))
+    setUsers(prev =>
+      prev.map(user =>
+        user.id === userId
+          ? { ...user, status: user.status === 'suspended' ? 'active' : 'suspended' }
+          : user
+      )
+    )
   }
 
   const handleDelete = (userId: string) => {
@@ -291,7 +316,7 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -371,15 +396,15 @@ export function UserManagement() {
           <CardTitle>用戶管理</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:space-x-4 md:space-y-0">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 <Input
                   placeholder="搜尋用戶名稱或信箱..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -388,8 +413,8 @@ export function UserManagement() {
             {/* Type Filter */}
             <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={e => setFilterType(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">所有類型</option>
               <option value="restaurant">餐廳</option>
@@ -399,8 +424,8 @@ export function UserManagement() {
             {/* Status Filter */}
             <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              onChange={e => setFilterStatus(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">所有狀態</option>
               <option value="active">啟用</option>
@@ -408,9 +433,7 @@ export function UserManagement() {
               <option value="suspended">停用</option>
             </select>
 
-            <Button className="px-6">
-              新增用戶
-            </Button>
+            <Button className="px-6">新增用戶</Button>
           </div>
 
           {/* User Table */}
@@ -423,9 +446,7 @@ export function UserManagement() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              顯示 {filteredUsers.length} 筆用戶
-            </div>
+            <div className="text-sm text-gray-500">顯示 {filteredUsers.length} 筆用戶</div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" disabled>
                 上一頁
