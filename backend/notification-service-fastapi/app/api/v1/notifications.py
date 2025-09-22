@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 
 from app.core.database import get_async_session
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'libs')))
+from orderly_fastapi_core.pagination import pagination_params, Pagination
 from app.models.notification import Notification
 
 
@@ -17,10 +20,14 @@ async def health(db: AsyncSession = Depends(get_async_session)):
 
 
 @router.get("/notifications")
-async def list_notifications(limit: int = 50, db: AsyncSession = Depends(get_async_session)):
-    res = await db.execute(select(Notification).order_by(desc(Notification.created_at)).limit(limit))
+async def list_notifications(p: Pagination = Depends(pagination_params), db: AsyncSession = Depends(get_async_session)):
+    res = await db.execute(
+        select(Notification)
+        .order_by(desc(Notification.created_at))
+        .offset(p["offset"]).limit(p["limit"]) 
+    )
     items = res.scalars().all()
-    return {"success": True, "data": items, "count": len(items)}
+    return {"success": True, "data": items, "count": len(items), "page": p["page"], "page_size": p["page_size"]}
 
 
 @router.post("/notifications", status_code=201)

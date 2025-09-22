@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { InvitationDetailResponse, InvitationStatus } from '@orderly/types';
+import { http } from '@/lib/api/http';
 
 interface InvitationVerifyFormData {
   code: string;
@@ -37,20 +38,8 @@ export default function SupplierInvitePage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/invitations/verify/${formData.code}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setInvitation(data);
-      } else {
-        setError(data.detail || '邀請代碼驗證失敗');
-      }
+      const data = await http.get<InvitationDetailResponse>(`/api/invitations/verify/${formData.code}`);
+      setInvitation(data);
     } catch (err) {
       setError('網路錯誤，請重試');
     } finally {

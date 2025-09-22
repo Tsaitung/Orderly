@@ -6,6 +6,9 @@ from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'libs')))
+from orderly_fastapi_core.pagination import pagination_params, Pagination
 from app.models.order import Order, OrderItem
 
 
@@ -22,15 +25,16 @@ async def health(db: AsyncSession = Depends(get_async_session)):
 
 
 @router.get("/orders")
-async def list_orders(limit: int = 50, db: AsyncSession = Depends(get_async_session)):
+async def list_orders(p: Pagination = Depends(pagination_params), db: AsyncSession = Depends(get_async_session)):
     result = await db.execute(
         select(Order)
         .options(selectinload(Order.items))  # Eager load order items to prevent N+1 queries
         .order_by(desc(Order.created_at))
-        .limit(limit)
+        .offset(p["offset"])  # pagination offset
+        .limit(p["limit"])    # pagination limit
     )
     orders = result.scalars().all()
-    return {"success": True, "data": orders, "count": len(orders)}
+    return {"success": True, "data": orders, "count": len(orders), "page": p["page"], "page_size": p["page_size"]}
 
 
 @router.get("/orders/{order_id}")
@@ -103,4 +107,3 @@ async def update_order_status(order_id: str, payload: dict, db: AsyncSession = D
     await db.commit()
     await db.refresh(order)
     return {"success": True, "data": order}
-

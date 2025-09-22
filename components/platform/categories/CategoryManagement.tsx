@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { CategoryTree } from './CategoryTree'
 import { CategoryEditor } from './CategoryEditor'
+import { http } from '@/lib/api/http'
 
 interface Category {
   id: string
@@ -38,11 +39,8 @@ export function CategoryManagement() {
   const fetchCategories = React.useCallback(async () => {
     try {
       setRefreshing(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/products/categories?includeProducts=true`)
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data.data || [])
-      }
+      const data = await http.get<{ data: Category[] }>(`/products/categories?includeProducts=true`)
+      setCategories(data.data || [])
     } catch (error) {
       console.error('Failed to fetch categories:', error)
     } finally {
@@ -93,29 +91,15 @@ export function CategoryManagement() {
     try {
       setLoading(true)
       
-      const url = editingCategory 
-        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/categories/${editingCategory.id}`
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/categories`
-      
-      const method = editingCategory ? 'PUT' : 'POST'
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(categoryData),
-      })
-
-      if (response.ok) {
-        await fetchCategories() // Refresh the list
-        setEditorOpen(false)
-        setEditingCategory(null)
-        setParentForNewChild(null)
+      if (editingCategory) {
+        await http.put(`/products/categories/${editingCategory.id}`, categoryData)
       } else {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to save category')
+        await http.post(`/products/categories`, categoryData)
       }
+      await fetchCategories()
+      setEditorOpen(false)
+      setEditingCategory(null)
+      setParentForNewChild(null)
     } catch (error) {
       console.error('Failed to save category:', error)
       alert('儲存類別失敗：' + (error as Error).message)

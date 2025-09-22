@@ -5,6 +5,9 @@ Essential supplier management without inventory, ERP, or automation
 import structlog
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
+from orderly_fastapi_core.errors import register_exception_handlers
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -69,6 +72,9 @@ app.add_middleware(
     ],
     expose_headers=["X-Correlation-ID"]
 )
+
+# Consistent error responses
+register_exception_handlers(app)
 
 
 @app.get("/health")

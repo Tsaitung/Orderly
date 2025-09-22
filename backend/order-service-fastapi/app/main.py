@@ -1,6 +1,9 @@
 import structlog
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
+from orderly_fastapi_core.errors import register_exception_handlers
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -31,6 +34,9 @@ app = FastAPI(
 )
 
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+# Register shared exception handlers for consistent error responses
+register_exception_handlers(app)
 
 
 @app.get("/")

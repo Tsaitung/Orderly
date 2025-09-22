@@ -25,44 +25,10 @@ export function HeroSection() {
     return () => clearInterval(interval)
   }, [stats.length])
   
-  // No-JavaScript fallback content
-  if (!isLoaded) {
-    return (
-      <section className="critical-fallback flex items-center justify-center">
-        <div className="text-center">
-          <h1>井然 Orderly</h1>
-          <p>餐飲供應鏈自動化對帳平台</p>
-          <p style={{ marginTop: '2rem' }}>
-            透過 ERP 整合和 API 優先架構，實現「下單 → 配送 → 驗收 → 對帳 → 結算」全流程自動化
-          </p>
-          <div style={{ marginTop: '3rem' }}>
-            <a href="/restaurant" style={{ 
-              background: '#a47864', 
-              color: 'white', 
-              padding: '1rem 2rem', 
-              borderRadius: '0.5rem',
-              textDecoration: 'none',
-              marginRight: '1rem',
-              display: 'inline-block'
-            }}>
-              餐廳管理介面
-            </a>
-            <a href="/supplier" style={{ 
-              background: '#f3f4f6', 
-              color: '#374151', 
-              padding: '1rem 2rem', 
-              borderRadius: '0.5rem',
-              textDecoration: 'none',
-              border: '1px solid #d1d5db',
-              display: 'inline-block'
-            }}>
-              供應商管理介面
-            </a>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  // Simplified version without fallback - always show enhanced hero
+  // if (!isLoaded) {
+  //   return fallback...
+  // }
 
   return (
     <section className="relative overflow-hidden min-h-screen py-20">

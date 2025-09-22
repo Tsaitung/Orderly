@@ -172,6 +172,10 @@ class CustomerCompany(BaseModel):
         
         tax_id = tax_id.strip().upper()
         
+        # Skip validation if tax_id_type is not set yet (during object creation)
+        if not hasattr(self, 'tax_id_type') or self.tax_id_type is None:
+            return tax_id
+        
         if self.tax_id_type == 'company':
             # Taiwan company tax ID: 8 digits
             if not re.match(r'^\d{8}$', tax_id):

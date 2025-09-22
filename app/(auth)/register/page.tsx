@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { http } from '@/lib/api/http';
 
 interface RegistrationData {
   // Step 1: Account Info
@@ -101,29 +102,18 @@ export default function RegisterPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          organizationName: formData.organizationName,
-          organizationType: formData.organizationType,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-        }),
+      await http.post('/api/users/auth/register', {
+        email: formData.email,
+        password: formData.password,
+        organizationName: formData.organizationName,
+        organizationType: formData.organizationType,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      {
         // Registration successful, redirect to dashboard or show success message
         window.location.href = '/dashboard';
-      } else {
-        setErrors({ submit: data.message || '註冊失敗，請重試' });
       }
     } catch (error) {
       setErrors({ submit: '網路錯誤，請重試' });

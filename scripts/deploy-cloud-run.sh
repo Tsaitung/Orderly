@@ -263,7 +263,6 @@ deploy_services() {
             --platform=managed \
             --region="$REGION" \
             --allow-unauthenticated \
-            --port="$service_port" \
             --memory=512Mi \
             --cpu=1 \
             --min-instances=0 \

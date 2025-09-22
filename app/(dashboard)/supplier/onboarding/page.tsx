@@ -69,7 +69,7 @@ export default function SupplierOnboardingDashboard() {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/invitations/profile`, {
+      const response = await fetch('/api/bff/api/invitations/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

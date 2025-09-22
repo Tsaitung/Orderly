@@ -1,122 +1,138 @@
 """
-Configuration settings for Customer Hierarchy Service
+Customer Hierarchy Service Configuration
+基於統一配置管理系統的客戶層級服務配置
 """
-from pydantic_settings import BaseSettings
+
+import sys
+from pathlib import Path
 from typing import Optional
-import os
+
+# 添加共享庫路徑
+sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs"))
+
+from orderly_fastapi_core import UnifiedSettings, get_settings
+from pydantic import Field
 
 
-class Settings(BaseSettings):
-    """Application settings"""
+class CustomerHierarchyServiceSettings(UnifiedSettings):
+    """Customer Hierarchy Service 特定配置"""
     
-    # Application
-    APP_NAME: str = "Customer Hierarchy Service"
-    API_VERSION: str = "1.0.0"
-    API_V2_STR: str = "/api/v2"
-    DEBUG: bool = False
-    ENVIRONMENT: str = "development"
+    # 覆蓋預設應用名稱和端口
+    app_name: str = Field(default="Customer Hierarchy Service", description="客戶層級服務名稱")
+    api_version: str = Field(default="1.0.0", description="API 版本")
+    api_v2_str: str = Field(default="/api/v2", description="API v2 路徑前綴")
+    port: int = Field(default=3007, description="客戶層級服務端口")
+    workers: int = Field(default=4, description="Worker 數量")
     
-    # Server
-    HOST: str = "0.0.0.0"
-    PORT: int = int(os.getenv("PORT", "3007"))
-    WORKERS: int = 4
+    # 客戶層級業務規則
+    max_hierarchy_depth: int = Field(default=4, description="最大層級深度")
+    max_locations_per_company: int = Field(default=100, description="每個公司最大地點數")
+    max_units_per_location: int = Field(default=50, description="每個地點最大單位數")
+    default_migration_batch_size: int = Field(default=100, description="預設遷移批次大小")
     
-    # Database
-    DATABASE_URL: str = "postgresql://postgres:password@localhost:5432/orderly_hierarchy"
+    # 台灣稅號驗證規則
+    taiwan_company_tax_id_pattern: str = Field(default=r"^\d{8}$", description="台灣公司統編格式")
+    taiwan_individual_id_pattern: str = Field(default=r"^[A-Z]\d{9}$", description="台灣個人身分證格式")
     
-    DATABASE_ECHO: bool = False
-    DATABASE_POOL_SIZE: int = 10
-    DATABASE_MAX_OVERFLOW: int = 20
+    # 緩存設定（覆蓋統一設定以符合業務需求）
+    cache_tree_ttl: int = Field(default=600, description="層級樹緩存 TTL（10分鐘）")
+    cache_entity_ttl: int = Field(default=300, description="個別實體緩存 TTL（5分鐘）")
+    redis_ttl: int = Field(default=300, description="Redis 預設 TTL（5分鐘）")
     
-    @property
-    def database_url(self) -> str:
-        """Get database URL"""
-        return self.DATABASE_URL
+    # 客戶管理配置
+    enable_customer_verification: bool = Field(default=True, description="啟用客戶驗證")
+    enable_auto_hierarchy_creation: bool = Field(default=True, description="啟用自動層級創建")
+    enable_bulk_operations: bool = Field(default=True, description="啟用批量操作")
+    enable_hierarchy_validation: bool = Field(default=True, description="啟用層級驗證")
     
-    @property
-    def database_echo(self) -> bool:
-        """Get database echo setting"""
-        return self.DATABASE_ECHO
+    # 公司管理配置
+    require_business_registration: bool = Field(default=True, description="需要商業登記")
+    enable_company_verification: bool = Field(default=True, description="啟用公司驗證")
+    company_verification_timeout_days: int = Field(default=7, description="公司驗證超時天數")
     
-    @property
-    def database_pool_size(self) -> int:
-        """Get database pool size"""
-        return self.DATABASE_POOL_SIZE
+    # 地點管理配置
+    enable_location_coordinates: bool = Field(default=True, description="啟用地點座標")
+    enable_delivery_zones: bool = Field(default=True, description="啟用配送區域")
+    max_delivery_radius_km: float = Field(default=50.0, description="最大配送半徑（公里）")
     
-    @property
-    def database_max_overflow(self) -> int:
-        """Get database max overflow"""
-        return self.DATABASE_MAX_OVERFLOW
+    # 單位管理配置
+    enable_unit_budgets: bool = Field(default=True, description="啟用單位預算")
+    enable_cost_centers: bool = Field(default=True, description="啟用成本中心")
+    enable_approval_workflows: bool = Field(default=True, description="啟用審核工作流")
     
-    # Redis
-    REDIS_URL: Optional[str] = "redis://localhost:6379/0"
-    REDIS_TTL: int = 300  # 5 minutes default TTL
+    # 層級權限管理
+    enable_inherited_permissions: bool = Field(default=True, description="啟用繼承權限")
+    enable_permission_overrides: bool = Field(default=True, description="啟用權限覆蓋")
+    max_permission_inheritance_depth: int = Field(default=3, description="最大權限繼承深度")
     
-    # Authentication
-    SECRET_KEY: str = "your-secret-key-here"
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    # 客戶分類配置
+    enable_customer_segmentation: bool = Field(default=True, description="啟用客戶分群")
+    enable_auto_categorization: bool = Field(default=False, description="啟用自動分類")
+    customer_tier_levels: str = Field(default="bronze,silver,gold,platinum", description="客戶等級")
     
-    # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
-    ALLOWED_HOSTS: list = ["localhost", "127.0.0.1"]
+    # 審計和合規
+    enable_audit_logging: bool = Field(default=True, description="啟用審計日誌")
+    enable_data_retention_policies: bool = Field(default=True, description="啟用資料保留政策")
+    audit_log_retention_days: int = Field(default=2555, description="審計日誌保留天數（7年）")
     
-    # Logging
-    log_level: str = "INFO"
-    log_format: str = "json"
+    # 整合設定
+    enable_erp_integration: bool = Field(default=False, description="啟用 ERP 整合")
+    enable_crm_sync: bool = Field(default=True, description="啟用 CRM 同步")
+    sync_interval_minutes: int = Field(default=60, description="同步間隔（分鐘）")
     
-    # Service Discovery
-    api_gateway_url: str = "http://localhost:8000"
-    user_service_url: str = "http://localhost:3001"
-    order_service_url: str = "http://localhost:3002"
-    billing_service_url: str = "http://localhost:3005"
+    # 報告和分析
+    enable_hierarchy_analytics: bool = Field(default=True, description="啟用層級分析")
+    enable_customer_insights: bool = Field(default=True, description="啟用客戶洞察")
+    enable_performance_metrics: bool = Field(default=True, description="啟用績效指標")
     
-    # Business Rules
-    max_hierarchy_depth: int = 4
-    max_locations_per_company: int = 100
-    max_units_per_location: int = 50
-    default_migration_batch_size: int = 100
+    # API 配置
+    api_rate_limit_per_minute: int = Field(default=300, description="API 每分鐘限制")
+    enable_bulk_api: bool = Field(default=True, description="啟用批量 API")
+    max_bulk_operation_size: int = Field(default=1000, description="最大批量操作大小")
     
-    # Tax ID Validation
-    taiwan_company_tax_id_pattern: str = r"^\d{8}$"
-    taiwan_individual_id_pattern: str = r"^[A-Z]\d{9}$"
+    # 搜索和篩選
+    enable_fuzzy_search: bool = Field(default=True, description="啟用模糊搜索")
+    enable_advanced_filters: bool = Field(default=True, description="啟用進階篩選")
+    search_result_limit: int = Field(default=1000, description="搜索結果限制")
     
-    # Cache Settings
-    cache_tree_ttl: int = 600  # 10 minutes for hierarchy trees
-    cache_entity_ttl: int = 300  # 5 minutes for individual entities
+    # 通知配置
+    enable_hierarchy_change_notifications: bool = Field(default=True, description="啟用層級變更通知")
+    enable_verification_notifications: bool = Field(default=True, description="啟用驗證通知")
+    enable_approval_notifications: bool = Field(default=True, description="啟用審核通知")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        
+    # 資料匯入匯出
+    enable_data_import: bool = Field(default=True, description="啟用資料匯入")
+    enable_data_export: bool = Field(default=True, description="啟用資料匯出")
+    max_import_file_size_mb: int = Field(default=100, description="最大匯入檔案大小（MB）")
+    supported_import_formats: str = Field(default="csv,xlsx,json", description="支援的匯入格式")
+    
+    # 業務邏輯驗證
+    enable_duplicate_detection: bool = Field(default=True, description="啟用重複檢測")
+    enable_data_quality_checks: bool = Field(default=True, description="啟用資料品質檢查")
+    enable_business_rule_validation: bool = Field(default=True, description="啟用業務規則驗證")
+    
+    # 為了向後兼容，保留舊的 property 方法
     @property
     def database_url_async(self) -> str:
         """Get async database URL"""
-        url = self.database_url
-        # Normalize to async form regardless of input
-        if url.startswith("postgresql+asyncpg://"):
-            return url
-        if url.startswith("postgresql+psycopg2://"):
-            return "postgresql+asyncpg://" + url.split("postgresql+psycopg2://", 1)[1]
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
-        # Fallback: return as-is
-        return url
+        return self.get_database_url_async()
     
     @property
     def database_url_sync(self) -> str:
         """Get sync database URL for Alembic"""
-        url = self.database_url
-        # Normalize to sync form regardless of input
-        if url.startswith("postgresql+psycopg2://"):
-            return url
-        if url.startswith("postgresql+asyncpg://"):
-            return "postgresql+psycopg2://" + url.split("postgresql+asyncpg://", 1)[1]
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+psycopg2://", 1)
-        # Fallback: return as-is
-        return url
+        return self.get_database_url_sync()
 
 
-# Global settings instance
-settings = Settings()
+# 創建配置實例
+settings = CustomerHierarchyServiceSettings()
+
+# 為了向後兼容，保持原有接口
+DATABASE_URL = settings.database_url_async
+REDIS_URL = settings.get_redis_url()
+APP_NAME = settings.app_name
+API_VERSION = settings.api_version
+API_V2_STR = settings.api_v2_str
+PORT = settings.port
+SECRET_KEY = settings.secret_key
+ALGORITHM = settings.jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes

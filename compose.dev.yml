@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway-fastapi
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+
+  user-service:
+    build:
+      context: ./backend/user-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  order-service:
+    build:
+      context: ./backend/order-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  product-service:
+    build:
+      context: ./backend/product-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  acceptance-service:
+    build:
+      context: ./backend/acceptance-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  notification-service:
+    build:
+      context: ./backend/notification-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  customer-hierarchy-service:
+    build:
+      context: ./backend/customer-hierarchy-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  supplier-service:
+    build:
+      context: ./backend/supplier-service-fastapi
+      dockerfile: Dockerfile
+    environment:
+      ENVIRONMENT: development
+
+  # Admin tools (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@orderly.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - orderly-network
+    profiles:
+      - admin
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - orderly-network
+    profiles:
+      - admin
+
+volumes:
+  pgadmin_data:
+

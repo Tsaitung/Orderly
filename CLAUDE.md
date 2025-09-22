@@ -30,7 +30,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `shared/types/` - TypeScript type definitions shared across services
 - `infrastructure/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
 - `.github/workflows/` - 8 advanced CI/CD workflows including ML-powered quality gates
-- `scripts/` - Automation scripts for deployment, monitoring, security
+- `scripts/` - Automation scripts for deployment, monitoring, security, and database management
+  - `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
+  - `scripts/database/seed_from_real_data.py` - 基於真實資料的完整測試腳本
 
 ## Repository Guidelines
 
@@ -152,6 +154,37 @@ alembic upgrade head
 
 # Reset database
 # use backups + alembic downgrade if needed
+```
+
+### Database Management Commands
+```bash
+# 🎯 統一資料庫管理工具 (scripts/database/database_manager.py)
+
+# 導出所有業務資料
+python scripts/database/database_manager.py export
+
+# 創建標準測試客戶資料 (20個客戶：15個公司+5個自然人)
+python scripts/database/database_manager.py create-test-customers
+
+# 導入資料到其他環境
+python scripts/database/database_manager.py import --target "postgresql+asyncpg://staging:pass@host:5432/orderly"
+
+# 清理測試資料
+python scripts/database/database_manager.py clean --test-data
+
+# 清理導出文件
+python scripts/database/database_manager.py clean --export-files
+
+# 🏷️ 基於真實資料的完整測試腳本 (scripts/database/seed_from_real_data.py)
+
+# 創建所有真實資料的測試副本 (9供應商+20客戶+105品類+52SKU)
+python scripts/database/seed_from_real_data.py
+
+# 清理真實資料測試副本
+python scripts/database/seed_from_real_data.py --clean
+
+# 強制重新創建
+python scripts/database/seed_from_real_data.py --force
 ```
 
 ## CI/CD System

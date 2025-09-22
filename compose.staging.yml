@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    image: ghcr.io/your-org/api-gateway:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  user-service:
+    image: ghcr.io/your-org/user-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  order-service:
+    image: ghcr.io/your-org/order-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  product-service:
+    image: ghcr.io/your-org/product-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  acceptance-service:
+    image: ghcr.io/your-org/acceptance-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  billing-service:
+    image: ghcr.io/your-org/billing-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  notification-service:
+    image: ghcr.io/your-org/notification-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  customer-hierarchy-service:
+    image: ghcr.io/your-org/customer-hierarchy-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+

@@ -2,6 +2,7 @@
 export * from './logging';
 export * from './customer-hierarchy';
 export * from './supplier';
+export * from './notification';
 
 // 用戶相關類型
 export interface User {

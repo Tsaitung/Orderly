@@ -30,10 +30,21 @@
     "arrow-spacing": "error",
     "no-duplicate-imports": "error",
     "no-restricted-syntax": [
-      "error,
+      "error",
       {
         "selector": "CallExpression[callee.name='useCustomerHierarchyStore'][arguments.length=0]",
         "message": "Always use a selector with useCustomerHierarchyStore, e.g. useCustomerHierarchyStore(s => s.loadTree)"
+      }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@/components/ui/dialog",
+            "message": "Use AccessibleModal from '@/components/ui/accessible-modal' instead."
+          }
+        ]
       }
     ]
   },

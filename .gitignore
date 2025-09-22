@@ -76,7 +76,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -85,6 +84,12 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+# Virtualenvs
+.venv/
+venv/
+**/.venv/
+**/venv/
+backend/**/venv/
 
 # Terraform
 *.tfstate

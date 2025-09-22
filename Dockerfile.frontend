@@ -33,8 +33,7 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy public folder from source (not builder) since standalone doesn't include it
 COPY public ./public
 
-# Cloud Run provides PORT; default to 8000
-ENV PORT=8000
+# Cloud Run provides PORT automatically; EXPOSE for local development
 EXPOSE 8000
 
 CMD ["node", "server.js"]

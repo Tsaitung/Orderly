@@ -16,8 +16,7 @@ class CustomerHierarchyService {
   // Prefer dedicated hierarchy base (can be '/api/bff/v2' or direct 'http://localhost:3007/api/v2')
   private baseUrl =
     process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:3007/api/v2';
+    '/api/bff';
   private requestMap = new Map<string, Promise<any>>();
 
   // Tree operations with request deduplication

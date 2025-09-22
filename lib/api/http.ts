@@ -26,5 +26,6 @@ async function request<T>(path: string, init?: RequestInit, opts?: HttpOptions):
 export const http = {
   get: <T>(path: string, opts?: HttpOptions) => request<T>(path, { method: 'GET' }, opts),
   post: <T>(path: string, body?: any, opts?: HttpOptions) => request<T>(path, { method: 'POST', body: JSON.stringify(body || {}) }, opts),
-  patch: <T>(path: string, body?: any, opts?: HttpOptions) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body || {}) }, opts)
+  patch: <T>(path: string, body?: any, opts?: HttpOptions) => request<T>(path, { method: 'PATCH', body: JSON.stringify(body || {}) }, opts),
+  put: <T>(path: string, body?: any, opts?: HttpOptions) => request<T>(path, { method: 'PUT', body: JSON.stringify(body || {}) }, opts)
 }

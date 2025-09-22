@@ -1,42 +1,22 @@
 """
 Database configuration and connection management
 """
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from .config import settings
-
-# Create async engine
-async_engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    pool_size=20,
-    max_overflow=40,
-    pool_pre_ping=True,
-    pool_recycle=3600
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
+from orderly_fastapi_core import (
+    create_db_engines,
+    get_async_session_dependency,
 )
 
-# Create session makers
-AsyncSessionLocal = async_sessionmaker(
-    async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+
+async_engine, sync_engine, AsyncSessionLocal, SessionLocal = create_db_engines(
+    settings.database_url, debug=settings.debug
 )
-
-# Create Base class for models
-Base = declarative_base()
-
-# Metadata for Alembic
-metadata = MetaData()
 
 
 async def get_async_session() -> AsyncSession:
-    """Dependency to get async database session"""
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
-
+    async for s in get_async_session_dependency(AsyncSessionLocal)():
+        yield s
 

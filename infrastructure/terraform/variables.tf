@@ -163,7 +163,6 @@ variable "cloud_run_services" {
       max_instances = 10
       env_vars = {
         NODE_ENV = "production"
-        PORT     = "3000"
       }
     }
     backend = {
@@ -175,7 +174,6 @@ variable "cloud_run_services" {
       max_instances = 100
       env_vars = {
         ENVIRONMENT = "production"
-        PORT        = "8000"
       }
     }
   }

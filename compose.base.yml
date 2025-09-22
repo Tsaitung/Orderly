@@ -1,0 +1,126 @@
+version: '3.8'
+
+# 基於統一配置管理系統的環境變數模板
+x-env-common: &env_common
+  # 核心應用配置
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DEBUG: ${DEBUG:-true}
+  APP_VERSION: ${APP_VERSION:-2.0.0}
+  LOG_LEVEL: ${LOG_LEVEL:-DEBUG}
+  
+  # 資料庫配置
+  DATABASE_HOST: ${DATABASE_HOST:-postgres}
+  DATABASE_PORT: ${DATABASE_PORT:-5432}
+  DATABASE_NAME: ${DATABASE_NAME:-orderly}
+  DATABASE_USER: ${DATABASE_USER:-orderly}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderly_dev_password}
+  DATABASE_URL: postgresql+asyncpg://orderly:${POSTGRES_PASSWORD:-orderly_dev_password}@postgres:5432/orderly
+  DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
+  DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-20}
+  DATABASE_ECHO: ${DATABASE_ECHO:-false}
+  
+  # Redis 配置
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  REDIS_URL: redis://redis:6379/0
+  REDIS_TTL: ${REDIS_TTL:-300}
+  
+  # JWT 安全配置
+  JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-in-production}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-jwt-refresh-secret-change-in-production}
+  JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-30}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+  REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+  
+  # 應用密鑰
+  SECRET_KEY: ${SECRET_KEY:-dev-app-secret-key-change-in-production}
+  
+  # CORS 配置
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000,http://localhost:8080}
+  
+  # 檔案上傳配置
+  MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}
+  ALLOWED_FILE_TYPES: ${ALLOWED_FILE_TYPES:-jpg,jpeg,png,pdf,xlsx,csv}
+  UPLOAD_PATH: ${UPLOAD_PATH:-./uploads}
+  TEMP_PATH: ${TEMP_PATH:-./temp}
+  
+  # 功能開關
+  ENABLE_SWAGGER: ${ENABLE_SWAGGER:-true}
+  ENABLE_DOCS: ${ENABLE_DOCS:-true}
+  ENABLE_DEBUG_TOOLBAR: ${ENABLE_DEBUG_TOOLBAR:-true}
+  DISABLE_AUTH: ${DISABLE_AUTH:-false}
+  ENABLE_METRICS: ${ENABLE_METRICS:-true}
+  ENABLE_TRACING: ${ENABLE_TRACING:-true}
+  
+  # 緩存配置
+  CACHE_SHORT_TTL: ${CACHE_SHORT_TTL:-300}
+  CACHE_MEDIUM_TTL: ${CACHE_MEDIUM_TTL:-1800}
+  CACHE_LONG_TTL: ${CACHE_LONG_TTL:-3600}
+  
+  # 率限配置
+  RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+  RATE_LIMIT_BURST: ${RATE_LIMIT_BURST:-20}
+  
+  # 監控配置
+  METRICS_PORT: ${METRICS_PORT:-9090}
+  ENABLE_PROFILING: ${ENABLE_PROFILING:-true}
+  SLOW_QUERY_THRESHOLD: ${SLOW_QUERY_THRESHOLD:-1.0}
+
+x-gateway-urls: &gateway_urls
+  API_GATEWAY_URL: ${API_GATEWAY_URL:-http://api-gateway:8000}
+  USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:3001}
+  ORDER_SERVICE_URL: ${ORDER_SERVICE_URL:-http://order-service:3002}
+  PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL:-http://product-service:3003}
+  ACCEPTANCE_SERVICE_URL: ${ACCEPTANCE_SERVICE_URL:-http://acceptance-service:3004}
+  NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL:-http://notification-service:3006}
+  CUSTOMER_HIERARCHY_SERVICE_URL: ${CUSTOMER_HIERARCHY_SERVICE_URL:-http://customer-hierarchy-service:3007}
+  SUPPLIER_SERVICE_URL: ${SUPPLIER_SERVICE_URL:-http://supplier-service:3008}
+
+x-svc: &svc_common
+  restart: unless-stopped
+  networks:
+    - orderly-network
+
+x-health-db: &health_db
+  test: ["CMD-SHELL", "pg_isready -U orderly -d orderly"]
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 30s
+
+x-health-redis: &health_redis
+  test: ["CMD", "redis-cli", "ping"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 30s
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: orderly
+      POSTGRES_USER: orderly
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck: *health_db
+    <<: *svc_common
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck: *health_redis
+    <<: *svc_common
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  orderly-network:
+    driver: bridge
+

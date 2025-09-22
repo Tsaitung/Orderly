@@ -1,0 +1,16 @@
+{
+  "export_timestamp": "2025-09-22T07:07:57.512318",
+  "export_duration_seconds": 0.312664,
+  "data_counts": {
+    "suppliers": 9,
+    "customers": 20,
+    "categories": 105,
+    "skus": 52
+  },
+  "files_created": [
+    "scripts/database/data/suppliers.json",
+    "scripts/database/data/customers.json",
+    "scripts/database/data/categories.json",
+    "scripts/database/data/skus.json"
+  ]
+}

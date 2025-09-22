@@ -120,10 +120,9 @@ export default function SupplierSKUsPage() {
         params.append('sku_type', filters.type);
       }
 
-      // Fetch from API Gateway -> Product Service
-      const apiBase = process.env['NEXT_PUBLIC_API_BASE_URL'] || 'http://localhost:8000';
-      console.log('📡 Fetching SKUs from:', `${apiBase}/api/products/skus/search?${params}`);
-      const response = await fetch(`${apiBase}/api/products/skus/search?${params}`, {
+      // Fetch via BFF proxy to gateway -> Product Service
+      console.log('📡 Fetching SKUs from BFF:', `/api/bff/api/products/skus/search?${params}`);
+      const response = await fetch(`/api/bff/api/products/skus/search?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

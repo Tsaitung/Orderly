@@ -1,0 +1,780 @@
+[
+  {
+    "id": "cmfql974d000l14cjyxqa0vru",
+    "name": "新鮮食材供應商",
+    "type": "supplier",
+    "settings": {
+      "deliveryDays": [
+        "monday",
+        "wednesday",
+        "friday"
+      ],
+      "paymentTerms": 30,
+      "minOrderAmount": 1000
+    },
+    "isActive": true,
+    "businessType": null,
+    "taxId": null,
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": null,
+    "contactPhone": null,
+    "contactEmail": null,
+    "address": null,
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [],
+    "productCategories": [],
+    "certifications": [],
+    "createdAt": "2025-09-19T08:39:26.798000",
+    "updatedAt": "2025-09-19T08:39:26.798000",
+    "profile": null
+  },
+  {
+    "id": "test-org-123",
+    "name": "Test Supplier Organization",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": null,
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "Test Contact",
+    "contactPhone": "0912345678",
+    "contactEmail": "test@supplier.com",
+    "address": "台北市大安區test",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [],
+    "productCategories": [],
+    "certifications": [],
+    "createdAt": "2025-09-20T07:59:55.647000",
+    "updatedAt": "2025-09-20T07:59:55.647000",
+    "profile": {
+      "organizationId": "test-org-123",
+      "status": "PENDING",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "MEDIUM",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "06:00",
+          "close": "18:00",
+          "is_closed": false
+        }
+      },
+      "deliveryZones": [
+        "台北市大安區",
+        "台北市信義區"
+      ],
+      "minimumOrderAmount": 1500.0,
+      "paymentTermsDays": 30,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        {
+          "name": "HACCP",
+          "number": "HACCP123",
+          "expires_at": "2024-12-31"
+        }
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "email_notifications": true,
+        "sms_notifications": false
+      },
+      "settings": {},
+      "internalNotes": null,
+      "publicDescription": "Test supplier for API validation",
+      "createdAt": "2025-09-20T02:15:12.483906+00:00",
+      "updatedAt": "2025-09-20T02:15:12.483906+00:00"
+    }
+  },
+  {
+    "id": "9d768400-c23d-4045-b609-c6d32a4674b8",
+    "name": "聯華食品工業股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "11328702",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "聯華食品工業股份有限公司 負責人",
+    "contactPhone": "+886-2-2392-8899",
+    "contactEmail": "contact@lianhua.com.tw",
+    "address": "台北市中正區重慶南路一段122號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "台北市",
+      "新北市",
+      "桃園市",
+      "新竹縣市"
+    ],
+    "productCategories": [
+      "餅乾",
+      "穀物製品",
+      "糖果",
+      "乾貨"
+    ],
+    "certifications": [
+      "ISO 22000",
+      "HACCP",
+      "清真認證"
+    ],
+    "createdAt": "2025-09-20T14:32:58.982000",
+    "updatedAt": "2025-09-20T14:32:58.982000",
+    "profile": null
+  },
+  {
+    "id": "ac7b3add-839a-4678-9280-3b18719fbbbe",
+    "name": "聯華食品工業股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "11328702",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "聯華食品工業股份有限公司 負責人",
+    "contactPhone": "+886-2-2392-8899",
+    "contactEmail": "contact@lianhua.com.tw",
+    "address": "台北市中正區重慶南路一段122號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "台北市",
+      "新北市",
+      "桃園市",
+      "新竹縣市"
+    ],
+    "productCategories": [
+      "餅乾",
+      "穀物製品",
+      "糖果",
+      "乾貨"
+    ],
+    "certifications": [
+      "ISO 22000",
+      "HACCP",
+      "清真認證"
+    ],
+    "createdAt": "2025-09-20T14:33:26.244000",
+    "updatedAt": "2025-09-20T14:33:26.244000",
+    "profile": {
+      "organizationId": "ac7b3add-839a-4678-9280-3b18719fbbbe",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "台北市",
+        "新北市",
+        "桃園市",
+        "新竹縣市"
+      ],
+      "minimumOrderAmount": 50000.0,
+      "paymentTermsDays": 30,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "ISO 22000",
+        "HACCP",
+        "清真認證"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "台灣最大食品製造商之一，專營餅乾、糖果及穀物製品",
+      "createdAt": "2025-09-20T06:33:26.252608+00:00",
+      "updatedAt": "2025-09-20T06:33:26.252608+00:00"
+    }
+  },
+  {
+    "id": "826d3638-0d79-442f-adb4-2f01a30c98d3",
+    "name": "統一企業股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "03410606",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "統一企業股份有限公司 負責人",
+    "contactPhone": "+886-6-243-3261",
+    "contactEmail": "service@uni-president.com.tw",
+    "address": "台南市永康區鹽行里中正路301號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "全台灣"
+    ],
+    "productCategories": [
+      "調味料",
+      "醬料",
+      "飲料",
+      "泡麵",
+      "乳製品"
+    ],
+    "certifications": [
+      "ISO 9001",
+      "ISO 22000",
+      "HACCP",
+      "SQF"
+    ],
+    "createdAt": "2025-09-20T14:33:26.255000",
+    "updatedAt": "2025-09-20T14:33:26.255000",
+    "profile": {
+      "organizationId": "826d3638-0d79-442f-adb4-2f01a30c98d3",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "全台灣"
+      ],
+      "minimumOrderAmount": 30000.0,
+      "paymentTermsDays": 15,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "ISO 9001",
+        "ISO 22000",
+        "HACCP",
+        "SQF"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "台灣食品龍頭企業，涵蓋食品、飲料、流通等多元業務",
+      "createdAt": "2025-09-20T06:33:26.254949+00:00",
+      "updatedAt": "2025-09-20T06:33:26.254949+00:00"
+    }
+  },
+  {
+    "id": "61453615-8ea5-47a3-90ed-464d8eec3d83",
+    "name": "裕毛屋企業股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "84149755",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "裕毛屋企業股份有限公司 負責人",
+    "contactPhone": "+886-4-2358-8168",
+    "contactEmail": "sales@yumao.com.tw",
+    "address": "台中市西屯區工業區三十八路189號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "台中市",
+      "彰化縣",
+      "南投縣",
+      "苗栗縣"
+    ],
+    "productCategories": [
+      "有機蔬菜",
+      "根莖類",
+      "葉菜類",
+      "瓜果類"
+    ],
+    "certifications": [
+      "有機認證",
+      "產銷履歷",
+      "CAS"
+    ],
+    "createdAt": "2025-09-20T14:33:26.255000",
+    "updatedAt": "2025-09-20T14:33:26.255000",
+    "profile": {
+      "organizationId": "61453615-8ea5-47a3-90ed-464d8eec3d83",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "台中市",
+        "彰化縣",
+        "南投縣",
+        "苗栗縣"
+      ],
+      "minimumOrderAmount": 8000.0,
+      "paymentTermsDays": 15,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "有機認證",
+        "產銷履歷",
+        "CAS"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "專業蔬果供應商，提供新鮮有機蔬果配送服務",
+      "createdAt": "2025-09-20T06:33:26.255613+00:00",
+      "updatedAt": "2025-09-20T06:33:26.255613+00:00"
+    }
+  },
+  {
+    "id": "0fcd7708-0586-474f-9fe2-2e8a0a358017",
+    "name": "大昌華嘉股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "22099146",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "大昌華嘉股份有限公司 負責人",
+    "contactPhone": "+886-2-8752-6888",
+    "contactEmail": "info@dch.com.tw",
+    "address": "新北市汐止區新台五路一段79號30樓",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "大台北地區",
+      "桃園市",
+      "基隆市"
+    ],
+    "productCategories": [
+      "冷凍海鮮",
+      "進口肉品",
+      "乳製品",
+      "冷凍蔬菜"
+    ],
+    "certifications": [
+      "HACCP",
+      "FDA認證",
+      "冷鏈認證"
+    ],
+    "createdAt": "2025-09-20T14:33:26.256000",
+    "updatedAt": "2025-09-20T14:33:26.256000",
+    "profile": {
+      "organizationId": "0fcd7708-0586-474f-9fe2-2e8a0a358017",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "大台北地區",
+        "桃園市",
+        "基隆市"
+      ],
+      "minimumOrderAmount": 25000.0,
+      "paymentTermsDays": 15,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "HACCP",
+        "FDA認證",
+        "冷鏈認證"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "專業食材進口商，提供高品質冷凍海鮮及肉品",
+      "createdAt": "2025-09-20T06:33:26.256401+00:00",
+      "updatedAt": "2025-09-20T06:33:26.256401+00:00"
+    }
+  },
+  {
+    "id": "5b8bf840-2aef-48e2-b112-2cd3d7bd83f7",
+    "name": "嘉義縣農會",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "78400965",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "嘉義縣農會 負責人",
+    "contactPhone": "+886-5-362-4301",
+    "contactEmail": "service@cyfa.org.tw",
+    "address": "嘉義縣太保市祥和二路東段8號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "嘉義縣市",
+      "台南市",
+      "雲林縣"
+    ],
+    "productCategories": [
+      "稻米",
+      "蔬菜",
+      "水果",
+      "農特產品"
+    ],
+    "certifications": [
+      "產銷履歷",
+      "有機認證",
+      "CAS台灣優良農產品"
+    ],
+    "createdAt": "2025-09-20T14:33:26.257000",
+    "updatedAt": "2025-09-20T14:33:26.257000",
+    "profile": {
+      "organizationId": "5b8bf840-2aef-48e2-b112-2cd3d7bd83f7",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "嘉義縣市",
+        "台南市",
+        "雲林縣"
+      ],
+      "minimumOrderAmount": 5000.0,
+      "paymentTermsDays": 15,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "產銷履歷",
+        "有機認證",
+        "CAS台灣優良農產品"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "嘉義在地農會，提供優質農產品直銷服務",
+      "createdAt": "2025-09-20T06:33:26.256932+00:00",
+      "updatedAt": "2025-09-20T06:33:26.256932+00:00"
+    }
+  },
+  {
+    "id": "6b55de7e-19b8-406d-8f12-1b2820e6fbb7",
+    "name": "豐年農場股份有限公司",
+    "type": "supplier",
+    "settings": {},
+    "isActive": true,
+    "businessType": "company",
+    "taxId": "53742891",
+    "personalId": null,
+    "businessLicenseNumber": null,
+    "contactPerson": "豐年農場股份有限公司 負責人",
+    "contactPhone": "+886-8-778-2345",
+    "contactEmail": "orders@fengnian.com.tw",
+    "address": "屏東縣內埔鄉豐田路168號",
+    "invitedByOrganizationId": null,
+    "invitationAcceptedAt": null,
+    "onboardingStatus": null,
+    "onboardingProgress": {},
+    "onboardingCompletedAt": null,
+    "deliveryZones": [
+      "屏東縣",
+      "高雄市",
+      "台東縣"
+    ],
+    "productCategories": [
+      "有機蔬菜",
+      "熱帶水果",
+      "香草",
+      "有機肉品"
+    ],
+    "certifications": [
+      "有機認證",
+      "友善環境",
+      "碳足跡認證"
+    ],
+    "createdAt": "2025-09-20T14:33:26.257000",
+    "updatedAt": "2025-09-20T14:33:26.257000",
+    "profile": {
+      "organizationId": "6b55de7e-19b8-406d-8f12-1b2820e6fbb7",
+      "status": "VERIFIED",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "deliveryCapacity": "LARGE",
+      "deliveryCapacityKgPerDay": 1000,
+      "operatingHours": {
+        "monday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "tuesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "wednesday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "thursday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "friday": {
+          "open": "08:00",
+          "close": "18:00"
+        },
+        "saturday": {
+          "open": "09:00",
+          "close": "15:00"
+        },
+        "sunday": {
+          "closed": true
+        }
+      },
+      "deliveryZones": [
+        "屏東縣",
+        "高雄市",
+        "台東縣"
+      ],
+      "minimumOrderAmount": 3000.0,
+      "paymentTermsDays": 15,
+      "bankAccountInfo": null,
+      "qualityCertifications": [
+        "有機認證",
+        "友善環境",
+        "碳足跡認證"
+      ],
+      "foodSafetyLicense": null,
+      "foodSafetyExpiresAt": null,
+      "contactPreferences": {
+        "phone": true,
+        "email": true,
+        "sms": false
+      },
+      "settings": {
+        "autoAcceptOrders": false,
+        "notificationSettings": {
+          "newOrders": true,
+          "orderUpdates": true
+        }
+      },
+      "internalNotes": null,
+      "publicDescription": "南台灣最大有機農場，專供應高品質有機蔬果",
+      "createdAt": "2025-09-20T06:33:26.257546+00:00",
+      "updatedAt": "2025-09-20T06:33:26.257546+00:00"
+    }
+  }
+]

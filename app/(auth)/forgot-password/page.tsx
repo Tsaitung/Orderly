@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, Check, AlertCircle } from 'lucide-react';
+import { http } from '@/lib/api/http';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -66,22 +67,9 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: form.email,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      await http.post('/api/users/auth/forgot-password', { email: form.email });
+      {
         setStep('sent');
-      } else {
-        setErrors({ submit: data.message || '發送重設信件失敗，請重試' });
       }
     } catch (error) {
       setErrors({ submit: '網路錯誤，請重試' });
@@ -96,25 +84,14 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: form.email,
-          code: form.code,
-          newPassword: form.newPassword,
-        }),
+      await http.post('/api/users/auth/reset-password', {
+        email: form.email,
+        code: form.code,
+        newPassword: form.newPassword,
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      {
         // Password reset successful, redirect to login
         window.location.href = '/login?message=password-reset-success';
-      } else {
-        setErrors({ submit: data.message || '密碼重設失敗，請重試' });
       }
     } catch (error) {
       setErrors({ submit: '網路錯誤，請重試' });

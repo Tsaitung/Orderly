@@ -235,12 +235,7 @@ export default function RestaurantAcceptanceManagement() {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/acceptance`)
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch acceptance records')
-      }
-      
+      const response = await fetch('/api/bff/api/acceptance')
       const data = await response.json()
       
       if (data.success) {

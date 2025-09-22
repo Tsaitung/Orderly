@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { AuthValidation, type LoginFormData } from '@/lib/validation/auth-schemas';
 import { SecureStorage } from '@/lib/secure-storage';
+import { http } from '@/lib/api/http';
 
 // Using typed form data from validation schema
 type LoginForm = LoginFormData;
@@ -116,28 +117,23 @@ export default function LoginPage() {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/auth/verify-mfa`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const data = await http.post<{ data: { accessToken: string; refreshToken: string } }>(
+        '/api/users/auth/verify-mfa',
+        {
           email: loginForm.email,
           code: mfaForm.code,
           mfaSessionId: mfaForm.mfaSessionId,
           rememberMe: loginForm.rememberMe,
-        }),
-      });
+        }
+      );
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (data?.data?.accessToken && data?.data?.refreshToken) {
         // MFA verification successful
         localStorage.setItem('accessToken', data.data.accessToken);
         localStorage.setItem('refreshToken', data.data.refreshToken);
         window.location.href = '/dashboard';
       } else {
-        setErrors({ submit: data.message || 'MFA 驗證失敗，請重試' });
+        setErrors({ submit: 'MFA 驗證失敗，請重試' });
       }
     } catch (error) {
       setErrors({ submit: '網路錯誤，請重試' });

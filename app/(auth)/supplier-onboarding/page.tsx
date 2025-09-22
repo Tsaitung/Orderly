@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { http } from '@/lib/api/http';
 import type { 
   InvitationDetailResponse, 
   SupplierOnboardingRequest, 
@@ -95,10 +96,8 @@ export default function SupplierOnboardingPage() {
     if (!invitationCode) return;
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/invitations/verify/${invitationCode}`);
-      const data = await response.json();
-
-      if (response.ok && data.canBeAccepted) {
+      const data = await http.get<any>(`/api/invitations/verify/${invitationCode}`);
+      if (data && (data.canBeAccepted ?? true)) {
         setInvitation(data);
         // Pre-fill form with invitation data
         setFormData(prev => ({
@@ -210,17 +209,8 @@ export default function SupplierOnboardingPage() {
         address: formData.address || undefined
       };
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/invitations/accept`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await http.post<any>(`/api/invitations/accept`, request);
+      if (data?.accessToken && data?.refreshToken) {
         // Store tokens
         localStorage.setItem('access_token', data.accessToken);
         localStorage.setItem('refresh_token', data.refreshToken);

@@ -78,11 +78,87 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-  setup-registry:
-    name: Setup Artifact Registry
+  detect-changes:
+    name: Detect Changed Services
     runs-on: ubuntu-latest
     needs: [determine-environment]
     if: needs.determine-environment.outputs.deploy == 'true'
+    outputs:
+      changed-services: ${{ steps.changes.outputs.services }}
+      has-infrastructure-changes: ${{ steps.changes.outputs.infrastructure }}
+      has-frontend-changes: ${{ steps.changes.outputs.frontend }}
+      all-services: ${{ steps.changes.outputs.all_services }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get full history for proper diff
+      
+      - name: Detect changed services and components
+        id: changes
+        run: |
+          # Define all available services
+          ALL_SERVICES='["api-gateway-fastapi","user-service-fastapi","order-service-fastapi","product-service-fastapi","acceptance-service-fastapi","notification-service-fastapi","customer-hierarchy-service-fastapi","supplier-service-fastapi"]'
+          echo "all_services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+          
+          # Get changed files (compare with previous commit or main if first push)
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "$(git rev-parse --verify HEAD~1 2>/dev/null)" ]; then
+            changed_files=$(git diff --name-only HEAD~1 HEAD)
+          else
+            # First commit or manual trigger - deploy all services
+            echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+            echo "infrastructure=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "📦 Manual trigger or first commit - deploying all services"
+            exit 0
+          fi
+          
+          echo "🔍 Changed files:"
+          echo "$changed_files"
+          
+          # Check for infrastructure changes
+          infrastructure_changed=false
+          if echo "$changed_files" | grep -E "(infrastructure/|\.github/workflows/|scripts/deploy|docker-compose)" > /dev/null; then
+            infrastructure_changed=true
+          fi
+          echo "infrastructure=$infrastructure_changed" >> $GITHUB_OUTPUT
+          
+          # Check for frontend changes
+          frontend_changed=false
+          if echo "$changed_files" | grep -E "(app/|components/|lib/|shared/types/|package\.json|Dockerfile\.frontend)" > /dev/null; then
+            frontend_changed=true
+          fi
+          echo "frontend=$frontend_changed" >> $GITHUB_OUTPUT
+          
+          # Detect changed services
+          changed_services=()
+          for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+            if echo "$changed_files" | grep -q "backend/$service/"; then
+              changed_services+=("\"$service\"")
+              echo "📦 Detected changes in: $service"
+            fi
+          done
+          
+          # Check for shared library changes that affect all services
+          if echo "$changed_files" | grep -E "(backend/libs/|shared/types/)" > /dev/null; then
+            echo "📚 Shared library changes detected - rebuilding all services"
+            changed_services=("\"api-gateway-fastapi\"" "\"user-service-fastapi\"" "\"order-service-fastapi\"" "\"product-service-fastapi\"" "\"acceptance-service-fastapi\"" "\"notification-service-fastapi\"" "\"customer-hierarchy-service-fastapi\"" "\"supplier-service-fastapi\"")
+          fi
+          
+          # Format as JSON array
+          if [ ${#changed_services[@]} -eq 0 ]; then
+            echo "services=[]" >> $GITHUB_OUTPUT
+            echo "🚫 No service changes detected"
+          else
+            services_json="[$(IFS=,; echo "${changed_services[*]}")]"
+            echo "services=$services_json" >> $GITHUB_OUTPUT
+            echo "✅ Services to deploy: $services_json"
+          fi
+
+  setup-registry:
+    name: Setup Artifact Registry
+    runs-on: ubuntu-latest
+    needs: [determine-environment, detect-changes]
+    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.has-infrastructure-changes == 'true')
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -108,16 +184,42 @@ jobs:
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
-    needs: [determine-environment, setup-registry]
-    if: needs.determine-environment.outputs.deploy == 'true'
+    needs: [determine-environment, detect-changes, setup-registry]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.changed-services != '[]'
     
     strategy:
       matrix:
-        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
+        service: ${{ fromJson(needs.detect-changes.outputs.changed-services) }}
       fail-fast: false
+      max-parallel: 8  # Increased from 3 to 8 for faster parallel builds
 
     steps:
       - uses: actions/checkout@v4
+      
+      # Multi-layer caching setup
+      - name: Set up Docker Buildx with cache
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:latest
+          buildkitd-flags: --allow-insecure-entitlement security.insecure
+      
+      - name: Setup pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ matrix.service }}-${{ hashFiles(format('backend/{0}/requirements.txt', matrix.service)) }}
+          restore-keys: |
+            pip-${{ matrix.service }}-
+            pip-
+      
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache-${{ matrix.service }}
+          key: buildx-${{ matrix.service }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ matrix.service }}-
+            buildx-
       
       - name: Check if service exists
         id: check-service
@@ -147,11 +249,7 @@ jobs:
         if: steps.check-service.outputs.exists == 'true'
         run: gcloud auth configure-docker asia-east1-docker.pkg.dev
       
-      - name: Set up Docker Buildx
-        if: steps.check-service.outputs.exists == 'true'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
+      - name: Build and push Docker image with enhanced caching
         if: steps.check-service.outputs.exists == 'true'
         uses: docker/build-push-action@v5
         env:
@@ -161,12 +259,29 @@ jobs:
           context: backend/${{ matrix.service }}
           file: backend/${{ matrix.service }}/Dockerfile.cloudrun
           push: true
+          platforms: linux/amd64  # Specify platform for consistency
           tags: |
             ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:latest
             ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:${{ github.sha }}
             ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest,mode=max
+          # Enhanced multi-layer caching
+          cache-from: |
+            type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
+          cache-to: |
+            type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+            SERVICE_NAME=${{ matrix.service }}
+      
+      - name: Optimize cache
+        if: steps.check-service.outputs.exists == 'true'
+        run: |
+          # Move cache to optimize for next build
+          rm -rf /tmp/.buildx-cache-${{ matrix.service }}
+          mv /tmp/.buildx-cache-${{ matrix.service }}-new /tmp/.buildx-cache-${{ matrix.service }} || true
 
   deploy-infrastructure:
     name: Deploy Infrastructure
@@ -198,15 +313,15 @@ jobs:
   deploy-services:
     name: Deploy Services
     runs-on: ubuntu-latest
-    needs: [determine-environment, deploy-infrastructure]
-    if: needs.determine-environment.outputs.deploy == 'true'
+    needs: [determine-environment, detect-changes, deploy-infrastructure]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.changed-services != '[]'
     environment: ${{ needs.determine-environment.outputs.environment }}
     
     strategy:
       matrix:
-        service: [api-gateway-fastapi, user-service-fastapi, order-service-fastapi, product-service-fastapi, acceptance-service-fastapi, notification-service-fastapi, customer-hierarchy-service-fastapi, supplier-service-fastapi]
+        service: ${{ fromJson(needs.detect-changes.outputs.changed-services) }}
       fail-fast: false
-      max-parallel: 3  # Deploy services in batches to avoid overwhelming the infrastructure
+      max-parallel: 8  # Increased from 3 to 8 for faster parallel deployments
 
     steps:
       - uses: actions/checkout@v4
@@ -249,16 +364,11 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         run: |
-          # Get service port mapping
+          # Validate service name
           case "${{ matrix.service }}" in
-            "api-gateway-fastapi") PORT=8000 ;;
-            "user-service-fastapi") PORT=3001 ;;
-            "order-service-fastapi") PORT=3002 ;;
-            "product-service-fastapi") PORT=3003 ;;
-            "acceptance-service-fastapi") PORT=3004 ;;
-            "notification-service-fastapi") PORT=3006 ;;
-            "customer-hierarchy-service-fastapi") PORT=3007 ;;
-            "supplier-service-fastapi") PORT=3008 ;;
+            "api-gateway-fastapi"|"user-service-fastapi"|"order-service-fastapi"|"product-service-fastapi"|"acceptance-service-fastapi"|"notification-service-fastapi"|"customer-hierarchy-service-fastapi"|"supplier-service-fastapi") 
+              echo "Deploying service: ${{ matrix.service }}"
+              ;;
             *) echo "Unknown service: ${{ matrix.service }}"; exit 1 ;;
           esac
           
@@ -291,7 +401,6 @@ jobs:
             --platform=managed \
             --region="$GOOGLE_CLOUD_REGION" \
             --allow-unauthenticated \
-            --port="$PORT" \
             --memory="$MEMORY" \
             --cpu="$CPU" \
             --min-instances="$MIN_INSTANCES" \
