@@ -84,6 +84,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Check for existing secure token
         const storedData = SecureStorage.getTokens()
+        // Staging 環境：檢查特殊的超級管理員登入
+        const isStaging = window.location.hostname.includes('staging')
+        if (!storedData && isStaging) {
+          // 在 staging 環境下，檢查是否有特殊 URL 參數來登入超級管理員
+          const urlParams = new URLSearchParams(window.location.search)
+          if (urlParams.get('admin') === 'staging' || localStorage.getItem('staging_admin') === 'true') {
+            console.log('🔧 Staging: Creating super admin user')
+            const mockUser: User = {
+              id: 'platform-admin-staging',
+              email: 'admin@staging.orderly.com',
+              role: 'platform_admin',
+              organizationId: 'platform',
+              name: '平台管理員 (Staging)',
+              avatar: '/avatars/admin.png',
+              isActive: true,
+            }
+
+            setUser(mockUser)
+            setIsAuthenticated(true)
+            await loadOrganizations()
+            setIsLoading(false)
+            
+            // 設置 localStorage 以保持登入狀態
+            localStorage.setItem('staging_admin', 'true')
+            return
+          }
+        }
+        
         if (!storedData) {
           setIsLoading(false)
           return

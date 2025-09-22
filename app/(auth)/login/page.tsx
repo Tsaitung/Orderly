@@ -212,6 +212,23 @@ export default function LoginPage() {
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? '登入中...' : '登入'}
       </Button>
+
+      {/* Staging 環境快速登入 */}
+      {typeof window !== 'undefined' && window.location.hostname.includes('staging') && (
+        <div className="mt-4 border-t pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
+            onClick={() => {
+              localStorage.setItem('staging_admin', 'true')
+              window.location.href = '/?admin=staging'
+            }}
+          >
+            🔧 Staging 環境：快速登入超級管理員
+          </Button>
+        </div>
+      )}
     </form>
   )
 
