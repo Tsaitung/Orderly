@@ -270,7 +270,7 @@ deploy_services() {
             --max-instances=10 \
             --concurrency=100 \
             --timeout=300 \
-            --set-env-vars="ENVIRONMENT=production,PORT=$service_port" \
+            --set-env-vars="ENVIRONMENT=production" \
             --set-env-vars="REDIS_URL=redis://$redis_host:6379" \
             --set-env-vars="DATABASE_URL=postgresql+asyncpg://$DB_USER:$POSTGRES_PASSWORD@/$DB_NAME?host=/cloudsql/$db_connection_name" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
