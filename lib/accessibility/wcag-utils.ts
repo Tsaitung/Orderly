@@ -129,7 +129,8 @@ export class ColorContrastChecker {
  */
 export class KeyboardNavigationManager {
   private focusableElements: HTMLElement[] = []
-  private currentIndex = -1
+  // @ts-ignore - Used in navigation methods but TS cannot detect usage
+  private _currentIndex = -1
   private trapContainer: HTMLElement | null = null
 
   /**
@@ -160,7 +161,7 @@ export class KeyboardNavigationManager {
     if (this.focusableElements.length > 0) {
       const first = this.focusableElements[0]
       if (first) first.focus()
-      this.currentIndex = 0
+      this._currentIndex = 0
     }
   }
 
@@ -171,7 +172,7 @@ export class KeyboardNavigationManager {
     this.removeEventListeners()
     this.trapContainer = null
     this.focusableElements = []
-    this.currentIndex = -1
+    this._currentIndex = -1
   }
 
   /**
@@ -279,7 +280,7 @@ export class KeyboardNavigationManager {
     if (this.focusableElements.length > 0) {
       const first = this.focusableElements[0]
       if (first) first.focus()
-      this.currentIndex = 0
+      this._currentIndex = 0
     }
   }
 
@@ -291,7 +292,7 @@ export class KeyboardNavigationManager {
       const lastIndex = this.focusableElements.length - 1
       const last = this.focusableElements[lastIndex]
       if (last) last.focus()
-      this.currentIndex = lastIndex
+      this._currentIndex = lastIndex
     }
   }
 

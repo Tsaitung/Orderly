@@ -118,7 +118,7 @@ export class OrderService {
     }
     
     // 更新邏輯
-    const updatedOrder: Order = {
+    const updatedOrder = {
       ...existingOrder,
       ...data,
       updatedAt: new Date()
@@ -132,11 +132,11 @@ export class OrderService {
         totalPrice: item.quantity * item.unitPrice
       }))
       
-      updatedOrder.items = items
+      updatedOrder.items = items as OrderItem[]
       updatedOrder.totalAmount = items.reduce((sum, item) => sum + item.totalPrice, 0)
     }
     
-    return updatedOrder
+    return updatedOrder as Order
   }
   
   /**

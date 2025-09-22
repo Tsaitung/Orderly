@@ -477,7 +477,7 @@ export function useAccessibility(options: {
   trackFocus?: boolean
   validateContrast?: boolean
 } = {}) {
-  const { announcePageLoad = true, trackFocus = true, validateContrast = false } = options
+  const { announcePageLoad = true, validateContrast = false } = options
   
   const focusManagement = useFocusManagement()
   const screenReader = useScreenReaderAnnouncer()
@@ -495,7 +495,7 @@ export function useAccessibility(options: {
 
   // 對比度驗證
   useEffect(() => {
-    if (validateContrast && process.env.NODE_ENV === 'development') {
+    if (validateContrast && process.env['NODE_ENV'] === 'development') {
       import('@/lib/accessibility/wcag-utils').then(({ AccessibilityValidator }) => {
         const contrastResult = AccessibilityValidator.validateColorContrast()
         if (!contrastResult.isValid) {

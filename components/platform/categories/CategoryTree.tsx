@@ -215,7 +215,7 @@ export function CategoryTree({
         const possibleParents = cats.filter(p => p.level === 1)
         
         // Match based on parent_id if available, otherwise use code logic
-        let parent = possibleParents.find(p => {
+        const parent = possibleParents.find(p => {
           // If parent_id exists in the data, use it
           if ((cat as any).parent_id) {
             return p.id === (cat as any).parent_id

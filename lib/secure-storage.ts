@@ -6,7 +6,18 @@
 import CryptoJS from 'crypto-js'
 
 const STORAGE_KEY = 'orderly_session'
-const ENCRYPTION_KEY = process.env.NEXT_PUBLIC_STORAGE_KEY || 'orderly-fallback-key-dev'
+
+// Safe process.env access for browser compatibility
+function getEncryptionKey(): string {
+  if (typeof window !== 'undefined') {
+    // Browser environment - use runtime env vars or fallback
+    return window.process?.env?.NEXT_PUBLIC_STORAGE_KEY || 'orderly-fallback-key-dev'
+  }
+  // Server environment
+  return process.env.NEXT_PUBLIC_STORAGE_KEY || 'orderly-fallback-key-dev'
+}
+
+const ENCRYPTION_KEY = getEncryptionKey()
 
 interface StoredData {
   token: string

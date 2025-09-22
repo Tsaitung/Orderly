@@ -281,6 +281,7 @@ jobs:
               pip install -r backend/$svc/requirements.txt
               if [ -f backend/$svc/alembic.ini ]; then
                 cd backend/$svc && alembic upgrade head && cd -
+              fi
               if [ -d backend/$svc/tests ]; then
                 echo "Running tests for $svc";
                 python -m pytest -q backend/$svc/tests

@@ -89,6 +89,21 @@ const nextConfig = {
       'lib': path.resolve(__dirname, 'lib'),
       '@/lib': path.resolve(__dirname, 'lib'),
     };
+
+    // Add process polyfill for Next.js 14 browser compatibility
+    config.resolve.fallback = {
+      ...(config.resolve.fallback || {}),
+      process: 'process/browser',
+    };
+
+    // Provide process global for browser
+    config.plugins = config.plugins || [];
+    config.plugins.push(
+      new (require('webpack')).ProvidePlugin({
+        process: 'process/browser',
+      })
+    );
+
     return config;
   },
 };
