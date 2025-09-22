@@ -26,11 +26,6 @@ services:
     environment:
       ENVIRONMENT: production
 
-  billing-service:
-    image: ghcr.io/your-org/billing-service:${TAG:-${GIT_SHA:-latest}}
-    environment:
-      ENVIRONMENT: production
-
   notification-service:
     image: ghcr.io/your-org/notification-service:${TAG:-${GIT_SHA:-latest}}
     environment:
@@ -38,6 +33,11 @@ services:
 
   customer-hierarchy-service:
     image: ghcr.io/your-org/customer-hierarchy-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: production
+
+  supplier-service:
+    image: ghcr.io/your-org/supplier-service:${TAG:-${GIT_SHA:-latest}}
     environment:
       ENVIRONMENT: production
 

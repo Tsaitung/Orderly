@@ -3,8 +3,8 @@ export type HttpOptions = {
   headers?: Record<string, string>
 }
 
-// Prefer BFF proxy for same-origin requests; fall back to env or localhost gateway
-const defaultBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff'
+// Prefer BFF proxy for same-origin requests; only use external base when explicitly overridden
+const defaultBase = '/api/bff'
 
 async function request<T>(path: string, init?: RequestInit, opts?: HttpOptions): Promise<T> {
   const base = opts?.baseUrl || defaultBase

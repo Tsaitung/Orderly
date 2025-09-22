@@ -121,8 +121,8 @@ export default function SupplierSKUsPage() {
       }
 
       // Fetch via BFF proxy to gateway -> Product Service
-      console.log('📡 Fetching SKUs from BFF:', `/api/bff/api/products/skus/search?${params}`);
-      const response = await fetch(`/api/bff/api/products/skus/search?${params}`, {
+      console.log('📡 Fetching SKUs from BFF:', `/api/bff/products/skus/search?${params}`);
+      const response = await fetch(`/api/bff/products/skus/search?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

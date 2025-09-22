@@ -60,24 +60,39 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 await self.add_hierarchy_context(request, user_info)
             else:
                 # For development/testing, allow requests without auth
-                if settings.ENVIRONMENT == "development":
-                    request.state.user = {"sub": "dev-user", "permissions": ["admin"]}
+                if settings.environment == "development":
+                    logger.debug("No auth token provided, using dev-user in development mode")
+                    dev_user_info = {"sub": "dev-user", "permissions": ["admin"]}
+                    request.state.user = dev_user_info
                     request.state.user_id = "dev-user"
                     request.state.user_permissions = ["admin"]
+                    # Add default hierarchy context for dev user
+                    await self.add_hierarchy_context(request, dev_user_info)
                 else:
+                    logger.warning("Authentication required but no token provided", path=request.url.path)
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="Authentication required"
                     )
                     
         except HTTPException:
+            # Re-raise HTTP exceptions as-is
             raise
         except Exception as e:
-            logger.error("Authentication error", error=str(e))
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication"
-            )
+            logger.error("Authentication error", error=str(e), path=request.url.path, method=request.method)
+            # In development, be more lenient
+            if settings.environment == "development":
+                logger.warning("Auth error in development, falling back to dev-user", error=str(e))
+                dev_user_info = {"sub": "dev-user", "permissions": ["admin"]}
+                request.state.user = dev_user_info
+                request.state.user_id = "dev-user"
+                request.state.user_permissions = ["admin"]
+                await self.add_hierarchy_context(request, dev_user_info)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication"
+                )
         
         return await call_next(request)
     
@@ -101,7 +116,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         try:
             payload = jwt.decode(
                 token,
-                settings.SECRET_KEY,
+                settings.secret_key,
                 algorithms=["HS256"],
                 options={"verify_exp": True}
             )
@@ -116,12 +131,20 @@ class AuthMiddleware(BaseHTTPMiddleware):
             
         except jwt.ExpiredSignatureError:
             logger.warning("Expired token provided")
+            # In development, don't fail on expired tokens
+            if settings.environment == "development":
+                logger.debug("Ignoring expired token in development mode")
+                return None
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token has expired"
             )
         except jwt.InvalidTokenError as e:
             logger.warning("Invalid token provided", error=str(e))
+            # In development, don't fail on invalid tokens
+            if settings.environment == "development":
+                logger.debug("Ignoring invalid token in development mode")
+                return None
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"

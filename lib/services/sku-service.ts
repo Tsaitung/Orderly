@@ -131,9 +131,7 @@ interface PricingAnalysisParams {
 }
 
 export class SKUService {
-  private static baseUrl = typeof window !== 'undefined' 
-    ? `${process.env['NEXT_PUBLIC_API_BASE_URL'] || 'http://localhost:8000'}/api/products`
-    : 'http://localhost:8000/api/products'
+  private static baseUrl = '/api/bff'
   private static requestQueue = new Map<string, Promise<any>>()
 
   /**
@@ -219,7 +217,7 @@ export class SKUService {
       }
     })
 
-    const url = `${this.baseUrl}/skus/search?${searchParams.toString()}`
+    const url = `${this.baseUrl}/products/skus/search?${searchParams.toString()}`
     
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<any>(url)
@@ -243,7 +241,7 @@ export class SKUService {
       return cached as SKUSearchResult
     }
 
-    const url = `${this.baseUrl}/skus/${skuId}`
+    const url = `${this.baseUrl}/products/skus/${skuId}`
     
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<SKUSearchResult>(url)
@@ -277,7 +275,7 @@ export class SKUService {
       }
     })
 
-    const url = `${this.baseUrl}/skus/${skuId}/suppliers/compare?${searchParams.toString()}`
+    const url = `${this.baseUrl}/products/skus/${skuId}/suppliers/compare?${searchParams.toString()}`
     
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request(url)
@@ -304,7 +302,7 @@ export class SKUService {
       return cached
     }
 
-    const url = `${this.baseUrl}/skus/${skuId}/suppliers/pricing-analysis?quantity=${params.quantity}`
+    const url = `${this.baseUrl}/products/skus/${skuId}/suppliers/pricing-analysis?quantity=${params.quantity}`
     
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request(url)
@@ -335,7 +333,7 @@ export class SKUService {
       }
     })
 
-    const url = `${this.baseUrl}/skus/batches?${searchParams.toString()}`
+    const url = `${this.baseUrl}/products/skus/batches?${searchParams.toString()}`
     
     return this.dedupeRequest(cacheKey, async () => {
       const result = await this.request<BatchInfo[]>(url)
@@ -351,7 +349,7 @@ export class SKUService {
    * 批量創建 SKU
    */
   static async batchCreateSKUs(productId: string, skus: CreateSKUData[]): Promise<SKUSearchResult[]> {
-    const url = `${this.baseUrl}/products/${productId}/skus/batch`
+    const url = `${this.baseUrl}/products/products/${productId}/skus/batch`
     
     const result = await this.request<SKUSearchResult[]>(url, {
       method: 'POST',
@@ -369,7 +367,7 @@ export class SKUService {
    * 更新 SKU
    */
   static async updateSKU(skuId: string, data: UpdateSKUData): Promise<SKUSearchResult> {
-    const url = `${this.baseUrl}/skus/${skuId}`
+    const url = `${this.baseUrl}/products/skus/${skuId}`
     
     const result = await this.request<SKUSearchResult>(url, {
       method: 'PUT',
@@ -389,7 +387,7 @@ export class SKUService {
    * 刪除 SKU
    */
   static async deleteSKU(skuId: string): Promise<boolean> {
-    const url = `${this.baseUrl}/skus/${skuId}`
+    const url = `${this.baseUrl}/products/skus/${skuId}`
     
     const result = await this.request<boolean>(url, {
       method: 'DELETE'

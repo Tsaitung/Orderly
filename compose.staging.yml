@@ -26,11 +26,6 @@ services:
     environment:
       ENVIRONMENT: staging
 
-  billing-service:
-    image: ghcr.io/your-org/billing-service:${TAG:-${GIT_SHA:-latest}}
-    environment:
-      ENVIRONMENT: staging
-
   notification-service:
     image: ghcr.io/your-org/notification-service:${TAG:-${GIT_SHA:-latest}}
     environment:
@@ -38,6 +33,11 @@ services:
 
   customer-hierarchy-service:
     image: ghcr.io/your-org/customer-hierarchy-service:${TAG:-${GIT_SHA:-latest}}
+    environment:
+      ENVIRONMENT: staging
+
+  supplier-service:
+    image: ghcr.io/your-org/supplier-service:${TAG:-${GIT_SHA:-latest}}
     environment:
       ENVIRONMENT: staging
 

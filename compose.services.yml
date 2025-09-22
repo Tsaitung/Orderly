@@ -1,10 +1,24 @@
 version: '3.8'
 
+# 定義本文件中的別名（繼承自 compose.base.yml 的配置）
+x-svc: &svc_common
+  restart: unless-stopped
+  networks:
+    - orderly-network
+
 services:
   api-gateway:
     environment:
-      <<: *env_common
-      <<: *gateway_urls
+      # 基於統一配置管理系統的環境變數將在各環境文件中覆蓋
+      PORT: 8000
+      API_GATEWAY_URL: ${API_GATEWAY_URL:-http://api-gateway:8000}
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:3001}
+      ORDER_SERVICE_URL: ${ORDER_SERVICE_URL:-http://order-service:3002}
+      PRODUCT_SERVICE_URL: ${PRODUCT_SERVICE_URL:-http://product-service:3003}
+      ACCEPTANCE_SERVICE_URL: ${ACCEPTANCE_SERVICE_URL:-http://acceptance-service:3004}
+      NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL:-http://notification-service:3006}
+      CUSTOMER_HIERARCHY_SERVICE_URL: ${CUSTOMER_HIERARCHY_SERVICE_URL:-http://customer-hierarchy-service:3007}
+      SUPPLIER_SERVICE_URL: ${SUPPLIER_SERVICE_URL:-http://supplier-service:3008}
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,7 +47,8 @@ services:
     <<: *svc_common
 
   user-service:
-    environment: *env_common
+    environment:
+      PORT: 3001
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,7 +61,8 @@ services:
     <<: *svc_common
 
   order-service:
-    environment: *env_common
+    environment:
+      PORT: 3002
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,7 +77,8 @@ services:
     <<: *svc_common
 
   product-service:
-    environment: *env_common
+    environment:
+      PORT: 3003
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,7 +93,8 @@ services:
     <<: *svc_common
 
   acceptance-service:
-    environment: *env_common
+    environment:
+      PORT: 3004
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,7 +107,8 @@ services:
     <<: *svc_common
 
   notification-service:
-    environment: *env_common
+    environment:
+      PORT: 3006
     depends_on:
       postgres:
         condition: service_healthy
@@ -104,7 +123,8 @@ services:
     <<: *svc_common
 
   customer-hierarchy-service:
-    environment: *env_common
+    environment:
+      PORT: 3007
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,7 +139,8 @@ services:
     <<: *svc_common
 
   supplier-service:
-    environment: *env_common
+    environment:
+      PORT: 3008
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,4 +153,8 @@ services:
       retries: 3
       start_period: 30s
     <<: *svc_common
+
+networks:
+  orderly-network:
+    external: true
 

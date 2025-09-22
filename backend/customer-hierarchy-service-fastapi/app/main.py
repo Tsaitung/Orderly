@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     Application lifespan events
     """
     # Startup
-    logger.info("Customer Hierarchy Service starting up", version=settings.API_VERSION)
+    logger.info("Customer Hierarchy Service starting up", version=settings.api_version)
     
     # Verify database connection
     try:
@@ -68,28 +68,28 @@ app = FastAPI(
     - Bulk operations and data validation
     - Real-time updates with caching
     """,
-    version=settings.API_VERSION,
-    openapi_url=f"{settings.API_V2_STR}/openapi.json",
-    docs_url=f"{settings.API_V2_STR}/docs",
-    redoc_url=f"{settings.API_V2_STR}/redoc",
+    version=settings.api_version,
+    openapi_url=f"{settings.api_v2_str}/openapi.json",
+    docs_url=f"{settings.api_v2_str}/docs",
+    redoc_url=f"{settings.api_v2_str}/redoc",
     lifespan=lifespan
 )
 
 # Security middleware
-if settings.BACKEND_CORS_ORIGINS:
+if settings.backend_cors_origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_origins=[str(origin) for origin in settings.backend_cors_origins],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
 # Trusted hosts middleware for production
-if settings.ENVIRONMENT == "production":
+if settings.environment == "production":
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
+        allowed_hosts=settings.allowed_hosts
     )
 
 # Custom middleware
@@ -115,7 +115,7 @@ async def health_check() -> Dict[str, str]:
     return {
         "status": "healthy",
         "service": "customer-hierarchy-service",
-        "version": settings.API_VERSION,
+        "version": settings.api_version,
         "timestamp": str(time.time())
     }
 
@@ -126,7 +126,7 @@ async def detailed_health_check() -> Dict[str, Any]:
     health_status = {
         "status": "healthy",
         "service": "customer-hierarchy-service",
-        "version": settings.API_VERSION,
+        "version": settings.api_version,
         "timestamp": str(time.time()),
         "checks": {}
     }
@@ -144,7 +144,7 @@ async def detailed_health_check() -> Dict[str, Any]:
         health_status["status"] = "unhealthy"
     
     # Redis health check (if Redis is configured)
-    if settings.REDIS_URL:
+    if settings.redis_url:
         try:
             # Redis health check would go here
             health_status["checks"]["redis"] = {"status": "healthy"}
@@ -187,7 +187,7 @@ async def get_metrics():
 # Include API routers
 app.include_router(
     api_v2_router,
-    prefix=settings.API_V2_STR,
+    prefix=settings.api_v2_str,
     tags=["API v2"]
 )
 
@@ -254,8 +254,8 @@ async def root():
     return {
         "service": "Customer Hierarchy Service",
         "description": "4-Level Customer Hierarchy Management System",
-        "version": settings.API_VERSION,
-        "docs_url": f"{settings.API_V2_STR}/docs",
+        "version": settings.api_version,
+        "docs_url": f"{settings.api_v2_str}/docs",
         "health_url": "/health",
         "metrics_url": "/metrics"
     }
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=settings.PORT,
-        reload=settings.ENVIRONMENT == "development",
+        port=settings.port,
+        reload=settings.environment == "development",
         log_level="info"
     )

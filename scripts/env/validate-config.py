@@ -85,7 +85,6 @@ class ConfigValidator:
             'ORDER_SERVICE_URL',
             'PRODUCT_SERVICE_URL',
             'ACCEPTANCE_SERVICE_URL',
-            'BILLING_SERVICE_URL',
             'NOTIFICATION_SERVICE_URL',
             'CUSTOMER_HIERARCHY_SERVICE_URL',
             'SUPPLIER_SERVICE_URL',

@@ -196,7 +196,7 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
         "suppliers": ("users", SERVICE_URLS["users"], 0),
         # '/api/orders/*' -> order-service '/*' (service exposes '/orders/*' at root and '/api/orders/*')
         "orders": ("orders", SERVICE_URLS["orders"], 2),
-        # '/api/products/*' -> product-service '/api/products/*' (keep prefix)
+        # '/api/products/*' -> product-service '/api/products/*' (keep full path, includes SKUs)
         "products": ("products", SERVICE_URLS["products"], 0),
         # '/api/acceptance/*' -> acceptance-service '/acceptance/*'
         "acceptance": ("acceptance", SERVICE_URLS["acceptance"], 2),

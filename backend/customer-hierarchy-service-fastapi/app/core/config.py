@@ -5,7 +5,7 @@ Customer Hierarchy Service Configuration
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 # 添加共享庫路徑
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs"))
@@ -23,6 +23,12 @@ class CustomerHierarchyServiceSettings(UnifiedSettings):
     api_v2_str: str = Field(default="/api/v2", description="API v2 路徑前綴")
     port: int = Field(default=3007, description="客戶層級服務端口")
     workers: int = Field(default=4, description="Worker 數量")
+    
+    # 環境和CORS配置
+    environment: str = Field(default="development", description="運行環境")
+    backend_cors_origins: List[str] = Field(default=["http://localhost:3000"], description="CORS 允許的來源")
+    allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], description="允許的主機")
+    redis_url: str = Field(default="redis://localhost:6379/0", description="Redis 連接 URL")
     
     # 客戶層級業務規則
     max_hierarchy_depth: int = Field(default=4, description="最大層級深度")
@@ -125,14 +131,3 @@ class CustomerHierarchyServiceSettings(UnifiedSettings):
 
 # 創建配置實例
 settings = CustomerHierarchyServiceSettings()
-
-# 為了向後兼容，保持原有接口
-DATABASE_URL = settings.database_url_async
-REDIS_URL = settings.get_redis_url()
-APP_NAME = settings.app_name
-API_VERSION = settings.api_version
-API_V2_STR = settings.api_v2_str
-PORT = settings.port
-SECRET_KEY = settings.secret_key
-ALGORITHM = settings.jwt_algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes

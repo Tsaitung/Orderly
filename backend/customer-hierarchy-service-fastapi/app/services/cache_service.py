@@ -54,7 +54,7 @@ class CacheService:
         """Initialize Redis connection pool"""
         try:
             self.redis_pool = redis.ConnectionPool.from_url(
-                settings.REDIS_URL,
+                settings.redis_url,
                 max_connections=20,
                 retry_on_timeout=True,
                 decode_responses=False  # Handle encoding manually for flexibility
@@ -64,7 +64,7 @@ class CacheService:
             async with self._get_connection() as conn:
                 await conn.ping()
             
-            logger.info("Cache service initialized successfully", redis_url=settings.REDIS_URL)
+            logger.info("Cache service initialized successfully", redis_url=settings.redis_url)
             
         except Exception as e:
             logger.error("Failed to initialize cache service", error=str(e))

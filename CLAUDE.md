@@ -321,3 +321,5 @@ Refer to `docs/INDEX.md` for the up-to-date documentation map. Key entries:
 - Session management with Redis for scalability
 
 This codebase represents an enterprise-grade platform with emphasis on automation, reliability, and scalability. The Ultra-Automated CI/CD system ensures high-quality deployments with minimal human intervention while maintaining strict security and compliance standards.
+
+- 所有路由設定都不應該hard code

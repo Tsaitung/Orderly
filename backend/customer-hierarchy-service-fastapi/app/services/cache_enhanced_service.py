@@ -59,7 +59,7 @@ class EnhancedCacheService:
         """Initialize Redis connection"""
         try:
             # Use Redis URL from environment or default to local
-            redis_url = getattr(settings, 'REDIS_URL', 'redis://localhost:6379/0')
+            redis_url = getattr(settings, 'redis_url', 'redis://localhost:6379/0')
             self.redis_client = redis.from_url(redis_url, decode_responses=True)
             
             # Test connection

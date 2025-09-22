@@ -61,13 +61,15 @@ export interface ProductSearchResponse {
 
 // 產品統計 API 服務
 export class ProductService {
-  private static baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  private static baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin + '/api/bff'
+    : 'http://localhost:3000/api/bff';
 
   /**
    * 獲取產品統計資訊
    */
   static async getProductStats(supplierId?: string): Promise<ProductStats> {
-    const url = new URL(`${this.baseUrl}/api/products/products/stats`);
+    const url = new URL(`${this.baseUrl}/products/products/stats`);
     if (supplierId) {
       url.searchParams.append('supplierId', supplierId);
     }
@@ -96,7 +98,7 @@ export class ProductService {
    * 搜尋產品
    */
   static async searchProducts(params: ProductSearchParams = {}): Promise<ProductSearchResponse> {
-    const url = new URL(`${this.baseUrl}/api/products/products`);
+    const url = new URL(`${this.baseUrl}/products/products`);
     
     // 添加查詢參數
     Object.entries(params).forEach(([key, value]) => {
@@ -129,7 +131,7 @@ export class ProductService {
    * 獲取產品詳情
    */
   static async getProductById(productId: string): Promise<Product> {
-    const response = await fetch(`${this.baseUrl}/api/products/products/${productId}`, {
+    const response = await fetch(`${this.baseUrl}/products/products/${productId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -153,7 +155,7 @@ export class ProductService {
    * 獲取SKU統計資訊
    */
   static async getSKUStats(): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/api/products/skus/stats`, {
+    const response = await fetch(`${this.baseUrl}/products/skus/stats`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
