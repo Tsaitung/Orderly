@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { OrderStatus, OrderFilterParams } from '@/lib/api/supplier-types'
 import { useOrderWebSocket } from '@/lib/websocket/order-websocket'
 import { useNotifications, createOrderStatusNotification } from '@/lib/hooks/useNotifications'
-import { Search, Filter, Calendar, Eye, MoreVertical, Download, RefreshCw, Loader } from 'lucide-react'
+import { Search, Filter, Calendar, Eye, MoreVertical, Download, RefreshCw, Loader, AlertTriangle, Package } from 'lucide-react'
 import { getOrderStatusMeta, SUPPLIER_ORDER_STATUSES } from '@/lib/status'
 
 interface OrderManagementProps {

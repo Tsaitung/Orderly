@@ -186,7 +186,7 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
     throw new Error(error);
   }
 
-  // Helper functions for data transformation
+  // Helper functions  
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('zh-TW', {
       style: 'currency',
@@ -317,7 +317,7 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
         description: '週營收穩定成長'
       }
     ];
-  }, [metrics]);
+  }, [metrics, formatCurrency, formatPercentage, getChangeType, getChangePercentage]);
 
   // Generate achievements based on real data
   const achievements = React.useMemo(() => {
@@ -353,7 +353,7 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
     }
 
     return achievementList;
-  }, [metrics]);
+  }, [metrics, formatPercentage]);
 
   return (
     <section aria-labelledby="supplier-overview-title">

@@ -72,25 +72,6 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
     refreshMetrics 
   } = useSupplierDashboard(organizationId);
 
-  if (loading && !metrics) {
-    return <SupplierDashboardSkeleton />;
-  }
-
-  if (error) {
-    throw new Error(error);
-  }
-
-  if (!metrics) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-gray-500">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>暫無營收數據</p>
-        </div>
-      </Card>
-    );
-  }
-
   // Helper functions
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('zh-TW', {
@@ -103,6 +84,8 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
 
   // Generate mock historical data based on current metrics
   const revenueData: RevenueData[] = React.useMemo(() => {
+    if (!metrics) return [];
+    
     const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月'];
     const currentMonthRevenue = metrics.month_revenue;
     
@@ -126,6 +109,8 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
 
   // Generate category revenue distribution (mock data based on current metrics)
   const categoryRevenue: ProductCategoryRevenue[] = React.useMemo(() => {
+    if (!metrics) return [];
+    
     const categories = [
       { name: '蔬菜類', basePercent: 35, color: 'bg-green-500' },
       { name: '肉品類', basePercent: 29, color: 'bg-red-500' },
@@ -151,6 +136,8 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
 
   // Generate monthly targets (mock data)
   const monthlyTargets: MonthlyTarget[] = React.useMemo(() => {
+    if (!metrics) return [];
+    
     const months = ['1月', '2月', '3月', '4月', '5月', '6月', '7月'];
     
     return months.map((month, index) => {
@@ -168,6 +155,33 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
     });
   }, [metrics]);
 
+  // Prepare all React hooks before any conditional returns
+  const handleTimeRangeChange = React.useCallback((value: string) => {
+    setTimeRange(value);
+    announcePolite(`時間範圍已切換至${value === 'week' ? '週' : value === 'month' ? '月' : '年'}檢視`);
+  }, [announcePolite]);
+
+
+  if (loading && !metrics) {
+    return <SupplierDashboardSkeleton />;
+  }
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  if (!metrics) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-gray-500">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+          <p>暫無營收數據</p>
+        </div>
+      </Card>
+    );
+  }
+
+  // Check data availability after all hooks are declared
   if (revenueData.length < 2 || monthlyTargets.length < 1) {
     return (
       <Card className="p-6">
@@ -188,11 +202,6 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
   const totalRevenue = revenueData.reduce((sum, data) => sum + data.revenue, 0);
   const avgProfitMargin = revenueData.reduce((sum, data) => sum + data.profitMargin, 0) / revenueData.length;
 
-  const handleTimeRangeChange = React.useCallback((value: string) => {
-    setTimeRange(value);
-    announcePolite(`時間範圍已切換至${value === 'week' ? '週' : value === 'month' ? '月' : '年'}檢視`);
-  }, [announcePolite]);
-
   const timeRangeOptions = [
     { value: 'week', label: '週檢視' },
     { value: 'month', label: '月檢視' },
@@ -209,6 +218,10 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
 
   // Generate insights based on real data
   const insights = React.useMemo(() => {
+    if (!metrics || !categoryRevenue.length) {
+      return { highlights: [], suggestions: ['持續優化產品組合，提升整體獲利率'] };
+    }
+    
     const highlights = [];
     const suggestions = [];
 

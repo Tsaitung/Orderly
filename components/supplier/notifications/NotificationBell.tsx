@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal, AccessibleModalContent, AccessibleModalHeader, AccessibleModalTitle } from '@/components/ui/accessible-modal'
 import { formatDate } from '@/lib/utils'
 import type { Notification } from '@shared/types'
 import {
@@ -275,10 +275,10 @@ export default function NotificationBell({ organizationId, className = '' }: Not
       </div>
 
       {/* Full Notification Modal */}
-      <Dialog open={showFullModal} onOpenChange={setShowFullModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
+      <AccessibleModal open={showFullModal} onOpenChange={setShowFullModal}>
+        <AccessibleModalContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+          <AccessibleModalHeader>
+            <AccessibleModalTitle className="flex items-center space-x-2">
               <Bell className="h-5 w-5" />
               <span>所有通知</span>
               {unreadCount > 0 && (
@@ -286,8 +286,8 @@ export default function NotificationBell({ organizationId, className = '' }: Not
                   {unreadCount}
                 </Badge>
               )}
-            </DialogTitle>
-          </DialogHeader>
+            </AccessibleModalTitle>
+          </AccessibleModalHeader>
 
           <div className="overflow-y-auto max-h-96">
             {notifications.filter(n => !n.archived).length === 0 ? (
@@ -362,8 +362,8 @@ export default function NotificationBell({ organizationId, className = '' }: Not
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </AccessibleModalContent>
+      </AccessibleModal>
 
       {/* Click outside to close */}
       {isOpen && (

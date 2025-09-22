@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { AccessibleModal, AccessibleModalContent, AccessibleModalHeader, AccessibleModalTitle } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -165,11 +165,11 @@ export default function BulkProductModal({
   const currentOperation = BULK_OPERATIONS.find(op => op.type === selectedOperation);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>批量產品操作</DialogTitle>
-        </DialogHeader>
+    <AccessibleModal open={isOpen} onOpenChange={handleClose}>
+      <AccessibleModalContent className="max-w-2xl">
+        <AccessibleModalHeader>
+          <AccessibleModalTitle>批量產品操作</AccessibleModalTitle>
+        </AccessibleModalHeader>
 
         <div className="space-y-6">
           {/* Selection Summary */}
@@ -421,7 +421,7 @@ export default function BulkProductModal({
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </AccessibleModalContent>
+    </AccessibleModal>
   );
 }

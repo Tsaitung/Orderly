@@ -25,7 +25,7 @@
     "test:coverage": "jest --coverage",
     "test:frontend": "jest --testMatch='**/app/**/*.test.(ts|tsx)' --testMatch='**/components/**/*.test.(ts|tsx)' --passWithNoTests",
     "test:integration": "jest --testMatch='**/tests/integration/**/*.test.(ts|js)' --passWithNoTests",
-    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 1000 --rule 'no-console: off' --rule 'curly: off' --rule 'prefer-const: warn' --rule 'no-duplicate-imports: warn' --rule 'react-hooks/exhaustive-deps: warn'",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 1000 --rule 'no-console: off' --rule 'curly: off' --rule 'prefer-const: warn' --rule 'no-duplicate-imports: warn' --rule 'react-hooks/exhaustive-deps: warn' --rule 'react-hooks/rules-of-hooks: warn'",
     "lint:fix": "next lint --fix",
     "type-check": "tsc -p tsconfig.staging.json --noEmit",
     "type-check:full": "tsc --noEmit",
