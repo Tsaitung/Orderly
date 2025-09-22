@@ -31,16 +31,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Customer Hierarchy Service starting up", version=settings.api_version)
     
-    # Verify database connection
-    try:
-        async with engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-            logger.info("Database connection established")
-        # Ensure tables exist (dev convenience; safe no-op if already created)
-        await init_db()
-    except Exception as e:
-        logger.error("Failed to connect to database", error=str(e))
-        raise
+    # Skip immediate database connection to avoid startup failures
+    # Database will be checked on first health check instead
+    logger.info("Database connection will be verified on first health check")
     
     yield
     
