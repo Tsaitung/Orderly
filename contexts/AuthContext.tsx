@@ -84,32 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Check for existing secure token
         const storedData = SecureStorage.getTokens()
-        // 在 staging 或開發環境下，如果沒有 token 則創建 mock 用戶
-        const isDevOrStaging = process.env.NODE_ENV !== 'production' || 
-                               window.location.hostname.includes('staging')
-        
-        if (!storedData && isDevOrStaging) {
-          // 開發/Staging 環境暫時提供 mock 平台管理員身份
-          console.log('🔧 Dev/Staging mode: Creating mock platform admin user')
-          const mockUser: User = {
-            id: 'platform-admin-dev',
-            email: 'admin@orderly.com',
-            role: 'platform_admin',
-            organizationId: 'platform',
-            name: '平台管理員',
-            avatar: '/avatars/admin.png',
-            isActive: true,
-          }
-
-          setUser(mockUser)
-          setIsAuthenticated(true)
-          await loadOrganizations()
-          setIsLoading(false)
-          return
-        }
-        
         if (!storedData) {
-          // Production 環境沒有 token 時清除狀態
           setIsLoading(false)
           return
         }

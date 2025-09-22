@@ -32,10 +32,6 @@ export function AuthGuard({
 
   // Check authorization
   const checkAuthorization = React.useCallback(() => {
-    // STAGING: 暫時允許訪問平台管理（開發模式）
-    if (process.env.NODE_ENV !== 'production' && requiredRole === 'platform_admin') {
-      return true
-    }
     
     if (!isAuthenticated || !user) {
       return false

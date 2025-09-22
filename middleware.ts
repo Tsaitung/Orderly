@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  
+  // Debug: 記錄所有平台路徑請求
+  if (pathname.startsWith('/platform')) {
+    console.log('🔍 Platform request:', pathname)
+  }
 
   // 公開路徑，不需要驗證
   const publicPaths = [
@@ -29,15 +34,12 @@ export async function middleware(request: NextRequest) {
   // 檢查 httpOnly cookie 是否存在（由 /api/auth/login 設置）
   const sessionCookie = request.cookies.get('orderly_session')
 
-  // STAGING: 暫時完全允許訪問平台管理
-  if (pathname.startsWith('/platform')) {
-    return NextResponse.next()
-  }
 
   // 對於受保護的路由，若無 session 則重定向到首頁
   if (
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
+    pathname.startsWith('/platform') ||
     pathname.startsWith('/settings')
   ) {
     if (!sessionCookie) {

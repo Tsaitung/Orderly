@@ -1,6 +1,6 @@
 {
   "name": "@orderly/root",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "井然 Orderly - 餐飲產業全鏈路數位供應平台",
   "private": true,
   "workspaces": [
