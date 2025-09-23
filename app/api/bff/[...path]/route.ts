@@ -33,15 +33,19 @@ function getOrderlyConfig() {
 const config = getOrderlyConfig()
 const BACKEND_URL = config.backendUrl
 
-// 調試日誌
-if (config.debug) {
-  console.log('[BFF] Runtime configuration loaded:', {
+// 調試日誌 - 總是輸出以便診斷
+console.log('[BFF] Configuration debug:', {
+  globalConfigAvailable: !!globalThis.__orderly_config,
+  processEnvORDERLY: process.env.ORDERLY_BACKEND_URL,
+  processEnvBACKEND: process.env.BACKEND_URL,
+  processEnvNODE_ENV: process.env.NODE_ENV,
+  computedConfig: {
     backendUrl: config.backendUrl,
     nodeEnv: config.nodeEnv,
     environment: config.environment,
     debug: config.debug
-  })
-}
+  }
+})
 
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
