@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  
-  // Debug: 記錄所有平台路徑請求
-  if (pathname.startsWith('/platform')) {
-    console.log('🔍 Platform request:', pathname)
-  }
+  try {
+    const { pathname } = request.nextUrl
+    
+    // Debug: 記錄所有平台路徑請求
+    if (pathname.startsWith('/platform')) {
+      console.log('🔍 Platform request:', pathname)
+    }
 
   // 公開路徑，不需要驗證
   const publicPaths = [
@@ -84,7 +85,12 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+    return NextResponse.next()
+  } catch (error) {
+    console.error('🔧 Middleware error:', error)
+    // 允許請求通過以避免阻擋用戶訪問
+    return NextResponse.next()
+  }
 }
 
 export const config = {

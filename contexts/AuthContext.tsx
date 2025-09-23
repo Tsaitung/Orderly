@@ -82,6 +82,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        // 🔧 確保在客戶端環境執行
+        if (typeof window === 'undefined') {
+          setIsLoading(false)
+          return
+        }
+
         // 🔧 Staging 環境：優先檢查超級管理員登入（不依賴 storedData）
         const isStaging = window.location.hostname.includes('staging')
         const urlParams = new URLSearchParams(window.location.search)
@@ -89,8 +95,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (isStaging && (urlParams.get('admin') === 'staging' || localStorage.getItem('staging_admin') === 'true')) {
           console.log('🔧 Staging: Creating super admin user (priority check)')
           
-          // 清除可能的舊數據避免衝突
-          SecureStorage.clearTokens()
+          // 清除可能的舊數據避免衝突（增加錯誤處理）
+          try {
+            SecureStorage.clearTokens()
+          } catch (e) {
+            console.warn('🔧 Failed to clear tokens:', e)
+          }
           
           const mockUser: User = {
             id: 'platform-admin-staging',
@@ -102,34 +112,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
             isActive: true,
           }
 
-          // 設置完整的 SecureStorage 數據以滿足 middleware 檢查
-          SecureStorage.setTokens({
-            token: 'staging-mock-token',
-            userId: mockUser.id,
-            email: mockUser.email,
-            role: mockUser.role,
-            organizationId: mockUser.organizationId,
-            organizationType: 'supplier', // 預設值
-            rememberMe: true
-          })
+          // 設置完整的 SecureStorage 數據以滿足 middleware 檢查（增加錯誤處理）
+          try {
+            SecureStorage.setTokens({
+              token: 'staging-mock-token',
+              userId: mockUser.id,
+              email: mockUser.email,
+              role: mockUser.role,
+              organizationId: mockUser.organizationId,
+              organizationType: 'supplier', // 預設值
+              rememberMe: true
+            })
+          } catch (e) {
+            console.warn('🔧 Failed to set tokens:', e)
+          }
 
-          // 🔧 設置 orderly_session cookie 以通過 middleware 檢查
-          document.cookie = 'orderly_session=staging-admin-session; path=/; max-age=86400; SameSite=Lax'
-          console.log('🔧 AuthContext: Set orderly_session cookie for staging admin')
+          // 🔧 設置 orderly_session cookie 以通過 middleware 檢查（增加錯誤處理）
+          try {
+            document.cookie = 'orderly_session=staging-admin-session; path=/; max-age=86400; SameSite=Lax'
+            console.log('🔧 AuthContext: Set orderly_session cookie for staging admin')
+          } catch (e) {
+            console.warn('🔧 Failed to set cookie:', e)
+          }
 
           setUser(mockUser)
           setIsAuthenticated(true)
-          await loadOrganizations()
+          
+          // 加載組織數據（增加錯誤處理）
+          try {
+            await loadOrganizations()
+          } catch (e) {
+            console.warn('🔧 Failed to load organizations:', e)
+          }
+          
           setIsLoading(false)
           
-          // 設置 localStorage 標記
-          localStorage.setItem('staging_admin', 'true')
+          // 設置 localStorage 標記（增加錯誤處理）
+          try {
+            localStorage.setItem('staging_admin', 'true')
+          } catch (e) {
+            console.warn('🔧 Failed to set localStorage:', e)
+          }
+          
           console.log('🔧 AuthContext: Staging admin initialization complete')
           return
         }
 
-        // 檢查正常的存儲 token
-        const storedData = SecureStorage.getTokens()
+        // 檢查正常的存儲 token（增加錯誤處理）
+        let storedData
+        try {
+          storedData = SecureStorage.getTokens()
+        } catch (e) {
+          console.warn('🔧 Failed to get tokens:', e)
+          setIsLoading(false)
+          return
+        }
+        
         if (!storedData) {
           setIsLoading(false)
           return
@@ -166,8 +204,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
           await loadUserOrganization(user.organizationId)
         }
       } catch (error) {
-        console.error('Auth initialization failed:', error)
-        SecureStorage.clearTokens()
+        console.error('🔧 Auth initialization failed:', error)
+        try {
+          SecureStorage.clearTokens()
+        } catch (e) {
+          console.warn('🔧 Failed to clear tokens after error:', e)
+        }
       } finally {
         setIsLoading(false)
       }

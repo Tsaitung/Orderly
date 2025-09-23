@@ -10,8 +10,8 @@ const STORAGE_KEY = 'orderly_session'
 // Safe process.env access for browser compatibility
 function getEncryptionKey(): string {
   if (typeof window !== 'undefined') {
-    // Browser environment - use runtime env vars or fallback
-    return window.process?.env?.NEXT_PUBLIC_STORAGE_KEY || 'orderly-fallback-key-dev'
+    // Browser environment - use fallback (process not available)
+    return 'orderly-fallback-key-dev'
   }
   // Server environment
   return process.env.NEXT_PUBLIC_STORAGE_KEY || 'orderly-fallback-key-dev'
