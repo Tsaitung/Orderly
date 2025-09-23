@@ -125,7 +125,7 @@ jobs:
           # Check for frontend changes
           frontend_changed=false
           echo "🔍 Testing frontend pattern match..."
-          if echo "$changed_files" | grep -E "(app/|components/|lib/|shared/types/|package\.json|Dockerfile\.frontend)"; then
+          if echo "$changed_files" | grep -E "(app/|components/|lib/|shared/types/|contexts/|hooks/|stores/|types/|public/|package\.json|package-lock\.json|next\.config\.(js|mjs)|instrumentation\.(ts|js)|middleware\.(ts|js)|tailwind\.config\.(ts|js)|tsconfig\.json|postcss\.config\.(js|mjs)|Dockerfile\.frontend|\.env\.example)"; then
             frontend_changed=true
             echo "✅ Frontend changes detected!"
           else
