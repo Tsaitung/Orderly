@@ -1,19 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 智能環境檢測 - Cloud Run 友好
-// 使用運行時環境變數（已在 next.config.js 中聲明）
-const BACKEND_URL =
-  process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging'
-    ? process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL
-    : process.env.BACKEND_URL || 'http://localhost:8000'
+// 獲取全局配置（由 instrumentation.ts 設置）
+function getOrderlyConfig() {
+  return globalThis.__orderly_config || {
+    backendUrl: 'http://localhost:8000',
+    nodeEnv: 'development',
+    environment: 'development' as const,
+    debug: true
+  }
+}
+
+// 使用全局配置而非直接讀取 process.env
+const config = getOrderlyConfig()
+const BACKEND_URL = config.backendUrl
 
 // 調試日誌
-console.log('[BFF] Environment check:', {
-  NODE_ENV: process.env.NODE_ENV,
-  ORDERLY_BACKEND_URL: process.env.ORDERLY_BACKEND_URL,
-  BACKEND_URL: process.env.BACKEND_URL,
-  computed_BACKEND_URL: BACKEND_URL
-})
+if (config.debug) {
+  console.log('[BFF] Runtime configuration loaded:', {
+    backendUrl: config.backendUrl,
+    nodeEnv: config.nodeEnv,
+    environment: config.environment,
+    debug: config.debug
+  })
+}
 
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
@@ -29,8 +38,9 @@ const LOCAL_SERVICE_URLS = {
 
 // 智能服務路由 - 僅在本地開發且 Gateway 不可用時使用
 function getDirectServiceUrl(path: string): string | null {
+  const config = getOrderlyConfig()
   // 只在本地開發環境啟用直連
-  if (process.env.NODE_ENV === 'production') {
+  if (config.environment === 'production') {
     return null
   }
 
@@ -70,7 +80,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const directServiceUrl = getDirectServiceUrl(subPath)
 
   // 本地開發環境：如果 Gateway 不可用，嘗試直連服務
-  if (process.env.NODE_ENV !== 'production') {
+  if (config.environment !== 'production') {
     try {
       // 快速檢測 Gateway 是否可用（不等待響應）
       const controller = new AbortController()
@@ -131,7 +141,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     )
 
     // 在本地開發環境中，若 Gateway 回傳錯誤，對特定資源（如 products/skus）自動回退直連服務
-    const isLocal = process.env.NODE_ENV !== 'production'
+    const isLocal = config.environment !== 'production'
     const isGateway = routingStrategy === 'gateway'
     const isServerError = res.status >= 500 || [404, 502, 503].includes(res.status)
     const canDirect = Boolean(directServiceUrl)
@@ -177,7 +187,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     })
 
     // 本地環境：主要請求失敗時，嘗試對產品域名執行直連回退
-    const isLocal = process.env.NODE_ENV !== 'production'
+    const isLocal = config.environment !== 'production'
     const directUrl = getDirectServiceUrl(subPath)
     const isProductDomain = subPath.startsWith('products') || subPath.startsWith('v1/products')
     if (isLocal && directUrl && isProductDomain) {
@@ -203,7 +213,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     }
 
     // 如果是本地開發且服務不可用，返回友好的錯誤信息
-    if (process.env.NODE_ENV !== 'production' && error.cause?.code === 'ECONNREFUSED') {
+    if (config.environment !== 'production' && error.cause?.code === 'ECONNREFUSED') {
       const serviceName =
         routingStrategy === 'direct' ? target.split('//')[1].split('/')[0] : 'API Gateway'
       return new NextResponse(
