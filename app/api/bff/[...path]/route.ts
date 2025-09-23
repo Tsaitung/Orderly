@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 獲取全局配置（由 instrumentation.ts 設置）
+// 獲取全局配置（由 instrumentation.ts 設置）或直接讀取環境變數
 function getOrderlyConfig() {
-  return globalThis.__orderly_config || {
-    backendUrl: 'http://localhost:8000',
-    nodeEnv: 'development',
-    environment: 'development' as const,
-    debug: true
+  // 如果 instrumentation.ts 設置了全局配置，優先使用
+  if (globalThis.__orderly_config) {
+    return globalThis.__orderly_config
+  }
+  
+  // 回退到直接讀取環境變數
+  const backendUrl = process.env.ORDERLY_BACKEND_URL || 
+                    process.env.BACKEND_URL || 
+                    'http://localhost:8000'
+  
+  const nodeEnv = process.env.NODE_ENV || 'development'
+  
+  let environment: 'development' | 'staging' | 'production' = 'development'
+  if (nodeEnv === 'production') {
+    environment = 'production'
+  } else if (nodeEnv === 'staging' || backendUrl.includes('staging')) {
+    environment = 'staging'
+  }
+  
+  return {
+    backendUrl,
+    nodeEnv,
+    environment,
+    debug: environment !== 'production'
   }
 }
 
-// 使用全局配置而非直接讀取 process.env
+// 使用配置獲取後端 URL
 const config = getOrderlyConfig()
 const BACKEND_URL = config.backendUrl
 
