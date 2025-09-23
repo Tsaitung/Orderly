@@ -491,9 +491,9 @@ jobs:
       - name: Build and deploy frontend
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
-          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT || vars.GOOGLE_CLOUD_PROJECT }}
-          GOOGLE_CLOUD_REGION: ${{ secrets.GOOGLE_CLOUD_REGION || vars.GOOGLE_CLOUD_REGION }}
-          REGISTRY: asia-east1-docker.pkg.dev
+          REGISTRY: ${{ env.REGISTRY }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
         run: |
           echo "🚀 Building and deploying frontend for $ENVIRONMENT"
           
