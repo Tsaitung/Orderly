@@ -1631,13 +1631,5 @@
       "createdAt": "2025-09-19T19:17:42.918000",
       "updatedAt": "2025-09-19T19:17:42.918000"
     }
-  ],
-  "export_timestamp": "2025-09-22T07:07:57.491903",
-  "summary": {
-    "total_categories": 105,
-    "level_breakdown": {
-      "1": 13,
-      "2": 92
-    }
-  }
+  ]
 }

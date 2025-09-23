@@ -22,7 +22,7 @@ RUN npm run build
 # Production image, copy standalone server
 FROM node:20-alpine AS runner
 WORKDIR /app
-ENV NODE_ENV=production
+# NODE_ENV set by Cloud Run deployment (staging/production)
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy the standalone server and static assets

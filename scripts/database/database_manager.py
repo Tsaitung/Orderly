@@ -113,9 +113,9 @@ class DatabaseManager:
                 SELECT 
                     cc.id, cc.group_id, cc.name, cc.legal_name,
                     cc.tax_id, cc.tax_id_type, cc.billing_address,
-                    cc.billing_contact, cc.created_at, cc.updated_at
+                    cc.billing_contact, cc."createdAt", cc."updatedAt"
                 FROM customer_companies cc
-                ORDER BY cc.created_at
+                ORDER BY cc."createdAt"
             """)
             
             result = await session.execute(companies_query)
@@ -125,9 +125,9 @@ class DatabaseManager:
             locations_query = text("""
                 SELECT 
                     cl.id, cl.company_id, cl.name, cl.code,
-                    cl.address, cl.delivery_contact, cl.created_at, cl.updated_at
+                    cl.address, cl.delivery_contact, cl."createdAt", cl."updatedAt"
                 FROM customer_locations cl
-                ORDER BY cl.created_at
+                ORDER BY cl."createdAt"
             """)
             
             result = await session.execute(locations_query)
@@ -137,9 +137,9 @@ class DatabaseManager:
             business_units_query = text("""
                 SELECT 
                     bu.id, bu.location_id, bu.name, bu.code, bu.type,
-                    bu.budget_monthly, bu.created_at, bu.updated_at
+                    bu.budget_monthly, bu."createdAt", bu."updatedAt"
                 FROM business_units bu
-                ORDER BY bu.created_at
+                ORDER BY bu."createdAt"
             """)
             
             result = await session.execute(business_units_query)
@@ -609,16 +609,29 @@ class DatabaseManager:
             company_insert = text("""
                 INSERT INTO customer_companies (
                     id, group_id, name, legal_name, tax_id, tax_id_type,
-                    billing_address, billing_contact, created_at, updated_at,
+                    billing_address, billing_contact, "createdAt", "updatedAt",
                     created_by, updated_by
                 ) VALUES (
                     :id, :group_id, :name, :legal_name, :tax_id, :tax_id_type,
-                    :billing_address, :billing_contact, :created_at, :updated_at,
+                    :billing_address, :billing_contact, :createdAt, :updatedAt,
                     'import_script', 'import_script'
                 )
             """)
             
-            await session.execute(company_insert, company)
+            # 處理 JSON 欄位和時間戳
+            company_data = company.copy()
+            if isinstance(company_data.get('billing_address'), dict):
+                company_data['billing_address'] = json.dumps(company_data['billing_address'])
+            if isinstance(company_data.get('billing_contact'), dict):
+                company_data['billing_contact'] = json.dumps(company_data['billing_contact'])
+            
+            # 處理時間戳
+            if isinstance(company_data.get('createdAt'), str):
+                company_data['createdAt'] = datetime.fromisoformat(company_data['createdAt'].replace('Z', '+00:00'))
+            if isinstance(company_data.get('updatedAt'), str):
+                company_data['updatedAt'] = datetime.fromisoformat(company_data['updatedAt'].replace('Z', '+00:00'))
+            
+            await session.execute(company_insert, company_data)
         
         # 類似地導入地點和業務單位...
         print(f"   ✅ 客戶資料導入完成")
