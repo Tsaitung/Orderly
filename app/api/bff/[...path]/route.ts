@@ -1,76 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 獲取運行時配置（多種方法回退）
-function getOrderlyConfig() {
-  // 方法1: 全局配置（由 instrumentation.ts 設置）
-  if (globalThis.__orderly_config) {
-    return globalThis.__orderly_config
-  }
-  
-  // 方法2: 運行時配置文件（由 Docker entrypoint 創建）
-  try {
-    const fs = require('fs')
-    const path = require('path')
-    const configPath = path.join(process.cwd(), 'runtime-config.json')
-    if (fs.existsSync(configPath)) {
-      const configData = fs.readFileSync(configPath, 'utf8')
-      const config = JSON.parse(configData)
-      return {
-        backendUrl: config.backendUrl,
-        nodeEnv: config.nodeEnv,
-        environment: config.environment,
-        debug: config.debug
-      }
-    }
-  } catch (error) {
-    console.warn('[BFF] Failed to read runtime-config.json:', error.message)
-  }
-  
-  // 方法3: 直接讀取環境變數（最後回退）
-  const backendUrl = process.env.ORDERLY_BACKEND_URL || 
-                    process.env.BACKEND_URL || 
-                    'http://localhost:8000'
-  
-  const nodeEnv = process.env.NODE_ENV || 'development'
-  
-  let environment: 'development' | 'staging' | 'production' = 'development'
-  if (nodeEnv === 'production') {
-    environment = 'production'
-  } else if (nodeEnv === 'staging' || backendUrl.includes('staging')) {
-    environment = 'staging'
-  }
-  
-  return {
-    backendUrl,
-    nodeEnv,
-    environment,
-    debug: environment !== 'production'
-  }
-}
-
-// 使用配置獲取後端 URL
-const config = getOrderlyConfig()
-const BACKEND_URL = config.backendUrl
-
-// 調試日誌 - 檢查配置來源
-const fs = require('fs')
-const configFileExists = fs.existsSync(require('path').join(process.cwd(), 'runtime-config.json'))
-console.log('[BFF] Configuration debug:', {
-  configSource: globalThis.__orderly_config ? 'instrumentation' : 
-                configFileExists ? 'runtime-file' : 'environment',
-  globalConfigAvailable: !!globalThis.__orderly_config,
-  runtimeFileExists: configFileExists,
-  processEnvORDERLY: process.env.ORDERLY_BACKEND_URL,
-  processEnvBACKEND: process.env.BACKEND_URL,
-  processEnvNODE_ENV: process.env.NODE_ENV,
-  finalConfig: {
-    backendUrl: config.backendUrl,
-    nodeEnv: config.nodeEnv,
-    environment: config.environment,
-    debug: config.debug
-  }
-})
-
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
@@ -84,10 +13,9 @@ const LOCAL_SERVICE_URLS = {
 }
 
 // 智能服務路由 - 僅在本地開發且 Gateway 不可用時使用
-function getDirectServiceUrl(path: string): string | null {
-  const config = getOrderlyConfig()
+function getDirectServiceUrl(path: string, environment: string): string | null {
   // 只在本地開發環境啟用直連
-  if (config.environment === 'production') {
+  if (environment === 'production') {
     return null
   }
 
@@ -121,13 +49,23 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const url = new URL(req.url)
   const qs = url.search ? url.search : ''
 
+  // ✅ 在函數內部動態讀取環境變數（每次請求時讀取）
+  const BACKEND_URL = process.env.ORDERLY_BACKEND_URL || 
+                     process.env.BACKEND_URL || 
+                     'http://localhost:8000'
+  
+  const nodeEnv = process.env.NODE_ENV || 'development'
+  const environment = nodeEnv === 'staging' ? 'staging' :
+                     nodeEnv === 'production' ? 'production' : 
+                     'development'
+
   // 優先使用 API Gateway（Cloud Run 友好）
   let target = `${BACKEND_URL}/api/${subPath}${qs}`
   let routingStrategy: 'gateway' | 'direct' = 'gateway'
-  const directServiceUrl = getDirectServiceUrl(subPath)
+  const directServiceUrl = getDirectServiceUrl(subPath, environment)
 
   // 本地開發環境：如果 Gateway 不可用，嘗試直連服務
-  if (config.environment !== 'production') {
+  if (environment !== 'production') {
     try {
       // 快速檢測 Gateway 是否可用（不等待響應）
       const controller = new AbortController()
@@ -188,7 +126,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     )
 
     // 在本地開發環境中，若 Gateway 回傳錯誤，對特定資源（如 products/skus）自動回退直連服務
-    const isLocal = config.environment !== 'production'
+    const isLocal = environment !== 'production'
     const isGateway = routingStrategy === 'gateway'
     const isServerError = res.status >= 500 || [404, 502, 503].includes(res.status)
     const canDirect = Boolean(directServiceUrl)
@@ -234,8 +172,8 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     })
 
     // 本地環境：主要請求失敗時，嘗試對產品域名執行直連回退
-    const isLocal = config.environment !== 'production'
-    const directUrl = getDirectServiceUrl(subPath)
+    const isLocal = environment !== 'production'
+    const directUrl = getDirectServiceUrl(subPath, environment)
     const isProductDomain = subPath.startsWith('products') || subPath.startsWith('v1/products')
     if (isLocal && directUrl && isProductDomain) {
       const fallbackTarget = `${directUrl}/api/${subPath}${qs}`
@@ -260,7 +198,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     }
 
     // 如果是本地開發且服務不可用，返回友好的錯誤信息
-    if (config.environment !== 'production' && error.cause?.code === 'ECONNREFUSED') {
+    if (environment !== 'production' && error.cause?.code === 'ECONNREFUSED') {
       const serviceName =
         routingStrategy === 'direct' ? target.split('//')[1].split('/')[0] : 'API Gateway'
       return new NextResponse(

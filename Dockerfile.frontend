@@ -35,33 +35,9 @@ COPY public ./public
 ENV PORT=8080
 EXPOSE $PORT
 
-# Create entrypoint script for runtime config file generation
-RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
-    echo 'set -e' >> /app/entrypoint.sh && \
-    echo '' >> /app/entrypoint.sh && \
-    echo '# Create runtime configuration file for Next.js API Routes' >> /app/entrypoint.sh && \
-    echo 'cat > /app/runtime-config.json << EOF' >> /app/entrypoint.sh && \
-    echo '{' >> /app/entrypoint.sh && \
-    echo '  "backendUrl": "${ORDERLY_BACKEND_URL:-${BACKEND_URL:-http://localhost:8000}}",' >> /app/entrypoint.sh && \
-    echo '  "nodeEnv": "${NODE_ENV:-development}",' >> /app/entrypoint.sh && \
-    echo '  "environment": "${NODE_ENV:-development}",' >> /app/entrypoint.sh && \
-    echo '  "debug": true,' >> /app/entrypoint.sh && \
-    echo '  "timestamp": "$(date -Iseconds)"' >> /app/entrypoint.sh && \
-    echo '}' >> /app/entrypoint.sh && \
-    echo 'EOF' >> /app/entrypoint.sh && \
-    echo '' >> /app/entrypoint.sh && \
-    echo '# Debug: Print generated configuration' >> /app/entrypoint.sh && \
-    echo 'echo "[Docker] Generated runtime config:"' >> /app/entrypoint.sh && \
-    echo 'cat /app/runtime-config.json' >> /app/entrypoint.sh && \
-    echo '' >> /app/entrypoint.sh && \
-    echo '# Export environment variables for compatibility' >> /app/entrypoint.sh && \
-    echo 'export NODE_ENV="${NODE_ENV:-development}"' >> /app/entrypoint.sh && \
-    echo 'export ORDERLY_BACKEND_URL="${ORDERLY_BACKEND_URL:-${BACKEND_URL:-http://localhost:8000}}"' >> /app/entrypoint.sh && \
-    echo 'export BACKEND_URL="${BACKEND_URL:-http://localhost:8000}"' >> /app/entrypoint.sh && \
-    echo '' >> /app/entrypoint.sh && \
-    echo '# Start Next.js server' >> /app/entrypoint.sh && \
-    echo 'exec node server.js' >> /app/entrypoint.sh && \
-    chmod +x /app/entrypoint.sh
+# Health check for Cloud Run
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/ || exit 1
 
-# Use entrypoint script that properly injects runtime env vars
-CMD ["/app/entrypoint.sh"]
+# Start Next.js server directly (environment variables are read in API Routes)
+CMD ["node", "server.js"]

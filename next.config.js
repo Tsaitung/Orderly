@@ -10,9 +10,6 @@ const nextConfig = {
 
   // Enable experimental features
   experimental: {
-    // Enable instrumentation for runtime configuration
-    instrumentation: true,
-
     // Server Components
     serverComponentsExternalPackages: ['ioredis', 'redis'],
 
@@ -69,10 +66,8 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
-    // 運行時環境變數 - Cloud Run 注入
-    // NODE_ENV is automatically managed by Next.js
-    ORDERLY_BACKEND_URL: process.env.ORDERLY_BACKEND_URL,
-    BACKEND_URL: process.env.BACKEND_URL,
+    // Runtime environment variables (ORDERLY_BACKEND_URL, BACKEND_URL) 
+    // are now read directly in API Routes to support Cloud Run dynamic injection
   },
 
   // Output configuration for standalone builds
