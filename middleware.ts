@@ -37,17 +37,25 @@ export async function middleware(request: NextRequest) {
   // 🔧 Staging 環境特殊處理：檢查超級管理員登入
   const isStaging = request.url.includes('staging')
   const hasStagingAdmin = request.nextUrl.searchParams.get('admin') === 'staging'
+  const hasStagingCookie = request.cookies.get('staging_admin')?.value === 'true'
   
+  // 如果是 staging 環境且有 admin 參數，設置 cookie 並允許通過
   if (isStaging && hasStagingAdmin) {
-    console.log('🔧 Middleware: Allowing staging admin access')
+    console.log('🔧 Middleware: Setting staging admin cookie')
     const response = NextResponse.next()
-    // 設置標記 cookie 以供後續請求使用
     response.cookies.set('staging_admin', 'true', { 
       httpOnly: false, 
       path: '/',
-      sameSite: 'lax'
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 // 24小時
     })
     return response
+  }
+  
+  // 如果是 staging 環境且已有 staging_admin cookie，直接允許通過所有請求
+  if (isStaging && hasStagingCookie) {
+    console.log('🔧 Middleware: Staging admin cookie found, allowing all access')
+    return NextResponse.next()
   }
 
   // 對於受保護的路由，若無 session 則重定向到首頁
@@ -57,12 +65,6 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/platform') ||
     pathname.startsWith('/settings')
   ) {
-    // 🔧 Staging 環境：如果有 staging_admin 標記，允許通過
-    if (isStaging && request.cookies.get('staging_admin')?.value === 'true') {
-      console.log('🔧 Middleware: Allowing staging admin with cookie')
-      return NextResponse.next()
-    }
-    
     if (!sessionCookie) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
