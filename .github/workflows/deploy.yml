@@ -500,15 +500,15 @@ jobs:
           # Build frontend image
           docker buildx build \
             --platform linux/amd64 \
-            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-${{ github.sha }}" \
-            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-latest" \
+            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
+            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-latest" \
             --push \
             -f Dockerfile.frontend \
             .
           
           # Deploy to Cloud Run
           gcloud run deploy "orderly-frontend-$ENVIRONMENT" \
-            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-${{ github.sha }}" \
+            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
             --region="$GOOGLE_CLOUD_REGION" \
             --platform=managed \
             --allow-unauthenticated \
