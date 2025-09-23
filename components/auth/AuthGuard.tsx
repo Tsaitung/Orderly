@@ -33,12 +33,30 @@ export function AuthGuard({
   // Check authorization
   const checkAuthorization = React.useCallback(() => {
     
+    // 🔧 Enhanced debugging for staging admin
+    console.log('🔧 AuthGuard Debug:', {
+      isAuthenticated,
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        name: user.name
+      } : null,
+      requiredRole,
+      isLoading,
+      allowSuperUser,
+      viewMode,
+      canViewAsOrganization: canViewAsOrganization()
+    })
+    
     if (!isAuthenticated || !user) {
+      console.log('🔧 AuthGuard: Not authenticated or no user')
       return false
     }
 
     // Platform admin has unrestricted access to all areas
     if (user.role === 'platform_admin') {
+      console.log('🔧 AuthGuard: Platform admin access granted')
       return true
     }
 
