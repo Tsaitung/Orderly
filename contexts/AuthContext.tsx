@@ -82,36 +82,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Check for existing secure token
-        const storedData = SecureStorage.getTokens()
-        // Staging 環境：檢查特殊的超級管理員登入
+        // 🔧 Staging 環境：優先檢查超級管理員登入（不依賴 storedData）
         const isStaging = window.location.hostname.includes('staging')
-        if (!storedData && isStaging) {
-          // 在 staging 環境下，檢查是否有特殊 URL 參數來登入超級管理員
-          const urlParams = new URLSearchParams(window.location.search)
-          if (urlParams.get('admin') === 'staging' || localStorage.getItem('staging_admin') === 'true') {
-            console.log('🔧 Staging: Creating super admin user')
-            const mockUser: User = {
-              id: 'platform-admin-staging',
-              email: 'admin@staging.orderly.com',
-              role: 'platform_admin',
-              organizationId: 'platform',
-              name: '平台管理員 (Staging)',
-              avatar: '/avatars/admin.png',
-              isActive: true,
-            }
-
-            setUser(mockUser)
-            setIsAuthenticated(true)
-            await loadOrganizations()
-            setIsLoading(false)
-            
-            // 設置 localStorage 以保持登入狀態
-            localStorage.setItem('staging_admin', 'true')
-            return
-          }
-        }
+        const urlParams = new URLSearchParams(window.location.search)
         
+        if (isStaging && (urlParams.get('admin') === 'staging' || localStorage.getItem('staging_admin') === 'true')) {
+          console.log('🔧 Staging: Creating super admin user (priority check)')
+          
+          // 清除可能的舊數據避免衝突
+          SecureStorage.clearTokens()
+          
+          const mockUser: User = {
+            id: 'platform-admin-staging',
+            email: 'admin@staging.orderly.com',
+            role: 'platform_admin',
+            organizationId: 'platform',
+            name: '平台管理員 (Staging)',
+            avatar: '/avatars/admin.png',
+            isActive: true,
+          }
+
+          // 設置完整的 SecureStorage 數據以滿足 middleware 檢查
+          SecureStorage.setTokens({
+            token: 'staging-mock-token',
+            userId: mockUser.id,
+            email: mockUser.email,
+            role: mockUser.role,
+            organizationId: mockUser.organizationId,
+            organizationType: 'supplier', // 預設值
+            rememberMe: true
+          })
+
+          setUser(mockUser)
+          setIsAuthenticated(true)
+          await loadOrganizations()
+          setIsLoading(false)
+          
+          // 設置 localStorage 標記
+          localStorage.setItem('staging_admin', 'true')
+          return
+        }
+
+        // 檢查正常的存儲 token
+        const storedData = SecureStorage.getTokens()
         if (!storedData) {
           setIsLoading(false)
           return

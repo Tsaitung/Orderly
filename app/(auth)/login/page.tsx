@@ -221,12 +221,30 @@ export default function LoginPage() {
             variant="outline"
             className="w-full border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
             onClick={() => {
+              console.log('🔧 Starting staging admin login process')
+              
+              // 清除所有舊數據避免衝突
+              localStorage.clear()
+              sessionStorage.clear()
+              
+              // 清除所有 cookies
+              document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+              });
+              
+              // 設置 staging admin 標記
               localStorage.setItem('staging_admin', 'true')
+              
+              console.log('🔧 Redirecting to staging admin login')
+              // 重定向到首頁並觸發 AuthContext 邏輯
               window.location.href = '/?admin=staging'
             }}
           >
             🔧 Staging 環境：快速登入超級管理員
           </Button>
+          <p className="mt-2 text-xs text-orange-600 text-center">
+            點擊後將自動清理舊數據並登入為平台管理員
+          </p>
         </div>
       )}
     </form>

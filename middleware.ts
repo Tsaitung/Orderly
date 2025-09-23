@@ -34,6 +34,21 @@ export async function middleware(request: NextRequest) {
   // 檢查 httpOnly cookie 是否存在（由 /api/auth/login 設置）
   const sessionCookie = request.cookies.get('orderly_session')
 
+  // 🔧 Staging 環境特殊處理：檢查超級管理員登入
+  const isStaging = request.url.includes('staging')
+  const hasStagingAdmin = request.nextUrl.searchParams.get('admin') === 'staging'
+  
+  if (isStaging && hasStagingAdmin) {
+    console.log('🔧 Middleware: Allowing staging admin access')
+    const response = NextResponse.next()
+    // 設置標記 cookie 以供後續請求使用
+    response.cookies.set('staging_admin', 'true', { 
+      httpOnly: false, 
+      path: '/',
+      sameSite: 'lax'
+    })
+    return response
+  }
 
   // 對於受保護的路由，若無 session 則重定向到首頁
   if (
@@ -42,6 +57,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/platform') ||
     pathname.startsWith('/settings')
   ) {
+    // 🔧 Staging 環境：如果有 staging_admin 標記，允許通過
+    if (isStaging && request.cookies.get('staging_admin')?.value === 'true') {
+      console.log('🔧 Middleware: Allowing staging admin with cookie')
+      return NextResponse.next()
+    }
+    
     if (!sessionCookie) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
