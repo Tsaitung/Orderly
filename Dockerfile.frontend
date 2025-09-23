@@ -15,9 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 # No ORM client generation required (moved to FastAPI + SQLAlchemy)
-# Accept backend URL at build time for client bundle
-ARG NEXT_PUBLIC_BACKEND_URL
-ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+# Backend URL now injected at runtime, not build time
 # Build Next.js (standalone)
 RUN npm run build
 
