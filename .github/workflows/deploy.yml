@@ -509,9 +509,10 @@ jobs:
           
           echo "📡 Backend URL for frontend: $BACKEND_URL"
           
-          # Build frontend image
+          # Build frontend image with backend URL
           docker buildx build \
             --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_BACKEND_URL="$BACKEND_URL" \
             --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
             --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-latest" \
             --push \
