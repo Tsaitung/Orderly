@@ -1,28 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // 智能環境檢測 - Cloud Run 友好
-// 使用運行時環境變數而非構建時變數
-function getBackendURL() {
-  // 優先順序：ORDERLY_BACKEND_URL -> BACKEND_URL -> 硬編碼 staging URL -> localhost
-  const orderly = process.env.ORDERLY_BACKEND_URL
-  const backend = process.env.BACKEND_URL  
-  const nodeEnv = process.env.NODE_ENV
-  
-  if (orderly) return orderly
-  if (backend) return backend
-  
-  // 硬編碼 staging fallback（避免 undefined）
-  if (nodeEnv === 'staging') {
-    return 'https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app'
-  }
-  if (nodeEnv === 'production') {
-    return 'https://orderly-api-gateway-fastapi-production-usg6y7o2ba-de.a.run.app'
-  }
-  
-  return 'http://localhost:8000'
-}
-
-const BACKEND_URL = getBackendURL()
+// 使用運行時環境變數（已在 next.config.js 中聲明）
+const BACKEND_URL =
+  process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging'
+    ? process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL
+    : process.env.BACKEND_URL || 'http://localhost:8000'
 
 // 調試日誌
 console.log('[BFF] Environment check:', {

@@ -66,6 +66,10 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
+    // 運行時環境變數 - Cloud Run 注入
+    NODE_ENV: process.env.NODE_ENV,
+    ORDERLY_BACKEND_URL: process.env.ORDERLY_BACKEND_URL,
+    BACKEND_URL: process.env.BACKEND_URL,
   },
 
   // Output configuration for standalone builds
