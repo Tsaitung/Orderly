@@ -290,7 +290,7 @@ jobs:
   deploy-infrastructure:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: [determine-environment, build-and-push]
+    needs: [determine-environment, setup-registry]
     if: needs.determine-environment.outputs.deploy == 'true'
     environment: ${{ needs.determine-environment.outputs.environment }}
     steps:
