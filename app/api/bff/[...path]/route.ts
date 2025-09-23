@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 獲取全局配置（由 instrumentation.ts 設置）或直接讀取環境變數
+// 獲取運行時配置（多種方法回退）
 function getOrderlyConfig() {
-  // 如果 instrumentation.ts 設置了全局配置，優先使用
+  // 方法1: 全局配置（由 instrumentation.ts 設置）
   if (globalThis.__orderly_config) {
     return globalThis.__orderly_config
   }
   
-  // 回退到直接讀取環境變數
+  // 方法2: 運行時配置文件（由 Docker entrypoint 創建）
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const configPath = path.join(process.cwd(), 'runtime-config.json')
+    if (fs.existsSync(configPath)) {
+      const configData = fs.readFileSync(configPath, 'utf8')
+      const config = JSON.parse(configData)
+      return {
+        backendUrl: config.backendUrl,
+        nodeEnv: config.nodeEnv,
+        environment: config.environment,
+        debug: config.debug
+      }
+    }
+  } catch (error) {
+    console.warn('[BFF] Failed to read runtime-config.json:', error.message)
+  }
+  
+  // 方法3: 直接讀取環境變數（最後回退）
   const backendUrl = process.env.ORDERLY_BACKEND_URL || 
                     process.env.BACKEND_URL || 
                     'http://localhost:8000'
@@ -33,13 +52,18 @@ function getOrderlyConfig() {
 const config = getOrderlyConfig()
 const BACKEND_URL = config.backendUrl
 
-// 調試日誌 - 總是輸出以便診斷
+// 調試日誌 - 檢查配置來源
+const fs = require('fs')
+const configFileExists = fs.existsSync(require('path').join(process.cwd(), 'runtime-config.json'))
 console.log('[BFF] Configuration debug:', {
+  configSource: globalThis.__orderly_config ? 'instrumentation' : 
+                configFileExists ? 'runtime-file' : 'environment',
   globalConfigAvailable: !!globalThis.__orderly_config,
+  runtimeFileExists: configFileExists,
   processEnvORDERLY: process.env.ORDERLY_BACKEND_URL,
   processEnvBACKEND: process.env.BACKEND_URL,
   processEnvNODE_ENV: process.env.NODE_ENV,
-  computedConfig: {
+  finalConfig: {
     backendUrl: config.backendUrl,
     nodeEnv: config.nodeEnv,
     environment: config.environment,
