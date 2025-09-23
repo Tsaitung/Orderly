@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force frontend redeploy to apply NEXT_PUBLIC_BACKEND_URL fix - 2024-09-23 */
+
 @layer base {
   :root {
     /* CSS 變數定義 */
