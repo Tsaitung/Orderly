@@ -67,7 +67,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
     // 運行時環境變數 - Cloud Run 注入
-    NODE_ENV: process.env.NODE_ENV,
+    // NODE_ENV is automatically managed by Next.js
     ORDERLY_BACKEND_URL: process.env.ORDERLY_BACKEND_URL,
     BACKEND_URL: process.env.BACKEND_URL,
   },
