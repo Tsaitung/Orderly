@@ -35,5 +35,30 @@ COPY public ./public
 ENV PORT=8080
 EXPOSE $PORT
 
-# Next.js standalone server with dynamic port support
-CMD ["sh", "-c", "node server.js"]
+# Create entrypoint script for runtime env injection
+RUN echo '#!/bin/sh' > /app/entrypoint.sh && \
+    echo 'set -e' >> /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    echo '# Inject runtime environment variables into Next.js standalone' >> /app/entrypoint.sh && \
+    echo 'if [ -n "$NODE_ENV" ]; then' >> /app/entrypoint.sh && \
+    echo '  export NODE_ENV="$NODE_ENV"' >> /app/entrypoint.sh && \
+    echo 'fi' >> /app/entrypoint.sh && \
+    echo 'if [ -n "$ORDERLY_BACKEND_URL" ]; then' >> /app/entrypoint.sh && \
+    echo '  export ORDERLY_BACKEND_URL="$ORDERLY_BACKEND_URL"' >> /app/entrypoint.sh && \
+    echo 'fi' >> /app/entrypoint.sh && \
+    echo 'if [ -n "$BACKEND_URL" ]; then' >> /app/entrypoint.sh && \
+    echo '  export BACKEND_URL="$BACKEND_URL"' >> /app/entrypoint.sh && \
+    echo 'fi' >> /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    echo '# Debug: Print resolved environment variables' >> /app/entrypoint.sh && \
+    echo 'echo "[Docker] Runtime env injection:"' >> /app/entrypoint.sh && \
+    echo 'echo "NODE_ENV=$NODE_ENV"' >> /app/entrypoint.sh && \
+    echo 'echo "ORDERLY_BACKEND_URL=$ORDERLY_BACKEND_URL"' >> /app/entrypoint.sh && \
+    echo 'echo "BACKEND_URL=$BACKEND_URL"' >> /app/entrypoint.sh && \
+    echo '' >> /app/entrypoint.sh && \
+    echo '# Start Next.js server' >> /app/entrypoint.sh && \
+    echo 'exec node server.js' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh
+
+# Use entrypoint script that properly injects runtime env vars
+CMD ["/app/entrypoint.sh"]
