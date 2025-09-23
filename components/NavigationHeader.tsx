@@ -87,7 +87,12 @@ export function NavigationHeader() {
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="sm" className="text-gray-700">
                   <UserCircle className="mr-1 h-4 w-4" />
-                  <span className="hidden sm:inline">{user.name}</span>
+                  <span className="hidden sm:inline" title={user.name}>{user.name}</span>
+                  {user.id === 'platform-admin-staging' && (
+                    <Badge variant="secondary" className="ml-1 bg-orange-100 text-xs text-orange-800">
+                      Staging
+                    </Badge>
+                  )}
                 </Button>
               </div>
             ) : (

@@ -63,7 +63,7 @@ export function OrganizationSwitcher({
     if (viewMode.isViewingAs && currentOrganization) {
       return currentOrganization.name
     }
-    return '選擇組織'
+    return '檢視組織'
   }
 
   const getCurrentIcon = () => {
