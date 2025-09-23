@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // 智能環境檢測 - Cloud Run 友好
 // 使用運行時環境變數而非構建時變數
 const BACKEND_URL =
-  process.env.NODE_ENV === 'production'
+  process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging'
     ? process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL // Cloud Run 運行時變數
     : process.env.BACKEND_URL || 'http://localhost:8000'
 
