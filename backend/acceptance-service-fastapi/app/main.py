@@ -16,7 +16,7 @@ register_exception_handlers(app)
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "acceptance-service-fastapi"}
+    return {"status": "healthy", "service": "acceptance-service-fastapi", "version": "1.1.0"}
 
 @app.get("/acceptance/health")
 async def health_legacy():
