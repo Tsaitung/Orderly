@@ -90,7 +90,7 @@ export function NavigationHeader() {
                   <span className="hidden sm:inline" title={user.name}>{user.name}</span>
                   {user.id === 'platform-admin-staging' && (
                     <Badge variant="secondary" className="ml-1 bg-orange-100 text-xs text-orange-800">
-                      🚀 Staging
+                      🚀 Staging Env
                     </Badge>
                   )}
                 </Button>
