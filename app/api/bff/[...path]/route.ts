@@ -7,6 +7,14 @@ const BACKEND_URL =
     ? process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL // Cloud Run 運行時變數
     : process.env.BACKEND_URL || 'http://localhost:8000'
 
+// 調試日誌
+console.log('[BFF] Environment check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  ORDERLY_BACKEND_URL: process.env.ORDERLY_BACKEND_URL,
+  BACKEND_URL: process.env.BACKEND_URL,
+  computed_BACKEND_URL: BACKEND_URL
+})
+
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
