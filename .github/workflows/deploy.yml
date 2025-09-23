@@ -413,7 +413,7 @@ jobs:
             --timeout=300 \
             --set-env-vars="NODE_ENV=$ENVIRONMENT" \
             --set-env-vars="REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379" \
-            --set-env-vars="DATABASE_URL=postgresql://orderly@/$GOOGLE_CLOUD_PROJECT?host=/cloudsql/$DB_CONNECTION_NAME" \
+            --set-env-vars="DATABASE_HOST=/cloudsql/$DB_CONNECTION_NAME,DATABASE_NAME=$GOOGLE_CLOUD_PROJECT,DATABASE_USER=orderly" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
