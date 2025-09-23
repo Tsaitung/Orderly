@@ -465,11 +465,64 @@ jobs:
             --set-env-vars="$env_vars" \
             --project="$GOOGLE_CLOUD_PROJECT"
 
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [determine-environment, detect-changes]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.has-frontend-changes == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Build and deploy frontend
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          GOOGLE_CLOUD_PROJECT: ${{ vars.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ vars.GOOGLE_CLOUD_REGION }}
+        run: |
+          echo "🚀 Building and deploying frontend for $ENVIRONMENT"
+          
+          # Build frontend image
+          docker buildx build \
+            --platform linux/amd64 \
+            --tag "asia-east1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-${{ github.sha }}" \
+            --tag "asia-east1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-latest" \
+            --push \
+            -f Dockerfile.frontend \
+            .
+          
+          # Deploy to Cloud Run
+          gcloud run deploy "orderly-frontend-$ENVIRONMENT" \
+            --image="asia-east1-docker.pkg.dev/$GOOGLE_CLOUD_PROJECT/orderly-registry/frontend:$ENVIRONMENT-${{ github.sha }}" \
+            --region="$GOOGLE_CLOUD_REGION" \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=$ENVIRONMENT" \
+            --memory=1Gi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --concurrency=100 \
+            --port=3000 \
+            --project="$GOOGLE_CLOUD_PROJECT"
+          
+          echo "✅ Frontend deployed successfully!"
+
   health-check:
     name: Health Check
     runs-on: ubuntu-latest
-    needs: [determine-environment, configure-routing]
-    if: needs.determine-environment.outputs.deploy == 'true'
+    needs: [determine-environment, configure-routing, deploy-frontend]
+    if: always() && needs.determine-environment.outputs.deploy == 'true'
     steps:
       - name: Wait for services to be ready
         run: sleep 30
@@ -516,7 +569,7 @@ jobs:
   post-deployment:
     name: Post-Deployment Tasks
     runs-on: ubuntu-latest
-    needs: [determine-environment, health-check]
+    needs: [determine-environment, health-check, deploy-frontend]
     if: always() && needs.determine-environment.outputs.deploy == 'true'
     steps:
       - name: Authenticate to Google Cloud
