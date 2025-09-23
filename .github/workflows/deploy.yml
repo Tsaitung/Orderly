@@ -162,7 +162,7 @@ jobs:
     name: Setup Artifact Registry
     runs-on: ubuntu-latest
     needs: [determine-environment, detect-changes]
-    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.has-infrastructure-changes == 'true')
+    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.has-infrastructure-changes == 'true' || needs.detect-changes.outputs.has-frontend-changes == 'true')
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
