@@ -240,7 +240,7 @@ export default function LoginPage() {
               window.location.href = '/?admin=staging'
             }}
           >
-            🔧 Staging 環境：快速登入超級管理員
+            🔧 Staging 環境：管理員快速登入
           </Button>
           <p className="mt-2 text-xs text-orange-600 text-center">
             點擊後將自動清理舊數據並登入為平台管理員
