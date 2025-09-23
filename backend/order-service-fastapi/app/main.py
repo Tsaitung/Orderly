@@ -44,6 +44,11 @@ async def root():
     return {"service": "Orderly Order Service (FastAPI)", "docs": "/api/docs"}
 
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "order-service-fastapi", "version": settings.app_version}
+
+
 app.include_router(health_router, prefix="/api", tags=["Health"])
 app.include_router(orders_router, prefix="/api", tags=["Orders"])
 # Also expose at root so API Gateway '/api/orders' -> '' mapping works
