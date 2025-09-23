@@ -159,7 +159,7 @@ export default function HomePage() {
             <div className="flex justify-center space-x-4 text-sm text-gray-400">
               <span>© 2025 Orderly Platform</span>
               <span>•</span>
-              <span>Version 2.0.2</span>
+              <span>Version 2.0.3</span>
               <span>•</span>
               <span>Built with Next.js 14</span>
             </div>

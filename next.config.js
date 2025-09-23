@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const path = require('path')
 
+// Test frontend deployment trigger - 2025-09-24 05:18
+
 const nextConfig = {
   // Enable React 18 features
   reactStrictMode: true,
