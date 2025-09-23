@@ -21,14 +21,26 @@ export async function middleware(request: NextRequest) {
   // 靜態資源路徑
   const staticPaths = ['/_next', '/favicon.ico', '/images', '/icons', '/assets']
 
-  // 🔧 Staging 環境特殊處理：檢查超級管理員登入（優先於公開路徑檢查）
+  // 🔧 PRIORITY 1: Staging 環境特殊處理（最高優先級，跳過所有路徑限制）
   const isStaging = request.url.includes('staging')
   const hasStagingAdmin = request.nextUrl.searchParams.get('admin') === 'staging'
   const hasStagingCookie = request.cookies.get('staging_admin')?.value === 'true'
   
+  // 增強調試：記錄 staging 檢查狀態
+  if (pathname.startsWith('/platform') || isStaging) {
+    console.log('🔧 Staging Debug:', {
+      url: request.url,
+      pathname,
+      isStaging,
+      hasStagingAdmin,
+      hasStagingCookie,
+      allCookies: Object.fromEntries(request.cookies.entries())
+    })
+  }
+  
   // 如果是 staging 環境且有 admin 參數，設置 cookie 並允許通過
   if (isStaging && hasStagingAdmin) {
-    console.log('🔧 Middleware: Setting staging admin cookie')
+    console.log('🔧 Middleware: Setting staging admin cookie for:', pathname)
     const response = NextResponse.next()
     response.cookies.set('staging_admin', 'true', { 
       httpOnly: false, 
@@ -41,7 +53,7 @@ export async function middleware(request: NextRequest) {
   
   // 如果是 staging 環境且已有 staging_admin cookie，直接允許通過所有請求
   if (isStaging && hasStagingCookie) {
-    console.log('🔧 Middleware: Staging admin cookie found, allowing all access')
+    console.log('🔧 Middleware: Staging admin bypass for:', pathname)
     return NextResponse.next()
   }
 

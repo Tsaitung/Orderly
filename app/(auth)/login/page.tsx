@@ -221,35 +221,23 @@ export default function LoginPage() {
             variant="outline"
             className="w-full border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100"
             onClick={() => {
-              try {
-                console.log('🔧 Starting staging admin login process')
-                alert('🔧 Staging admin login initiated - check console for details')
-                
-                // 清除所有舊數據避免衝突
-                localStorage.clear()
-                sessionStorage.clear()
-                console.log('🔧 Cleared localStorage and sessionStorage')
-                
-                // 清除所有 cookies
-                document.cookie.split(";").forEach(function(c) { 
-                  document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-                });
-                console.log('🔧 Cleared all cookies')
-                
-                // 設置 staging admin 標記
-                localStorage.setItem('staging_admin', 'true')
-                console.log('🔧 Set staging_admin localStorage flag')
-                
-                console.log('🔧 Redirecting to staging admin login')
-                console.log('🔧 Current URL:', window.location.href)
-                console.log('🔧 Target URL: /?admin=staging')
-                
-                // 重定向到首頁並觸發 AuthContext 邏輯
-                window.location.href = '/?admin=staging'
-              } catch (error) {
-                console.error('🔧 Error in staging admin login:', error)
-                alert('🔧 Error occurred: ' + error.message)
-              }
+              console.log('🔧 Starting staging admin login process')
+              
+              // 清除所有舊數據避免衝突
+              localStorage.clear()
+              sessionStorage.clear()
+              
+              // 清除所有 cookies
+              document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+              });
+              
+              // 設置 staging admin 標記
+              localStorage.setItem('staging_admin', 'true')
+              
+              console.log('🔧 Redirecting to staging admin login')
+              // 重定向到首頁並觸發 AuthContext 邏輯
+              window.location.href = '/?admin=staging'
             }}
           >
             🔧 Staging 環境：管理員快速登入

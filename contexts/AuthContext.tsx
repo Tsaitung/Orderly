@@ -113,6 +113,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
             rememberMe: true
           })
 
+          // 🔧 設置 orderly_session cookie 以通過 middleware 檢查
+          document.cookie = 'orderly_session=staging-admin-session; path=/; max-age=86400; SameSite=Lax'
+          console.log('🔧 AuthContext: Set orderly_session cookie for staging admin')
+
           setUser(mockUser)
           setIsAuthenticated(true)
           await loadOrganizations()
@@ -120,6 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           
           // 設置 localStorage 標記
           localStorage.setItem('staging_admin', 'true')
+          console.log('🔧 AuthContext: Staging admin initialization complete')
           return
         }
 
