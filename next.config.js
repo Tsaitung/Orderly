@@ -66,8 +66,12 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
-    // Runtime environment variables (ORDERLY_BACKEND_URL, BACKEND_URL) 
-    // are now read directly in API Routes to support Cloud Run dynamic injection
+  },
+  
+  // Runtime configuration - 讓 standalone 模式能讀取運行時環境變數
+  publicRuntimeConfig: {
+    BACKEND_URL: process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:8000',
+    NODE_ENV: process.env.NODE_ENV || 'development',
   },
 
   // Output configuration for standalone builds

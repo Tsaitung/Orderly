@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import getConfig from 'next/config'
 
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
@@ -49,12 +50,14 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const url = new URL(req.url)
   const qs = url.search ? url.search : ''
 
-  // ✅ 在函數內部動態讀取環境變數（每次請求時讀取）
-  const BACKEND_URL = process.env.ORDERLY_BACKEND_URL || 
+  // ✅ 使用 Next.js runtime config 讀取環境變數（支援 standalone 模式）
+  const { publicRuntimeConfig } = getConfig()
+  const BACKEND_URL = publicRuntimeConfig?.BACKEND_URL || 
+                     process.env.ORDERLY_BACKEND_URL || 
                      process.env.BACKEND_URL || 
                      'http://localhost:8000'
   
-  const nodeEnv = process.env.NODE_ENV || 'development'
+  const nodeEnv = publicRuntimeConfig?.NODE_ENV || process.env.NODE_ENV || 'development'
   const environment = nodeEnv === 'staging' ? 'staging' :
                      nodeEnv === 'production' ? 'production' : 
                      'development'
