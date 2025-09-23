@@ -68,10 +68,11 @@ const nextConfig = {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
   },
   
-  // Runtime configuration - 讓 standalone 模式能讀取運行時環境變數
+  // Runtime configuration - 使用函數延遲評估運行時環境變數
   publicRuntimeConfig: {
-    BACKEND_URL: process.env.ORDERLY_BACKEND_URL || process.env.BACKEND_URL || 'http://localhost:8000',
-    NODE_ENV: process.env.NODE_ENV || 'development',
+    // 使用空值，在運行時動態讀取
+    BACKEND_URL: null,
+    NODE_ENV: null,
   },
 
   // Output configuration for standalone builds
