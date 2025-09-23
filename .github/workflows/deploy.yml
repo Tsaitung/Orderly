@@ -460,7 +460,7 @@ jobs:
             env_vars="${env_vars},${env_name}_URL=${service_urls[$service]}"
           done
           
-          gcloud run services update "orderly-api-gateway-$ENVIRONMENT" \
+          gcloud run services update "orderly-api-gateway-fastapi-$ENVIRONMENT" \
             --region="$GOOGLE_CLOUD_REGION" \
             --set-env-vars="$env_vars" \
             --project="$GOOGLE_CLOUD_PROJECT"

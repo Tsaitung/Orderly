@@ -2,6 +2,7 @@
 Supplier Management API Endpoints
 Essential supplier features without inventory, ERP, or automation
 """
+import logging
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -36,6 +37,7 @@ from app.schemas.supplier import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -173,58 +175,83 @@ async def list_suppliers(
     db: AsyncSession = Depends(get_async_session)
 ):
     """List suppliers with pagination and filtering"""
-    # Build query with filters
-    query = select(SupplierProfile)
-    
-    if filters.status:
-        query = query.where(SupplierProfile.status == filters.status)
-    
-    if filters.delivery_capacity:
-        query = query.where(SupplierProfile.delivery_capacity == filters.delivery_capacity)
-    
-    if filters.verified_only:
-        query = query.where(SupplierProfile.status == SupplierStatus.VERIFIED)
-    
-    if filters.min_capacity_kg:
-        query = query.where(SupplierProfile.delivery_capacity_kg_per_day >= filters.min_capacity_kg)
-    
-    if filters.max_capacity_kg:
-        query = query.where(SupplierProfile.delivery_capacity_kg_per_day <= filters.max_capacity_kg)
-    
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total_count_result = await db.execute(count_query)
-    total_count = total_count_result.scalar()
-    
-    # Add pagination
-    offset = (pagination.page - 1) * pagination.page_size
-    query = query.offset(offset).limit(pagination.page_size)
-    
-    # Add sorting
-    if pagination.sort_by == "created_at":
-        if pagination.sort_order == "desc":
-            query = query.order_by(SupplierProfile.created_at.desc())
-        else:
-            query = query.order_by(SupplierProfile.created_at.asc())
-    
-    # Execute query
-    result = await db.execute(query)
-    suppliers = result.scalars().all()
-    
-    # Calculate pagination info
-    total_pages = (total_count + pagination.page_size - 1) // pagination.page_size
-    has_next = pagination.page < total_pages
-    has_previous = pagination.page > 1
-    
-    return SupplierListResponse(
-        suppliers=suppliers,
-        total_count=total_count,
-        page=pagination.page,
-        page_size=pagination.page_size,
-        total_pages=total_pages,
-        has_next=has_next,
-        has_previous=has_previous
-    )
+    try:
+        # Build query with filters
+        query = select(SupplierProfile)
+        
+        if filters.status:
+            query = query.where(SupplierProfile.status == filters.status)
+        
+        if filters.delivery_capacity:
+            query = query.where(SupplierProfile.delivery_capacity == filters.delivery_capacity)
+        
+        if filters.verified_only:
+            query = query.where(SupplierProfile.status == SupplierStatus.VERIFIED)
+        
+        if filters.min_capacity_kg:
+            query = query.where(SupplierProfile.delivery_capacity_kg_per_day >= filters.min_capacity_kg)
+        
+        if filters.max_capacity_kg:
+            query = query.where(SupplierProfile.delivery_capacity_kg_per_day <= filters.max_capacity_kg)
+        
+        # Count total with error handling
+        try:
+            count_query = select(func.count()).select_from(query.subquery())
+            total_count_result = await db.execute(count_query)
+            total_count = total_count_result.scalar()
+        except Exception as count_error:
+            logger.error(f"Failed to count suppliers: {count_error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database count query failed: {str(count_error)}"
+            )
+        
+        # Add pagination
+        offset = (pagination.page - 1) * pagination.page_size
+        query = query.offset(offset).limit(pagination.page_size)
+        
+        # Add sorting
+        if pagination.sort_by == "created_at":
+            if pagination.sort_order == "desc":
+                query = query.order_by(SupplierProfile.created_at.desc())
+            else:
+                query = query.order_by(SupplierProfile.created_at.asc())
+        
+        # Execute query with error handling
+        try:
+            result = await db.execute(query)
+            suppliers = result.scalars().all()
+        except Exception as query_error:
+            logger.error(f"Failed to execute suppliers query: {query_error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Database query failed: {str(query_error)}"
+            )
+        
+        # Calculate pagination info
+        total_pages = (total_count + pagination.page_size - 1) // pagination.page_size
+        has_next = pagination.page < total_pages
+        has_previous = pagination.page > 1
+        
+        return SupplierListResponse(
+            suppliers=suppliers,
+            total_count=total_count,
+            page=pagination.page,
+            page_size=pagination.page_size,
+            total_pages=total_pages,
+            has_next=has_next,
+            has_previous=has_previous
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in list_suppliers: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error: {str(e)}"
+        )
 
 
 # ============================================================================
