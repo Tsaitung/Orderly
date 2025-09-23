@@ -32,6 +32,8 @@ SERVICE_URLS = {
     "notifications": os.getenv("NOTIFICATION_SERVICE_URL", "http://localhost:3006"),
     # Customer Hierarchy service exposes '/api/v2/*'
     "customer_hierarchy_v2": os.getenv("CUSTOMER_HIERARCHY_SERVICE_URL", "http://localhost:3007"),
+    # Supplier service exposes '/api/*' and '/*' paths
+    "suppliers": os.getenv("SUPPLIER_SERVICE_URL", "http://localhost:3008"),
 }
 
 logger = logging.getLogger("api_gateway")
@@ -192,8 +194,10 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
         "users": ("users", SERVICE_URLS["users"], 2),
         # '/api/auth/*' -> user-service '/api/auth/*' (service exposes '/api/auth/*')
         "auth": ("users", SERVICE_URLS["users"], 0),
-        # '/api/suppliers/*' -> user-service '/api/suppliers/*' (keep prefix)
-        "suppliers": ("users", SERVICE_URLS["users"], 0),
+        # '/api/platform/suppliers/*' -> user-service '/api/suppliers/*' (admin/platform functions)
+        "platform": ("users", SERVICE_URLS["users"], 1),
+        # '/api/suppliers/*' -> supplier-service '/api/suppliers/*' (core supplier business logic)
+        "suppliers": ("suppliers", SERVICE_URLS["suppliers"], 0),
         # '/api/orders/*' -> order-service '/*' (service exposes '/orders/*' at root and '/api/orders/*')
         "orders": ("orders", SERVICE_URLS["orders"], 2),
         # '/api/products/*' -> product-service '/api/products/*' (keep full path, includes SKUs)
@@ -290,6 +294,20 @@ async def api_proxy(full_path: str, request: Request):
 async def products_alias(full_path: str, request: Request):
     # Rewrite '/products/x' -> '/api/products/x'
     return await _proxy(request, "/api/products/" + full_path)
+
+
+# Frontend compatibility: '/suppliers' root path (without '/api' prefix)
+@app.api_route("/suppliers", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+async def suppliers_root(request: Request):
+    # Rewrite '/suppliers' -> '/api/suppliers'
+    return await _proxy(request, "/api/suppliers")
+
+
+# Frontend compatibility: '/suppliers/*' (without '/api' prefix)
+@app.api_route("/suppliers/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+async def suppliers_alias(full_path: str, request: Request):
+    # Rewrite '/suppliers/x' -> '/api/suppliers/x'
+    return await _proxy(request, "/api/suppliers/" + full_path)
 
 
 @app.get("/")
