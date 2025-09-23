@@ -9,6 +9,7 @@ const BACKEND_URL =
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
+  SUPPLIER_SERVICE_URL: process.env.SUPPLIER_SERVICE_URL || 'http://localhost:3008',
   CUSTOMER_HIERARCHY_SERVICE_URL:
     process.env.CUSTOMER_HIERARCHY_SERVICE_URL || 'http://localhost:3007',
   PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003',
@@ -27,8 +28,11 @@ function getDirectServiceUrl(path: string): string | null {
   if (path.startsWith('v2/hierarchy') || path.startsWith('customers')) {
     return LOCAL_SERVICE_URLS.CUSTOMER_HIERARCHY_SERVICE_URL
   }
-  if (path.startsWith('v1/users') || path.startsWith('suppliers')) {
+  if (path.startsWith('v1/users')) {
     return LOCAL_SERVICE_URLS.USER_SERVICE_URL
+  }
+  if (path.startsWith('suppliers')) {
+    return LOCAL_SERVICE_URLS.SUPPLIER_SERVICE_URL
   }
   if (path.startsWith('v1/products') || path.startsWith('products')) {
     return LOCAL_SERVICE_URLS.PRODUCT_SERVICE_URL
