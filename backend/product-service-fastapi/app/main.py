@@ -13,6 +13,7 @@ import uvicorn
 
 from app.core.config import settings
 from app.core.database import async_engine
+from sqlalchemy import text
 from app.api.v1.categories import router as categories_router
 from app.api.v1.products import router as products_router
 from app.api.v1.skus_simple import router as skus_router
@@ -47,6 +48,22 @@ async def lifespan(app: FastAPI):
     """Application lifespan management"""
     # Startup
     logger.info("🚀 FastAPI Product Service starting up", version=settings.app_version)
+    # Log database connection source (mask secrets)
+    try:
+        db_url = settings.get_database_url_async()
+        masked = db_url
+        if "://" in db_url and "@" in db_url:
+            scheme, rest = db_url.split("://", 1)
+            creds, hostpart = rest.split("@", 1)
+            if ":" in creds:
+                user, _ = creds.split(":", 1)
+                creds_masked = f"{user}:***"
+            else:
+                creds_masked = creds
+            masked = f"{scheme}://{creds_masked}@{hostpart}"
+        logger.info("db.config", url=masked)
+    except Exception as e:
+        logger.warning("db.config_log_failed", error=str(e))
     yield
     # Shutdown
     logger.info("🛑 FastAPI Product Service shutting down")
@@ -240,3 +257,15 @@ if __name__ == "__main__":
         reload=settings.debug,
         log_level=settings.log_level.lower()
     )
+
+
+@app.get("/db/health")
+async def db_health():
+    """Active DB probe: attempts a lightweight SELECT 1."""
+    try:
+        async with async_engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"status": "healthy"}
+    except Exception as e:
+        logger.error("db.health.failed", error=str(e))
+        return JSONResponse(status_code=503, content={"status": "unhealthy", "error": str(e)})

@@ -16,7 +16,8 @@ NC='\033[0m' # No Color
 PROJECT_ID="${GCP_PROJECT_ID:-orderly-472413}"
 REGION="${GCP_REGION:-asia-east1}"
 ENVIRONMENT="${DEPLOY_ENV:-staging}"
-SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+# Use unified '-fastapi' service naming to match staging/prod conventions
+SERVICES=("api-gateway-fastapi" "user-service-fastapi" "product-service-fastapi" "acceptance-service-fastapi")
 
 # 健康檢查超時 (秒)
 HEALTH_CHECK_TIMEOUT=300
@@ -92,20 +93,20 @@ deploy_new_version() {
     local cpu_config="--cpu=1"
     
     case $service_name in
-        "api-gateway")
+        "api-gateway-fastapi")
             port_config="--port=8000"
             env_vars="NODE_ENV=${ENVIRONMENT},JWT_SECRET=${JWT_SECRET}"
             memory_config="--memory=1Gi"
             ;;
-        "user-service")
+        "user-service-fastapi")
             port_config="--port=3001"
             env_vars="NODE_ENV=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
             ;;
-        "product-service")
+        "product-service-fastapi")
             port_config="--port=3003"
             env_vars="ENVIRONMENT=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
             ;;
-        "acceptance-service")
+        "acceptance-service-fastapi")
             port_config="--port=3004"
             env_vars="NODE_ENV=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
             ;;
@@ -293,7 +294,7 @@ main_deployment() {
         log_info "新版本: $new_version"
         
         # 構建鏡像 URL
-        local image_url="us-central1-docker.pkg.dev/${PROJECT_ID}/orderly-docker/orderly-${service}:${image_tag}"
+        local image_url="asia-east1-docker.pkg.dev/${PROJECT_ID}/orderly/orderly-${service}:${image_tag}"
         
         # 部署新版本
         if ! deploy_new_version "$service" "$new_version" "$image_url"; then

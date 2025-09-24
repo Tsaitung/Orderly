@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY acceptance-service-fastapi/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -36,9 +36,9 @@ COPY --from=deps /root/.local /root/.local
 COPY libs ./libs
 
 # 複製應用程式
-COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
+COPY acceptance-service-fastapi/app ./app
+COPY acceptance-service-fastapi/alembic.ini ./alembic.ini
+COPY acceptance-service-fastapi/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app/libs
@@ -49,7 +49,7 @@ EXPOSE 8080
 
 # 健康檢查 - 使用動態端口
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/acceptance/health || exit 1
 
 # 啟動命令 - 支援動態端口
 CMD ["sh", "-c", "alembic upgrade head 2>/dev/null || true && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]

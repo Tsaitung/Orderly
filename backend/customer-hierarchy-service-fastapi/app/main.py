@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional, List
 
 from app.core.config import settings
 from sqlalchemy import text
-from app.core.database import async_engine as engine, get_async_db as get_database, init_db
+from app.core.database import async_engine as engine, get_async_db as get_database, init_db, check_db_health
 from app.api.v2 import router as api_v2_router
 from app.middleware.auth import AuthMiddleware
 from app.middleware.error_handler import ErrorHandlerMiddleware
@@ -30,6 +30,22 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("Customer Hierarchy Service starting up", version=settings.api_version)
+    # Log database connection source (mask secrets)
+    try:
+        db_url = settings.database_url_async
+        masked = db_url
+        if "://" in db_url and "@" in db_url:
+            scheme, rest = db_url.split("://", 1)
+            creds, hostpart = rest.split("@", 1)
+            if ":" in creds:
+                user, _ = creds.split(":", 1)
+                creds_masked = f"{user}:***"
+            else:
+                creds_masked = creds
+            masked = f"{scheme}://{creds_masked}@{hostpart}"
+        logger.info("db.config", url=masked)
+    except Exception as e:
+        logger.warning("db.config_log_failed", error=str(e))
     
     # Skip immediate database connection to avoid startup failures
     # Database will be checked on first health check instead
@@ -166,6 +182,15 @@ async def readiness_check() -> Dict[str, str]:
 async def liveness_check() -> Dict[str, str]:
     """Kubernetes liveness probe"""
     return {"status": "alive"}
+
+
+@app.get("/db/health", tags=["Health"])
+async def db_health_probe() -> Dict[str, Any]:
+    """Active DB probe: performs SELECT 1 and reports status."""
+    ok = await check_db_health()
+    if ok:
+        return {"status": "healthy"}
+    raise HTTPException(status_code=503, detail="Database unhealthy")
 
 
 # Metrics endpoint for Prometheus

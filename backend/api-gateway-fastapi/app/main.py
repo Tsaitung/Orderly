@@ -122,6 +122,14 @@ async def health():
     return health_payload()
 
 
+@app.get("/api/health")
+async def api_health():
+    """Compatibility probe for external monitors expecting '/api/health'.
+    Returns same payload as '/health'.
+    """
+    return health_payload()
+
+
 @app.get("/ready")
 async def ready(request: Request):
     """Enhanced readiness check that verifies downstream services"""
@@ -131,25 +139,43 @@ async def ready(request: Request):
     service_status = {}
     
     # List of services to check
+    hierarchy_base = SERVICE_URLS["customer_hierarchy_v2"].rstrip("/")
     services_to_check = {
         "user-service": f"{SERVICE_URLS['users']}/health",
-        "order-service": f"{SERVICE_URLS['orders']}/health", 
+        "order-service": f"{SERVICE_URLS['orders']}/health",
         "product-service": f"{SERVICE_URLS['products']}/health",
+        # acceptance service base already includes '/acceptance' suffix
+        "acceptance-service": f"{SERVICE_URLS['acceptance']}/health",
+        "notification-service": f"{SERVICE_URLS['notifications']}/health",
+        "supplier-service": f"{SERVICE_URLS['suppliers']}/health",
+        # Prefer '/api/v2/health', fallback to '/health' if service exposes it at root
+        "hierarchy-service-primary": f"{hierarchy_base}/api/v2/health",
+        "hierarchy-service-fallback": f"{hierarchy_base}/health",
     }
     
     client = await get_client(request)
     overall_healthy = True
     
+    # Probe each endpoint; special handling: if hierarchy primary is healthy, we can ignore fallback errors
+    hierarchy_ok = False
     for service_name, health_url in services_to_check.items():
         try:
             response = await client.get(health_url, timeout=5.0)
             if response.status_code == 200:
-                service_status[service_name] = {"status": "healthy", "response_time_ms": response.elapsed.total_seconds() * 1000}
+                service_status[service_name] = {"status": "healthy", "url": health_url, "response_time_ms": response.elapsed.total_seconds() * 1000}
+                if service_name == "hierarchy-service-primary":
+                    hierarchy_ok = True
             else:
-                service_status[service_name] = {"status": "unhealthy", "error": f"HTTP {response.status_code}"}
-                overall_healthy = False
+                service_status[service_name] = {"status": "unhealthy", "url": health_url, "error": f"HTTP {response.status_code}"}
         except Exception as e:
-            service_status[service_name] = {"status": "unhealthy", "error": str(e)}
+            service_status[service_name] = {"status": "unhealthy", "url": health_url, "error": str(e)}
+
+    # Derive overall health: tolerate hierarchy-fallback failure if primary succeeded
+    overall_healthy = True
+    for name, info in service_status.items():
+        if name == "hierarchy-service-fallback" and hierarchy_ok:
+            continue
+        if info.get("status") != "healthy":
             overall_healthy = False
     
     return {

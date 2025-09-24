@@ -337,6 +337,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         with:
+          # Build from backend root so shared 'libs' is available to all service Dockerfiles
           context: backend
           file: backend/${{ matrix.service }}/Dockerfile
           push: true
@@ -394,13 +395,15 @@ jobs:
   deploy-services:
     name: Deploy Services
     runs-on: ubuntu-latest
-    needs: [determine-environment, detect-changes, deploy-infrastructure]
-    if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || github.event.inputs.services != '' || needs.determine-environment.outputs.force_backend == 'true')
+    # Ensure images are built and pushed before deploying
+    needs: [determine-environment, detect-changes, setup-registry, build-and-push, deploy-infrastructure]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.requested-services != '' || github.event.inputs.services != '' || needs.determine-environment.outputs.force_backend == 'true')
     environment: ${{ needs.determine-environment.outputs.environment }}
     
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.changed-services) }}
+        # Match the same selection used by build-and-push so deploy waits on the exact services built
+        service: ${{ fromJson(needs.detect-changes.outputs.requested-services != '' && needs.detect-changes.outputs.requested-services || needs.detect-changes.outputs.changed-services) }}
       fail-fast: false
       max-parallel: 8  # Increased from 3 to 8 for faster parallel deployments
 
@@ -445,6 +448,20 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
         run: |
+          # Verify image exists before deploying (avoid race between push and deploy)
+          IMAGE_URI="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG"
+          echo "🔎 Verifying image exists: $IMAGE_URI"
+          for i in {1..12}; do
+            if gcloud artifacts docker images describe "$IMAGE_URI" --location="$GOOGLE_CLOUD_REGION" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
+              echo "✅ Image found in Artifact Registry"
+              break
+            fi
+            echo "⏳ Image not found yet, waiting... ($i/12)"
+            sleep 5
+          done
+          # Final verification
+          gcloud artifacts docker images describe "$IMAGE_URI" --location="$GOOGLE_CLOUD_REGION" --project="$GOOGLE_CLOUD_PROJECT"
+
           # Validate service name
           case "${{ matrix.service }}" in
             "api-gateway-fastapi"|"user-service-fastapi"|"order-service-fastapi"|"product-service-fastapi"|"acceptance-service-fastapi"|"notification-service-fastapi"|"customer-hierarchy-service-fastapi"|"supplier-service-fastapi") 
@@ -736,6 +753,29 @@ jobs:
             fi
           done
           
+          # Gateway smoke checks (non-auth endpoints)
+          gw=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          if [ -n "$gw" ]; then
+            echo "Gateway smoke: categories"
+            curl -sf "$gw/api/products/categories?includeProducts=false" --max-time 30 > /dev/null || failed_services+=("gateway-categories")
+            echo "Gateway smoke: skus"
+            curl -sf "$gw/api/products/skus/search?page_size=1" --max-time 30 > /dev/null || failed_services+=("gateway-skus")
+            echo "Gateway smoke: hierarchy"
+            curl -sf "$gw/api/v2/hierarchy/tree" --max-time 30 > /dev/null || failed_services+=("gateway-hierarchy")
+          fi
+
+          # Service DB health (if endpoint exists)
+          prod_url=$(gcloud run services describe "orderly-product-service-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          hier_url=$(gcloud run services describe "orderly-customer-hierarchy-service-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          if [ -n "$prod_url" ]; then
+            echo "DB health: product-service"
+            curl -sf "$prod_url/db/health" --max-time 30 > /dev/null || failed_services+=("product-db")
+          fi
+          if [ -n "$hier_url" ]; then
+            echo "DB health: hierarchy-service"
+            curl -sf "$hier_url/db/health" --max-time 30 > /dev/null || failed_services+=("hierarchy-db")
+          fi
+
           if [ ${#failed_services[@]} -gt 0 ]; then
             echo "Failed services: ${failed_services[*]}"
             exit 1

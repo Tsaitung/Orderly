@@ -66,12 +66,12 @@ jobs:
       - name: 🐳 Configure Docker
         run: |
           gcloud auth configure-docker
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          gcloud auth configure-docker asia-east1-docker.pkg.dev
 
       - name: 🏗️ Build Frontend Image (root Next.js)
         id: build-frontend
         run: |
-          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
+          IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-frontend:${{ github.sha }}"
           docker build -f Dockerfile.frontend -t $IMAGE .
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
@@ -79,32 +79,32 @@ jobs:
       - name: 🏗️ Build API Gateway Image
         id: build-api-gateway
         run: |
-          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
-          docker build -f backend/api-gateway-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/api-gateway-fastapi
+          IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-api-gateway-fastapi:${{ github.sha }}"
+          docker build -f backend/api-gateway-fastapi/Dockerfile -t $IMAGE backend
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: 🏗️ Build User Service Image
         id: build-user-service
         run: |
-          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
-          docker build -f backend/user-service-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/user-service-fastapi
+          IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-user-service-fastapi:${{ github.sha }}"
+          docker build -f backend/user-service-fastapi/Dockerfile -t $IMAGE backend
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: 🏗️ Build Product Service Image (FastAPI)
         id: build-product-service
         run: |
-          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${{ github.sha }}"
-          docker build -f backend/product-service-fastapi/Dockerfile -t $IMAGE ./backend/product-service-fastapi
+          IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-product-service-fastapi:${{ github.sha }}"
+          docker build -f backend/product-service-fastapi/Dockerfile -t $IMAGE backend
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       - name: 🏗️ Build Acceptance Service Image
         id: build-acceptance-service
         run: |
-          IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
-          docker build -f backend/acceptance-service-fastapi/Dockerfile.cloudrun -t $IMAGE ./backend/acceptance-service-fastapi
+          IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-acceptance-service-fastapi:${{ github.sha }}"
+          docker build -f backend/acceptance-service-fastapi/Dockerfile -t $IMAGE backend
           docker push $IMAGE
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
@@ -139,11 +139,11 @@ jobs:
         id: deploy
         run: |
           # Generate image URLs (same as build job)
-          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
-          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
-          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
-          PRODUCT_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${{ github.sha }}"
-          ACCEPTANCE_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${{ github.sha }}"
+          USER_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-user-service-fastapi:${{ github.sha }}"
+          API_GATEWAY_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-api-gateway-fastapi:${{ github.sha }}"
+          FRONTEND_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-frontend:${{ github.sha }}"
+          PRODUCT_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-product-service-fastapi:${{ github.sha }}"
+          ACCEPTANCE_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-acceptance-service-fastapi:${{ github.sha }}"
           
           # Deploy User Service
           gcloud run deploy orderly-user-service-fastapi-staging \
@@ -161,7 +161,7 @@ jobs:
           USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-fastapi-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy Product Service (FastAPI)
-          gcloud run deploy orderly-product-service-staging \
+          gcloud run deploy orderly-product-service-fastapi-staging \
             --image $PRODUCT_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -173,10 +173,10 @@ jobs:
             --port 3003 \
             --set-env-vars ENVIRONMENT=staging,DATABASE_URL=${{ secrets.STAGING_DATABASE_URL || secrets.DATABASE_URL }},LOG_LEVEL=INFO
 
-          PRODUCT_SERVICE_URL=$(gcloud run services describe orderly-product-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          PRODUCT_SERVICE_URL=$(gcloud run services describe orderly-product-service-fastapi-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy Acceptance Service
-          gcloud run deploy orderly-acceptance-service-staging \
+          gcloud run deploy orderly-acceptance-service-fastapi-staging \
             --image $ACCEPTANCE_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -188,10 +188,10 @@ jobs:
             --port 8004 \
             --set-env-vars NODE_ENV=staging
 
-          ACCEPTANCE_SERVICE_URL=$(gcloud run services describe orderly-acceptance-service-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          ACCEPTANCE_SERVICE_URL=$(gcloud run services describe orderly-acceptance-service-fastapi-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy API Gateway
-          gcloud run deploy orderly-api-gateway-staging \
+          gcloud run deploy orderly-api-gateway-fastapi-staging \
             --image $API_GATEWAY_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -203,7 +203,7 @@ jobs:
             --port 8000 \
             --set-env-vars NODE_ENV=staging,JWT_SECRET=${{ secrets.JWT_SECRET || 'staging-jwt-secret' }},USER_SERVICE_URL=$USER_SERVICE_URL,PRODUCT_SERVICE_URL=$PRODUCT_SERVICE_URL,ACCEPTANCE_SERVICE_URL=$ACCEPTANCE_SERVICE_URL/acceptance
 
-          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-fastapi-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Rebuild Frontend with runtime API base baked
           docker build -f Dockerfile.frontend --build-arg NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api -t $FRONTEND_IMAGE .
@@ -220,7 +220,7 @@ jobs:
             --max-instances 10 \
             --min-instances 0 \
             --port 8000 \
-            --set-env-vars NODE_ENV=staging,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api,NEXT_PUBLIC_API_URL=$API_GATEWAY_URL/api
+            --set-env-vars NODE_ENV=staging,ORDERLY_BACKEND_URL=$API_GATEWAY_URL,BACKEND_URL=$API_GATEWAY_URL,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
 
           FRONTEND_URL=$(gcloud run services describe orderly-frontend-staging --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
@@ -245,9 +245,19 @@ jobs:
           # Health checks
           curl -f "${{ steps.deploy.outputs.frontend-url }}/api/health" || exit 1
           curl -f "${{ steps.deploy.outputs.api-gateway-url }}/health" || exit 1
+          # Additional probe for gateway compatibility
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/api/health" || exit 1
           curl -f "${{ steps.deploy.outputs.user-service-url }}/health" || exit 1
           curl -f "${{ steps.deploy.outputs.product-service-url }}/health" || exit 1
           curl -f "${{ steps.deploy.outputs.acceptance-service-url }}/acceptance/health" || exit 1
+
+          # Gateway smoke checks (non-auth endpoints)
+          echo "🔎 Gateway smoke: categories"
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/api/products/categories?includeProducts=false" --max-time 30 || exit 1
+          echo "🔎 Gateway smoke: skus search"
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/api/products/skus/search?page_size=1" --max-time 30 || exit 1
+          echo "🔎 Gateway smoke: hierarchy tree"
+          curl -f "${{ steps.deploy.outputs.api-gateway-url }}/api/v2/hierarchy/tree" --max-time 30 || exit 1
           
           echo "✅ All staging services are healthy!"
 
@@ -280,12 +290,12 @@ jobs:
         id: deploy
         run: |
           # Generate image URLs (same as build job)
-          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service:${{ github.sha }}"
-          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${{ github.sha }}"
-          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${{ github.sha }}"
+          USER_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-user-service-fastapi:${{ github.sha }}"
+          API_GATEWAY_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-api-gateway-fastapi:${{ github.sha }}"
+          FRONTEND_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-frontend:${{ github.sha }}"
           
           # Deploy User Service
-          gcloud run deploy orderly-user-service-prod \
+          gcloud run deploy orderly-user-service-fastapi-prod \
             --image $USER_SERVICE_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -297,10 +307,10 @@ jobs:
             --port 8001 \
             --set-env-vars NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET_PROD }}
 
-          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          USER_SERVICE_URL=$(gcloud run services describe orderly-user-service-fastapi-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy API Gateway
-          gcloud run deploy orderly-api-gateway-prod \
+          gcloud run deploy orderly-api-gateway-fastapi-prod \
             --image $API_GATEWAY_IMAGE \
             --region ${{ env.GCP_REGION }} \
             --platform managed \
@@ -312,7 +322,7 @@ jobs:
             --port 8000 \
             --set-env-vars NODE_ENV=production,JWT_SECRET=${{ secrets.JWT_SECRET_PROD }},USER_SERVICE_URL=$USER_SERVICE_URL
 
-          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
+          API_GATEWAY_URL=$(gcloud run services describe orderly-api-gateway-fastapi-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
 
           # Deploy Frontend
           gcloud run deploy orderly-frontend-prod \
@@ -325,7 +335,7 @@ jobs:
             --max-instances 100 \
             --min-instances 1 \
             --port 8000 \
-            --set-env-vars NODE_ENV=production,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
+            --set-env-vars NODE_ENV=production,ORDERLY_BACKEND_URL=$API_GATEWAY_URL,BACKEND_URL=$API_GATEWAY_URL,NEXT_PUBLIC_API_BASE_URL=$API_GATEWAY_URL/api
 
           FRONTEND_URL=$(gcloud run services describe orderly-frontend-prod --region=${{ env.GCP_REGION }} --format='value(status.url)')
 

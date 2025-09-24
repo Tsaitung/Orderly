@@ -80,7 +80,7 @@ jobs:
       - name: 🐳 Configure Docker
         run: |
           gcloud auth configure-docker
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+          gcloud auth configure-docker asia-east1-docker.pkg.dev
 
       - name: 🏗️ Build all images
         id: images
@@ -89,32 +89,32 @@ jobs:
           IMAGE_TAG="bg-$(date +%Y%m%d-%H%M%S)-${{ github.sha }}"
           
           # Build Frontend
-          FRONTEND_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-frontend:${IMAGE_TAG}"
-          docker build -f Dockerfile.frontend -t $FRONTEND_IMAGE .
+          FRONTEND_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-frontend:${IMAGE_TAG}"
+          docker build -f Dockerfile.frontend -t "$FRONTEND_IMAGE" .
           docker push $FRONTEND_IMAGE
           echo "frontend-image=$FRONTEND_IMAGE" >> $GITHUB_OUTPUT
           
           # Build API Gateway
-          API_GATEWAY_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-api-gateway:${IMAGE_TAG}"
-          docker build -f backend/api-gateway/Dockerfile.cloudrun -t $API_GATEWAY_IMAGE .
+          API_GATEWAY_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-api-gateway-fastapi:${IMAGE_TAG}"
+          docker build -f backend/api-gateway-fastapi/Dockerfile -t "$API_GATEWAY_IMAGE" backend
           docker push $API_GATEWAY_IMAGE
           echo "api-gateway-image=$API_GATEWAY_IMAGE" >> $GITHUB_OUTPUT
           
           # Build User Service
-          USER_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-user-service-fastapi:${IMAGE_TAG}"
-          docker build -f backend/user-service/Dockerfile.cloudrun -t $USER_SERVICE_IMAGE .
+          USER_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-user-service-fastapi:${IMAGE_TAG}"
+          docker build -f backend/user-service-fastapi/Dockerfile -t "$USER_SERVICE_IMAGE" backend
           docker push $USER_SERVICE_IMAGE
           echo "user-service-image=$USER_SERVICE_IMAGE" >> $GITHUB_OUTPUT
           
           # Build Product Service (FastAPI)
-          PRODUCT_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-product-service:${IMAGE_TAG}"
-          docker build -f backend/product-service-fastapi/Dockerfile -t $PRODUCT_SERVICE_IMAGE ./backend/product-service-fastapi
+          PRODUCT_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-product-service-fastapi:${IMAGE_TAG}"
+          docker build -f backend/product-service-fastapi/Dockerfile -t "$PRODUCT_SERVICE_IMAGE" backend
           docker push $PRODUCT_SERVICE_IMAGE
           echo "product-service-image=$PRODUCT_SERVICE_IMAGE" >> $GITHUB_OUTPUT
           
           # Build Acceptance Service
-          ACCEPTANCE_SERVICE_IMAGE="us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly-docker/orderly-acceptance-service:${IMAGE_TAG}"
-          docker build -f backend/acceptance-service/Dockerfile.cloudrun -t $ACCEPTANCE_SERVICE_IMAGE ./backend/acceptance-service
+          ACCEPTANCE_SERVICE_IMAGE="asia-east1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/orderly/orderly-acceptance-service-fastapi:${IMAGE_TAG}"
+          docker build -f backend/acceptance-service-fastapi/Dockerfile -t "$ACCEPTANCE_SERVICE_IMAGE" backend
           docker push $ACCEPTANCE_SERVICE_IMAGE
           echo "acceptance-service-image=$ACCEPTANCE_SERVICE_IMAGE" >> $GITHUB_OUTPUT
 
@@ -163,7 +163,7 @@ jobs:
           sleep 60
           
           # Get service URLs and perform comprehensive health checks
-          SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+          SERVICES=("api-gateway-fastapi" "user-service-fastapi" "product-service-fastapi" "acceptance-service-fastapi")
           
           for service in "${SERVICES[@]}"; do
             SERVICE_URL=$(gcloud run services describe "orderly-${service}-${{ github.event.inputs.environment }}" \
@@ -181,13 +181,20 @@ jobs:
                 exit 1
               fi
               
-              # API specific tests
-              if [ "$service" = "api-gateway" ]; then
+              # API specific tests (only for gateway)
+              if [ "$service" = "api-gateway-fastapi" ]; then
                 if curl -f "$SERVICE_URL/api/health" --max-time 10 --silent; then
-                  echo "✅ API Gateway routing check passed"
+                  echo "✅ API Gateway /api/health passed"
                 else
-                  echo "⚠️ API Gateway routing check failed"
+                  echo "⚠️ API Gateway /api/health failed"
                 fi
+                # Lightweight smoke checks (non-auth endpoints)
+                echo "🔎 Gateway smoke: categories"
+                curl -f "$SERVICE_URL/api/products/categories?includeProducts=false" --max-time 30 --silent || echo "⚠️ categories smoke failed"
+                echo "🔎 Gateway smoke: skus search"
+                curl -f "$SERVICE_URL/api/products/skus/search?page_size=1" --max-time 30 --silent || echo "⚠️ skus smoke failed"
+                echo "🔎 Gateway smoke: hierarchy tree"
+                curl -f "$SERVICE_URL/api/v2/hierarchy/tree" --max-time 30 --silent || echo "⚠️ hierarchy tree smoke failed"
               fi
             else
               echo "⚠️ Could not find URL for $service"
@@ -212,7 +219,7 @@ jobs:
           echo "### 🎯 Deployed Services" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          SERVICES=("api-gateway" "user-service" "product-service" "acceptance-service")
+          SERVICES=("api-gateway-fastapi" "user-service-fastapi" "product-service-fastapi" "acceptance-service-fastapi")
           for service in "${SERVICES[@]}"; do
             SERVICE_URL=$(gcloud run services describe "orderly-${service}-${{ github.event.inputs.environment }}" \
               --region=${{ env.GCP_REGION }} \

@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY api-gateway-fastapi/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -39,7 +39,7 @@ COPY --from=deps /root/.local /root/.local
 COPY libs ./libs
 
 # 複製應用程式
-COPY app ./app
+COPY api-gateway-fastapi/app ./app
 
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app/libs
