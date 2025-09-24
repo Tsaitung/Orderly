@@ -23,10 +23,13 @@ RUN pip install --user --no-warn-script-location -r requirements.txt
 # 運行階段
 FROM base AS runtime
 
+# 安裝 CA 憑證以支援對 Cloud Run HTTPS 連線，避免 TLS 驗證失敗
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
+    ca-certificates \
     --no-install-recommends && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # 複製依賴
