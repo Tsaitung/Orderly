@@ -443,6 +443,14 @@ jobs:
             MAX_INSTANCES="10"
             CONCURRENCY="100"
           fi
+
+          # Staging overrides for critical services to reduce cold starts
+          if [ "$ENVIRONMENT" = "staging" ]; then
+            if [ "${{ matrix.service }}" = "supplier-service-fastapi" ]; then
+              echo "🔧 Override: setting min-instances=1 for supplier-service-fastapi in staging"
+              MIN_INSTANCES="1"
+            fi
+          fi
           
           # Deploy to Cloud Run
           gcloud run deploy "orderly-${{ matrix.service }}-$ENVIRONMENT" \
@@ -466,10 +474,23 @@ jobs:
             --project="$GOOGLE_CLOUD_PROJECT" \
             --labels="environment=$ENVIRONMENT,service=${{ matrix.service }},version=$IMAGE_TAG"
 
+          # Wait for the service /health to become available (max ~90s)
+          SVC_URL=$(gcloud run services describe "orderly-${{ matrix.service }}-$ENVIRONMENT" \
+            --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+            --project="$GOOGLE_CLOUD_PROJECT")
+          echo "⏳ Waiting for service ${{ matrix.service }} to be healthy at $SVC_URL/health"
+          for i in {1..18}; do
+            if curl -sf "$SVC_URL/health" --max-time 5 >/dev/null; then
+              echo "✅ ${{ matrix.service }} is healthy"
+              break
+            fi
+            sleep 5
+          done
+
   configure-routing:
     name: Configure Service Routing
     runs-on: ubuntu-latest
-    needs: [determine-environment, deploy-infrastructure]
+    needs: [determine-environment, deploy-infrastructure, deploy-services]
     if: needs.determine-environment.outputs.deploy == 'true'
     environment: ${{ needs.determine-environment.outputs.environment }}
     steps:
