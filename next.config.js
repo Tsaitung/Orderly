@@ -63,10 +63,7 @@ const nextConfig = {
     ]
   },
 
-  // Environment variables (build-time only for public runtime; prefer server-side process.env at runtime)
-  env: {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
-  },
+  // 移除 build-time env 注入，避免覆蓋執行時環境變數（特別是 NEXT_PUBLIC_* 被內嵌）
 
   // Output configuration for standalone builds
   output: 'standalone',
@@ -82,7 +79,7 @@ const nextConfig = {
   },
 
   // Ensure TS path aliases like '@/lib/*' resolve in Docker/CI builds
-  webpack: config => {
+  webpack: (config, { isServer, webpack }) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': path.resolve(__dirname),
@@ -90,19 +87,19 @@ const nextConfig = {
       '@/lib': path.resolve(__dirname, 'lib'),
     }
 
-    // Add process polyfill for Next.js 14 browser compatibility
-    config.resolve.fallback = {
-      ...(config.resolve.fallback || {}),
-      process: 'process/browser',
-    }
-
-    // Provide process global for browser
-    config.plugins = config.plugins || []
-    config.plugins.push(
-      new (require('webpack').ProvidePlugin)({
+    // 僅在瀏覽器端加入 process polyfill，避免覆蓋伺服端的 Node.js process 環境
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
         process: 'process/browser',
-      })
-    )
+      }
+      config.plugins = config.plugins || []
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: 'process/browser',
+        })
+      )
+    }
 
     return config
   },

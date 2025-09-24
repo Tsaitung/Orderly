@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
   // ✅ 完全繞過 Next.js，直接讀取 Node.js 進程環境變數
   // 同時提供從 NEXT_PUBLIC_API_BASE_URL 推導的最後回退
-  const deriveBackendFromPublic = (): string | null => {
+  const deriveBackendFromPublic = (reqUrl?: URL): string | null => {
     const pub = process.env.NEXT_PUBLIC_API_BASE_URL
     if (!pub) return null
     try {
@@ -11,6 +14,10 @@ export async function GET(req: Request) {
       if (pub.startsWith('http')) {
         const u = new URL(pub)
         return `${u.protocol}//${u.host}`
+      }
+      // 若為相對路徑（如 /api 或 /api/bff），回退為前端自身 Origin（僅作最後保險）
+      if (pub.startsWith('/') && reqUrl) {
+        return `${reqUrl.protocol}//${reqUrl.host}`
       }
     } catch (_) {
       // ignore parse errors
@@ -21,7 +28,7 @@ export async function GET(req: Request) {
   const BACKEND_URL =
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
-    deriveBackendFromPublic() ||
+    deriveBackendFromPublic(new URL(req.url)) ||
     'http://localhost:8000'
   
   const nodeEnv = process.env.NODE_ENV || 'development'

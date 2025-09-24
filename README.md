@@ -224,6 +224,41 @@ terraform apply
 
 ---
 
+### 🔧 部署環境變數與優先順序（Cloud Run / gcloud CLI）
+
+- 優先順序（伺服端解析 `backendUrl`）:
+  1) `ORDERLY_BACKEND_URL` → 2) `BACKEND_URL` → 3) 由 `NEXT_PUBLIC_API_BASE_URL` 推導（取其 Origin）→ 4) 回退 `http://localhost:8000`
+- 推薦做法:
+  - Cloud Run 執行時用 `--set-env-vars` 同時設置 `ORDERLY_BACKEND_URL`、`BACKEND_URL`、`NODE_ENV`
+  - 額外設 `NEXT_PUBLIC_API_BASE_URL=<BACKEND_URL>/api` 便於診斷與瀏覽器端使用
+- 本地開發（.env.local）: 參考 `.env.example` 已示範三者設定與說明
+
+範例：以 gcloud 部署前端（以 CI 同步用法為準）
+
+```bash
+BACKEND_URL="https://orderly-api-gateway-fastapi-staging-xxxxx.run.app"
+
+gcloud run deploy orderly-frontend-staging \
+  --image=asia-east1-docker.pkg.dev/$PROJECT/orderly/orderly-frontend:staging-<sha> \
+  --region=asia-east1 \
+  --platform=managed \
+  --allow-unauthenticated \
+  --set-env-vars="NODE_ENV=staging,ORDERLY_BACKEND_URL=$BACKEND_URL,BACKEND_URL=$BACKEND_URL,NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api" \
+  --memory=1Gi --cpu=1 --min-instances=0 --max-instances=10 --concurrency=100 --port=8080
+```
+
+驗證部署結果
+
+- 打開前端服務 `/api/env-check`：
+  - `raw_environment_variables.ORDERLY_BACKEND_URL` 與 `BACKEND_URL` 應等於 Cloud Run API Gateway 根網址
+  - `computed_config.backendUrl` 應與上列相同
+  - `validation.backend_url_resolved = true`
+
+注意事項（Next.js App Router + Standalone）
+
+- 請勿依賴 `publicRuntimeConfig` 在執行時讀取變數；已統一改為伺服端直接使用 `process.env`
+- 瀏覽器端如需變數，僅使用 `NEXT_PUBLIC_*` 名稱空間，並在部署時注入
+
 ## 🔍 監控和觀測
 
 ### 📊 關鍵指標

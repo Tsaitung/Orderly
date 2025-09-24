@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
@@ -50,13 +53,16 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const qs = url.search ? url.search : ''
 
   // ✅ 直接讀取環境變數，若缺失則從 NEXT_PUBLIC_API_BASE_URL 推導
-  const deriveBackendFromPublic = (): string | null => {
+  const deriveBackendFromPublic = (reqUrl?: URL): string | null => {
     const pub = process.env.NEXT_PUBLIC_API_BASE_URL
     if (!pub) return null
     try {
       if (pub.startsWith('http')) {
         const u = new URL(pub)
         return `${u.protocol}//${u.host}`
+      }
+      if (pub.startsWith('/') && reqUrl) {
+        return `${reqUrl.protocol}//${reqUrl.host}`
       }
     } catch (_) {}
     return null
@@ -65,7 +71,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const BACKEND_URL =
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
-    deriveBackendFromPublic() ||
+    deriveBackendFromPublic(new URL(req.url)) ||
     'http://localhost:8000'
   
   const nodeEnv = process.env.NODE_ENV || 'development'
