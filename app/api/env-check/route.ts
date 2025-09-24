@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server'
 
-export async function GET() {
+export async function GET(req: Request) {
   // ✅ 完全繞過 Next.js，直接讀取 Node.js 進程環境變數
-  const BACKEND_URL = process.env.ORDERLY_BACKEND_URL || 
-                     process.env.BACKEND_URL || 
-                     'http://localhost:8000'
+  // 同時提供從 NEXT_PUBLIC_API_BASE_URL 推導的最後回退
+  const deriveBackendFromPublic = (): string | null => {
+    const pub = process.env.NEXT_PUBLIC_API_BASE_URL
+    if (!pub) return null
+    try {
+      // 允許形如 https://gateway.run.app/api 或 https://gateway.run.app/api/bff
+      if (pub.startsWith('http')) {
+        const u = new URL(pub)
+        return `${u.protocol}//${u.host}`
+      }
+    } catch (_) {
+      // ignore parse errors
+    }
+    return null
+  }
+
+  const BACKEND_URL =
+    process.env.ORDERLY_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    deriveBackendFromPublic() ||
+    'http://localhost:8000'
   
   const nodeEnv = process.env.NODE_ENV || 'development'
   const environment = nodeEnv === 'staging' ? 'staging' :

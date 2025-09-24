@@ -49,10 +49,24 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   const url = new URL(req.url)
   const qs = url.search ? url.search : ''
 
-  // ✅ 直接讀取環境變數，使用服務發現機制作為回退
-  const BACKEND_URL = process.env.ORDERLY_BACKEND_URL || 
-                     process.env.BACKEND_URL || 
-                     'http://localhost:8000'
+  // ✅ 直接讀取環境變數，若缺失則從 NEXT_PUBLIC_API_BASE_URL 推導
+  const deriveBackendFromPublic = (): string | null => {
+    const pub = process.env.NEXT_PUBLIC_API_BASE_URL
+    if (!pub) return null
+    try {
+      if (pub.startsWith('http')) {
+        const u = new URL(pub)
+        return `${u.protocol}//${u.host}`
+      }
+    } catch (_) {}
+    return null
+  }
+
+  const BACKEND_URL =
+    process.env.ORDERLY_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    deriveBackendFromPublic() ||
+    'http://localhost:8000'
   
   const nodeEnv = process.env.NODE_ENV || 'development'
   const environment = nodeEnv === 'staging' ? 'staging' :

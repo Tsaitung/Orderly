@@ -63,16 +63,9 @@ const nextConfig = {
     ]
   },
 
-  // Environment variables
+  // Environment variables (build-time only for public runtime; prefer server-side process.env at runtime)
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || '/api/bff',
-  },
-  
-  // Runtime configuration - 使用函數延遲評估運行時環境變數
-  publicRuntimeConfig: {
-    // 使用空值，在運行時動態讀取
-    BACKEND_URL: null,
-    NODE_ENV: null,
   },
 
   // Output configuration for standalone builds
