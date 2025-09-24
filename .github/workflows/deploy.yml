@@ -22,6 +22,11 @@ on:
         description: 'Services to deploy (comma-separated, leave empty for all)'
         required: false
         type: string
+      force_backend_redeploy:
+        description: 'Force redeploy backend services (deploy ALL or selected)'
+        required: false
+        default: false
+        type: boolean
       force_frontend_redeploy:
         description: 'Force redeploy frontend even if no code changes'
         required: false
@@ -41,6 +46,7 @@ jobs:
       environment: ${{ steps.env.outputs.environment }}
       deploy: ${{ steps.env.outputs.deploy }}
       force_frontend: ${{ steps.env.outputs.force_frontend }}
+      force_backend: ${{ steps.env.outputs.force_backend }}
     steps:
       - name: Determine deployment environment
         id: env
@@ -49,22 +55,27 @@ jobs:
             echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
             echo "deploy=true" >> $GITHUB_OUTPUT
             echo "force_frontend=${{ github.event.inputs.force_frontend_redeploy }}" >> $GITHUB_OUTPUT
+            echo "force_backend=${{ github.event.inputs.force_backend_redeploy }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "environment=production" >> $GITHUB_OUTPUT
             echo "deploy=true" >> $GITHUB_OUTPUT
             echo "force_frontend=false" >> $GITHUB_OUTPUT
+            echo "force_backend=false" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
             echo "deploy=true" >> $GITHUB_OUTPUT
             echo "force_frontend=false" >> $GITHUB_OUTPUT
+            echo "force_backend=false" >> $GITHUB_OUTPUT
           elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
             echo "environment=staging" >> $GITHUB_OUTPUT
             echo "deploy=true" >> $GITHUB_OUTPUT
             echo "force_frontend=false" >> $GITHUB_OUTPUT
+            echo "force_backend=false" >> $GITHUB_OUTPUT
           else
             echo "environment=none" >> $GITHUB_OUTPUT
             echo "deploy=false" >> $GITHUB_OUTPUT
             echo "force_frontend=false" >> $GITHUB_OUTPUT
+            echo "force_backend=false" >> $GITHUB_OUTPUT
           fi
 
   security-scan:
@@ -99,6 +110,7 @@ jobs:
       has-infrastructure-changes: ${{ steps.changes.outputs.infrastructure }}
       has-frontend-changes: ${{ steps.changes.outputs.frontend }}
       all-services: ${{ steps.changes.outputs.all_services }}
+      requested-services: ${{ steps.changes.outputs.requested_services }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -111,6 +123,28 @@ jobs:
           ALL_SERVICES='["api-gateway-fastapi","user-service-fastapi","order-service-fastapi","product-service-fastapi","acceptance-service-fastapi","notification-service-fastapi","customer-hierarchy-service-fastapi","supplier-service-fastapi"]'
           echo "all_services=$ALL_SERVICES" >> $GITHUB_OUTPUT
           
+          # If manual dispatch with selected services or forced backend, honor it
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.services }}" ]; then
+            IFS=',' read -ra REQ <<< "${{ github.event.inputs.services }}"
+            # Build JSON array from requested services
+            req_json=$(printf '['; first=true; for s in "${REQ[@]}"; do s_trim=$(echo "$s" | xargs); [ -z "$s_trim" ] && continue; $first || printf ','; printf '"%s"' "$s_trim"; first=false; done; printf ']')
+            echo "services=$req_json" >> $GITHUB_OUTPUT
+            echo "requested_services=$req_json" >> $GITHUB_OUTPUT
+            echo "infrastructure=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "📦 Manual requested services: $req_json"
+            exit 0
+          fi
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ needs.determine-environment.outputs.force_backend }}" = "true" ]; then
+            echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+            echo "requested_services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+            echo "infrastructure=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "📦 Forced backend redeploy - deploying ALL services"
+            exit 0
+          fi
+
           # Get changed files (compare with previous commit or main if first push)
           if [ "${{ github.event_name }}" = "push" ] && [ -n "$(git rev-parse --verify HEAD~1 2>/dev/null)" ]; then
             changed_files=$(git diff --name-only HEAD~1 HEAD)
@@ -200,11 +234,11 @@ jobs:
     name: Build and Push Images
     runs-on: ubuntu-latest
     needs: [determine-environment, detect-changes, setup-registry]
-    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.changed-services != '[]'
+    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || github.event.inputs.services != '' || needs.determine-environment.outputs.force_backend == 'true')
     
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.changed-services) }}
+        service: ${{ fromJson(needs.detect-changes.outputs.requested-services != '' && needs.detect-changes.outputs.requested-services || needs.detect-changes.outputs.changed-services) }}
       fail-fast: false
       max-parallel: 8  # Increased from 3 to 8 for faster parallel builds
 
@@ -329,7 +363,7 @@ jobs:
     name: Deploy Services
     runs-on: ubuntu-latest
     needs: [determine-environment, detect-changes, deploy-infrastructure]
-    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.changed-services != '[]'
+    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || github.event.inputs.services != '' || needs.determine-environment.outputs.force_backend == 'true')
     environment: ${{ needs.determine-environment.outputs.environment }}
     
     strategy:
@@ -464,13 +498,35 @@ jobs:
             fi
           done
           
-          # Update API Gateway with service URLs
+          # Map Cloud Run service URLs to API Gateway expected env var names
+          # FastAPI Gateway expects: USER_SERVICE_URL, ORDER_SERVICE_URL, PRODUCT_SERVICE_URL,
+          # ACCEPTANCE_SERVICE_URL (note: must include '/acceptance' suffix), NOTIFICATION_SERVICE_URL,
+          # CUSTOMER_HIERARCHY_SERVICE_URL, SUPPLIER_SERVICE_URL
           env_vars="NODE_ENV=$ENVIRONMENT"
-          for service in "${!service_urls[@]}"; do
-            env_name=$(echo "$service" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-            env_vars="${env_vars},${env_name}_URL=${service_urls[$service]}"
-          done
-          
+          if [ -n "${service_urls[user-service-fastapi]}" ]; then
+            env_vars+="\,USER_SERVICE_URL=${service_urls[user-service-fastapi]}"
+          fi
+          if [ -n "${service_urls[order-service-fastapi]}" ]; then
+            env_vars+="\,ORDER_SERVICE_URL=${service_urls[order-service-fastapi]}"
+          fi
+          if [ -n "${service_urls[product-service-fastapi]}" ]; then
+            env_vars+="\,PRODUCT_SERVICE_URL=${service_urls[product-service-fastapi]}"
+          fi
+          if [ -n "${service_urls[acceptance-service-fastapi]}" ]; then
+            # acceptance service routes are under '/acceptance' on the service
+            env_vars+="\,ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service-fastapi]}/acceptance"
+          fi
+          if [ -n "${service_urls[notification-service-fastapi]}" ]; then
+            env_vars+="\,NOTIFICATION_SERVICE_URL=${service_urls[notification-service-fastapi]}"
+          fi
+          if [ -n "${service_urls[customer-hierarchy-service-fastapi]}" ]; then
+            env_vars+="\,CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service-fastapi]}"
+          fi
+          if [ -n "${service_urls[supplier-service-fastapi]}" ]; then
+            env_vars+="\,SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
+          fi
+
+          echo "Applying env vars to API Gateway: $env_vars"
           gcloud run services update "orderly-api-gateway-fastapi-$ENVIRONMENT" \
             --region="$GOOGLE_CLOUD_REGION" \
             --set-env-vars="$env_vars" \
@@ -480,7 +536,7 @@ jobs:
     name: Deploy Frontend
     runs-on: ubuntu-latest
     needs: [determine-environment, detect-changes, deploy-infrastructure]
-    if: needs.determine-environment.outputs.deploy == 'true' && needs.detect-changes.outputs.has-frontend-changes == 'true'
+    if: needs.determine-environment.outputs.deploy == 'true' && (needs.detect-changes.outputs.has-frontend-changes == 'true' || needs.determine-environment.outputs.force_frontend == 'true')
     steps:
       - uses: actions/checkout@v4
       
@@ -546,10 +602,47 @@ jobs:
           
           echo "✅ Frontend deployed successfully with backend URL: $BACKEND_URL"
 
+  update-frontend-env:
+    name: Update Frontend Env Vars
+    runs-on: ubuntu-latest
+    needs: [determine-environment, configure-routing]
+    if: needs.determine-environment.outputs.deploy == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Update frontend environment variables on Cloud Run
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+        run: |
+          echo "🔧 Updating frontend env vars for $ENVIRONMENT"
+          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" \
+            --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+            --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          if [ -z "$BACKEND_URL" ]; then
+            echo "⚠️ API Gateway not found, using placeholder URL"
+            BACKEND_URL="https://orderly-api-gateway-fastapi-$ENVIRONMENT-placeholder.run.app"
+          fi
+          echo "📡 Backend URL for frontend: $BACKEND_URL"
+          gcloud run services update "orderly-frontend-$ENVIRONMENT" \
+            --region="$GOOGLE_CLOUD_REGION" \
+            --set-env-vars="NODE_ENV=$ENVIRONMENT,ORDERLY_BACKEND_URL=$BACKEND_URL,BACKEND_URL=$BACKEND_URL,NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api" \
+            --project="$GOOGLE_CLOUD_PROJECT"
+          echo "✅ Frontend env vars updated"
+
   health-check:
     name: Health Check
     runs-on: ubuntu-latest
-    needs: [determine-environment, configure-routing, deploy-frontend]
+    needs: [determine-environment, configure-routing, deploy-frontend, update-frontend-env]
     if: always() && needs.determine-environment.outputs.deploy == 'true'
     steps:
       - name: Wait for services to be ready
