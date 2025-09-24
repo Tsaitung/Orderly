@@ -207,7 +207,11 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
     if key == "v2":
         base = SERVICE_URLS["customer_hierarchy_v2"]
         remainder = "/" + "/".join(segments[2:]) if len(segments) > 2 else "/"
-        final_url = base + "/api/v2" + remainder
+        # Be defensive: if base already contains '/api/v2', don't append again
+        if base.rstrip("/").endswith("/api/v2"):
+            final_url = base.rstrip("/") + remainder
+        else:
+            final_url = base.rstrip("/") + "/api/v2" + remainder
         return {"service": "customer_hierarchy_v2", "url": final_url}
 
     mapping = {

@@ -310,7 +310,10 @@ configure_service_mesh() {
         env_vars+=",ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service]}"
         env_vars+=",BILLING_SERVICE_URL=${service_urls[billing-service]}"
         env_vars+=",NOTIFICATION_SERVICE_URL=${service_urls[notification-service]}"
-        env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service]}/api/v2"
+        # IMPORTANT: Do NOT append path segments here.
+        # The API Gateway will append '/api/v2' for Customer Hierarchy routes.
+        # Use the pure service base URL only, otherwise requests become '/api/v2/api/v2/*'.
+        env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service]}"
         
         gcloud run services update "orderly-api-gateway" \
             --region="$REGION" \

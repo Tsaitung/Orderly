@@ -70,7 +70,7 @@ export class ProductService {
    * 獲取產品統計資訊
    */
   static async getProductStats(supplierId?: string): Promise<ProductStats> {
-    const url = new URL(`${this.baseUrl}/products/products/stats`)
+    const url = new URL(`${this.baseUrl}/products/stats`)
     if (supplierId) {
       url.searchParams.append('supplierId', supplierId)
     }
@@ -99,7 +99,7 @@ export class ProductService {
    * 搜尋產品
    */
   static async searchProducts(params: ProductSearchParams = {}): Promise<ProductSearchResponse> {
-    const url = new URL(`${this.baseUrl}/products/products`)
+    const url = new URL(`${this.baseUrl}/products`)
 
     // 添加查詢參數
     Object.entries(params).forEach(([key, value]) => {
@@ -132,7 +132,7 @@ export class ProductService {
    * 獲取產品詳情
    */
   static async getProductById(productId: string): Promise<Product> {
-    const response = await fetch(`${this.baseUrl}/products/products/${productId}`, {
+    const response = await fetch(`${this.baseUrl}/products/${productId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

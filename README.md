@@ -233,6 +233,15 @@ terraform apply
   - 額外設 `NEXT_PUBLIC_API_BASE_URL=<BACKEND_URL>/api` 便於診斷與瀏覽器端使用
 - 本地開發（.env.local）: 參考 `.env.example` 已示範三者設定與說明
 
+注意：服務 URL 形狀（非常重要）
+
+- PRODUCT_SERVICE_URL: 應為服務根網址（例如 `https://product-service-xxxxx.run.app`）。Gateway 會保留完整路徑 `/api/products/*`。
+- SUPPLIER_SERVICE_URL: 服務根網址（例如 `https://supplier-service-xxxxx.run.app`）。Gateway 會轉發 `/api/suppliers/*`。
+- CUSTOMER_HIERARCHY_SERVICE_URL: 服務根網址，請勿附加 `/api/v2`（例如 `https://customer-hierarchy-xxxxx.run.app`）。Gateway 會自動附加 `/api/v2` 後再轉發，如 `/api/v2/hierarchy/tree`。
+- ACCEPTANCE_SERVICE_URL: 此服務在自身以 `/acceptance` 為根；預設值已包含此路徑（例如 `http://localhost:3004/acceptance`）。在 Cloud Run 也可保持帶路徑的服務 URL。
+
+若錯誤地在 `CUSTOMER_HIERARCHY_SERVICE_URL` 加上 `/api/v2`，Gateway 將組合為 `/api/v2/api/v2/*`，導致 404/503。
+
 範例：以 gcloud 部署前端（以 CI 同步用法為準）
 
 ```bash
@@ -246,6 +255,15 @@ gcloud run deploy orderly-frontend-staging \
   --set-env-vars="NODE_ENV=staging,ORDERLY_BACKEND_URL=$BACKEND_URL,BACKEND_URL=$BACKEND_URL,NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api" \
   --memory=1Gi --cpu=1 --min-instances=0 --max-instances=10 --concurrency=100 --port=8080
 ```
+
+診斷建議（發生 500/503 時）
+
+- 前端：開啟 `https://<frontend>/api/env-check` 確認 `computed_config.backendUrl` 與公開變數設定。
+- Gateway：開啟 `https://<gateway>/service-map` 檢查所有下游服務 URL 是否正確（特別是 `CUSTOMER_HIERARCHY_SERVICE_URL` 不應包含 `/api/v2`）。
+- 錯誤對應：
+  - `HTTP 503: {"error":"products service unavailable", "correlationId":...}` 多為 Gateway 無法連至 Product 服務（URL 錯誤、服務未部署、網路/IAM 設定）。
+  - `GET /api/bff/v2/hierarchy/tree 503` 常見為 Hierarchy 服務 URL 附加了 `/api/v2` 導致路徑重複。
+  - `GET /api/bff/suppliers ... 500` 多半為供應商服務自身拋錯（請用 `X-Correlation-ID` 於 Cloud Run 日誌追蹤）。
 
 驗證部署結果
 

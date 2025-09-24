@@ -339,7 +339,7 @@ export class SKUService {
     productId: string,
     skus: CreateSKUData[]
   ): Promise<SKUSearchResult[]> {
-    const url = `${this.baseUrl}/products/products/${productId}/skus/batch`
+    const url = `${this.baseUrl}/products/${productId}/skus/batch`
 
     const result = await this.request<SKUSearchResult[]>(url, {
       method: 'POST',
