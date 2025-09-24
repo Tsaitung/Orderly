@@ -19,8 +19,19 @@ def create_db_engines(database_url: str, debug: bool = False) -> Tuple:
     Returns a tuple:
       (async_engine, sync_engine, AsyncSessionLocal, SessionLocal)
     """
-    async_engine = create_async_engine(database_url, echo=debug)
-    sync_engine = create_engine(database_url.replace("+asyncpg", ""), echo=debug)
+    # Enable connection liveness checks and recycling to avoid stale or refused connections
+    async_engine = create_async_engine(
+        database_url,
+        echo=debug,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
+    sync_engine = create_engine(
+        database_url.replace("+asyncpg", ""),
+        echo=debug,
+        pool_pre_ping=True,
+        pool_recycle=300,
+    )
 
     AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
@@ -42,4 +53,3 @@ def get_async_session_dependency(AsyncSessionLocal: async_sessionmaker[AsyncSess
                 await session.close()
 
     return _get_async_session
-
