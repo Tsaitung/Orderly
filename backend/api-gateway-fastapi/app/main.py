@@ -2,6 +2,7 @@
 FastAPI API Gateway
 - Provides health/metrics endpoints
 - Proxies /api/... to internal services via httpx
+- Updated: 2025-09-24 for v2 deployment trigger
 """
 
 import os
