@@ -512,16 +512,16 @@ jobs:
           # Verify image exists before deploying (avoid race between push and deploy)
           IMAGE_URI="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG"
           echo "🔎 Verifying image exists: $IMAGE_URI"
-          for i in {1..12}; do
-            if gcloud artifacts docker images describe "$IMAGE_URI" --location="$GOOGLE_CLOUD_REGION" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
+          for i in {1..24}; do
+            if gcloud artifacts docker images describe "$IMAGE_URI" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
               echo "✅ Image found in Artifact Registry"
               break
             fi
-            echo "⏳ Image not found yet, waiting... ($i/12)"
+            echo "⏳ Image not found yet, waiting... ($i/24)"
             sleep 5
           done
           # Final verification
-          gcloud artifacts docker images describe "$IMAGE_URI" --location="$GOOGLE_CLOUD_REGION" --project="$GOOGLE_CLOUD_PROJECT"
+          gcloud artifacts docker images describe "$IMAGE_URI" --project="$GOOGLE_CLOUD_PROJECT"
 
           # Validate service name
           case "${{ matrix.service }}" in
