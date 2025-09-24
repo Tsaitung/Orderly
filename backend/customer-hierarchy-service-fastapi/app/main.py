@@ -193,6 +193,32 @@ async def db_health_probe() -> Dict[str, Any]:
     raise HTTPException(status_code=503, detail="Database unhealthy")
 
 
+@app.get("/db/info", tags=["Health"])
+async def db_info() -> Dict[str, Any]:
+    """Return masked DB URL and ping time."""
+    try:
+        db_url = settings.database_url_async
+        masked = db_url
+        if "://" in db_url and "@" in db_url:
+            scheme, rest = db_url.split("://", 1)
+            creds, hostpart = rest.split("@", 1)
+            if ":" in creds:
+                user, _ = creds.split(":", 1)
+                creds_masked = f"{user}:***"
+            else:
+                creds_masked = creds
+            masked = f"{scheme}://{creds_masked}@{hostpart}"
+        import time
+        start = time.time()
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        dur = (time.time() - start) * 1000
+        return {"url_masked": masked, "ping_ms": dur}
+    except Exception as e:
+        logger.error("db.info.failed", error=str(e))
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 # Metrics endpoint for Prometheus
 @app.get("/metrics", tags=["Monitoring"])
 async def get_metrics():

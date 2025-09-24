@@ -18,6 +18,10 @@ on:
         options:
           - staging
           - production
+      db_instance_name:
+        description: 'Cloud SQL instance name (override, e.g., orderly-db-v2)'
+        required: false
+        type: string
       services:
         description: 'Services to deploy (comma-separated, leave empty for all)'
         required: false
@@ -27,12 +31,31 @@ on:
         required: false
         default: false
         type: boolean
+      service_suffix:
+        description: 'Optional service name suffix (e.g., -staging-v2)'
+        required: false
+        type: string
+      use_v2_backends:
+        description: 'Set USE_V2_BACKENDS=true on API Gateway'
+        required: false
+        default: false
+        type: boolean
+      use_service_accounts:
+        description: 'Deploy each service with its own service account'
+        required: false
+        default: false
+        type: boolean
       ref_name:
         description: 'Git ref/branch to deploy from (e.g., staging, develop, main)'
         required: false
         type: string
       force_frontend_redeploy:
         description: 'Force redeploy frontend even if no code changes'
+        required: false
+        default: false
+        type: boolean
+      enable_smoke_correlation:
+        description: 'Capture X-Correlation-ID for smoke endpoints in summary'
         required: false
         default: false
         type: boolean
@@ -53,6 +76,10 @@ jobs:
       force_backend: ${{ steps.env.outputs.force_backend }}
       ref_name: ${{ steps.env.outputs.ref_name }}
       context_ok: ${{ steps.env.outputs.context_ok }}
+      db_instance_name: ${{ steps.db.outputs.db_instance_name }}
+      service_suffix: ${{ steps.flags.outputs.service_suffix }}
+      use_v2_backends: ${{ steps.flags.outputs.use_v2_backends }}
+      use_service_accounts: ${{ steps.flags.outputs.use_service_accounts }}
     steps:
       - name: Determine deployment environment
         id: env
@@ -109,6 +136,36 @@ jobs:
         run: |
           echo "Using environment: ${{ steps.env.outputs.environment }}"
           echo "Using ref: ${{ steps.env.outputs.ref_name }} (sha: $GITHUB_SHA)"
+
+      - name: Resolve workflow flags
+        id: flags
+        run: |
+          SUFFIX=""
+          USE_V2=false
+          USE_SA=false
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SUFFIX="${{ github.event.inputs.service_suffix }}"
+            [ "${{ github.event.inputs.use_v2_backends }}" = "true" ] && USE_V2=true
+            [ "${{ github.event.inputs.use_service_accounts }}" = "true" ] && USE_SA=true
+          fi
+          echo "service_suffix=$SUFFIX" >> $GITHUB_OUTPUT
+          echo "use_v2_backends=$USE_V2" >> $GITHUB_OUTPUT
+          echo "use_service_accounts=$USE_SA" >> $GITHUB_OUTPUT
+
+      - name: Resolve DB instance name
+        id: db
+        run: |
+          # Priority 1: manual override via workflow_dispatch input
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.db_instance_name }}" ]; then
+            echo "db_instance_name=${{ github.event.inputs.db_instance_name }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          # Priority 2: environment-based default (staging -> orderly-db-v2, production -> orderly-db)
+          if [ "${{ steps.env.outputs.environment }}" = "staging" ]; then
+            echo "db_instance_name=orderly-db-v2" >> $GITHUB_OUTPUT
+          else
+            echo "db_instance_name=orderly-db" >> $GITHUB_OUTPUT
+          fi
 
   security-scan:
     name: Security Scan
@@ -388,6 +445,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          DB_INSTANCE_NAME: ${{ needs.determine-environment.outputs.db_instance_name }}
         run: |
           chmod +x scripts/deploy-cloud-run.sh
           scripts/deploy-cloud-run.sh infra
@@ -447,6 +505,9 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          DB_INSTANCE_NAME: ${{ needs.determine-environment.outputs.db_instance_name }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
+          USE_SERVICE_ACCOUNTS: ${{ needs.determine-environment.outputs.use_service_accounts }}
         run: |
           # Verify image exists before deploying (avoid race between push and deploy)
           IMAGE_URI="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG"
@@ -471,7 +532,7 @@ jobs:
           esac
           
           # Get database connection name
-          DB_CONNECTION_NAME=$(gcloud sql instances describe orderly-db \
+          DB_CONNECTION_NAME=$(gcloud sql instances describe "$DB_INSTANCE_NAME" \
             --format="value(connectionName)" --project="$GOOGLE_CLOUD_PROJECT")
           
           # Get Redis IP
@@ -502,7 +563,21 @@ jobs:
           fi
           
           # Deploy to Cloud Run
-          gcloud run deploy "orderly-${{ matrix.service }}-$ENVIRONMENT" \
+          SERVICE_NAME="orderly-${{ matrix.service }}-$ENVIRONMENT${SERVICE_SUFFIX}"
+
+          # Optional per-service Service Account
+          SA_FLAG=""
+          if [ "$USE_SERVICE_ACCOUNTS" = "true" ]; then
+            SA_EMAIL="orderly-${{ matrix.service }}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
+            if gcloud iam service-accounts describe "$SA_EMAIL" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
+              SA_FLAG="--service-account=$SA_EMAIL"
+              echo "🔐 Using service account: $SA_EMAIL"
+            else
+              echo "⚠️ Service account not found: $SA_EMAIL (skip)"
+            fi
+          fi
+
+          gcloud run deploy "$SERVICE_NAME" \
             --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG" \
             --platform=managed \
             --region="$GOOGLE_CLOUD_REGION" \
@@ -520,11 +595,12 @@ jobs:
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
             --add-cloudsql-instances="$DB_CONNECTION_NAME" \
+            $SA_FLAG \
             --project="$GOOGLE_CLOUD_PROJECT" \
             --labels="environment=$ENVIRONMENT,service=${{ matrix.service }},version=$IMAGE_TAG,git_ref=${{ needs.determine-environment.outputs.ref_name }},git_sha=$GITHUB_SHA"
 
           # Wait for the service /health to become available (max ~90s)
-          SVC_URL=$(gcloud run services describe "orderly-${{ matrix.service }}-$ENVIRONMENT" \
+          SVC_URL=$(gcloud run services describe "$SERVICE_NAME" \
             --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
             --project="$GOOGLE_CLOUD_PROJECT")
           echo "⏳ Waiting for service ${{ matrix.service }} to be healthy at $SVC_URL/health"
@@ -556,11 +632,13 @@ jobs:
       - name: Configure API Gateway routing
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
+          USE_V2_BACKENDS: ${{ needs.determine-environment.outputs.use_v2_backends }}
         run: |
           # Get all service URLs
           declare -A service_urls
           for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT${SERVICE_SUFFIX}" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
             if [ -n "$url" ]; then
@@ -572,7 +650,7 @@ jobs:
           # FastAPI Gateway expects: USER_SERVICE_URL, ORDER_SERVICE_URL, PRODUCT_SERVICE_URL,
           # ACCEPTANCE_SERVICE_URL (note: must include '/acceptance' suffix), NOTIFICATION_SERVICE_URL,
           # CUSTOMER_HIERARCHY_SERVICE_URL, SUPPLIER_SERVICE_URL
-          env_vars="NODE_ENV=$ENVIRONMENT"
+          env_vars="NODE_ENV=$ENVIRONMENT,USE_V2_BACKENDS=$USE_V2_BACKENDS"
           if [ -n "${service_urls[user-service-fastapi]}" ]; then
             env_vars+="\,USER_SERVICE_URL=${service_urls[user-service-fastapi]}"
           fi
@@ -596,8 +674,8 @@ jobs:
             env_vars+="\,SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
           fi
 
-          echo "Applying env vars to API Gateway: $env_vars"
-          gcloud run services update "orderly-api-gateway-fastapi-$ENVIRONMENT" \
+          echo "Applying env vars to API Gateway: $env_vars (suffix='${SERVICE_SUFFIX}')"
+          gcloud run services update "orderly-api-gateway-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
             --region="$GOOGLE_CLOUD_REGION" \
             --set-env-vars="$env_vars" \
             --labels="environment=$ENVIRONMENT,git_ref=${{ needs.determine-environment.outputs.ref_name }},git_sha=$GITHUB_SHA" \
@@ -632,11 +710,12 @@ jobs:
           REGISTRY: ${{ env.REGISTRY }}
           GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
           GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
         run: |
           echo "🚀 Building and deploying frontend for $ENVIRONMENT"
           
           # Get API Gateway URL for frontend configuration
-          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" \
+          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
             --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
             --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           
@@ -657,7 +736,7 @@ jobs:
             .
           
           # Deploy to Cloud Run with backend URL as runtime variable
-          gcloud run deploy "orderly-frontend-$ENVIRONMENT" \
+          gcloud run deploy "orderly-frontend-$ENVIRONMENT${SERVICE_SUFFIX}" \
             --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
             --region="$GOOGLE_CLOUD_REGION" \
             --platform=managed \
@@ -695,9 +774,10 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
           GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
         run: |
           echo "🔧 Updating frontend env vars for $ENVIRONMENT"
-          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" \
+          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
             --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
             --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           if [ -z "$BACKEND_URL" ]; then
@@ -705,7 +785,7 @@ jobs:
             BACKEND_URL="https://orderly-api-gateway-fastapi-$ENVIRONMENT-placeholder.run.app"
           fi
           echo "📡 Backend URL for frontend: $BACKEND_URL"
-          gcloud run services update "orderly-frontend-$ENVIRONMENT" \
+          gcloud run services update "orderly-frontend-$ENVIRONMENT${SERVICE_SUFFIX}" \
             --region="$GOOGLE_CLOUD_REGION" \
             --set-env-vars="NODE_ENV=$ENVIRONMENT,ORDERLY_BACKEND_URL=$BACKEND_URL,BACKEND_URL=$BACKEND_URL,NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api" \
             --labels="environment=$ENVIRONMENT,git_ref=${{ needs.determine-environment.outputs.ref_name }},git_sha=$GITHUB_SHA" \
@@ -732,11 +812,12 @@ jobs:
       - name: Perform health checks
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
         run: |
           # Health check all deployed services
           failed_services=()
           for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT${SERVICE_SUFFIX}" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
             
@@ -756,12 +837,39 @@ jobs:
           # Gateway smoke checks (non-auth endpoints)
           gw=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           if [ -n "$gw" ]; then
+            ENABLE_CID=false
+            if [ "$ENVIRONMENT" = "staging" ]; then ENABLE_CID=true; fi
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.enable_smoke_correlation }}" = "true" ]; then ENABLE_CID=true; fi
+
             echo "Gateway smoke: categories"
-            curl -sf "$gw/api/products/categories?includeProducts=false" --max-time 30 > /dev/null || failed_services+=("gateway-categories")
+            resp=$(curl -sS -i -m 30 "$gw/api/products/categories?includeProducts=false" || true)
+            code=$(echo "$resp" | sed -n '1p' | awk '{print $2}')
+            cid=$(echo "$resp" | sed -n 's/^x-correlation-id:[[:space:]]*\(.*\)$/\1/ip')
+            if [ "$ENABLE_CID" = true ]; then
+              echo "### Smoke: categories ($code)" >> $GITHUB_STEP_SUMMARY
+              echo "X-Correlation-ID: ${cid:-N/A}" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ -z "$code" ] || [ "$code" -ge 400 ]; then failed_services+=("gateway-categories"); fi
+
             echo "Gateway smoke: skus"
-            curl -sf "$gw/api/products/skus/search?page_size=1" --max-time 30 > /dev/null || failed_services+=("gateway-skus")
+            resp=$(curl -sS -i -m 30 "$gw/api/products/skus/search?page_size=1" || true)
+            code=$(echo "$resp" | sed -n '1p' | awk '{print $2}')
+            cid=$(echo "$resp" | sed -n 's/^x-correlation-id:[[:space:]]*\(.*\)$/\1/ip')
+            if [ "$ENABLE_CID" = true ]; then
+              echo "### Smoke: skus ($code)" >> $GITHUB_STEP_SUMMARY
+              echo "X-Correlation-ID: ${cid:-N/A}" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ -z "$code" ] || [ "$code" -ge 400 ]; then failed_services+=("gateway-skus"); fi
+
             echo "Gateway smoke: hierarchy"
-            curl -sf "$gw/api/v2/hierarchy/tree" --max-time 30 > /dev/null || failed_services+=("gateway-hierarchy")
+            resp=$(curl -sS -i -m 30 "$gw/api/v2/hierarchy/tree" || true)
+            code=$(echo "$resp" | sed -n '1p' | awk '{print $2}')
+            cid=$(echo "$resp" | sed -n 's/^x-correlation-id:[[:space:]]*\(.*\)$/\1/ip')
+            if [ "$ENABLE_CID" = true ]; then
+              echo "### Smoke: hierarchy ($code)" >> $GITHUB_STEP_SUMMARY
+              echo "X-Correlation-ID: ${cid:-N/A}" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ -z "$code" ] || [ "$code" -ge 400 ]; then failed_services+=("gateway-hierarchy"); fi
           fi
 
           # Service DB health (if endpoint exists)
@@ -797,6 +905,23 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       
+      - name: DB diagnostics (Cloud SQL + /db/health)
+        env:
+          PROJECT_ID: ${{ env.GOOGLE_CLOUD_PROJECT }}
+          REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+          ENV: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          bash scripts/db/diag.sh | tee diag.out
+          echo "### DB Diagnostics ($ENV)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          sed 's/^/    /' diag.out >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          # Fail the job if diagnostics found issues
+          if grep -Ei '(unreachable|/db/health:\s+http (4|5)[0-9]{2}|POSTGRES_PASSWORD: \(not bound via secret\)|CloudSQL:\s*$|CloudSQL:\s*\(none\))' diag.out; then
+            echo "❌ DB diagnostics found issues" >&2
+            exit 1
+          fi
+
       - name: Create deployment summary
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}

@@ -20,6 +20,7 @@ from jose import jwt, JWTError
 
 APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 ENVIRONMENT = os.getenv("NODE_ENV", os.getenv("ENVIRONMENT", "development"))
+USE_V2_BACKENDS = os.getenv("USE_V2_BACKENDS", "false").lower() == "true"
 
 # Service targets (default to docker-compose names/ports)
 SERVICE_URLS = {
@@ -178,10 +179,26 @@ async def ready(request: Request):
         if info.get("status") != "healthy":
             overall_healthy = False
     
+    # Summaries
+    unhealthy = [name for name, info in service_status.items() if not (name == "hierarchy-service-fallback" and hierarchy_ok) and info.get("status") != "healthy"]
+    errors = {name: info.get("error") for name, info in service_status.items() if info.get("status") != "healthy" and info.get("error")}
+
     return {
         **base_health,
         "status": "ready" if overall_healthy else "degraded",
-        "services": service_status
+        "use_v2_backends": USE_V2_BACKENDS,
+        "configured_urls": {
+            "user": SERVICE_URLS["users"],
+            "order": SERVICE_URLS["orders"],
+            "product": SERVICE_URLS["products"],
+            "acceptance": SERVICE_URLS["acceptance"],
+            "notification": SERVICE_URLS["notifications"],
+            "customer_hierarchy_v2": SERVICE_URLS["customer_hierarchy_v2"],
+            "supplier": SERVICE_URLS["suppliers"],
+        },
+        "services": service_status,
+        "unhealthy": unhealthy,
+        "errors": errors,
     }
 
 
