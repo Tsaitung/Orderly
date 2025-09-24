@@ -8,6 +8,7 @@ import os
 import time
 import uuid
 import logging
+from datetime import datetime
 from typing import Optional, Dict, Any
 
 from fastapi import FastAPI, Request, Response, HTTPException
@@ -155,6 +156,26 @@ async def ready(request: Request):
         **base_health,
         "status": "ready" if overall_healthy else "degraded",
         "services": service_status
+    }
+
+
+@app.get("/service-map")
+async def get_service_map():
+    """診斷端點：返回當前Gateway配置的所有服務URL映射"""
+    return {
+        "environment": ENVIRONMENT,
+        "service_urls": {
+            "user_service": os.getenv("USER_SERVICE_URL", "NOT_CONFIGURED"),
+            "order_service": os.getenv("ORDER_SERVICE_URL", "NOT_CONFIGURED"),
+            "product_service": os.getenv("PRODUCT_SERVICE_URL", "NOT_CONFIGURED"),
+            "acceptance_service": os.getenv("ACCEPTANCE_SERVICE_URL", "NOT_CONFIGURED"),
+            "notification_service": os.getenv("NOTIFICATION_SERVICE_URL", "NOT_CONFIGURED"),
+            "customer_hierarchy_service": os.getenv("CUSTOMER_HIERARCHY_SERVICE_URL", "NOT_CONFIGURED"),
+            "supplier_service": os.getenv("SUPPLIER_SERVICE_URL", "NOT_CONFIGURED"),
+        },
+        "internal_service_map": SERVICE_URLS,
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": APP_VERSION
     }
 
 
