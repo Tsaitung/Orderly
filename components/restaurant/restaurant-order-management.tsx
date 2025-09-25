@@ -250,7 +250,7 @@ export default function RestaurantOrderManagement() {
   const { announcePolite, announceSuccess } = useScreenReaderAnnouncer()
 
   const filteredOrders = React.useMemo(() => {
-    let filtered = orders.filter(order => {
+    const filtered = orders.filter(order => {
       const matchesSearch =
         searchTerm === '' ||
         order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

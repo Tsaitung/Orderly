@@ -75,13 +75,13 @@ function useAsyncState<T>(
     } finally {
       setLoading(false)
     }
-  }, dependencies)
+  }, [asyncFunction])
 
   useEffect(() => {
     if (immediate) {
       execute()
     }
-  }, [execute, immediate])
+  }, [dependencies, execute, immediate])
 
   const mutate = useCallback((newData: T | null) => {
     setData(newData)
@@ -223,26 +223,40 @@ export function useSupplierDashboard(organizationId?: string) {
     !!organizationId
   )
 
+  const {
+    refetch: refetchDashboard,
+    data: dashboardData,
+    loading: dashboardLoading,
+    error: dashboardError,
+  } = dashboard
+
+  const {
+    refetch: refetchMetrics,
+    data: metricsData,
+    loading: metricsLoading,
+    error: metricsError,
+  } = metrics
+
   // Auto-refresh functionality
   useEffect(() => {
     if (!autoRefresh || !organizationId) return
 
     const interval = setInterval(() => {
-      metrics.refetch()
+      refetchMetrics()
     }, refreshInterval)
 
     return () => clearInterval(interval)
-  }, [autoRefresh, refreshInterval, organizationId, metrics.refetch])
+  }, [autoRefresh, organizationId, refetchMetrics, refreshInterval])
 
   const refreshMetrics = useCallback(async () => {
-    await Promise.all([dashboard.refetch(), metrics.refetch()])
-  }, [dashboard.refetch, metrics.refetch])
+    await Promise.all([refetchDashboard(), refetchMetrics()])
+  }, [refetchDashboard, refetchMetrics])
 
   return {
-    dashboard: dashboard.data,
-    metrics: metrics.data,
-    loading: dashboard.loading || metrics.loading,
-    error: dashboard.error || metrics.error,
+    dashboard: dashboardData,
+    metrics: metricsData,
+    loading: dashboardLoading || metricsLoading,
+    error: dashboardError || metricsError,
     refreshMetrics,
     autoRefresh,
     setAutoRefresh,
@@ -807,7 +821,7 @@ export function useFileUpload() {
 
       return upload.mutate({ file, type })
     },
-    [upload.mutate]
+    [upload]
   )
 
   return {
@@ -834,6 +848,14 @@ export function useSupplierData(organizationId?: string) {
   const products = useSupplierProducts(organizationId)
   const finance = useSupplierFinance(organizationId)
 
+  const { refetch: refetchProfile } = profile
+  const { refreshMetrics } = dashboard
+  const { refetch: refetchCustomers } = customers
+  const { refetch: refetchOnboarding } = onboarding
+  const { refetch: refetchOrders } = orders
+  const { refetch: refetchProducts } = products
+  const { refetch: refetchFinance } = finance
+
   const isLoading =
     profile.loading ||
     dashboard.loading ||
@@ -854,22 +876,22 @@ export function useSupplierData(organizationId?: string) {
 
   const refetchAll = useCallback(async () => {
     await Promise.all([
-      profile.refetch(),
-      dashboard.refreshMetrics(),
-      customers.refetch(),
-      onboarding.refetch(),
-      orders.refetch(),
-      products.refetch(),
-      finance.refetch(),
+      refetchProfile(),
+      refreshMetrics(),
+      refetchCustomers(),
+      refetchOnboarding(),
+      refetchOrders(),
+      refetchProducts(),
+      refetchFinance(),
     ])
   }, [
-    profile.refetch,
-    dashboard.refreshMetrics,
-    customers.refetch,
-    onboarding.refetch,
-    orders.refetch,
-    products.refetch,
-    finance.refetch,
+    refetchProfile,
+    refreshMetrics,
+    refetchCustomers,
+    refetchOnboarding,
+    refetchOrders,
+    refetchProducts,
+    refetchFinance,
   ])
 
   return {

@@ -89,11 +89,7 @@ export function PermissionMatrix() {
   const [changes, setChanges] = React.useState<MatrixChange[]>([])
   const [saving, setSaving] = React.useState(false)
 
-  React.useEffect(() => {
-    loadMatrixData()
-  }, [])
-
-  const loadMatrixData = async () => {
+  const loadMatrixData = React.useCallback(async () => {
     try {
       setLoading(true)
       // 模擬 API 調用
@@ -442,7 +438,11 @@ export function PermissionMatrix() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  React.useEffect(() => {
+    loadMatrixData()
+  }, [loadMatrixData])
 
   const getCategoryName = (category: string): string => {
     const names = {

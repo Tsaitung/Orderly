@@ -69,6 +69,20 @@ export function useCustomerHierarchy(
   const { autoLoad = true, includeInactive = false } = options
   const { state, actions } = useCustomerHierarchyContext()
 
+  const {
+    loadTree,
+    selectNode,
+    toggleNode,
+    expandNode,
+    collapseNode,
+    search,
+    clearSearch,
+    setViewMode,
+    setShowFilters,
+    resetState,
+    clearError: clearContextError,
+  } = actions
+
   // Stable reference to track if we've already loaded
   const hasLoadedRef = useRef(false)
 
@@ -79,9 +93,9 @@ export function useCustomerHierarchy(
   useEffect(() => {
     if (autoLoad && !hasLoadedRef.current && !state.loading.tree && state.tree.length === 0) {
       hasLoadedRef.current = true
-      actions.loadTree()
+      loadTree()
     }
-  }, [autoLoad, actions.loadTree, state.loading.tree])
+  }, [autoLoad, loadTree, state.loading.tree, state.tree.length])
 
   // ============================================================================
   // Computed values (memoized for performance)
@@ -136,9 +150,9 @@ export function useCustomerHierarchy(
   )
 
   const clearError = useCallback(() => {
-    actions.clearError('tree')
-    actions.clearError('search')
-  }, [actions])
+    clearContextError('tree')
+    clearContextError('search')
+  }, [clearContextError])
 
   // ============================================================================
   // Return interface - all stable references
@@ -169,16 +183,16 @@ export function useCustomerHierarchy(
     totalNodes,
 
     // Actions (from context, already stable)
-    loadTree: actions.loadTree,
-    selectNode: actions.selectNode,
-    toggleNode: actions.toggleNode,
-    expandNode: actions.expandNode,
-    collapseNode: actions.collapseNode,
-    search: actions.search,
-    clearSearch: actions.clearSearch,
-    setViewMode: actions.setViewMode,
-    setShowFilters: actions.setShowFilters,
-    resetState: actions.resetState,
+    loadTree,
+    selectNode,
+    toggleNode,
+    expandNode,
+    collapseNode,
+    search,
+    clearSearch,
+    setViewMode,
+    setShowFilters,
+    resetState,
 
     // Utilities (stable with useCallback)
     findNode,

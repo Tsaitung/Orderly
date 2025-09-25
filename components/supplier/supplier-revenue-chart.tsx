@@ -218,62 +218,58 @@ function SupplierRevenueChartContent({ organizationId }: SupplierRevenueChartCon
   ]
 
   // Generate insights based on real data
-  const insights = React.useMemo(() => {
-    if (!metrics || !categoryRevenue.length) {
-      return { highlights: [], suggestions: ['持續優化產品組合，提升整體獲利率'] }
-    }
+  const insights = !metrics || !categoryRevenue.length
+    ? { highlights: [], suggestions: ['持續優化產品組合，提升整體獲利率'] }
+    : (() => {
+        const highlights: string[] = []
+        const suggestions: string[] = []
 
-    const highlights = []
-    const suggestions = []
+        const bestCategory = categoryRevenue.reduce((best, cat) =>
+          cat.growth > best.growth ? cat : best
+        )
 
-    // Generate highlights based on metrics
-    const bestCategory = categoryRevenue.reduce((best, cat) =>
-      cat.growth > best.growth ? cat : best
-    )
+        if (bestCategory.growth > 10) {
+          highlights.push(
+            `${bestCategory.category}營收成長 ${bestCategory.growth.toFixed(1)}%，成為最佳成長類別`
+          )
+        }
 
-    if (bestCategory.growth > 10) {
-      highlights.push(
-        `${bestCategory.category}營收成長 ${bestCategory.growth.toFixed(1)}%，成為最佳成長類別`
-      )
-    }
+        if (monthlyGrowth > 5) {
+          highlights.push(`月營收成長 ${monthlyGrowth.toFixed(1)}%，表現優異`)
+        }
 
-    if (monthlyGrowth > 5) {
-      highlights.push(`月營收成長 ${monthlyGrowth.toFixed(1)}%，表現優異`)
-    }
+        if (metrics.customer_satisfaction_rate >= 4.5) {
+          highlights.push(
+            `客戶滿意度達 ${metrics.customer_satisfaction_rate.toFixed(1)}★，服務品質優異`
+          )
+        }
 
-    if (metrics.customer_satisfaction_rate >= 4.5) {
-      highlights.push(
-        `客戶滿意度達 ${metrics.customer_satisfaction_rate.toFixed(1)}★，服務品質優異`
-      )
-    }
+        if (metrics.on_time_delivery_rate >= 95) {
+          highlights.push(`準時交付率 ${metrics.on_time_delivery_rate.toFixed(1)}%，超越行業標準`)
+        }
 
-    if (metrics.on_time_delivery_rate >= 95) {
-      highlights.push(`準時交付率 ${metrics.on_time_delivery_rate.toFixed(1)}%，超越行業標準`)
-    }
+        const worstCategory = categoryRevenue.reduce((worst, cat) =>
+          cat.growth < worst.growth ? cat : worst
+        )
 
-    // Generate suggestions
-    const worstCategory = categoryRevenue.reduce((worst, cat) =>
-      cat.growth < worst.growth ? cat : worst
-    )
+        if (worstCategory.growth < 0) {
+          suggestions.push(
+            `${worstCategory.category}營收下滑 ${Math.abs(worstCategory.growth).toFixed(1)}%，建議推出促銷活動`
+          )
+        }
 
-    if (worstCategory.growth < 0) {
-      suggestions.push(
-        `${worstCategory.category}營收下滑 ${Math.abs(worstCategory.growth).toFixed(1)}%，建議推出促銷活動`
-      )
-    }
+        if (metrics.avg_order_value < 1000) {
+          suggestions.push('平均客單價偏低，考慮推出套餐或高價值產品')
+        }
 
-    if (metrics.avg_order_value < 1000) {
-      suggestions.push('平均客單價偏低，考慮推出套餐或高價值產品')
-    }
+        if (metrics.active_customers < 20) {
+          suggestions.push('活躍客戶數量有限，建議加強客戶開發')
+        }
 
-    if (metrics.active_customers < 20) {
-      suggestions.push('活躍客戶數量有限，建議加強客戶開發')
-    }
+        suggestions.push('持續優化產品組合，提升整體獲利率')
 
-    suggestions.push('持續優化產品組合，提升整體獲利率')
-
-    return { highlights, suggestions }
-  }, [categoryRevenue, monthlyGrowth, metrics])
+        return { highlights, suggestions }
+      })()
 
   return (
     <Card className="h-full">

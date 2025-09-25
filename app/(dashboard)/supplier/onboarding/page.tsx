@@ -58,46 +58,46 @@ export default function SupplierOnboardingDashboard() {
   ])
 
   useEffect(() => {
-    loadUserData()
-  }, [])
-
-  const loadUserData = async () => {
-    try {
-      const token = localStorage.getItem('access_token')
-      if (!token) {
-        router.push('/auth/login')
-        return
-      }
-
-      const response = await fetch('/api/bff/api/invitations/profile', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setOrganization(data)
-
-        // Update onboarding steps based on organization progress
-        if (data.onboardingProgress) {
-          setOnboardingSteps(prev =>
-            prev.map(step => ({
-              ...step,
-              completed: data.onboardingProgress[step.id] !== undefined,
-            }))
-          )
+    const loadUserData = async () => {
+      try {
+        const token = localStorage.getItem('access_token')
+        if (!token) {
+          router.push('/auth/login')
+          return
         }
-      } else {
+
+        const response = await fetch('/api/bff/api/invitations/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setOrganization(data)
+
+          // Update onboarding steps based on organization progress
+          if (data.onboardingProgress) {
+            setOnboardingSteps(prev =>
+              prev.map(step => ({
+                ...step,
+                completed: data.onboardingProgress[step.id] !== undefined,
+              }))
+            )
+          }
+        } else {
+          router.push('/auth/login')
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error)
         router.push('/auth/login')
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Failed to load user data:', error)
-      router.push('/auth/login')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadUserData()
+  }, [router])
 
   const completedSteps = onboardingSteps.filter(step => step.completed).length
   const totalSteps = onboardingSteps.length

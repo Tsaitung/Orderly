@@ -58,7 +58,7 @@ const TEST_SKU = {
 }
 
 // Test state
-let testState = {
+const testState = {
   restaurantToken: null,
   supplierToken: null,
   invitationCode: null,

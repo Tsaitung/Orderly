@@ -32,6 +32,7 @@
 ### 🧑‍💻 開發協作（唯一指南）
 
 - **[開發助手與代碼協作指南](CLAUDE.md)** — 以此為唯一開發助理/代理使用與協作指引
+- **[協作守則 Repository Guidelines](CLAUDE.md#repository-guidelines)** — 代理與協作者的流程、測試與安全標準總覽
 
 ### 📋 最新狀態報告 (必讀)
 
@@ -296,6 +297,98 @@ gcloud run deploy orderly-frontend-staging \
 ```
 
 ### 📈 效能監控
+
+## 🚀 Cloud Run 手動部署快速指南（避免 build context 與 DB 連線陷阱）
+
+以下流程可在本機或 CI 手動部署單一服務，並以「成功訊號」判斷是否真的生效。
+
+1) 設定環境變數（舉例）
+
+```bash
+export PROJECT_ID=orderly-472413
+export REGION=asia-east1
+export ENV=staging
+export SHA=$(git rev-parse --short=40 HEAD)
+cd "$(git rev-parse --show-toplevel)"  # 回到 repo 根
+```
+
+2) 用 Cloud Build 建置（務必以 `backend/` 作為 build context）
+
+- Product Service
+
+```bash
+gcloud builds submit . \
+  --config=scripts/cloudbuild/cloudbuild.product.yaml \
+  --substitutions=_IMAGE=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-product-service-fastapi:$SHA
+```
+
+- Customer Hierarchy Service
+
+```bash
+gcloud builds submit . \
+  --config=scripts/cloudbuild/cloudbuild.hierarchy.yaml \
+  --substitutions=_IMAGE=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-customer-hierarchy-service-fastapi:$SHA
+```
+
+3) 部署到 Cloud Run（嚴格使用剛打出的 tag）
+
+```bash
+gcloud run deploy orderly-product-service-fastapi-$ENV \
+  --image=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-product-service-fastapi:$SHA \
+  --region=$REGION --project=$PROJECT_ID --allow-unauthenticated
+
+gcloud run deploy orderly-customer-hierarchy-service-fastapi-$ENV \
+  --image=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-customer-hierarchy-service-fastapi:$SHA \
+  --region=$REGION --project=$PROJECT_ID --allow-unauthenticated
+```
+
+4) 確保 Cloud SQL 連接器與 DB 環境變數/Secret（保險覆蓋一次）
+
+```bash
+INSTANCE_CONN=$(gcloud sql instances describe orderly-db --project=$PROJECT_ID --format='value(connectionName)')
+
+gcloud run services update orderly-product-service-fastapi-$ENV \
+  --region=$REGION --project=$PROJECT_ID \
+  --add-cloudsql-instances="$INSTANCE_CONN" \
+  --update-secrets=POSTGRES_PASSWORD=postgres-password:latest \
+  --set-env-vars="DATABASE_HOST=/cloudsql/$INSTANCE_CONN,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+
+gcloud run services update orderly-customer-hierarchy-service-fastapi-$ENV \
+  --region=$REGION --project=$PROJECT_ID \
+  --add-cloudsql-instances="$INSTANCE_CONN" \
+  --update-secrets=POSTGRES_PASSWORD=postgres-password:latest \
+  --set-env-vars="DATABASE_HOST=/cloudsql/$INSTANCE_CONN,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+```
+
+5) 成功訊號清單（務必逐項通過）
+
+- 部署映像：
+  - `gcloud run services describe <service> --format=json | jq '.spec.template.spec.containers[0].image'` 應等於剛 build 的 `$SHA` tag。
+  - `.status.traffic[0].percent==100` 且 `latestReadyRevisionName` 為新 revision。
+- DB 連線：
+  - 直打服務 `/db/health` 應回 200；`/db/info` 回遮罩過的 DSN 與 ping_ms。
+  - 若 `/db/health` 404 → 映像未更新；503 → CloudSQL 綁定/ENV/Secret 未落地。
+- Gateway 路由：
+  - `/ready` 應為 ready，且包含每個探針的 url 與錯誤摘要。
+  - 三條 smoke（無授權）：`/api/products/categories?includeProducts=false`、`/api/products/skus/search?page_size=1`、`/api/v2/hierarchy/tree` 應 2xx。
+  - 若 4xx/5xx，從回應 header 擷取 `X-Correlation-ID` 查 Cloud Logging。
+
+6) 常見陷阱
+
+- 不要在子資料夾用 `gcloud run deploy --source .` 或本機 `docker build`：會用錯 build context，導致 Dockerfile 的 `COPY backend/...` 與 `COPY libs/` 失效。
+- Cloud SQL：
+  - `cloudsql-instances` 注解必須存在（`<PROJECT>:asia-east1:<INSTANCE>`）。
+  - `DATABASE_HOST` 必須精確為 `/cloudsql/<INSTANCE_CONN>`。
+  - `POSTGRES_PASSWORD` 建議以 Secret latest 綁定，並與 DB 使用者口令同步。
+
+7) 一鍵診斷
+
+```bash
+bash scripts/db/diag.sh
+```
+
+將列出各服務的 Cloud SQL 綁定、主要 DB ENV/Secret、`/db/health` 結果，並快速找出問題點。CI 的 post-deploy 也會自動執行，且在 Summary 中附上 Correlation ID 與 DB 概況。
+
 
 - **分布式追蹤**: OpenTelemetry 相容
 - **日誌聚合**: 結構化 JSON 日誌

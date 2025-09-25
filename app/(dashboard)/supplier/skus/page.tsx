@@ -238,18 +238,9 @@ export default function SupplierSKUsPage() {
       console.log('🏁 SKU loading completed, setting loading to false')
       setLoading(false)
     }
-  }, [filters.search, filters.isActive, pagination.page, pagination.pageSize])
+  }, [filters, pagination])
 
-  // Initial load on component mount
   useEffect(() => {
-    console.log('🎬 Component mounted, triggering initial SKU load')
-    console.log('🔍 Current state - loading:', loading, 'skus length:', skus.length)
-    loadSKUs()
-  }, [])
-
-  // Load on filter/pagination changes
-  useEffect(() => {
-    console.log('🔄 Filters or pagination changed, reloading SKUs')
     loadSKUs()
   }, [loadSKUs])
 

@@ -158,7 +158,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): Notific
     } finally {
       setLoading(false)
     }
-  }, [organizationId, filter])
+  }, [filter])
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId: string) => {

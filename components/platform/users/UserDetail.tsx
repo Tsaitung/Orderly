@@ -75,11 +75,7 @@ export function UserDetail({ userId }: UserDetailProps) {
   >('overview')
   const [isEditing, setIsEditing] = React.useState(false)
 
-  React.useEffect(() => {
-    loadUserDetail()
-  }, [userId])
-
-  const loadUserDetail = async () => {
+  const loadUserDetail = React.useCallback(async () => {
     try {
       setLoading(true)
       // 模擬 API 調用
@@ -160,7 +156,11 @@ export function UserDetail({ userId }: UserDetailProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [userId])
+
+  React.useEffect(() => {
+    loadUserDetail()
+  }, [loadUserDetail])
 
   const getStatusBadge = (status: UserDetailData['status']) => {
     switch (status) {

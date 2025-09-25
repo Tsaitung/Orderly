@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -182,12 +183,14 @@ export default function ProductEditModal({
       <div className="mb-6 rounded-md border border-gray-200 bg-gray-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="h-16 w-16 overflow-hidden rounded-lg border border-gray-200 bg-white">
+            <div className="relative h-16 w-16 overflow-hidden rounded-lg border border-gray-200 bg-white">
               {product.images[0] ? (
-                <img
+                <Image
                   src={product.images[0].url}
                   alt={product.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="64px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-gray-400">

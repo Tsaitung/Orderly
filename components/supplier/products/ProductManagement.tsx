@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -204,12 +205,14 @@ export default function ProductManagement({ organizationId }: ProductManagementP
 
           {/* Product Image */}
           <div className="group relative">
-            <div className="h-32 w-full overflow-hidden rounded-md bg-gray-100">
+            <div className="relative h-32 w-full overflow-hidden rounded-md bg-gray-100">
               {primaryImage ? (
-                <img
+                <Image
                   src={primaryImage.url}
                   alt={primaryImage.alt_text || product.name}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-gray-400">

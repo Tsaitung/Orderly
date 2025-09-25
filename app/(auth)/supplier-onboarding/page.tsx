@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -97,17 +97,7 @@ function SupplierOnboardingPageContent() {
     address: '',
   })
 
-  // Load invitation details on mount
-  useEffect(() => {
-    if (!invitationCode) {
-      router.push('/auth/supplier-invite')
-      return
-    }
-
-    loadInvitationDetails()
-  }, [invitationCode, router])
-
-  const loadInvitationDetails = async () => {
+  const loadInvitationDetails = useCallback(async () => {
     if (!invitationCode) return
 
     try {
@@ -129,7 +119,17 @@ function SupplierOnboardingPageContent() {
     } catch (err) {
       setError('無法載入邀請資訊')
     }
-  }
+  }, [invitationCode, router])
+
+  // Load invitation details on mount
+  useEffect(() => {
+    if (!invitationCode) {
+      router.push('/auth/supplier-invite')
+      return
+    }
+
+    loadInvitationDetails()
+  }, [invitationCode, loadInvitationDetails, router])
 
   const updateFormData = (field: keyof OnboardingFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))

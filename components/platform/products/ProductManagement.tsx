@@ -99,7 +99,7 @@ export function SKUManagement() {
   // 初始載入統計資料
   React.useEffect(() => {
     fetchStats()
-  }, [])
+  }, [fetchStats])
 
   // 重新載入統計資料的函數
   const handleRefresh = () => {

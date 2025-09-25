@@ -253,10 +253,12 @@ export function getSupportedERPSystems() {
   ]
 }
 
-export default {
+const erpAdapterRegistry = {
   ERPAdapterFactory,
   ERPSystemConfigs,
   createERPAdapterFromEnv,
   validateERPConfig,
   getSupportedERPSystems,
 }
+
+export default erpAdapterRegistry

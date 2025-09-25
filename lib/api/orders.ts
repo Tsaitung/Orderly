@@ -1,6 +1,5 @@
 import { http } from './http'
 import type { ListResponse, ItemResponse, OrderDTO } from './types'
-import type { ListResponse, ItemResponse, OrderDTO } from './types'
 
 export const OrdersAPI = {
   list: () => http.get<ListResponse<OrderDTO>>(`/orders`),

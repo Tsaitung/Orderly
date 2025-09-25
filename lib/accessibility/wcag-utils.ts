@@ -860,7 +860,7 @@ export class AccessibilityEventHandler {
 }
 
 // 導出所有無障礙工具
-export default {
+const accessibilityTools = {
   ColorContrastChecker,
   KeyboardNavigationManager,
   ScreenReaderAnnouncer,
@@ -869,3 +869,5 @@ export default {
   AccessibilityValidator,
   AccessibilityEventHandler,
 }
+
+export default accessibilityTools

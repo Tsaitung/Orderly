@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useMemo, useEffect } from 'react'
+import Image from 'next/image'
 import { AccessibleModal } from '@/components/ui/accessible-modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,6 +45,17 @@ export default function ProductImageUploadModal({
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({})
   const [altTexts, setAltTexts] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const selectedFilePreviews = useMemo(
+    () => selectedFiles.map(file => ({ name: file.name, url: URL.createObjectURL(file) })),
+    [selectedFiles]
+  )
+
+  useEffect(() => {
+    return () => {
+      selectedFilePreviews.forEach(({ url }) => URL.revokeObjectURL(url))
+    }
+  }, [selectedFilePreviews])
 
   // Handle file selection
   const handleFileSelect = (files: FileList | null) => {
@@ -194,11 +206,13 @@ export default function ProductImageUploadModal({
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {product.images.map(image => (
                 <div key={image.id} className="group relative">
-                  <div className="aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                    <img
+                  <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    <Image
                       src={image.url}
                       alt={image.alt_text || product.name}
-                      className="h-full w-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover"
                     />
                   </div>
 
@@ -290,12 +304,19 @@ export default function ProductImageUploadModal({
                   className="flex items-center space-x-4 rounded-lg border border-gray-200 p-4"
                 >
                   {/* File preview */}
-                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="h-full w-full object-cover"
-                    />
+                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    {selectedFilePreviews[index] ? (
+                      <Image
+                        src={selectedFilePreviews[index]!.url}
+                        alt={file.name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 text-gray-400" />
+                    )}
                   </div>
 
                   {/* File info */}

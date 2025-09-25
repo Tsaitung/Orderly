@@ -176,43 +176,32 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
     return () => setAutoRefresh(false)
   }, [setAutoRefresh])
 
-  if (loading && !dashboard && !metrics) {
-    return <SupplierDashboardSkeleton />
-  }
-
-  if (error) {
-    throw new Error(error)
-  }
-
-  // Helper functions
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = React.useCallback((amount: number) => {
     return new Intl.NumberFormat('zh-TW', {
       style: 'currency',
       currency: 'TWD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount)
-  }
+  }, [])
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = React.useCallback((value: number) => {
     return `${value.toFixed(1)}%`
-  }
+  }, [])
 
-  const getChangeType = (current: number, previous: number): 'increase' | 'decrease' => {
+  const getChangeType = React.useCallback((current: number, previous: number): 'increase' | 'decrease' => {
     return current >= previous ? 'increase' : 'decrease'
-  }
+  }, [])
 
-  const getChangePercentage = (current: number, previous: number): number => {
+  const getChangePercentage = React.useCallback((current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0
     return Math.abs(((current - previous) / previous) * 100)
-  }
+  }, [])
 
-  // Transform API data to display metrics
   const supplierMetrics = React.useMemo(() => {
     if (!metrics) return []
 
     // Calculate week-over-week changes (mock data for now)
-    const prevWeekOrders = Math.max(1, metrics.week_orders - Math.floor(Math.random() * 5))
     const prevMonthRevenue = Math.max(
       1000,
       metrics.month_revenue - Math.floor(Math.random() * 10000)
@@ -336,9 +325,8 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
         description: '週營收穩定成長',
       },
     ]
-  }, [metrics, formatCurrency, formatPercentage, getChangeType, getChangePercentage])
+  }, [metrics, formatCurrency, formatPercentage, getChangePercentage, getChangeType])
 
-  // Generate achievements based on real data
   const achievements = React.useMemo(() => {
     if (!metrics) return []
 
@@ -373,6 +361,14 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
 
     return achievementList
   }, [metrics, formatPercentage])
+
+  if (loading && !dashboard && !metrics) {
+    return <SupplierDashboardSkeleton />
+  }
+
+  if (error) {
+    throw new Error(error)
+  }
 
   return (
     <section aria-labelledby="supplier-overview-title">

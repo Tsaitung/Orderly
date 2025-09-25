@@ -128,7 +128,7 @@ export function useHierarchyNavigation(
     const nodeType = (searchParams.get('nodeType') as HierarchyNodeType) || undefined
 
     return { nodeId, nodeType }
-  }, [])
+  }, [searchParams])
 
   // Update URL with current navigation state
   const updateUrl = useCallback(
@@ -408,7 +408,7 @@ export function useHierarchyNavigation(
         navigateToNode(params.nodeId, params.nodeType)
       }
     }
-  }, []) // Only run on mount
+  }, [autoLoadFromUrl, navigateToNode, parseUrlParams])
 
   return {
     // State

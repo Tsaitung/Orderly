@@ -104,11 +104,7 @@ export function RoleDetail({ roleId }: RoleDetailProps) {
   const [error, setError] = React.useState<string | null>(null)
   const [activeTab, setActiveTab] = React.useState('overview')
 
-  React.useEffect(() => {
-    loadRoleData()
-  }, [roleId])
-
-  const loadRoleData = async () => {
+  const loadRoleData = React.useCallback(async () => {
     try {
       setLoading(true)
       // 模擬 API 調用
@@ -273,7 +269,11 @@ export function RoleDetail({ roleId }: RoleDetailProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [roleId])
+
+  React.useEffect(() => {
+    loadRoleData()
+  }, [loadRoleData])
 
   const getTypeDisplay = (type: string) => {
     const types = {

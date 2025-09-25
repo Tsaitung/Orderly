@@ -38,59 +38,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Guidelines
 
+> 註解：以下協作守則整合自 `AGENTS.md` 與既有內容，協助代理／協作者快速掌握關鍵流程。
+
 ### Project Structure
 
-- `app/`: Next.js App Router + TypeScript frontend application.
-- `backend/`: Microservices (API Gateway and core domain services in FastAPI + SQLAlchemy).
-- `shared/types/`: Reusable TS types as `@orderly/types`.
-- `infrastructure/`, `scripts/`, `docker-compose.yml`: IaC, automation, local orchestration.
+- 前端：`app/`、`components/`、`lib/`、`stores/` 與 `shared/types/`（跨服務型別），靜態資源集中於 `public/`。
+- 後端：`backend/*-service-fastapi/` 內含 FastAPI 微服務，`backend/api-gateway-fastapi/` 提供統一入口，跨服務 Python 工具放在 `backend/libs/`。
+- 文檔與設計：主要說明位於 `docs/`，Storybook 與設計參考放在 `stories/` 與 `components/design-system/`。
+- 自動化與基礎設施：`scripts/` 收錄部署、資料庫、監控工具；`infrastructure/` 與各 `compose.*.yml` 描述 IaC 與執行拓撲。
 
 ### Build, Test, and Develop
 
-- Install deps (root): `npm install`.
-- Dev all: `npm run dev` (frontend) and `docker-compose up -d` (backend services).
-- Build all/one: `npm run build` (frontend) or Docker builds per service.
-- Start API Gateway: `docker compose up -d api-gateway` (FastAPI).
-- Tests: `npm test` (all) or `npm test -w <workspace>`; watch: `npm run test:watch -w backend/user-service`.
-- Lint/format: `npm run lint`, `npm run format`.
+- 安裝依賴：`npm install`
+- 啟動前端：`npm run dev`（預設埠 3000，預期後端服務由 Docker Compose 提供）
+- 啟動後端與依賴：`docker compose -f compose.dev.yml up`
+- 建置／啟動正式版本：`npm run build`、`npm run start`
+- 測試套件：`npm test`、`npm run test:frontend`、`npm run test:coverage`
+- 品質檢查：`npm run lint`、`npm run type-check`、`npm run format:check`
 
 ### Coding Style
 
-- TypeScript, 2-space indent, Prettier trailing commas.
-- ESLint with TS, React, and hooks plugins; fix issues before PR.
-- Names: `PascalCase` components, `camelCase` vars/functions, env as `SCREAMING_SNAKE_CASE`.
-- Files: components `PascalCase.tsx`, modules `kebab-case.ts`, tests `*.test.ts(x)`.
+- TypeScript + Prettier，採 2 空白縮排、保留分號、字串使用單引號；Tailwind 類別順序交由 Prettier 外掛整理。
+- React 元件／Hook 採 `PascalCase` 與 `camelCase` 命名；FastAPI 路由與 ORM 模型維持 `snake_case`。
+- 檔案命名：React 元件以 `.tsx` 結尾並盡量單一預設匯出；共用函式使用 `kebab-case.ts`；測試檔命名為 `*.test.ts(x)`。
 
 ### Testing
 
-- Frontend: Jest + React Testing Library; Backend: Jest (+ ts-jest). Prefer co-located unit tests.
-- Target ≥80% unit coverage; add integration tests for FastAPI routes and DB flows.
-- Run fast locally with watch; run full suite in CI.
+- 主要測試框架為 Jest，前端整合 `@testing-library/react`；整合測試集中在 `tests/integration/`。
+- 單元測試建議與元件／模組同目錄（例：`Button.test.tsx`）。
+- 依 `npm run test:coverage` 監控覆蓋率；新增功能時需撰寫關鍵流程的冒煙測試並適度 mock 後端依賴。
 
 ### Commits & PRs
 
-- Conventional Commits (e.g., `feat(api): add rate limiting`, `fix(user): hash password correctly`).
-- PRs: concise summary, linked issues (`Closes #123`), UI screenshots, test plan, and green lint/tests.
-- Keep scope focused; update docs when behavior changes.
+- 採 Conventional Commits 前綴（如 `feat`、`fix`、`chore`、`docs` 等），主旨不超過 72 字元。
+- PR 需描述問題背景、功能影響、關聯議題（`Closes #123`），UI／API 變更時附上截圖或範例 payload。
+- 在描述中標註已執行的測試與靜態檢查指令輸出，並記錄同步更新的文檔或設定。
 
 ### Documentation Maintenance
 
-- Single source of truth lives in `docs/INDEX.md`.
-- Update the corresponding canonical docs when changing behavior/contracts:
-  - PRD → `docs/PRD-Complete.md`
-  - Architecture → `docs/Technical-Architecture-Summary.md`
-  - Design System → `docs/design-system.md`
-  - API → `docs/API-Endpoints-Essential.md` and `docs/api-specification.yaml`
-  - Database → `docs/Database-Schema-Core.md` and `docs/database.md`
-- If adding/renaming docs, also update `docs/INDEX.md` and cross-links.
-- Before merging, run a quick link check for stale paths:
-  - `rg -n "api-specification\.md|technical-architecture\.md|PRD\.md|Orderly Design System\.md|requirement\.md"`
+- 依 `docs/INDEX.md` 定義的 Canonical 文檔維護單一事實來源。
+- 行為、契約或設計調整時，務必同步更新對應主檔（PRD、架構、API、資料庫、設計等）並修正索引與交叉引用。
+- 新增或重命名檔案後使用 `rg` 檢查舊連結：`rg -n "api-specification\.md|technical-architecture\.md|PRD\.md|Orderly Design System\.md|requirement\.md"`
 
 ### Security & Configuration
 
-- Copy `.env.example` per workspace to `.env.local`; never commit secrets.
-- For full local stack use `docker-compose up -d`; verify health endpoints before merging.
-- Manage secrets via GitHub Secrets as outlined in README.
+- 機敏設定僅放於 `.env.local` 或授權密鑰庫，依 `docs/ci-secrets.md` 流程管理。
+- 新增服務時更新 `compose.*.yml` 與 FastAPI 設定，確保所有入口均由 API Gateway 控制；必要環境變數記錄於 `docs/DEPLOYMENT-CHECKLIST.md`。
+- 本地整合測試建議透過 Docker Compose 啟動 Postgres／Redis，並確認健康檢查端點再提交 PR。
 
 ## Common Commands
 

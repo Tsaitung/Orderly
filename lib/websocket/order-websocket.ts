@@ -305,6 +305,8 @@ export function useOrderWebSocket(
   >('closed')
   const [lastEvent, setLastEvent] = React.useState<OrderUpdateEvent | null>(null)
   const connectionRef = React.useRef<OrderWebSocket | null>(null)
+  const autoConnect = options?.autoConnect ?? true
+  const onOrderUpdate = options?.onOrderUpdate
 
   React.useEffect(() => {
     if (!organizationId) return
@@ -314,14 +316,14 @@ export function useOrderWebSocket(
       onDisconnect: () => setConnectionState('closed'),
       onOrderUpdate: event => {
         setLastEvent(event)
-        options?.onOrderUpdate?.(event)
+        onOrderUpdate?.(event)
       },
     })
 
     connectionRef.current = connection
 
     // 自動連接
-    if (options?.autoConnect !== false) {
+    if (autoConnect) {
       connection.connect().catch(error => {
         console.error('Failed to connect to Order WebSocket:', error)
         setConnectionState('closed')
@@ -332,7 +334,7 @@ export function useOrderWebSocket(
       // 組件卸載時不立即斷開連接，允許其他組件繼續使用
       connectionRef.current = null
     }
-  }, [organizationId, options?.autoConnect])
+  }, [autoConnect, onOrderUpdate, organizationId])
 
   // 更新連接狀態
   React.useEffect(() => {

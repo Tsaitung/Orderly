@@ -208,7 +208,7 @@ export function useHierarchySearch(
     } else if (autoSearch && (!debouncedQuery || debouncedQuery.length < minQueryLength)) {
       clearStoreSearch()
     }
-  }, [debouncedQuery, autoSearch, minQueryLength])
+  }, [autoSearch, clearStoreSearch, debouncedQuery, minQueryLength, performSearch])
 
   // Search function (manual trigger)
   const search = useCallback(

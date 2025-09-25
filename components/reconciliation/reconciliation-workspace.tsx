@@ -176,7 +176,7 @@ export default function ReconciliationWorkspace() {
   const { announcePolite, announceSuccess, announceUrgent } = useScreenReaderAnnouncer()
 
   const filteredData = React.useMemo(() => {
-    let filtered = data.filter(item => {
+    const filtered = data.filter(item => {
       const matchesSearch =
         searchTerm === '' ||
         item.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

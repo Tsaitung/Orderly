@@ -69,7 +69,7 @@ export class SecureStorage {
   static getTokens(): StoredData | null {
     try {
       // Try both storages
-      let encrypted = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY)
+      const encrypted = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY)
 
       if (!encrypted) {
         return null

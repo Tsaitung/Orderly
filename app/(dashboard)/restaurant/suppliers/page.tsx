@@ -194,7 +194,7 @@ export default function SuppliersPage() {
   useEffect(() => {
     fetchSuppliers()
     fetchStatistics()
-  }, []) // Only run on mount
+  }, [fetchSuppliers, fetchStatistics])
 
   return (
     <div className="spacing-normal theme-supplier">

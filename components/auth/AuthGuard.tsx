@@ -97,10 +97,11 @@ export function AuthGuard({
 
     const hasSupplierAccess = requiredRole === 'supplier' && user.role?.startsWith('supplier_')
 
-    return hasDirectRole || isAdmin || hasRestaurantAccess || hasSupplierAccess
+  return hasDirectRole || isAdmin || hasRestaurantAccess || hasSupplierAccess
   }, [
     isAuthenticated,
     user,
+    isLoading,
     allowSuperUser,
     canViewAsOrganization,
     viewMode,

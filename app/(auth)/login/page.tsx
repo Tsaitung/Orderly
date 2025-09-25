@@ -228,9 +228,11 @@ export default function LoginPage() {
               sessionStorage.clear()
               
               // 清除所有 cookies
-              document.cookie.split(";").forEach(function(c) { 
-                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-              });
+          document.cookie.split(";").forEach(cookie => {
+            document.cookie = cookie
+              .replace(/^ +/, '')
+              .replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+          })
               
               // 設置 staging admin 標記
               localStorage.setItem('staging_admin', 'true')

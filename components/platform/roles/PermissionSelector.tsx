@@ -71,11 +71,7 @@ export function PermissionSelector({
   const [loading, setLoading] = React.useState(true)
   const [expandAll, setExpandAll] = React.useState(false)
 
-  React.useEffect(() => {
-    loadPermissions()
-  }, [roleType])
-
-  const loadPermissions = async () => {
+  const loadPermissions = React.useCallback(async () => {
     try {
       setLoading(true)
       // 模擬 API 調用
@@ -404,7 +400,11 @@ export function PermissionSelector({
     } finally {
       setLoading(false)
     }
-  }
+  }, [roleType])
+
+  React.useEffect(() => {
+    loadPermissions()
+  }, [loadPermissions])
 
   const getCategoryName = (category: string): string => {
     const names = {

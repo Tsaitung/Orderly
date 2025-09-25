@@ -297,7 +297,7 @@ export function useProducts(organizationId?: string, filters: ProductFilters = {
     } finally {
       setLoading(false)
     }
-  }, [organizationId, filters, applyFilters])
+  }, [organizationId, filters, applyFilters, mockProducts])
 
   // Create product
   const createProduct = useCallback(
@@ -379,7 +379,7 @@ export function useProducts(organizationId?: string, filters: ProductFilters = {
                 return product
               }
 
-              let updatedProduct = { ...product }
+              const updatedProduct = { ...product }
 
               switch (operation.operation) {
                 case 'update_status':
