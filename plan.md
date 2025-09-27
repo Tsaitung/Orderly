@@ -947,12 +947,15 @@ Supplier Product SKUs: 52/52 ✅
 3. ✅ 修復所有關鍵服務問題（API 資料讀取、供應商認證）
 4. ✅ 實現資料完整性保障與自動驗證
 5. ✅ 建立健康檢查與監控機制
+6. ✅ 修復 GitHub Actions 認證問題並成功部署所有服務
 
 **達成的永久化成果：**
 - **配置永久化**：所有環境變數、Cloud SQL 連線、Service Account 已寫入版本控制
 - **部署自動化**：單一指令部署 + GitHub Actions 完整 CI/CD 流程
 - **資料可靠性**：核心測試資料（users/customer_groups/supplier_product_skus）已永久化並可重複匯入
 - **問題不重複**：解決了「每次部署都需要手動修復相同問題」的痛點
+- **CI/CD 認證修復**：更新至 `google-github-actions/auth@v2` 並修復 filter 語法
+- **Docker 映像修復**：成功建立並部署缺失的 user/acceptance/notification 服務映像
 
 **環境狀態：** staging 環境現已穩定運行，核心 API 功能正常，準備進入生產部署階段。
 
@@ -999,23 +1002,34 @@ Supplier Product SKUs: 52/52 ✅
 - [ ] Customer Hierarchy Service `/api/v2/health` 端點實現
 - [ ] BFF 層級供應商端點完整實現（如 `/api/bff/suppliers/stats`）
 
-### 🏆 永久化成果驗證
+### 🏆 永久化成果驗證（2025-09-27 17:40）
 
 **配置永久化：**
 - ✅ 8 個服務的 Cloud Run 配置已導出至 `configs/staging/*.yaml`
 - ✅ 部署腳本 `scripts/deploy-staging-permanent.sh` 可重現配置
 - ✅ 資料庫遷移與資料驗證腳本完整建立
+- ✅ Docker 映像配置更新為 :latest 標籤（user/acceptance/notification）
 
 **自動化程度：**
 - ✅ 單一指令部署：`./scripts/deploy-staging-permanent.sh`
 - ✅ GitHub Actions 完整 CI/CD 流程（觸發 → 部署 → 驗證 → 報告）
 - ✅ 健康檢查與 API 驗證自動化
+- ✅ Docker 映像自動建置與推送流程正常運作
 
 **系統穩定性：**
-- ✅ 核心 API 資料數量正確（52 產品、105 分類）
-- ✅ 所有主要服務健康狀態良好
+- ✅ 核心 API 資料數量正確（52 產品、105 分類、20 公司）
+- ✅ 所有 8 個主要服務健康狀態良好
 - ✅ API Gateway 服務映射正確配置
 - ✅ 前端服務正常運行並連接正確的後端
+- ✅ API 響應時間正常（user: 34ms, order: 34ms, product: 21ms）
+
+**最終部署結果（17:38）：**
+```
+✅ Successfully deployed: api-gateway user order product customer-hierarchy supplier acceptance notification
+Total services processed: 8
+Successfully deployed: 8
+Failed deployments: 0
+```
 
 ### 🎉 最終結論
 
