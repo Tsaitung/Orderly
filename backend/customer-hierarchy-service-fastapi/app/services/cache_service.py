@@ -68,13 +68,16 @@ class CacheService:
             
         except Exception as e:
             logger.error("Failed to initialize cache service", error=str(e))
-            raise
+            logger.warning("Cache service will operate in fallback mode without Redis")
+            self.redis_pool = None  # Ensure pool is None for fallback operations
     
     @asynccontextmanager
     async def _get_connection(self):
         """Get Redis connection with connection pooling"""
         if not self.redis_pool:
-            await self.initialize()
+            # If redis_pool is None, it means Redis is not available
+            # Don't retry initialization, just raise an exception for graceful fallback
+            raise Exception("Redis connection not available")
         
         conn = redis.Redis(connection_pool=self.redis_pool)
         try:

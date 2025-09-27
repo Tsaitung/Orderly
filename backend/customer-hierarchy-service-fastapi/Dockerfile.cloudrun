@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY backend/customer-hierarchy-service-fastapi/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -32,13 +32,13 @@ RUN apt-get update && apt-get install -y \
 # 複製依賴
 COPY --from=deps /root/.local /root/.local
 
-# 複製共享庫（從backend目錄複製）
-COPY ../libs ./libs
+# 複製共享庫
+COPY backend/libs ./libs
 
 # 複製應用程式
-COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
+COPY backend/customer-hierarchy-service-fastapi/app ./app
+COPY backend/customer-hierarchy-service-fastapi/alembic.ini ./alembic.ini
+COPY backend/customer-hierarchy-service-fastapi/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app/libs

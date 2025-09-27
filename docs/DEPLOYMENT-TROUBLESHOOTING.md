@@ -25,6 +25,72 @@ curl https://api.orderly.com/service-map
 - **流量切換**：暫時切換到備用環境
 - **服務重啟**：重啟有問題的微服務
 
+## 🔄 Customer Hierarchy Service BFF 503 錯誤
+
+### 問題描述
+前端通過 BFF 訪問 Customer Hierarchy Service 的 `/api/bff/v2/hierarchy/tree` 端點返回 503 錯誤：
+```json
+{"error":"customer_hierarchy_v2 service unavailable"}
+```
+
+### 根本原因分析
+1. **API Gateway URL 配置錯誤**：指向不存在的服務 URL
+2. **Redis 連接失敗**：服務無法連接到 Memorystore Redis 實例
+3. **VPC 網絡隔離**：Cloud Run 服務無法訪問 VPC 內的 Redis
+
+### 解決方案
+
+#### 步驟 1：修復 API Gateway 配置
+```bash
+# 檢查當前服務 URL
+curl -s "https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app/service-map"
+
+# 修正配置文件中的 URL
+vim configs/staging/api-gateway.yaml
+# 確保 CUSTOMER_HIERARCHY_SERVICE_URL 指向正確的 Cloud Run URL
+
+# 重新部署
+gcloud run services replace configs/staging/api-gateway.yaml --region=asia-east1
+```
+
+#### 步驟 2：配置 Redis 連接
+```bash
+# 檢查 Redis 實例
+gcloud redis instances list --region=asia-east1
+
+# 在 Customer Hierarchy Service 配置中添加 REDIS_URL
+vim configs/staging/customer-hierarchy.yaml
+# 添加：REDIS_URL: redis://REDIS_IP:6379
+
+# 重新部署服務
+gcloud run services replace configs/staging/customer-hierarchy.yaml --region=asia-east1
+```
+
+#### 步驟 3：實現 Redis 連接優雅降級
+修改 `backend/customer-hierarchy-service-fastapi/app/services/cache_service.py`：
+```python
+async def initialize(self):
+    """Initialize Redis connection pool"""
+    try:
+        # ... Redis 初始化代碼 ...
+    except Exception as e:
+        logger.error("Failed to initialize cache service", error=str(e))
+        logger.warning("Cache service will operate in fallback mode without Redis")
+        self.redis_pool = None  # 確保 fallback 模式
+```
+
+### 驗證修復
+```bash
+# 直接測試服務
+curl "https://orderly-customer-hierarchy-service-fastapi-staging-655602747430.asia-east1.run.app/health"
+
+# 測試 BFF 路由
+curl "https://orderly-frontend-staging-usg6y7o2ba-de.a.run.app/api/bff/v2/hierarchy/tree"
+
+# 運行完整驗證
+./scripts/validate-api-endpoints.sh staging
+```
+
 ## 🗄️ 資料庫連接問題
 
 ### Connection Refused [Errno 111]

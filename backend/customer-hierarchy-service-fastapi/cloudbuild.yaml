@@ -1,0 +1,13 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '-f'
+  - 'backend/customer-hierarchy-service-fastapi/Dockerfile.cloudrun'
+  - '-t'
+  - 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-customer-hierarchy-service-fastapi:redis-fix'
+  - '.'
+  dir: '..'
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-customer-hierarchy-service-fastapi:redis-fix']
+timeout: '1200s'

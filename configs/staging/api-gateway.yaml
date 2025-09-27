@@ -48,7 +48,7 @@ spec:
         - name: NOTIFICATION_SERVICE_URL
           value: https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: CUSTOMER_HIERARCHY_SERVICE_URL
-          value: https://orderly-customer-hierarchy-service-fastapi-staging-usg6y7o2ba-de.a.run.app
+          value: https://orderly-customer-hierarchy-service-fastapi-staging-655602747430.asia-east1.run.app
         - name: SUPPLIER_SERVICE_URL
           value: https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: DATABASE_HOST

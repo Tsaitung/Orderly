@@ -201,6 +201,27 @@ else
     echo "   Response: $V2_COMPANIES_RESPONSE"
 fi
 
+echo -n "Testing V2 Hierarchy Tree endpoint... "
+V2_HIERARCHY_RESPONSE=$(curl -s --max-time 15 "$API_BASE/api/v2/hierarchy/tree" 2>/dev/null || echo "ERROR")
+
+if [ "$V2_HIERARCHY_RESPONSE" = "ERROR" ]; then
+    echo -e "${RED}❌ TIMEOUT/ERROR${NC}"
+    ((ERRORS++))
+elif echo "$V2_HIERARCHY_RESPONSE" | jq -e '.detail == "Not Found"' >/dev/null 2>&1; then
+    echo -e "${RED}❌ V2 Hierarchy Router Not Found${NC}"
+    ((ERRORS++))
+elif echo "$V2_HIERARCHY_RESPONSE" | jq -e '.error' >/dev/null 2>&1; then
+    V2_ERROR=$(echo "$V2_HIERARCHY_RESPONSE" | jq -r '.error')
+    echo -e "${RED}❌ $V2_ERROR${NC}"
+    ((ERRORS++))
+elif echo "$V2_HIERARCHY_RESPONSE" | jq -e '.data' >/dev/null 2>&1; then
+    HIERARCHY_COUNT=$(echo "$V2_HIERARCHY_RESPONSE" | jq '.data | length' 2>/dev/null || echo "0")
+    echo -e "${GREEN}✅ $HIERARCHY_COUNT items (hierarchy working)${NC}"
+else
+    echo -e "${YELLOW}⚠️  Unexpected response${NC}"
+    echo "   Response: $V2_HIERARCHY_RESPONSE"
+fi
+
 echo ""
 echo "📊 Validation Summary:"
 echo "────────────────────────"
