@@ -24,6 +24,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Default async connection string for local development fallback
+DEFAULT_DATABASE_URL = "postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly"
+
 
 class UnifiedSettings(BaseSettings):
     """
@@ -267,21 +270,28 @@ class UnifiedSettings(BaseSettings):
     
     def get_database_url_async(self) -> str:
         """獲取異步資料庫連接 URL"""
-        if self.database_url and "postgresql+asyncpg://" in self.database_url:
-            return self.database_url
-        
-        # 如果是普通 postgresql URL，轉換為 asyncpg
-        if self.database_url and self.database_url.startswith("postgresql://"):
-            return self.database_url.replace("postgresql://", "postgresql+asyncpg://")
-        
-        # 構建異步 URL
+        env_database_url = os.getenv("DATABASE_URL")
+        if env_database_url:
+            if env_database_url.startswith("postgresql://"):
+                return env_database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            return env_database_url
+
+        if self.database_url and self.database_url != DEFAULT_DATABASE_URL:
+            if self.database_url.startswith("postgresql://"):
+                return self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            if self.database_url.startswith("postgresql+asyncpg://"):
+                return self.database_url
+
         password = os.getenv("POSTGRES_PASSWORD", "orderly_dev_password")
         if self.database_host.startswith("/cloudsql/"):
-            # Cloud SQL 連接
-            return f"postgresql+asyncpg://{self.database_user}:{password}@/{self.database_name}?host={self.database_host}"
-        else:
-            # 標準連接
-            return f"postgresql+asyncpg://{self.database_user}:{password}@{self.database_host}:{self.database_port}/{self.database_name}"
+            return (
+                f"postgresql+asyncpg://{self.database_user}:{password}@/"
+                f"{self.database_name}?host={self.database_host}"
+            )
+        return (
+            f"postgresql+asyncpg://{self.database_user}:{password}@"
+            f"{self.database_host}:{self.database_port}/{self.database_name}"
+        )
     
     def get_database_url_sync(self) -> str:
         """獲取同步資料庫連接 URL（用於 Alembic）"""

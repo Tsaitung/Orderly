@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY product-service-fastapi/requirements.txt ./
+COPY backend/product-service-fastapi/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -33,12 +33,12 @@ RUN apt-get update && apt-get install -y \
 COPY --from=deps /root/.local /root/.local
 
 # 複製共享庫
-COPY libs ./libs
+COPY backend/libs ./libs
 
 # 複製應用程式
-COPY product-service-fastapi/app ./app
-COPY product-service-fastapi/alembic.ini ./alembic.ini
-COPY product-service-fastapi/alembic ./alembic
+COPY backend/product-service-fastapi/app ./app
+COPY backend/product-service-fastapi/alembic.ini ./alembic.ini
+COPY backend/product-service-fastapi/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app/libs

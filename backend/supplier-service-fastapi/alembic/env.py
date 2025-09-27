@@ -2,9 +2,18 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
+from app.core.config import settings
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Ensure Alembic uses the same database configuration as the application.
+config.set_main_option("sqlalchemy.url", settings.get_database_url_sync())
+
+# Use a service-specific version table so multiple services can share the same
+# database without clobbering each other's migration state.
+VERSION_TABLE = "alembic_version_supplier"
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -29,6 +38,7 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
+        version_table=VERSION_TABLE,
         dialect_opts={"paramstyle": "named"},
     )
 
@@ -44,7 +54,11 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table=VERSION_TABLE,
+        )
 
         with context.begin_transaction():
             context.run_migrations()

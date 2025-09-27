@@ -72,9 +72,12 @@ docs/
 
 # Scripts
 scripts/
+!scripts/cloudbuild/
+!scripts/cloudbuild/run-migrations.sh
+# ensure database utilities included for migration images
+!scripts/database/
 .github/
 
 # Temporary files
 tmp/
 temp/
-

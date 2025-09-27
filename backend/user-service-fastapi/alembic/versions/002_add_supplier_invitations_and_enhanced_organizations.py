@@ -73,13 +73,13 @@ def upgrade() -> None:
         batch_op.add_column(sa.Column('invitedByOrganizationId', sa.String(), nullable=True))
         batch_op.add_column(sa.Column('invitationAcceptedAt', sa.DateTime(timezone=True), nullable=True))
         batch_op.add_column(sa.Column('onboardingStatus', onboarding_status_enum, nullable=True, default='invited'))
-        batch_op.add_column(sa.Column('onboardingProgress', sa.JSON(), nullable=False, default={}))
+        batch_op.add_column(sa.Column('onboardingProgress', sa.JSON(), nullable=False, server_default='{}'))
         batch_op.add_column(sa.Column('onboardingCompletedAt', sa.DateTime(timezone=True), nullable=True))
         
         # Add business capabilities columns
-        batch_op.add_column(sa.Column('deliveryZones', sa.JSON(), nullable=False, default=[]))
-        batch_op.add_column(sa.Column('productCategories', sa.JSON(), nullable=False, default=[]))
-        batch_op.add_column(sa.Column('certifications', sa.JSON(), nullable=False, default=[]))
+        batch_op.add_column(sa.Column('deliveryZones', sa.JSON(), nullable=False, server_default='[]'))
+        batch_op.add_column(sa.Column('productCategories', sa.JSON(), nullable=False, server_default='[]'))
+        batch_op.add_column(sa.Column('certifications', sa.JSON(), nullable=False, server_default='[]'))
         
         # Create indexes
         batch_op.create_index('ix_organizations_taxId', ['taxId'], unique=False)

@@ -20,34 +20,63 @@ ZONE="asia-east1-a"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Database Configuration
-DB_INSTANCE_NAME="orderly-db"
+DB_INSTANCE_NAME="${DB_INSTANCE_NAME:-orderly-db}"
 DB_NAME="orderly"
 DB_USER="orderly"
 REDIS_INSTANCE_NAME="orderly-cache"
 
-# Service Configuration
-declare -A SERVICES=(
-    ["api-gateway"]="8000"
-    ["user-service"]="3001"
-    ["order-service"]="3002"
-    ["product-service"]="3003"
-    ["acceptance-service"]="3004"
-    ["notification-service"]="3006"
-    ["customer-hierarchy-service"]="3007"
-    ["supplier-service"]="3008"
-)
+# Container Registry (use Artifact Registry per regional standard)
+REGISTRY="asia-east1-docker.pkg.dev"
+REPOSITORY="orderly"
+
+# Service Configuration - Get port for service
+get_service_port() {
+  echo "8080"  # All services use port 8080 for Cloud Run
+}
+
+# Get service account for service
+get_service_account() {
+  case "$1" in
+    "api-gateway-fastapi") echo "orderly-apigw-fastapi" ;;
+    "user-service-fastapi") echo "orderly-user-fastapi" ;;
+    "order-service-fastapi") echo "orderly-order-fastapi" ;;
+    "product-service-fastapi") echo "orderly-product-fastapi" ;;
+    "acceptance-service-fastapi") echo "orderly-accept-fastapi" ;;
+    "notification-service-fastapi") echo "orderly-notify-fastapi" ;;
+    "customer-hierarchy-service-fastapi") echo "orderly-custhier-fastapi" ;;
+    "supplier-service-fastapi") echo "orderly-supplier-fastapi" ;;
+    "billing-service-fastapi") echo "orderly-billing-fastapi" ;;
+    *) echo "" ;;
+  esac
+}
+
+# Get all service names
+get_all_services() {
+  echo "api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi billing-service-fastapi"
+}
+
+# Check if service exists
+service_exists() {
+  local service_name="$1"
+  case "$service_name" in
+    api-gateway-fastapi|user-service-fastapi|order-service-fastapi|product-service-fastapi|acceptance-service-fastapi|notification-service-fastapi|customer-hierarchy-service-fastapi|supplier-service-fastapi|billing-service-fastapi) 
+      return 0 ;;
+    *) 
+      return 1 ;;
+  esac
+}
 
 # Map Cloud Run service names to local directories
 resolve_service_path() {
   case "$1" in
-    api-gateway) echo "$PROJECT_ROOT/backend/api-gateway-fastapi" ;;
-    user-service) echo "$PROJECT_ROOT/backend/user-service-fastapi" ;;
-    order-service) echo "$PROJECT_ROOT/backend/order-service-fastapi" ;;
-    product-service) echo "$PROJECT_ROOT/backend/product-service-fastapi" ;;
-    acceptance-service) echo "$PROJECT_ROOT/backend/acceptance-service-fastapi" ;;
-    notification-service) echo "$PROJECT_ROOT/backend/notification-service-fastapi" ;;
-    customer-hierarchy-service) echo "$PROJECT_ROOT/backend/customer-hierarchy-service-fastapi" ;;
-    supplier-service) echo "$PROJECT_ROOT/backend/supplier-service-fastapi" ;;
+    api-gateway-fastapi) echo "$PROJECT_ROOT/backend/api-gateway-fastapi" ;;
+    user-service-fastapi) echo "$PROJECT_ROOT/backend/user-service-fastapi" ;;
+    order-service-fastapi) echo "$PROJECT_ROOT/backend/order-service-fastapi" ;;
+    product-service-fastapi) echo "$PROJECT_ROOT/backend/product-service-fastapi" ;;
+    acceptance-service-fastapi) echo "$PROJECT_ROOT/backend/acceptance-service-fastapi" ;;
+    notification-service-fastapi) echo "$PROJECT_ROOT/backend/notification-service-fastapi" ;;
+    customer-hierarchy-service-fastapi) echo "$PROJECT_ROOT/backend/customer-hierarchy-service-fastapi" ;;
+    supplier-service-fastapi) echo "$PROJECT_ROOT/backend/supplier-service-fastapi" ;;
     *) echo "" ;;
   esac
 }
@@ -219,17 +248,11 @@ build_and_push_images() {
             continue
         fi
         
-        if [[ ! -f "$service_path/Dockerfile.cloudrun" ]]; then
-            print_warning "Dockerfile.cloudrun not found for $service_name, skipping..."
-            continue
-        fi
-        
         print_status "Building $service_name..."
-        
-        # Build and push using Cloud Build
-        gcloud builds submit "$service_path" \
-            --tag="gcr.io/$PROJECT_ID/orderly-$service_name:latest" \
-            --dockerfile="Dockerfile.cloudrun" \
+        # Build from backend root so shared libs are available; push to Artifact Registry
+        gcloud builds submit "$PROJECT_ROOT/backend" \
+            --tag="$REGISTRY/$PROJECT_ID/$REPOSITORY/orderly-$service_name:latest" \
+            --dockerfile="$service_path/Dockerfile" \
             --project="$PROJECT_ID"
         
         print_status "✓ $service_name built and pushed"
@@ -259,21 +282,22 @@ deploy_services() {
         
         # Deploy to Cloud Run
         gcloud run deploy "orderly-$service_name" \
-            --image="gcr.io/$PROJECT_ID/orderly-$service_name:latest" \
+            --image="$REGISTRY/$PROJECT_ID/$REPOSITORY/orderly-$service_name:latest" \
             --platform=managed \
             --region="$REGION" \
             --allow-unauthenticated \
+            --service-account="${SERVICE_ACCOUNTS[$service_name]}@$PROJECT_ID.iam.gserviceaccount.com" \
             --memory=512Mi \
             --cpu=1 \
             --min-instances=0 \
             --max-instances=10 \
             --concurrency=100 \
             --timeout=300 \
-            --set-env-vars="ENVIRONMENT=production" \
-            --set-env-vars="REDIS_URL=redis://$redis_host:6379" \
-            --set-env-vars="DATABASE_URL=postgresql+asyncpg://$DB_USER:$POSTGRES_PASSWORD@/$DB_NAME?host=/cloudsql/$db_connection_name" \
+            --set-env-vars="NODE_ENV=production" \
+            --set-env-vars="REDIS_HOST=$redis_host,REDIS_PORT=6379" \
+            --set-env-vars="DATABASE_HOST=/cloudsql/$db_connection_name,DATABASE_NAME=$DB_NAME,DATABASE_USER=$DB_USER" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
-            --set-secrets="JWT_SECRET_KEY=jwt-secret:latest" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
             --add-cloudsql-instances="$db_connection_name" \
             --project="$PROJECT_ID"
@@ -300,22 +324,22 @@ configure_service_mesh() {
     done
     
     # Update API Gateway with service URLs
-    if [[ -n "${service_urls[api-gateway]}" ]]; then
+    if [[ -n "${service_urls[api-gateway-fastapi]}" ]]; then
         print_status "Updating API Gateway configuration..."
         
-        local env_vars="ENVIRONMENT=production,GATEWAY_ENFORCE_ROLES=true"
-        env_vars+=",USER_SERVICE_URL=${service_urls[user-service]}"
-        env_vars+=",ORDER_SERVICE_URL=${service_urls[order-service]}"
-        env_vars+=",PRODUCT_SERVICE_URL=${service_urls[product-service]}"
-        env_vars+=",ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service]}"
-        env_vars+=",BILLING_SERVICE_URL=${service_urls[billing-service]}"
-        env_vars+=",NOTIFICATION_SERVICE_URL=${service_urls[notification-service]}"
+        local env_vars="NODE_ENV=production,GATEWAY_ENFORCE_ROLES=true"
+        env_vars+=",USER_SERVICE_URL=${service_urls[user-service-fastapi]}"
+        env_vars+=",ORDER_SERVICE_URL=${service_urls[order-service-fastapi]}"
+        env_vars+=",PRODUCT_SERVICE_URL=${service_urls[product-service-fastapi]}"
+        env_vars+=",ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service-fastapi]}"
+        env_vars+=",NOTIFICATION_SERVICE_URL=${service_urls[notification-service-fastapi]}"
+        env_vars+=",SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
         # IMPORTANT: Do NOT append path segments here.
         # The API Gateway will append '/api/v2' for Customer Hierarchy routes.
         # Use the pure service base URL only, otherwise requests become '/api/v2/api/v2/*'.
-        env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service]}"
-        
-        gcloud run services update "orderly-api-gateway" \
+        env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service-fastapi]}"
+
+        gcloud run services update "orderly-api-gateway-fastapi" \
             --region="$REGION" \
             --set-env-vars="$env_vars" \
             --project="$PROJECT_ID"
@@ -391,7 +415,7 @@ show_summary() {
     
     echo ""
     print_status "Deployment completed successfully! 🚀"
-    print_status "API Gateway URL: ${service_urls[api-gateway]}"
+    print_status "API Gateway URL: ${service_urls[api-gateway-fastapi]}"
     print_status "Monitor at: https://console.cloud.google.com/run?project=$PROJECT_ID"
 }
 
@@ -418,7 +442,7 @@ show_usage() {
     echo "  export GOOGLE_CLOUD_PROJECT=my-project"
     echo "  export POSTGRES_PASSWORD=secure_password"
     echo "  $0 full"
-    echo "  $0 update api-gateway"
+    echo "  $0 update api-gateway-fastapi"
     echo "  $0 logs order-service"
 }
 

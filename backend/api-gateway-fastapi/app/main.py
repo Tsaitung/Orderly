@@ -132,6 +132,65 @@ async def api_health():
     return health_payload()
 
 
+@app.get("/db/health")
+async def db_health(request: Request):
+    """Database health check - verifies all backend services can connect to their databases"""
+    # Check all backend services' /db/health endpoints
+    hierarchy_base = SERVICE_URLS["customer_hierarchy_v2"].rstrip("/")
+    db_endpoints = {
+        "user-service": f"{SERVICE_URLS['users']}/db/health",
+        "order-service": f"{SERVICE_URLS['orders']}/db/health",
+        "product-service": f"{SERVICE_URLS['products']}/db/health",
+        "acceptance-service": f"{SERVICE_URLS['acceptance']}/db/health",
+        "notification-service": f"{SERVICE_URLS['notifications']}/db/health",
+        "supplier-service": f"{SERVICE_URLS['suppliers']}/db/health",
+        "hierarchy-service": f"{hierarchy_base}/api/v2/health/ready",  # Customer hierarchy uses different path
+    }
+    
+    client = await get_client(request)
+    db_status = {}
+    overall_healthy = True
+    
+    for service_name, db_url in db_endpoints.items():
+        try:
+            response = await client.get(db_url, timeout=5.0)
+            if response.status_code == 200:
+                data = response.json()
+                db_status[service_name] = {
+                    "status": "healthy",
+                    "url": db_url,
+                    "response_time_ms": round(response.elapsed.total_seconds() * 1000, 2),
+                    "details": data.get("database", {}) if isinstance(data, dict) else {}
+                }
+            else:
+                db_status[service_name] = {
+                    "status": "unhealthy",
+                    "url": db_url,
+                    "error": f"HTTP {response.status_code}"
+                }
+                overall_healthy = False
+        except Exception as e:
+            db_status[service_name] = {
+                "status": "unhealthy", 
+                "url": db_url,
+                "error": str(e)
+            }
+            overall_healthy = False
+    
+    return {
+        "status": "healthy" if overall_healthy else "unhealthy",
+        "service": "api-gateway",
+        "check_type": "database",
+        "services": db_status,
+        "timestamp": datetime.utcnow().isoformat(),
+        "summary": {
+            "total": len(db_endpoints),
+            "healthy": len([s for s in db_status.values() if s["status"] == "healthy"]),
+            "unhealthy": len([s for s in db_status.values() if s["status"] != "healthy"])
+        }
+    }
+
+
 @app.get("/ready")
 async def ready(request: Request):
     """Enhanced readiness check that verifies downstream services"""
@@ -287,7 +346,7 @@ async def _proxy(request: Request, full_path: str) -> Response:
     # Basic protection: require Authorization for protected areas
     def _is_protected(p: str) -> bool:
         return any(p.startswith(prefix) for prefix in [
-            "/api/orders", "/api/acceptance", "/api/notifications", "/api/users"
+            "/api/orders", "/api/acceptance", "/api/notifications", "/api/users", "/api/v2"
         ])
 
     claims = None

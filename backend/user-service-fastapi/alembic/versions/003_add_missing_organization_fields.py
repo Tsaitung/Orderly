@@ -44,16 +44,18 @@ def upgrade() -> None:
     # Add missing columns to organizations table (without changing type column)
     with op.batch_alter_table('organizations', schema=None) as batch_op:
         # Add business information columns
-        batch_op.add_column(sa.Column('businessType', business_type_enum, nullable=True))
-        batch_op.add_column(sa.Column('taxId', sa.String(8), nullable=True))
+        # businessType already added in 002, skip it
+        # batch_op.add_column(sa.Column('businessType', business_type_enum, nullable=True))
+        # taxId already added in 002, skip it
+        # batch_op.add_column(sa.Column('taxId', sa.String(8), nullable=True))
         batch_op.add_column(sa.Column('personalId', sa.String(10), nullable=True))
         batch_op.add_column(sa.Column('businessLicenseNumber', sa.String(), nullable=True))
         
-        # Add contact information columns
-        batch_op.add_column(sa.Column('contactPerson', sa.String(), nullable=True))
-        batch_op.add_column(sa.Column('contactPhone', sa.String(), nullable=True))
-        batch_op.add_column(sa.Column('contactEmail', sa.String(), nullable=True))
-        batch_op.add_column(sa.Column('address', sa.String(), nullable=True))
+        # Add contact information columns (all already added in 002, skip them)
+        # batch_op.add_column(sa.Column('contactPerson', sa.String(), nullable=True))
+        # batch_op.add_column(sa.Column('contactPhone', sa.String(), nullable=True))
+        # batch_op.add_column(sa.Column('contactEmail', sa.String(), nullable=True))
+        # batch_op.add_column(sa.Column('address', sa.String(), nullable=True))
         
         # Add invitation and onboarding tracking columns
         batch_op.add_column(sa.Column('invitedByOrganizationId', sa.String(), nullable=True))

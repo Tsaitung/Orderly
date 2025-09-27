@@ -1,5 +1,7 @@
 # 藍綠部署指南 - Orderly Platform
 
+> ⚠️ **已棄用**（2025-09-25）：此文件僅保留做為歷史參考。現行部署流程請改讀 `docs/Infra-Runbook.md`、`docs/DEPLOYMENT-CHECKLIST.md`、`docs/DEPLOYMENT-ENVIRONMENTS.md` 與 `docs/DEPLOYMENT-TROUBLESHOOTING.md`。若需要藍綠部署策略，請依前述官方文檔的 Cloud Run v2 流程與服務帳戶/Secrets 規範操作，勿再依據本指南的腳本或設定。
+
 ## 🎯 概述
 
 藍綠部署是一種零停機時間的部署策略，通過維護兩個相同的生產環境（藍色和綠色）來實現無縫的服務更新。

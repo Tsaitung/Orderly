@@ -3,7 +3,16 @@ API v2 Router for Customer Hierarchy Service
 """
 
 from fastapi import APIRouter
-from .endpoints import groups, companies, locations, business_units, hierarchy, migration, bulk
+from .endpoints import (
+    groups,
+    companies,
+    locations,
+    business_units,
+    hierarchy,
+    migration,
+    bulk,
+    health,
+)
 
 router = APIRouter()
 
@@ -48,4 +57,10 @@ router.include_router(
     bulk.router,
     prefix="/bulk",
     tags=["Bulk Operations"]
+)
+
+router.include_router(
+    health.router,
+    prefix="/health",
+    tags=["Health"]
 )

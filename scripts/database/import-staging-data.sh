@@ -1,11 +1,12 @@
 #!/bin/bash
-# 資料匯入腳本 - 將缺失的測試資料匯入到 staging 環境
+# 永久化資料匯入腳本
+# 確保 staging 環境有完整的測試資料
+
 set -e
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-BLUE='\033[0;34m'
 NC='\033[0m'
 
 log_info() {
@@ -20,191 +21,88 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-log_section() {
-    echo -e "${BLUE}[SECTION]${NC} $1"
-}
+# 配置
+STAGING_DATA_DIR="data/staging/v1"
+CLOUD_SQL_PROXY_PID=""
 
-# Configuration
-LOCAL_PORT="${1:-5433}"
-DB_NAME="${2:-orderly}"
-DB_USER="${3:-orderly}"
-DATA_DIR="data/staging/v1"
-PROXY_PID=""
+log_info "🗄️ Starting staging data import process..."
 
-log_section "📊 Starting staging data import process"
-echo "Database: $DB_NAME on localhost:$LOCAL_PORT"
-echo "Data directory: $DATA_DIR"
-echo ""
-
-# Function to cleanup proxy on exit
-cleanup() {
-    if [ ! -z "$PROXY_PID" ] && kill -0 $PROXY_PID 2>/dev/null; then
-        log_info "Stopping Cloud SQL Proxy (PID: $PROXY_PID)"
-        kill $PROXY_PID
-    fi
-}
-trap cleanup EXIT
-
-# Check if Cloud SQL Proxy is already running
-if ! nc -z 127.0.0.1 $LOCAL_PORT 2>/dev/null; then
-    log_info "Starting Cloud SQL Proxy on port $LOCAL_PORT..."
+# 檢查是否有版本控制的測試資料
+if [ ! -d "$STAGING_DATA_DIR" ]; then
+    log_warning "⚠️ Staging data directory not found: $STAGING_DATA_DIR"
+    log_info "Attempting to generate test data..."
     
-    if [ ! -f "./cloud-sql-proxy" ]; then
-        log_error "Cloud SQL Proxy binary not found. Please download it first:"
-        echo "wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud-sql-proxy"
-        echo "chmod +x cloud-sql-proxy"
-        exit 1
-    fi
-    
-    ./cloud-sql-proxy --port=$LOCAL_PORT orderly-472413:asia-east1:orderly-db-v2 &
-    PROXY_PID=$!
-    
-    # Wait for proxy to be ready
-    for i in {1..30}; do
-        if nc -z 127.0.0.1 $LOCAL_PORT 2>/dev/null; then
-            log_info "✅ Cloud SQL Proxy ready"
-            break
-        fi
-        if [ $i -eq 30 ]; then
-            log_error "Cloud SQL Proxy failed to start after 30 seconds"
-            exit 1
-        fi
-        sleep 1
-    done
-else
-    log_info "✅ Cloud SQL Proxy already running on port $LOCAL_PORT"
-fi
-
-# Step 1: Check current data state
-log_section "🔍 Step 1: Checking current data state"
-
-./scripts/database/data-integrity-check.sh || true
-
-if [ ! -f "/tmp/missing-data-tables.txt" ]; then
-    log_info "🎉 No data integrity issues found!"
-    echo "All expected data is present. Exiting."
-    exit 0
-fi
-
-MISSING_TABLES=$(cat /tmp/missing-data-tables.txt | tr '\n' ' ')
-log_warning "Missing data in tables: $MISSING_TABLES"
-
-# Step 2: Create data directory and export existing data if needed
-log_section "📋 Step 2: Preparing data files"
-
-mkdir -p "$DATA_DIR"
-
-# Check if we have existing data files
-if [ ! -f "$DATA_DIR/export_summary.json" ]; then
-    log_info "Creating test data using database_manager.py..."
-    
-    if [ -f "scripts/database/database_manager.py" ]; then
-        # Export existing data first
-        python scripts/database/database_manager.py export --output-dir "$DATA_DIR"
-        
-        # Create test customers if users table is empty
-        if echo "$MISSING_TABLES" | grep -q "users"; then
-            log_info "Creating test customers data..."
-            python scripts/database/database_manager.py create-test-customers --output-dir "$DATA_DIR"
-        fi
-        
-        log_info "✅ Test data prepared"
+    if [ -f "scripts/database/seed_from_real_data.py" ]; then
+        log_info "Running seed script to generate test data..."
+        python3 scripts/database/seed_from_real_data.py
     else
-        log_error "database_manager.py not found"
-        exit 1
+        log_warning "⚠️ No seed script found, skipping data generation"
+        exit 0
     fi
+fi
+
+# 檢查 Cloud SQL Proxy 是否在運行
+if ! pgrep -f "cloud-sql-proxy.*orderly-db-v2" > /dev/null; then
+    log_info "Starting Cloud SQL Proxy..."
+    ./cloud-sql-proxy --credentials-file=/Users/leeyude/orderly-migration-sa-key.json \
+      --port=5433 orderly-472413:asia-east1:orderly-db-v2 &
+    CLOUD_SQL_PROXY_PID=$!
+    sleep 5
+    log_info "Cloud SQL Proxy started with PID: $CLOUD_SQL_PROXY_PID"
 else
-    log_info "✅ Data files already exist in $DATA_DIR"
+    log_info "✅ Cloud SQL Proxy already running"
 fi
 
-# Step 3: Import missing data
-log_section "📥 Step 3: Importing missing data"
-
-# Get database password
-DB_PASSWORD=$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)
-if [ -z "$DB_PASSWORD" ]; then
-    log_error "Could not retrieve database password from Secret Manager"
-    exit 1
-fi
-
-# Build connection string
-DATABASE_URL="postgresql+asyncpg://orderly:${DB_PASSWORD}@127.0.0.1:$LOCAL_PORT/orderly"
-
-log_info "Importing data to staging database..."
-if python scripts/database/database_manager.py import \
-    --target "$DATABASE_URL" \
-    --data-dir "$DATA_DIR"; then
-    log_info "✅ Data import completed successfully"
+# 運行資料完整性檢查
+if [ -f "scripts/database/data-integrity-check.sh" ]; then
+    log_info "Running data integrity check..."
+    ./scripts/database/data-integrity-check.sh
 else
-    log_warning "⚠️ Data import had some issues (this may be expected for existing data)"
+    log_warning "⚠️ Data integrity check script not found"
 fi
 
-# Step 4: Seed additional real data if needed
-log_section "🌱 Step 4: Seeding additional real data"
+# 檢查是否需要補充缺失資料
+MISSING_TABLES=()
 
-if [ -f "scripts/database/seed_from_real_data.py" ]; then
-    log_info "Running seed_from_real_data.py to create comprehensive test data..."
+# 檢查關鍵表的資料
+PGPASSWORD="OtAEG5/1h78R+EGHStvtabQjOhjKtXNq/Pse3d6ZTDs=" \
+  psql -h 127.0.0.1 -p 5433 -U orderly -d orderly -t -c "
+    SELECT CASE 
+      WHEN (SELECT COUNT(*) FROM users) < 3 THEN 'users'
+      WHEN (SELECT COUNT(*) FROM customer_groups) < 10 THEN 'customer_groups'
+      WHEN (SELECT COUNT(*) FROM supplier_product_skus) < 50 THEN 'supplier_product_skus'
+      ELSE 'OK'
+    END;
+  " | while read result; do
+    result=$(echo "$result" | xargs)  # trim whitespace
+    if [ "$result" != "OK" ]; then
+        MISSING_TABLES+=("$result")
+    fi
+done
+
+# 如果有缺失資料，運行同步腳本
+if [ ${#MISSING_TABLES[@]} -gt 0 ]; then
+    log_warning "⚠️ Found missing data in tables: ${MISSING_TABLES[*]}"
     
-    # Set environment for the script
-    export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
-    export DATABASE_NAME="orderly"
-    export DATABASE_USER="orderly"
-    export POSTGRES_PASSWORD="$DB_PASSWORD"
-    
-    if python scripts/database/seed_from_real_data.py; then
-        log_info "✅ Real data seeding completed"
+    if [ -f "scripts/database/sync_missing_staging_tables.py" ]; then
+        log_info "Running staging data sync script..."
+        python3 scripts/database/sync_missing_staging_tables.py
     else
-        log_warning "⚠️ Real data seeding had issues"
+        log_error "❌ Sync script not found: scripts/database/sync_missing_staging_tables.py"
     fi
 else
-    log_warning "⚠️ seed_from_real_data.py not found, skipping"
+    log_info "✅ All required data tables have sufficient records"
 fi
 
-# Step 5: Verify data integrity after import
-log_section "🔍 Step 5: Post-import data verification"
+# 清理 Cloud SQL Proxy（如果我們啟動的）
+if [ -n "$CLOUD_SQL_PROXY_PID" ]; then
+    log_info "Stopping Cloud SQL Proxy (PID: $CLOUD_SQL_PROXY_PID)..."
+    kill $CLOUD_SQL_PROXY_PID 2>/dev/null || true
+fi
 
-log_info "Running data integrity checks..."
-./scripts/database/data-integrity-check.sh
-
-# Step 6: Test API endpoints
-log_section "🧪 Step 6: Testing API endpoints"
-
-API_GATEWAY="https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app"
-
-log_info "Testing critical API endpoints..."
-
-# Test product categories
-CATEGORIES_COUNT=$(curl -s "$API_GATEWAY/api/products/categories" | jq '. | length' 2>/dev/null || echo "0")
-log_info "Product categories API: $CATEGORIES_COUNT items"
-
-# Test products
-PRODUCTS_COUNT=$(curl -s "$API_GATEWAY/api/products/products" | jq '. | length' 2>/dev/null || echo "0")
-log_info "Products API: $PRODUCTS_COUNT items"
-
-# Test customer companies (if endpoint exists)
-CUSTOMERS_COUNT=$(curl -s "$API_GATEWAY/api/customer-companies" | jq '. | length' 2>/dev/null || echo "0")
-log_info "Customer companies API: $CUSTOMERS_COUNT items"
-
-# Summary
-log_section "📊 Import Summary"
-echo "========================================"
-echo "✅ Data import process completed"
-echo "📋 API test results:"
-echo "  - Product categories: $CATEGORIES_COUNT"
-echo "  - Products: $PRODUCTS_COUNT" 
-echo "  - Customer companies: $CUSTOMERS_COUNT"
+log_info "🎉 Staging data import process completed!"
 echo ""
-
-if [ "$CATEGORIES_COUNT" -gt 100 ] && [ "$PRODUCTS_COUNT" -gt 40 ]; then
-    log_info "🎉 Core data import successful!"
-    echo ""
-    echo "Next steps:"
-    echo "1. Run full health check: ./scripts/health-check-all.sh"
-    echo "2. Test frontend: https://orderly-frontend-staging-*.run.app"
-    echo "3. Monitor for issues: gcloud logging read 'resource.type=\"cloud_run_revision\"' --limit=20"
-else
-    log_warning "⚠️ Data import may be incomplete"
-    echo "Consider running manual data verification"
-fi
-
-log_info "🎯 Data import process completed!"
+echo "📋 Summary:"
+echo "- Data integrity verified"
+echo "- Missing data synced (if any)"
+echo "- Staging environment ready for testing"

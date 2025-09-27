@@ -1,0 +1,53 @@
+FROM python:3.11-slim
+
+# 安裝系統依賴
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# 設置工作目錄
+WORKDIR /app
+
+# 複製 requirements 和安裝依賴
+COPY backend/user-service-fastapi/requirements.txt /tmp/user-requirements.txt
+COPY backend/product-service-fastapi/requirements.txt /tmp/product-requirements.txt
+COPY backend/order-service-fastapi/requirements.txt /tmp/order-requirements.txt
+
+# 安裝所有依賴
+RUN pip install --no-cache-dir \
+    alembic \
+    sqlalchemy \
+    asyncpg \
+    psycopg2-binary \
+    python-dotenv
+
+# 安裝各服務的依賴
+RUN pip install --no-cache-dir -r /tmp/user-requirements.txt || true
+RUN pip install --no-cache-dir -r /tmp/product-requirements.txt || true
+RUN pip install --no-cache-dir -r /tmp/order-requirements.txt || true
+
+# 複製所有服務的 alembic 配置和遷移
+COPY backend/user-service-fastapi/alembic.ini /app/user-service/alembic.ini
+COPY backend/user-service-fastapi/alembic /app/user-service/alembic
+
+COPY backend/product-service-fastapi/alembic.ini /app/product-service/alembic.ini
+COPY backend/product-service-fastapi/alembic /app/product-service/alembic
+
+COPY backend/order-service-fastapi/alembic.ini /app/order-service/alembic.ini
+COPY backend/order-service-fastapi/alembic /app/order-service/alembic
+
+# 複製共享庫
+COPY backend/libs /app/libs
+
+# 複製各服務的應用程式碼（需要 models）
+COPY backend/user-service-fastapi/app /app/user-service/app
+COPY backend/product-service-fastapi/app /app/product-service/app
+COPY backend/order-service-fastapi/app /app/order-service/app
+
+# 複製執行腳本
+COPY scripts/cloudbuild/run-migrations.sh /app/run-migrations.sh
+RUN chmod +x /app/run-migrations.sh
+
+CMD ["/app/run-migrations.sh"]

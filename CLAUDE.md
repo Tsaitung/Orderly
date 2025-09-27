@@ -85,6 +85,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 機敏設定僅放於 `.env.local` 或授權密鑰庫，依 `docs/ci-secrets.md` 流程管理。
 - 新增服務時更新 `compose.*.yml` 與 FastAPI 設定，確保所有入口均由 API Gateway 控制；必要環境變數記錄於 `docs/DEPLOYMENT-CHECKLIST.md`。
 - 本地整合測試建議透過 Docker Compose 啟動 Postgres／Redis，並確認健康檢查端點再提交 PR。
+- Cloud Run 部署必須使用專用 Service Account（由 `scripts/iam/bootstrap-service-accounts.sh` 建立，例如 `orderly-apigw-fastapi@PROJECT.iam.gserviceaccount.com`）。部署時務必指定這些帳戶（`scripts/deploy-cloud-run.sh` 會自動帶入），避免落回預設的 Compute Engine 帳戶。
+- 資料庫遷移／測試資料導入改以 Cloud Build / Cloud Run Job 執行：
+  - Service Account：`orderly-migration@<project>.iam.gserviceaccount.com`，請先以 `gcloud iam service-accounts create orderly-migration` 建立並賦予 `cloudsql.client`、`secretmanager.secretAccessor`、`logging.logWriter`。
+  - 遷移：`gcloud builds submit --config=scripts/cloudbuild/migration-job.yaml --substitutions=_INSTANCE=orderly-472413:asia-east1:orderly-db-v2,_SERVICE_ACCOUNT=orderly-migration@...`
+  - 種子資料：`gcloud run jobs create orderly-seed-data --image=asia-east1-docker.pkg.dev/.../orderly-seeder:latest --service-account=orderly-migration@... --add-cloudsql-instances=orderly-472413:asia-east1:orderly-db-v2 --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_NAME=orderly,DATABASE_USER=orderly --set-secrets=POSTGRES_PASSWORD=postgres-password:latest`
+  - 以上流程統一連到 staging Cloud SQL（`orderly-db-v2`），再視需要同步回本機。
+- Cloud Run 健康檢查與連線問題排查：
+  1. `ENV=<env> SERVICE_SUFFIX=<suffix> ./scripts/db/diag.sh` — 一次收集所有服務的 `/health`、`/db/health`、Cloud SQL annotation 與 Service Account。
+  2. 若所有服務都回 `Connection refused`，先確認 Cloud SQL `orderly-db-v2` 狀態是否 RUNNABLE；接著依 `docs/DEPLOYMENT-TROUBLESHOOTING.md` 快速流程檢查 annotation、Service Account、Secret，並使用 `gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="<service>"' --project=orderly-472413 --limit=50 --format="value(textPayload)"` 抓錯誤堆疊。
+  3. 連線恢復後，務必執行 Alembic 遷移或 SQL 檢查 `SELECT to_regclass('public.products');` 等核心表是否存在，避免 API 因缺表持續回 500。
+  4. 驗證 API Gateway `/service-map` 是否與目標環境一致（`-staging` 或 `-staging-v2`），避免誤接舊服務。
+- API Gateway 與後端服務的路由/健康檢查標準：
+  - 所有 `*_SERVICE_URL` 必須對應 Cloud Run HTTPS URL，不得使用 localhost。
+  - 基本健康檢查：`/health` + `/db/health`（Acceptance Service 為 `/acceptance/health`、`/acceptance/db/health`）。
+  - Customer Hierarchy Service 額外提供 `/api/v2/health`、`/api/v2/health/live`、`/api/v2/health/ready`。
+  - 部署後務必執行 `scripts/db/diag.sh` 驗證 Cloud SQL 綁定與 Service Account 是否正確，並檢視 `/service-map` 確保所有 URL 指向預期服務。
 
 ## Common Commands
 

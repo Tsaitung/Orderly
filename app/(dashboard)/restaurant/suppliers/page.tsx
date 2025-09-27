@@ -101,7 +101,7 @@ export default function SuppliersPage() {
         params.set('limit', '20')
         params.set('offset', String((page - 1) * 20))
 
-        const response = await fetch(`/api/v2/suppliers?${params}`)
+        const response = await fetch(`/api/bff/suppliers?${params}`)
         const data: SuppliersResponse = await response.json()
 
         if (data.success) {
@@ -133,7 +133,7 @@ export default function SuppliersPage() {
     setStatsError(null)
 
     try {
-      const response = await fetch('/api/bff/v2/suppliers/statistics')
+      const response = await fetch('/api/bff/suppliers/stats')
       const data: StatisticsResponse = await response.json()
 
       if (data.success) {

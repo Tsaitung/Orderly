@@ -7,6 +7,23 @@ set -euo pipefail
 # Optionally: roles/logging.logWriter, roles/monitoring.metricWriter (usually granted by default runtime SA)
 
 PROJECT_ID="${GOOGLE_CLOUD_PROJECT:?Set GOOGLE_CLOUD_PROJECT}"
+
+# Map logical services to shortened service-account IDs (<30 chars)
+get_service_account_id() {
+  case "$1" in
+    "api-gateway-fastapi") echo "orderly-apigw-fastapi" ;;
+    "user-service-fastapi") echo "orderly-user-fastapi" ;;
+    "order-service-fastapi") echo "orderly-order-fastapi" ;;
+    "product-service-fastapi") echo "orderly-product-fastapi" ;;
+    "acceptance-service-fastapi") echo "orderly-accept-fastapi" ;;
+    "notification-service-fastapi") echo "orderly-notify-fastapi" ;;
+    "customer-hierarchy-service-fastapi") echo "orderly-custhier-fastapi" ;;
+    "supplier-service-fastapi") echo "orderly-supplier-fastapi" ;;
+    "billing-service-fastapi") echo "orderly-billing-fastapi" ;;
+    *) echo "" ;;
+  esac
+}
+
 SERVICES=(
   api-gateway-fastapi
   user-service-fastapi
@@ -16,6 +33,7 @@ SERVICES=(
   notification-service-fastapi
   customer-hierarchy-service-fastapi
   supplier-service-fastapi
+  billing-service-fastapi
 )
 
 create_sa() {
@@ -41,7 +59,11 @@ bind_role() {
 echo "Project: $PROJECT_ID"
 
 for svc in "${SERVICES[@]}"; do
-  sa_id="orderly-${svc}"
+  sa_id=$(get_service_account_id "$svc")
+  if [[ -z "$sa_id" ]]; then
+    echo "⚠️  Skipping $svc (no service-account alias configured)"
+    continue
+  fi
   create_sa "$sa_id" "Orderly SA for $svc"
   bind_role "$sa_id" roles/cloudsql.client
   bind_role "$sa_id" roles/secretmanager.secretAccessor
@@ -50,8 +72,10 @@ done
 
 echo "\nExport these for reference (deploy step will auto-detect):"
 for svc in "${SERVICES[@]}"; do
-  echo "export SA_${svc//-/_}=orderly-${svc}@${PROJECT_ID}.iam.gserviceaccount.com"
+  sa_id=$(get_service_account_id "$svc")
+  if [[ -n "$sa_id" ]]; then
+    echo "export SA_${svc//-/_}=${sa_id}@${PROJECT_ID}.iam.gserviceaccount.com"
+  fi
 done
 
 echo "✅ Service accounts ready."
-

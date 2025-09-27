@@ -569,11 +569,11 @@ class DatabaseManager:
                 INSERT INTO organizations (
                     id, name, type, "businessType", "taxId", "contactPerson",
                     "contactPhone", "contactEmail", address, "isActive",
-                    "createdAt", "updatedAt"
+                    "createdAt", "updatedAt", settings
                 ) VALUES (
                     :id, :name, :type, :businessType, :taxId, :contactPerson,
                     :contactPhone, :contactEmail, :address, true,
-                    NOW(), NOW()
+                    NOW(), NOW(), '{}'::json
                 )
             """)
             
@@ -609,12 +609,12 @@ class DatabaseManager:
             company_insert = text("""
                 INSERT INTO customer_companies (
                     id, group_id, name, legal_name, tax_id, tax_id_type,
-                    billing_address, billing_contact, "createdAt", "updatedAt",
-                    created_by, updated_by
+                    billing_address, billing_contact, settings, extra_data, is_active,
+                    "createdAt", "updatedAt", created_by, updated_by
                 ) VALUES (
                     :id, :group_id, :name, :legal_name, :tax_id, :tax_id_type,
-                    :billing_address, :billing_contact, :createdAt, :updatedAt,
-                    'import_script', 'import_script'
+                    :billing_address, :billing_contact, '{}'::jsonb, '{}'::jsonb, true,
+                    :createdAt, :updatedAt, 'import_script', 'import_script'
                 )
             """)
             
@@ -633,19 +633,163 @@ class DatabaseManager:
             
             await session.execute(company_insert, company_data)
         
-        # 類似地導入地點和業務單位...
+        # 導入地點
+        for location in locations:
+            check_query = text("SELECT id FROM customer_locations WHERE id = :id")
+            result = await session.execute(check_query, {"id": location["id"]})
+            if result.fetchone():
+                continue
+            
+            location_insert = text("""
+                INSERT INTO customer_locations (
+                    id, company_id, name, code, address, delivery_contact,
+                    extra_data, is_active, "createdAt", "updatedAt",
+                    created_by, updated_by
+                ) VALUES (
+                    :id, :company_id, :name, :code, :address, :delivery_contact,
+                    '{}'::jsonb, true, :createdAt, :updatedAt,
+                    'import_script', 'import_script'
+                )
+            """)
+            
+            location_data = location.copy()
+            if isinstance(location_data.get('address'), dict):
+                location_data['address'] = json.dumps(location_data['address'])
+            if isinstance(location_data.get('delivery_contact'), dict):
+                location_data['delivery_contact'] = json.dumps(location_data['delivery_contact'])
+            if isinstance(location_data.get('createdAt'), str):
+                location_data['createdAt'] = datetime.fromisoformat(location_data['createdAt'].replace('Z', '+00:00'))
+            if isinstance(location_data.get('updatedAt'), str):
+                location_data['updatedAt'] = datetime.fromisoformat(location_data['updatedAt'].replace('Z', '+00:00'))
+                
+            await session.execute(location_insert, location_data)
+        
+        # 導入業務單位
+        for unit in business_units:
+            check_query = text("SELECT id FROM business_units WHERE id = :id")
+            result = await session.execute(check_query, {"id": unit["id"]})
+            if result.fetchone():
+                continue
+            
+            unit_insert = text("""
+                INSERT INTO business_units (
+                    id, location_id, name, code, type, budget_monthly,
+                    ordering_permissions, extra_data, is_active, requires_approval,
+                    "createdAt", "updatedAt", created_by, updated_by
+                ) VALUES (
+                    :id, :location_id, :name, :code, :type, :budget_monthly,
+                    '{}'::jsonb, '{}'::jsonb, true, false,
+                    :createdAt, :updatedAt, 'import_script', 'import_script'
+                )
+            """)
+            
+            unit_data = unit.copy()
+            if isinstance(unit_data.get('createdAt'), str):
+                unit_data['createdAt'] = datetime.fromisoformat(unit_data['createdAt'].replace('Z', '+00:00'))
+            if isinstance(unit_data.get('updatedAt'), str):
+                unit_data['updatedAt'] = datetime.fromisoformat(unit_data['updatedAt'].replace('Z', '+00:00'))
+                
+            await session.execute(unit_insert, unit_data)
+        
         print(f"   ✅ 客戶資料導入完成")
     
     async def _import_categories(self, session: AsyncSession, categories: List[Dict]):
         """導入品類資料"""
         print(f"📂 導入 {len(categories)} 個品類...")
-        # 實現品類導入邏輯...
+        
+        for category in categories:
+            check_query = text("SELECT id FROM product_categories WHERE id = :id")
+            result = await session.execute(check_query, {"id": category["id"]})
+            if result.fetchone():
+                continue
+            
+            category_insert = text("""
+                INSERT INTO product_categories (
+                    id, code, name, "nameEn", "parentId", level, "sortOrder",
+                    description, metadata, "isActive", "createdAt", "updatedAt"
+                ) VALUES (
+                    :id, :code, :name, :nameEn, :parentId, :level, :sortOrder,
+                    :description, :metadata, :isActive, :createdAt, :updatedAt
+                )
+            """)
+            
+            category_data = category.copy()
+            if isinstance(category_data.get('metadata'), dict):
+                category_data['metadata'] = json.dumps(category_data['metadata'])
+            if isinstance(category_data.get('createdAt'), str):
+                category_data['createdAt'] = datetime.fromisoformat(category_data['createdAt'].replace('Z', '+00:00'))
+            if isinstance(category_data.get('updatedAt'), str):
+                category_data['updatedAt'] = datetime.fromisoformat(category_data['updatedAt'].replace('Z', '+00:00'))
+                
+            await session.execute(category_insert, category_data)
+            
         print(f"   ✅ 品類導入完成")
     
     async def _import_skus(self, session: AsyncSession, skus: List[Dict]):
         """導入 SKU 資料"""
         print(f"🏷️ 導入 {len(skus)} 個 SKU...")
-        # 實現 SKU 導入邏輯...
+        
+        # 先導入 products
+        products_imported = set()
+        for sku in skus:
+            product_id = sku.get("productId")
+            if product_id and product_id not in products_imported:
+                check_query = text("SELECT id FROM products WHERE id = :id")
+                result = await session.execute(check_query, {"id": product_id})
+                if not result.fetchone():
+                    # 創建基本的 product
+                    product_insert = text("""
+                        INSERT INTO products (
+                            id, "categoryId", code, name, "unitOfMeasure",
+                            "isActive", "createdAt", "updatedAt"
+                        ) VALUES (
+                            :id, :categoryId, :code, :name, 'unit',
+                            true, NOW(), NOW()
+                        )
+                    """)
+                    # 使用第一個可用的 categoryId
+                    cat_query = text("SELECT id FROM product_categories LIMIT 1")
+                    cat_result = await session.execute(cat_query)
+                    category_row = cat_result.fetchone()
+                    category_id = category_row.id if category_row else "cmfqla3r60000akg7tpm9o6h6"  # 預設使用蔬菜類
+                    
+                    await session.execute(product_insert, {
+                        "id": product_id,
+                        "categoryId": category_id,
+                        "code": f"PROD-{product_id[:8]}",
+                        "name": f"Product {product_id[:8]}"
+                    })
+                    products_imported.add(product_id)
+        
+        # 導入 SKUs
+        for sku in skus:
+            check_query = text("SELECT id FROM product_skus WHERE id = :id")
+            result = await session.execute(check_query, {"id": sku["id"]})
+            if result.fetchone():
+                continue
+            
+            sku_insert = text("""
+                INSERT INTO product_skus (
+                    id, "productId", "skuCode", name, "packageType",
+                    "pricingUnit", "unitPrice", "minOrderQuantity",
+                    weight, "originCountry", "isActive",
+                    "createdAt", "updatedAt"
+                ) VALUES (
+                    :id, :productId, :skuCode, :name, :packageType,
+                    :pricingUnit, :unitPrice, :minOrderQuantity,
+                    :weight, :originCountry, :isActive,
+                    :createdAt, :updatedAt
+                )
+            """)
+            
+            sku_data = sku.copy()
+            if isinstance(sku_data.get('createdAt'), str):
+                sku_data['createdAt'] = datetime.fromisoformat(sku_data['createdAt'].replace('Z', '+00:00'))
+            if isinstance(sku_data.get('updatedAt'), str):
+                sku_data['updatedAt'] = datetime.fromisoformat(sku_data['updatedAt'].replace('Z', '+00:00'))
+                
+            await session.execute(sku_insert, sku_data)
+            
         print(f"   ✅ SKU 導入完成")
 
 # ==================== CLI 介面 ====================

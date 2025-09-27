@@ -565,15 +565,32 @@ jobs:
           # Deploy to Cloud Run
           SERVICE_NAME="orderly-${{ matrix.service }}-$ENVIRONMENT${SERVICE_SUFFIX}"
 
-          # Optional per-service Service Account
+          # Optional per-service Service Account (map service names to SA IDs)
           SA_FLAG=""
           if [ "$USE_SERVICE_ACCOUNTS" = "true" ]; then
-            SA_EMAIL="orderly-${{ matrix.service }}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
-            if gcloud iam service-accounts describe "$SA_EMAIL" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
-              SA_FLAG="--service-account=$SA_EMAIL"
-              echo "🔐 Using service account: $SA_EMAIL"
+            case "${{ matrix.service }}" in
+              "api-gateway-fastapi") SA_ID="orderly-apigw-fastapi" ;;
+              "user-service-fastapi") SA_ID="orderly-user-fastapi" ;;
+              "order-service-fastapi") SA_ID="orderly-order-fastapi" ;;
+              "product-service-fastapi") SA_ID="orderly-product-fastapi" ;;
+              "acceptance-service-fastapi") SA_ID="orderly-accept-fastapi" ;;
+              "notification-service-fastapi") SA_ID="orderly-notify-fastapi" ;;
+              "customer-hierarchy-service-fastapi") SA_ID="orderly-custhier-fastapi" ;;
+              "supplier-service-fastapi") SA_ID="orderly-supplier-fastapi" ;;
+              "billing-service-fastapi") SA_ID="orderly-billing-fastapi" ;;
+              *) SA_ID="" ;;
+            esac
+            
+            if [ -n "$SA_ID" ]; then
+              SA_EMAIL="${SA_ID}@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com"
+              if gcloud iam service-accounts describe "$SA_EMAIL" --project="$GOOGLE_CLOUD_PROJECT" >/dev/null 2>&1; then
+                SA_FLAG="--service-account=$SA_EMAIL"
+                echo "🔐 Using service account: $SA_EMAIL"
+              else
+                echo "⚠️ Service account not found: $SA_EMAIL (skip)"
+              fi
             else
-              echo "⚠️ Service account not found: $SA_EMAIL (skip)"
+              echo "⚠️ No service account mapping for: ${{ matrix.service }}"
             fi
           fi
 
@@ -652,26 +669,26 @@ jobs:
           # CUSTOMER_HIERARCHY_SERVICE_URL, SUPPLIER_SERVICE_URL
           env_vars="NODE_ENV=$ENVIRONMENT,USE_V2_BACKENDS=$USE_V2_BACKENDS"
           if [ -n "${service_urls[user-service-fastapi]}" ]; then
-            env_vars+="\,USER_SERVICE_URL=${service_urls[user-service-fastapi]}"
+            env_vars+=",USER_SERVICE_URL=${service_urls[user-service-fastapi]}"
           fi
           if [ -n "${service_urls[order-service-fastapi]}" ]; then
-            env_vars+="\,ORDER_SERVICE_URL=${service_urls[order-service-fastapi]}"
+            env_vars+=",ORDER_SERVICE_URL=${service_urls[order-service-fastapi]}"
           fi
           if [ -n "${service_urls[product-service-fastapi]}" ]; then
-            env_vars+="\,PRODUCT_SERVICE_URL=${service_urls[product-service-fastapi]}"
+            env_vars+=",PRODUCT_SERVICE_URL=${service_urls[product-service-fastapi]}"
           fi
           if [ -n "${service_urls[acceptance-service-fastapi]}" ]; then
             # acceptance service routes are under '/acceptance' on the service
-            env_vars+="\,ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service-fastapi]}/acceptance"
+            env_vars+=",ACCEPTANCE_SERVICE_URL=${service_urls[acceptance-service-fastapi]}/acceptance"
           fi
           if [ -n "${service_urls[notification-service-fastapi]}" ]; then
-            env_vars+="\,NOTIFICATION_SERVICE_URL=${service_urls[notification-service-fastapi]}"
+            env_vars+=",NOTIFICATION_SERVICE_URL=${service_urls[notification-service-fastapi]}"
           fi
           if [ -n "${service_urls[customer-hierarchy-service-fastapi]}" ]; then
-            env_vars+="\,CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service-fastapi]}"
+            env_vars+=",CUSTOMER_HIERARCHY_SERVICE_URL=${service_urls[customer-hierarchy-service-fastapi]}"
           fi
           if [ -n "${service_urls[supplier-service-fastapi]}" ]; then
-            env_vars+="\,SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
+            env_vars+=",SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
           fi
 
           echo "Applying env vars to API Gateway: $env_vars (suffix='${SERVICE_SUFFIX}')"

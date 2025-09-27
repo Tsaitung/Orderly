@@ -1,0 +1,30 @@
+# Default gcloudignore patterns
+.gcloudignore
+.git
+.gitignore
+node_modules
+npm-debug.log
+.env
+.env.local
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+*.log
+dist/
+build/
+*.egg-info/
+.DS_Store
+.vscode/
+.idea/
+
+# Include important build files
+!scripts/cloudbuild/Dockerfile.seed
+!scripts/cloudbuild/Dockerfile.migration-fix
+!scripts/cloudbuild/run-migrations.sh
+!scripts/cloudbuild/seed-data.yaml
+!scripts/database/
+!scripts/database/data/*.json
+!scripts/database/seed_from_real_data.py

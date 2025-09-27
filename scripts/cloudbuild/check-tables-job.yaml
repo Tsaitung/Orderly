@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-tables
+spec:
+  template:
+    spec:
+      containers:
+      - name: check-tables
+        image: postgres:14-alpine
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-password
+              key: latest
+        - name: DATABASE_HOST
+          value: "/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+        - name: DATABASE_USER
+          value: "orderly"
+        - name: DATABASE_NAME
+          value: "orderly"
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "=== Checking tables in staging database ==="
+            psql "postgresql://${DATABASE_USER}@/${DATABASE_NAME}?host=${DATABASE_HOST}" << 'EOF'
+            -- List all tables
+            SELECT schemaname, tablename 
+            FROM pg_tables 
+            WHERE schemaname = 'public' 
+            ORDER BY tablename;
+            
+            -- Check specific product-related tables
+            SELECT 
+              'product_categories' as table_name,
+              to_regclass('public.product_categories') as exists,
+              CASE 
+                WHEN to_regclass('public.product_categories') IS NOT NULL 
+                THEN (SELECT COUNT(*) FROM product_categories)
+                ELSE 0 
+              END as row_count;
+              
+            SELECT 
+              'products' as table_name,
+              to_regclass('public.products') as exists,
+              CASE 
+                WHEN to_regclass('public.products') IS NOT NULL 
+                THEN (SELECT COUNT(*) FROM products)
+                ELSE 0 
+              END as row_count;
+              
+            SELECT 
+              'product_skus' as table_name,
+              to_regclass('public.product_skus') as exists,
+              CASE 
+                WHEN to_regclass('public.product_skus') IS NOT NULL 
+                THEN (SELECT COUNT(*) FROM product_skus)
+                ELSE 0 
+              END as row_count;
+              
+            SELECT 
+              'supplier_product_skus' as table_name,
+              to_regclass('public.supplier_product_skus') as exists,
+              CASE 
+                WHEN to_regclass('public.supplier_product_skus') IS NOT NULL 
+                THEN (SELECT COUNT(*) FROM supplier_product_skus)
+                ELSE 0 
+              END as row_count;
+            
+            -- Check table structure if exists
+            \d+ product_categories
+            \d+ products
+            \d+ product_skus
+            EOF

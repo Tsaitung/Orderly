@@ -1,0 +1,63 @@
+steps:
+  # Build container with Alembic and migrations for all services
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-migration-image'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-east1-docker.pkg.dev/${PROJECT_ID}/orderly/db-migration:latest'
+      - '-f'
+      - 'scripts/cloudbuild/Dockerfile.migration-simple'
+      - '.'
+    dir: '.'
+
+  # Push the migration image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-migration-image'
+    args:
+      - 'push'
+      - 'asia-east1-docker.pkg.dev/${PROJECT_ID}/orderly/db-migration:latest'
+
+  # Create/Update Cloud Run Job
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'create-migration-job'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run jobs create db-migration \
+          --image=asia-east1-docker.pkg.dev/${PROJECT_ID}/orderly/db-migration:latest \
+          --region=${_REGION} \
+          --project=${PROJECT_ID} \
+          --service-account=orderly-migration@${PROJECT_ID}.iam.gserviceaccount.com \
+          --set-env-vars="DATABASE_HOST=/cloudsql/${_INSTANCE_CONNECTION_NAME},DATABASE_NAME=orderly,DATABASE_USER=orderly" \
+          --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
+          --set-cloudsql-instances=${_INSTANCE_CONNECTION_NAME} \
+          --parallelism=1 \
+          --task-timeout=30m \
+          --max-retries=0 \
+          || \
+        gcloud run jobs update db-migration \
+          --image=asia-east1-docker.pkg.dev/${PROJECT_ID}/orderly/db-migration:latest \
+          --region=${_REGION} \
+          --project=${PROJECT_ID}
+
+  # Execute the migration job
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'run-migration-job'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "Executing database migrations..."
+        gcloud run jobs execute db-migration \
+          --region=${_REGION} \
+          --project=${PROJECT_ID} \
+          --wait
+
+substitutions:
+  _REGION: asia-east1
+  _INSTANCE_CONNECTION_NAME: orderly-472413:asia-east1:orderly-db-v2
+
+options:
+  logging: CLOUD_LOGGING_ONLY

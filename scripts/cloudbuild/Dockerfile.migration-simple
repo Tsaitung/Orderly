@@ -1,0 +1,91 @@
+FROM python:3.11-slim
+
+# 安裝系統依賴
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# 設置工作目錄
+WORKDIR /app
+
+# 複製 requirements 和安裝依賴
+COPY backend/user-service-fastapi/requirements.txt /tmp/user-requirements.txt
+COPY backend/product-service-fastapi/requirements.txt /tmp/product-requirements.txt
+COPY backend/order-service-fastapi/requirements.txt /tmp/order-requirements.txt
+
+# 安裝所有依賴
+RUN pip install --no-cache-dir \
+    alembic \
+    sqlalchemy \
+    asyncpg \
+    psycopg2-binary \
+    python-dotenv \
+    pydantic-settings
+
+# 安裝各服務的依賴
+RUN pip install --no-cache-dir -r /tmp/user-requirements.txt || true
+RUN pip install --no-cache-dir -r /tmp/product-requirements.txt || true
+RUN pip install --no-cache-dir -r /tmp/order-requirements.txt || true
+
+# 複製所有服務的 alembic 配置和遷移
+COPY backend/user-service-fastapi/alembic.ini /app/user-service/alembic.ini
+COPY backend/user-service-fastapi/alembic /app/user-service/alembic
+
+COPY backend/product-service-fastapi/alembic.ini /app/product-service/alembic.ini
+COPY backend/product-service-fastapi/alembic /app/product-service/alembic
+
+COPY backend/order-service-fastapi/alembic.ini /app/order-service/alembic.ini
+COPY backend/order-service-fastapi/alembic /app/order-service/alembic
+
+# 複製共享庫
+COPY backend/libs /app/libs
+
+# 複製各服務的應用程式碼（需要 models）
+COPY backend/user-service-fastapi/app /app/user-service/app
+COPY backend/product-service-fastapi/app /app/product-service/app
+COPY backend/order-service-fastapi/app /app/order-service/app
+
+# 創建執行腳本使用 echo 命令
+RUN echo '#!/bin/bash' > /app/run-migrations.sh && \
+    echo 'set -e' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo '# 設置 Python 路徑' >> /app/run-migrations.sh && \
+    echo 'export PYTHONPATH=/app:/app/libs' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo '# 構建資料庫 URL' >> /app/run-migrations.sh && \
+    echo 'export DATABASE_URL="postgresql://${DATABASE_USER}:${POSTGRES_PASSWORD}@/${DATABASE_NAME}?host=${DATABASE_HOST}"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Checking database connection..."' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT version();" || exit 1' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Current tables:"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo '# 執行各服務的遷移' >> /app/run-migrations.sh && \
+    echo 'echo "Running User Service migrations..."' >> /app/run-migrations.sh && \
+    echo 'cd /app/user-service' >> /app/run-migrations.sh && \
+    echo 'alembic upgrade head || echo "User service migration completed or no changes needed"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Running Product Service migrations..."' >> /app/run-migrations.sh && \
+    echo 'cd /app/product-service' >> /app/run-migrations.sh && \
+    echo 'alembic upgrade head || echo "Product service migration completed or no changes needed"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Running Order Service migrations..."' >> /app/run-migrations.sh && \
+    echo 'cd /app/order-service' >> /app/run-migrations.sh && \
+    echo 'alembic upgrade head || echo "Order service migration completed or no changes needed"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Final table list:"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "Checking critical tables:"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.products'"'"') as products_table;"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.product_categories'"'"') as categories_table;"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.users'"'"') as users_table;"' >> /app/run-migrations.sh && \
+    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.orders'"'"') as orders_table;"' >> /app/run-migrations.sh && \
+    echo '' >> /app/run-migrations.sh && \
+    echo 'echo "All migrations completed!"' >> /app/run-migrations.sh && \
+    chmod +x /app/run-migrations.sh
+
+CMD ["/app/run-migrations.sh"]

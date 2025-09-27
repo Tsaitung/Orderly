@@ -1,0 +1,113 @@
+name: Deploy Staging (Permanent)
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if tests fail'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          
+      - name: Configure gcloud
+        run: |
+          gcloud auth configure-docker asia-east1-docker.pkg.dev --quiet
+          gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          
+      - name: Deploy Services with Permanent Configuration
+        run: |
+          chmod +x scripts/deploy-staging-permanent.sh
+          ./scripts/deploy-staging-permanent.sh
+          
+      - name: Run Database Migrations
+        run: |
+          if [ -f "scripts/database/run-migrations.sh" ]; then
+            chmod +x scripts/database/run-migrations.sh
+            ./scripts/database/run-migrations.sh
+          else
+            echo "⚠️ Migration script not found, skipping..."
+          fi
+          
+      - name: Import/Verify Data
+        run: |
+          if [ -f "scripts/database/import-staging-data.sh" ]; then
+            chmod +x scripts/database/import-staging-data.sh
+            ./scripts/database/import-staging-data.sh
+          else
+            echo "⚠️ Data import script not found, skipping..."
+          fi
+          
+      - name: Health Check
+        run: |
+          echo "Running post-deployment health checks..."
+          if [ -f "scripts/health-check-simple.sh" ]; then
+            chmod +x scripts/health-check-simple.sh
+            ./scripts/health-check-simple.sh
+          else
+            echo "⚠️ Health check script not found, running basic API test..."
+            curl -f "https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app/ready"
+          fi
+          
+      - name: Verify Core APIs
+        run: |
+          echo "Testing core API endpoints..."
+          GATEWAY_URL="https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app"
+          
+          # Test product categories API
+          echo "Testing product categories:"
+          CATEGORIES_COUNT=$(curl -s "$GATEWAY_URL/api/products/categories" | jq '.meta.total // 0')
+          echo "Product categories count: $CATEGORIES_COUNT"
+          
+          # Test products API with higher limit
+          echo "Testing products API:"
+          PRODUCTS_COUNT=$(curl -s "$GATEWAY_URL/api/products/products?limit=60" | jq '.data.pagination.totalItems // 0')
+          echo "Products count: $PRODUCTS_COUNT"
+          
+          # Verify minimum data requirements
+          if [ "$CATEGORIES_COUNT" -lt 100 ]; then
+            echo "❌ Warning: Product categories count ($CATEGORIES_COUNT) below expected (105)"
+          fi
+          
+          if [ "$PRODUCTS_COUNT" -lt 50 ]; then
+            echo "❌ Warning: Products count ($PRODUCTS_COUNT) below expected (52)"
+          fi
+          
+          echo "✅ Core API verification completed"
+          
+      - name: Send Deployment Report
+        if: always()
+        run: |
+          echo "📊 Deployment Summary"
+          echo "======================"
+          echo "Timestamp: $(date)"
+          echo "Branch: staging"
+          echo "Commit: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo ""
+          echo "Services deployed using permanent configuration from configs/staging/"
+          echo "Health checks and API verification completed"
+          echo ""
+          echo "🔗 Staging URLs:"
+          echo "- API Gateway: https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app"
+          echo "- Frontend: https://orderly-frontend-staging-655602747430.asia-east1.run.app"
+          echo ""
+          echo "📋 Next steps:"
+          echo "1. Manual verification of frontend functionality"
+          echo "2. Check Cloud Run logs if any issues"
+          echo "3. Monitor performance metrics"

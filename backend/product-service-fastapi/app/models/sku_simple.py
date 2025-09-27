@@ -9,18 +9,22 @@ from .product import PricingMethod
 import enum
 
 class SKUType(str, enum.Enum):
-    PUBLIC = "public"
-    PRIVATE = "private"
+    STANDARD = "STANDARD"
+    VARIANT = "VARIANT"
+    BUNDLE = "BUNDLE"
+    CUSTOM = "CUSTOM"
 
 class CreatorType(str, enum.Enum):
-    PLATFORM = "platform"
-    SUPPLIER = "supplier"
+    SYSTEM = "SYSTEM"
+    PLATFORM = "PLATFORM"
+    SUPPLIER = "SUPPLIER"
+    RESTAURANT = "RESTAURANT"
 
 class ApprovalStatus(str, enum.Enum):
-    DRAFT = "draft"
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    DRAFT = "DRAFT"
 
 
 class ProductSKU(BaseModel):
@@ -43,11 +47,11 @@ class ProductSKU(BaseModel):
     is_active = Column("isActive", Boolean, nullable=False, default=True)
     
     # SKU 共享機制欄位
-    type = Column(Enum(SKUType), nullable=False, default=SKUType.PRIVATE)
-    creator_type = Column(Enum(CreatorType), nullable=False, default=CreatorType.SUPPLIER)
+    type = Column(Enum(SKUType), nullable=False, default=SKUType.STANDARD)
+    creator_type = Column(Enum(CreatorType), nullable=False, default=CreatorType.SYSTEM)
     creator_id = Column(String(36), nullable=True)
     standard_info = Column(JSON, nullable=True, comment='共享型 SKU 的標準化資訊')
-    approval_status = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.APPROVED)
+    approval_status = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.DRAFT)
     approved_by = Column(String(36), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     version = Column(Integer, nullable=False, default=1)
