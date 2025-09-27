@@ -84,12 +84,36 @@ class ProductInDB(ProductBase):
         populate_by_name = True
 
 
-class ProductResponse(ProductInDB):
+class ProductResponse(BaseModel):
     """
     API response schema - compatible with existing frontend
     Matches the structure expected by ProductManagement.tsx
     """
-    # 支援前端既有欄位格式
+    id: str
+    code: str = Field(..., description="產品代碼")
+    name: str = Field(..., description="產品名稱")
+    nameEn: Optional[str] = Field(None, description="英文名稱", alias="name_en")
+    description: Optional[str] = Field(None, description="描述")
+    brand: Optional[str] = Field(None, description="品牌")
+    origin: Optional[str] = Field(None, description="產地")
+    productState: Optional[ProductState] = Field(None, description="產品狀態", alias="product_state")
+    taxStatus: Optional[TaxStatus] = Field(None, description="稅務狀態", alias="tax_status")
+    categoryId: str = Field(..., description="類別ID", alias="category_id")
+    baseUnit: Optional[str] = Field(None, description="基本單位", alias="base_unit")
+    pricingUnit: Optional[str] = Field(None, description="定價單位", alias="pricing_unit")
+    allergenTrackingEnabled: bool = Field(default=False, description="是否啟用過敏原追蹤", alias="allergen_tracking_enabled")
+    isActive: bool = Field(default=True, description="是否啟用", alias="is_active")
+    isPublic: bool = Field(default=True, description="是否公開", alias="is_public")
+    specifications: Optional[Dict[str, Any]] = Field(None, description="規格")
+    certifications: Optional[List[Dict[str, Any]]] = Field(None, description="認證")
+    safetyInfo: Optional[Dict[str, Any]] = Field(None, description="安全資訊", alias="safety_info")
+    supplierId: Optional[str] = Field(None, description="供應商ID", alias="supplier_id")
+    version: int
+    createdAt: datetime = Field(..., alias="created_at")
+    updatedAt: datetime = Field(..., alias="updated_at")
+    createdBy: Optional[str] = Field(None, alias="created_by")
+    updatedBy: Optional[str] = Field(None, alias="updated_by")
+    
     class Config:
         from_attributes = True
         populate_by_name = True

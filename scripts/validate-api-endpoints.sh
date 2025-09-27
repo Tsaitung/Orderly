@@ -6,7 +6,7 @@
 set -e
 
 ENVIRONMENT=${1:-staging}
-API_BASE="https://orderly-api-gateway-fastapi-${ENVIRONMENT}-usg6y7o2ba-de.a.run.app"
+API_BASE="https://orderly-api-gateway-fastapi-${ENVIRONMENT}-655602747430.asia-east1.run.app"
 
 echo "🔍 Validating API endpoints for environment: $ENVIRONMENT"
 echo "📍 Base URL: $API_BASE"

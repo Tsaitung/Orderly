@@ -1,0 +1,11 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'build'
+  - '-t'
+  - 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-product-service-fastapi:v1.0.3'
+  - '-f'
+  - 'backend/product-service-fastapi/Dockerfile'
+  - '.'
+images:
+- 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-product-service-fastapi:v1.0.3'

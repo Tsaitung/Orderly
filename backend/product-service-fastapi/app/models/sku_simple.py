@@ -47,11 +47,11 @@ class ProductSKU(BaseModel):
     is_active = Column("isActive", Boolean, nullable=False, default=True)
     
     # SKU 共享機制欄位
-    type = Column(Enum(SKUType), nullable=False, default=SKUType.STANDARD)
-    creator_type = Column(Enum(CreatorType), nullable=False, default=CreatorType.SYSTEM)
+    type = Column(Enum(SKUType, name="skutype", create_type=False), nullable=False, default=SKUType.STANDARD)
+    creator_type = Column(Enum(CreatorType, name="creatortype", create_type=False), nullable=False, default=CreatorType.SYSTEM)
     creator_id = Column(String(36), nullable=True)
     standard_info = Column(JSON, nullable=True, comment='共享型 SKU 的標準化資訊')
-    approval_status = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.DRAFT)
+    approval_status = Column(Enum(ApprovalStatus, name="approvalstatus", create_type=False), nullable=False, default=ApprovalStatus.APPROVED)
     approved_by = Column(String(36), nullable=True)
     approved_at = Column(DateTime, nullable=True)
     version = Column(Integer, nullable=False, default=1)

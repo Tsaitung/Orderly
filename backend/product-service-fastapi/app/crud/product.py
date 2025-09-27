@@ -75,7 +75,7 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
             ).where(base_where).group_by(Product.product_state)
             state_breakdown_result = await db.execute(state_breakdown_query)
             state_breakdown = {
-                row.product_state.value: row.count 
+                row.product_state.value if row.product_state else "未設定": row.count 
                 for row in state_breakdown_result.fetchall()
             }
             
@@ -86,7 +86,7 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
             ).where(base_where).group_by(Product.tax_status)
             tax_breakdown_result = await db.execute(tax_breakdown_query)
             tax_status_breakdown = {
-                row.tax_status.value: row.count 
+                row.tax_status.value if row.tax_status else "未設定": row.count 
                 for row in tax_breakdown_result.fetchall()
             }
             

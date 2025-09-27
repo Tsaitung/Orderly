@@ -9,62 +9,18 @@ import { Badge } from '@/components/ui/badge'
 import SuppliersList from '@/components/suppliers/suppliers-list'
 import SupplierFilters, { type FilterValues } from '@/components/suppliers/supplier-filters'
 import SupplierStatistics from '@/components/suppliers/supplier-statistics'
-import type {
-  SupplierSummary,
-  SupplierStatistics as SupplierStatsType,
+import {
+  mapSupplierCardToSummary,
+  mapSupplierStats,
+  type SupplierStatistics as SupplierStatsType,
+  type SupplierSummary,
 } from '@/lib/services/supplier-service'
-
-// Types for API responses
-interface SuppliersResponse {
-  success: boolean
-  data: {
-    suppliers: SupplierSummary[]
-    pagination: {
-      total: number
-      limit: number
-      offset: number
-      currentPage: number
-      totalPages: number
-      hasNext: boolean
-      hasPrev: boolean
-    }
-    filters: {
-      search?: string
-      isActive: boolean
-      appliedAt: string
-    }
-  }
-}
-
-interface StatisticsResponse {
-  success: boolean
-  data: {
-    statistics: SupplierStatsType & {
-      computed?: {
-        supplierUtilizationRate: number
-        averageProductsPerSupplier: number
-        averageGMVPerSupplier: number
-      }
-      trends?: {
-        supplierGrowth: number
-        gmvGrowth: number
-        fulfillmentImprovement: number
-      }
-      period?: {
-        start: string
-        end: string
-        days: number
-      }
-    }
-  }
-}
+import { platformSupplierService } from '@/lib/api/platform-supplier-service'
 
 export default function SuppliersPage() {
   // State management
   const [suppliers, setSuppliers] = useState<SupplierSummary[]>([])
-  const [statistics, setStatistics] = useState<StatisticsResponse['data']['statistics'] | null>(
-    null
-  )
+  const [statistics, setStatistics] = useState<SupplierStatsType | null>(null)
   const [filters, setFilters] = useState<FilterValues>({ isActive: true })
   const [pagination, setPagination] = useState({
     total: 0,
@@ -91,33 +47,38 @@ export default function SuppliersPage() {
       setSuppliersError(null)
 
       try {
-        // Build query parameters
-        const params = new URLSearchParams()
+        const statusFilter =
+          currentFilters.isActive === undefined
+            ? undefined
+            : currentFilters.isActive
+              ? 'VERIFIED'
+              : 'DEACTIVATED'
 
-        if (currentFilters.search) params.set('search', currentFilters.search)
-        if (currentFilters.isActive !== undefined)
-          params.set('active', String(currentFilters.isActive))
+        const response = await platformSupplierService.getSuppliers({
+          search: currentFilters.search,
+          status: statusFilter,
+          page,
+          page_size: 20,
+          sort_by: 'created_at',
+          sort_order: 'desc',
+        })
 
-        params.set('limit', '20')
-        params.set('offset', String((page - 1) * 20))
+        const normalizedSuppliers = response.suppliers.map(mapSupplierCardToSummary)
 
-        const response = await fetch(`/api/bff/suppliers?${params}`)
-        const data: SuppliersResponse = await response.json()
+        setSuppliers(normalizedSuppliers)
+        setPagination({
+          total: response.total,
+          currentPage: response.page,
+          totalPages: response.total_pages,
+          hasNext: response.page < response.total_pages,
+          hasPrev: response.page > 1,
+        })
 
-        if (data.success) {
-          setSuppliers(data.data.suppliers)
-          setPagination({
-            total: data.data.pagination.total,
-            currentPage: data.data.pagination.currentPage,
-            totalPages: data.data.pagination.totalPages,
-            hasNext: data.data.pagination.hasNext,
-            hasPrev: data.data.pagination.hasPrev,
-          })
-          // 更新最后更新时间
-          setLastUpdateTime(new Date().toLocaleString('zh-TW'))
-        } else {
-          throw new Error('Failed to fetch suppliers')
+        if (response.stats) {
+          setStatistics(mapSupplierStats(response.stats))
         }
+
+        setLastUpdateTime(new Date().toLocaleString('zh-TW'))
       } catch (error) {
         console.error('Error fetching suppliers:', error)
         setSuppliersError('無法載入供應商列表，請稍後再試')
@@ -133,14 +94,8 @@ export default function SuppliersPage() {
     setStatsError(null)
 
     try {
-      const response = await fetch('/api/bff/suppliers/stats')
-      const data: StatisticsResponse = await response.json()
-
-      if (data.success) {
-        setStatistics(data.data.statistics)
-      } else {
-        throw new Error('Failed to fetch statistics')
-      }
+      const response = await platformSupplierService.getSupplierStats()
+      setStatistics(mapSupplierStats(response))
     } catch (error) {
       console.error('Error fetching statistics:', error)
       setStatsError('無法載入統計資料')

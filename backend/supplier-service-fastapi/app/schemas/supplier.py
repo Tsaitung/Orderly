@@ -42,7 +42,7 @@ class SupplierProfileCreateRequest(BaseModel):
     delivery_zones: List[str] = Field(default_factory=list)
     minimum_order_amount: Decimal = Field(default=Decimal("1000.00"), ge=0)
     payment_terms_days: int = Field(default=30, ge=1, le=180)
-    quality_certifications: List[Dict[str, Any]] = Field(default_factory=list)
+    quality_certifications: List[str] = Field(default_factory=list)
     contact_preferences: Dict[str, Any] = Field(default_factory=dict)
     public_description: Optional[str] = Field(None, max_length=500)
 
@@ -60,7 +60,7 @@ class SupplierProfileUpdateRequest(BaseModel):
     delivery_zones: Optional[List[str]] = None
     minimum_order_amount: Optional[Decimal] = Field(None, ge=0)
     payment_terms_days: Optional[int] = Field(None, ge=1, le=180)
-    quality_certifications: Optional[List[Dict[str, Any]]] = None
+    quality_certifications: Optional[List[str]] = None
     contact_preferences: Optional[Dict[str, Any]] = None
     public_description: Optional[str] = Field(None, max_length=500)
     settings: Optional[Dict[str, Any]] = None
@@ -112,7 +112,7 @@ class SupplierProfileResponse(BaseModel):
     delivery_zones: List[str]
     minimum_order_amount: Decimal
     payment_terms_days: int
-    quality_certifications: List[Dict[str, Any]]
+    quality_certifications: List[str]
     contact_preferences: Dict[str, Any]
     public_description: Optional[str] = None
     settings: Dict[str, Any]
