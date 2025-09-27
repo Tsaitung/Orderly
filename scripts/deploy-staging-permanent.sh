@@ -38,10 +38,20 @@ if [ ! -d "$CONFIG_DIR" ]; then
     exit 1
 fi
 
-if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
+if ! gcloud auth list --format="value(account)" --filter="status:ACTIVE" | grep -q .; then
     log_error "No active gcloud authentication found"
+    log_info "Available authentication methods:"
+    gcloud auth list
     exit 1
 fi
+
+# Verify we can access the project
+if ! gcloud projects describe "$PROJECT_ID" >/dev/null 2>&1; then
+    log_error "Cannot access project $PROJECT_ID. Check authentication and permissions."
+    exit 1
+fi
+
+log_info "✅ Authentication verified for project $PROJECT_ID"
 
 log_section "🚀 Starting permanent staging deployment..."
 echo "Project: $PROJECT_ID"

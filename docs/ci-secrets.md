@@ -280,10 +280,41 @@ gcloud services list --enabled
 echo "GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}"
 ```
 
+## 🚀 永久部署工作流 (deploy-staging-permanent.yml)
+
+新增的永久部署工作流使用預配置的YAML文件進行部署，確保配置的一致性和可重現性。
+
+### 使用方式
+
+```bash
+# 自動觸發（推送到staging分支）
+git push origin staging
+
+# 手動觸發
+gh workflow run "Deploy Staging (Permanent)" --ref staging -f force_deploy=false
+```
+
+### 配置文件位置
+
+永久部署使用 `configs/staging/` 目錄中的YAML配置文件：
+
+- `configs/staging/api-gateway.yaml` - API閘道配置
+- `configs/staging/user.yaml` - 用戶服務配置
+- `configs/staging/product.yaml` - 產品服務配置
+- 等等...
+
+### 故障排除
+
+**認證問題**: 確保已正確設置 `GCP_SA_KEY` 和 `GCP_PROJECT_ID` secrets
+**配置缺失**: 檢查 `configs/staging/` 目錄中是否存在所有必需的YAML文件
+**權限不足**: 確保Service Account具有Cloud Run Admin權限
+
 ## 📚 相關文檔
 
 - [deploy.yml工作流](.github/workflows/deploy.yml) - 主要部署工作流
+- [deploy-staging-permanent.yml工作流](.github/workflows/deploy-staging-permanent.yml) - 永久配置部署工作流
 - [GCP部署腳本](scripts/deploy-cloud-run.sh) - Cloud Run部署腳本
+- [永久部署腳本](scripts/deploy-staging-permanent.sh) - 永久配置部署腳本
 - [Docker配置](docs/docker-containerization-summary.md) - 容器化文檔
 
 ---

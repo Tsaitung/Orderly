@@ -19,21 +19,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           
       - name: Configure gcloud
         run: |
           gcloud auth configure-docker asia-east1-docker.pkg.dev --quiet
           gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+          # Verify authentication
+          gcloud auth list --format="value(account)" --filter="status:ACTIVE"
+          echo "✅ Authentication verified"
           
       - name: Deploy Services with Permanent Configuration
         run: |
           chmod +x scripts/deploy-staging-permanent.sh
+          echo "🚀 Starting deployment with permanent configuration..."
+          echo "Environment: staging"
+          echo "Project: ${{ secrets.GCP_PROJECT_ID }}"
+          echo "Region: asia-east1"
           ./scripts/deploy-staging-permanent.sh
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           
       - name: Run Database Migrations
         run: |
@@ -90,18 +103,41 @@ jobs:
           
           echo "✅ Core API verification completed"
           
+      - name: Check for Deployment Failures
+        if: failure()
+        run: |
+          echo "❌ Deployment failed - collecting diagnostic information..."
+          echo ""
+          echo "🔍 Authentication Status:"
+          gcloud auth list
+          echo ""
+          echo "🔍 Project Access:"
+          gcloud projects describe ${{ secrets.GCP_PROJECT_ID }} || echo "Cannot access project"
+          echo ""
+          echo "🔍 Recent Cloud Run deployments:"
+          gcloud run services list --region=asia-east1 --limit=10 || echo "Cannot list services"
+          echo ""
+          echo "🔍 Cloud Run logs (last 10 entries):"
+          gcloud logging read 'resource.type="cloud_run_revision"' --limit=10 --format="value(textPayload)" || echo "Cannot read logs"
+
       - name: Send Deployment Report
         if: always()
         run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment completed successfully!"
+          else
+            echo "❌ Deployment failed or had issues"
+          fi
+          echo ""
           echo "📊 Deployment Summary"
           echo "======================"
+          echo "Status: ${{ job.status }}"
           echo "Timestamp: $(date)"
           echo "Branch: staging"
           echo "Commit: ${{ github.sha }}"
           echo "Workflow: ${{ github.workflow }}"
           echo ""
           echo "Services deployed using permanent configuration from configs/staging/"
-          echo "Health checks and API verification completed"
           echo ""
           echo "🔗 Staging URLs:"
           echo "- API Gateway: https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app"
@@ -111,3 +147,4 @@ jobs:
           echo "1. Manual verification of frontend functionality"
           echo "2. Check Cloud Run logs if any issues"
           echo "3. Monitor performance metrics"
+          echo "4. Review deployment logs in GitHub Actions"
