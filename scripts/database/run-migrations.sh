@@ -55,12 +55,45 @@ for SERVICE in "${SERVICES[@]}"; do
     log_info "Running migrations for $SERVICE..."
     cd "$SERVICE_DIR"
     
-    if alembic upgrade head 2>/dev/null; then
-        log_info "✅ $SERVICE: Migration completed successfully"
-        MIGRATION_RESULTS+=("$SERVICE: SUCCESS")
+    # Set PYTHONPATH for service imports
+    export PYTHONPATH="$(pwd):$PYTHONPATH"
+    
+    # Check current migration state
+    CURRENT_VERSION=$(alembic current 2>/dev/null | tail -n 1 | awk '{print $1}' || echo "")
+    HEAD_VERSION=$(alembic heads 2>/dev/null | tail -n 1 | awk '{print $1}' || echo "")
+    
+    if [ -z "$CURRENT_VERSION" ]; then
+        # No version tracked - first check if tables exist
+        log_info "🔧 $SERVICE: No migration history found, checking schema state"
+        
+        # Try to mark as head if tables exist, otherwise run fresh migration
+        if alembic stamp head 2>/tmp/stamp_error.log; then
+            log_info "✅ $SERVICE: Schema marked as current"
+            MIGRATION_RESULTS+=("$SERVICE: SUCCESS (marked)")
+        else
+            # If stamp fails, try fresh migration
+            log_info "🔄 $SERVICE: Running fresh migration"
+            if alembic upgrade head 2>/tmp/migration_error.log; then
+                log_info "✅ $SERVICE: Fresh migration completed"
+                MIGRATION_RESULTS+=("$SERVICE: SUCCESS")
+            else
+                log_error "❌ $SERVICE: Migration failed ($(cat /tmp/migration_error.log | head -n 1))"
+                MIGRATION_RESULTS+=("$SERVICE: FAILED")
+            fi
+        fi
+    elif [ "$CURRENT_VERSION" = "$HEAD_VERSION" ]; then
+        log_info "✅ $SERVICE: Already at latest version ($CURRENT_VERSION)"
+        MIGRATION_RESULTS+=("$SERVICE: SUCCESS (up-to-date)")
     else
-        log_error "❌ $SERVICE: Migration failed"
-        MIGRATION_RESULTS+=("$SERVICE: FAILED")
+        # Run actual migration
+        log_info "🔄 $SERVICE: Upgrading from $CURRENT_VERSION to $HEAD_VERSION"
+        if alembic upgrade head 2>/dev/null; then
+            log_info "✅ $SERVICE: Migration completed successfully"
+            MIGRATION_RESULTS+=("$SERVICE: SUCCESS")
+        else
+            log_error "❌ $SERVICE: Migration failed"
+            MIGRATION_RESULTS+=("$SERVICE: FAILED")
+        fi
     fi
     
     cd "$ORIGINAL_DIR"

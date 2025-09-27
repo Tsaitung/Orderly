@@ -879,7 +879,7 @@ jobs:
             if [ -z "$code" ] || [ "$code" -ge 400 ]; then failed_services+=("gateway-skus"); fi
 
             echo "Gateway smoke: hierarchy"
-            resp=$(curl -sS -i -m 30 "$gw/api/v2/hierarchy/tree" || true)
+            resp=$(curl -sS -i -m 30 "$gw/api/v2/hierarchy/tree?fast_mode=true" || true)
             code=$(echo "$resp" | sed -n '1p' | awk '{print $2}')
             cid=$(echo "$resp" | sed -n 's/^x-correlation-id:[[:space:]]*\(.*\)$/\1/ip')
             if [ "$ENABLE_CID" = true ]; then

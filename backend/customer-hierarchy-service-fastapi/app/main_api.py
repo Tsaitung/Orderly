@@ -132,94 +132,189 @@ async def detailed_health_check() -> Dict[str, Any]:
 # API v2 Hierarchy endpoints
 @app.get("/api/v2/hierarchy/tree")
 async def get_hierarchy_tree(
-    include_inactive: bool = Query(False, description="Include inactive entities")
+    include_inactive: bool = Query(False, description="Include inactive entities"),
+    fast_mode: bool = Query(False, description="Use fast mode (groups only)")
 ):
-    """Get complete hierarchy tree structure"""
+    """Get complete hierarchy tree structure with fallback optimization"""
     try:
         async with get_async_session() as session:
-            # Load complete hierarchy with relationships
-            stmt = select(CustomerGroup).where(
-                CustomerGroup.is_active == True if not include_inactive else True
-            ).options(
-                selectinload(CustomerGroup.companies).selectinload(CustomerCompany.locations).selectinload(CustomerLocation.business_units)
-            )
-            
-            result = await session.execute(stmt)
-            groups = result.scalars().all()
-            
-            # Convert to frontend format
-            tree_data = []
-            for group in groups:
-                group_node = {
-                    "id": group.id,
-                    "name": group.name,
-                    "type": "group",
-                    "isActive": group.is_active,
-                    "children": [],
-                    "childrenCount": 0
-                }
+            # Fast mode: return only top-level groups for performance
+            if fast_mode:
+                stmt = select(CustomerGroup).where(
+                    CustomerGroup.is_active == True if not include_inactive else True
+                )
+                result = await session.execute(stmt)
+                groups = result.scalars().all()
                 
-                for company in group.companies:
-                    if not include_inactive and not company.is_active:
-                        continue
-                        
-                    company_node = {
-                        "id": company.id,
-                        "name": company.name,
-                        "type": "company",
-                        "parentId": group.id,
-                        "isActive": company.is_active,
+                tree_data = []
+                for group in groups:
+                    group_node = {
+                        "id": group.id,
+                        "name": group.name,
+                        "type": "group",
+                        "isActive": group.is_active,
+                        "children": [],
+                        "childrenCount": 0,
+                        "loadChildrenOnDemand": True  # Indicate children should be loaded on demand
+                    }
+                    tree_data.append(group_node)
+                
+                return {
+                    "data": tree_data,
+                    "totalCount": len(tree_data),
+                    "lastModified": str(time.time()),
+                    "mode": "fast"
+                }
+            
+            # Try full tree with timeout protection
+            import asyncio
+            
+            async def load_full_tree():
+                # Load complete hierarchy with relationships
+                stmt = select(CustomerGroup).where(
+                    CustomerGroup.is_active == True if not include_inactive else True
+                ).options(
+                    selectinload(CustomerGroup.companies).selectinload(CustomerCompany.locations).selectinload(CustomerLocation.business_units)
+                )
+                
+                result = await session.execute(stmt)
+                groups = result.scalars().all()
+                
+                # Convert to frontend format
+                tree_data = []
+                for group in groups:
+                    group_node = {
+                        "id": group.id,
+                        "name": group.name,
+                        "type": "group",
+                        "isActive": group.is_active,
                         "children": [],
                         "childrenCount": 0
                     }
                     
-                    for location in company.locations:
-                        if not include_inactive and not location.is_active:
+                    for company in group.companies:
+                        if not include_inactive and not company.is_active:
                             continue
                             
-                        location_node = {
-                            "id": location.id,
-                            "name": location.name,
-                            "type": "location",
-                            "parentId": company.id,
-                            "isActive": location.is_active,
+                        company_node = {
+                            "id": company.id,
+                            "name": company.name,
+                            "type": "company",
+                            "parentId": group.id,
+                            "isActive": company.is_active,
                             "children": [],
                             "childrenCount": 0
                         }
                         
-                        for business_unit in location.business_units:
-                            if not include_inactive and not business_unit.is_active:
+                        for location in company.locations:
+                            if not include_inactive and not location.is_active:
                                 continue
                                 
-                            bu_node = {
-                                "id": business_unit.id,
-                                "name": business_unit.name,
-                                "type": "business_unit",
-                                "parentId": location.id,
-                                "isActive": business_unit.is_active,
+                            location_node = {
+                                "id": location.id,
+                                "name": location.name,
+                                "type": "location",
+                                "parentId": company.id,
+                                "isActive": location.is_active,
                                 "children": [],
                                 "childrenCount": 0
                             }
-                            location_node["children"].append(bu_node)
+                            
+                            for business_unit in location.business_units:
+                                if not include_inactive and not business_unit.is_active:
+                                    continue
+                                    
+                                bu_node = {
+                                    "id": business_unit.id,
+                                    "name": business_unit.name,
+                                    "type": "business_unit",
+                                    "parentId": location.id,
+                                    "isActive": business_unit.is_active,
+                                    "children": [],
+                                    "childrenCount": 0
+                                }
+                                location_node["children"].append(bu_node)
+                            
+                            location_node["childrenCount"] = len(location_node["children"])
+                            company_node["children"].append(location_node)
                         
-                        location_node["childrenCount"] = len(location_node["children"])
-                        company_node["children"].append(location_node)
+                        company_node["childrenCount"] = len(company_node["children"])
+                        group_node["children"].append(company_node)
                     
-                    company_node["childrenCount"] = len(company_node["children"])
-                    group_node["children"].append(company_node)
+                    group_node["childrenCount"] = len(group_node["children"])
+                    tree_data.append(group_node)
                 
-                group_node["childrenCount"] = len(group_node["children"])
-                tree_data.append(group_node)
+                return {
+                    "data": tree_data,
+                    "totalCount": len(tree_data),
+                    "lastModified": str(time.time()),
+                    "mode": "full"
+                }
             
-            return {
-                "data": tree_data,
-                "totalCount": len(tree_data),
-                "lastModified": str(time.time())
-            }
+            # Try full load with 10-second timeout
+            try:
+                return await asyncio.wait_for(load_full_tree(), timeout=10.0)
+            except asyncio.TimeoutError:
+                logger.warning("Full tree loading timed out, falling back to fast mode")
+                # Fallback to fast mode
+                stmt = select(CustomerGroup).where(
+                    CustomerGroup.is_active == True if not include_inactive else True
+                )
+                result = await session.execute(stmt)
+                groups = result.scalars().all()
+                
+                tree_data = []
+                for group in groups:
+                    group_node = {
+                        "id": group.id,
+                        "name": group.name,
+                        "type": "group",
+                        "isActive": group.is_active,
+                        "children": [],
+                        "childrenCount": 0,
+                        "loadChildrenOnDemand": True,
+                        "fallbackMode": True
+                    }
+                    tree_data.append(group_node)
+                
+                return {
+                    "data": tree_data,
+                    "totalCount": len(tree_data),
+                    "lastModified": str(time.time()),
+                    "mode": "fallback"
+                }
             
     except Exception as e:
         logger.error("Failed to get hierarchy tree", error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to fetch hierarchy tree")
+        # Emergency fallback with minimal data
+        try:
+            async with get_async_session() as session:
+                stmt = select(CustomerGroup).limit(10)  # Only get first 10 groups
+                result = await session.execute(stmt)
+                groups = result.scalars().all()
+                
+                tree_data = []
+                for group in groups:
+                    tree_data.append({
+                        "id": group.id,
+                        "name": group.name,
+                        "type": "group",
+                        "isActive": group.is_active,
+                        "children": [],
+                        "childrenCount": 0,
+                        "emergency": True
+                    })
+                
+                return {
+                    "data": tree_data,
+                    "totalCount": len(tree_data),
+                    "lastModified": str(time.time()),
+                    "mode": "emergency",
+                    "error": "Partial data due to service issues"
+                }
+        except Exception as emergency_error:
+            logger.error("Emergency fallback also failed", error=str(emergency_error))
+            raise HTTPException(status_code=500, detail="Failed to fetch hierarchy tree")
 
 
 @app.get("/api/v2/hierarchy/search")

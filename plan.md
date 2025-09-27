@@ -666,7 +666,7 @@ relation "supplier_profiles" does not exist
 - CloudBuild 腳本建立：自動化構建流程
 
 #### **待處理事項**
-- [✅] **GitHub Actions CI/CD 整合**：已完成 deploy-staging-permanent.yml 測試並修復認證問題
+- [❌] **CI/CD 部署失敗修復**：GitHub Actions 工作流持續失敗（Deploy Staging 和 Deploy to Cloud Run）
 - [✅] **BFF `/api/bff/v2/hierarchy/tree` 503 已解決**（2025-09-27 19:40）：
   - 後端修復：API Gateway URL 配置、Redis 配置、優雅降級機制
   - 前端修復：請求超時機制、fallback 處理、友好錯誤訊息
@@ -1112,3 +1112,35 @@ $ curl "https://orderly-frontend-staging-usg6y7o2ba-de.a.run.app/api/bff/v2/hier
 }
 HTTP Status: 200
 ```
+
+## ⚠️ 新發現 CI/CD 部署失敗問題（2025-09-27 19:45）
+
+### GitHub Actions 部署工作流持續失敗
+
+**問題描述：**
+根據 GitHub Actions 界面截圖，以下兩個工作流持續失敗：
+1. **Deploy Staging (Permanent) #6**: Commit a231fa5 - 1m 11s 失敗
+2. **Deploy to Cloud Run #150**: Commit a231fa5 - 7m 7s 失敗
+
+**失敗統計：**
+```bash
+# Deploy Staging (Permanent) 最近 5 次全部失敗
+- feat: complete Customer Hierarchy BFF fix - 失敗 (1m12s)
+- fix: add hierarchy/tree fallback - 失敗 (1m11s) 
+- feat: complete staging deployment - 失敗 (1m19s)
+- fix(config): update Docker image tags - 失敗 (1m55s)
+- fix(ci): resolve GitHub Actions auth - 失敗 (1m23s)
+```
+
+**可能原因：**
+1. Docker 映像構建失敗
+2. Cloud Run 部署權限不足
+3. 配置檔案路徑問題
+4. 服務配額限制
+
+**需要的修復方案：**
+1. 檢查 GitHub Actions 詳細錯誤日誌
+2. 驗證 GCP Service Account 權限
+3. 檢查 Docker 映像構建步驟
+4. 確認 Cloud Run 配額和資源限制
+5. 修復工作流配置檔案
