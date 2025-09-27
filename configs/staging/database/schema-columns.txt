@@ -1,0 +1,263 @@
+       table_name        |         column_name         |          data_type          | is_nullable 
+-------------------------+-----------------------------+-----------------------------+-------------
+ alembic_version         | version_num                 | character varying           | NO
+ alembic_version_user    | version_num                 | character varying           | NO
+ business_units          | id                          | character varying           | NO
+ business_units          | location_id                 | character varying           | NO
+ business_units          | name                        | character varying           | NO
+ business_units          | code                        | character varying           | NO
+ business_units          | type                        | character varying           | YES
+ business_units          | cost_center_code            | character varying           | YES
+ business_units          | budget_monthly              | numeric                     | YES
+ business_units          | budget_alert_threshold      | numeric                     | YES
+ business_units          | manager_contact             | jsonb                       | YES
+ business_units          | ordering_permissions        | jsonb                       | NO
+ business_units          | allowed_suppliers           | jsonb                       | YES
+ business_units          | blocked_categories          | jsonb                       | YES
+ business_units          | max_order_value             | numeric                     | YES
+ business_units          | requires_approval           | boolean                     | NO
+ business_units          | approval_threshold          | numeric                     | YES
+ business_units          | extra_data                  | jsonb                       | NO
+ business_units          | notes                       | text                        | YES
+ business_units          | is_active                   | boolean                     | NO
+ business_units          | created_by                  | character varying           | NO
+ business_units          | updated_by                  | character varying           | YES
+ business_units          | createdAt                   | timestamp with time zone    | NO
+ business_units          | updatedAt                   | timestamp with time zone    | NO
+ customer_companies      | id                          | character varying           | NO
+ customer_companies      | group_id                    | character varying           | YES
+ customer_companies      | name                        | character varying           | NO
+ customer_companies      | legal_name                  | character varying           | YES
+ customer_companies      | tax_id                      | character varying           | NO
+ customer_companies      | tax_id_type                 | character varying           | NO
+ customer_companies      | billing_address             | jsonb                       | NO
+ customer_companies      | billing_contact             | jsonb                       | NO
+ customer_companies      | billing_email               | character varying           | YES
+ customer_companies      | payment_terms               | character varying           | YES
+ customer_companies      | credit_limit                | numeric                     | YES
+ customer_companies      | legacy_organization_id      | character varying           | YES
+ customer_companies      | settings                    | jsonb                       | NO
+ customer_companies      | extra_data                  | jsonb                       | NO
+ customer_companies      | notes                       | text                        | YES
+ customer_companies      | is_active                   | boolean                     | NO
+ customer_companies      | created_by                  | character varying           | NO
+ customer_companies      | updated_by                  | character varying           | YES
+ customer_companies      | createdAt                   | timestamp with time zone    | NO
+ customer_companies      | updatedAt                   | timestamp with time zone    | NO
+ customer_groups         | id                          | character varying           | NO
+ customer_groups         | name                        | character varying           | NO
+ customer_groups         | code                        | character varying           | YES
+ customer_groups         | description                 | text                        | YES
+ customer_groups         | extra_data                  | jsonb                       | NO
+ customer_groups         | notes                       | text                        | YES
+ customer_groups         | is_active                   | boolean                     | NO
+ customer_groups         | created_by                  | character varying           | NO
+ customer_groups         | updated_by                  | character varying           | YES
+ customer_groups         | createdAt                   | timestamp with time zone    | NO
+ customer_groups         | updatedAt                   | timestamp with time zone    | NO
+ customer_locations      | id                          | character varying           | NO
+ customer_locations      | company_id                  | character varying           | NO
+ customer_locations      | name                        | character varying           | NO
+ customer_locations      | code                        | character varying           | YES
+ customer_locations      | address                     | jsonb                       | NO
+ customer_locations      | city                        | character varying           | YES
+ customer_locations      | delivery_contact            | jsonb                       | NO
+ customer_locations      | delivery_phone              | character varying           | YES
+ customer_locations      | delivery_instructions       | text                        | YES
+ customer_locations      | operating_hours             | jsonb                       | YES
+ customer_locations      | coordinates                 | jsonb                       | YES
+ customer_locations      | timezone                    | character varying           | YES
+ customer_locations      | extra_data                  | jsonb                       | NO
+ customer_locations      | notes                       | text                        | YES
+ customer_locations      | is_active                   | boolean                     | NO
+ customer_locations      | created_by                  | character varying           | NO
+ customer_locations      | updated_by                  | character varying           | YES
+ customer_locations      | createdAt                   | timestamp with time zone    | NO
+ customer_locations      | updatedAt                   | timestamp with time zone    | NO
+ customer_migration_logs | id                          | character varying           | NO
+ customer_migration_logs | old_customer_id             | character varying           | NO
+ customer_migration_logs | old_organization_id         | character varying           | NO
+ customer_migration_logs | old_customer_data           | jsonb                       | YES
+ customer_migration_logs | old_organization_data       | jsonb                       | YES
+ customer_migration_logs | new_group_id                | character varying           | YES
+ customer_migration_logs | new_company_id              | character varying           | YES
+ customer_migration_logs | new_location_id             | character varying           | YES
+ customer_migration_logs | new_business_unit_id        | character varying           | YES
+ customer_migration_logs | migration_status            | character varying           | NO
+ customer_migration_logs | migration_type              | character varying           | NO
+ customer_migration_logs | migration_date              | timestamp with time zone    | YES
+ customer_migration_logs | migration_started_at        | timestamp with time zone    | YES
+ customer_migration_logs | migration_completed_at      | timestamp with time zone    | YES
+ customer_migration_logs | rollback_date               | timestamp with time zone    | YES
+ customer_migration_logs | rollback_reason             | text                        | YES
+ customer_migration_logs | rolled_back_by              | character varying           | YES
+ customer_migration_logs | validation_errors           | jsonb                       | YES
+ customer_migration_logs | validation_warnings         | jsonb                       | YES
+ customer_migration_logs | data_mapping                | jsonb                       | YES
+ customer_migration_logs | migration_config            | jsonb                       | YES
+ customer_migration_logs | processing_duration_seconds | character varying           | YES
+ customer_migration_logs | records_processed           | character varying           | YES
+ customer_migration_logs | migrated_by                 | character varying           | YES
+ customer_migration_logs | reviewed_by                 | character varying           | YES
+ customer_migration_logs | extra_data                  | jsonb                       | NO
+ customer_migration_logs | notes                       | text                        | YES
+ customer_migration_logs | is_active                   | boolean                     | NO
+ customer_migration_logs | created_by                  | character varying           | NO
+ customer_migration_logs | updated_by                  | character varying           | YES
+ customer_migration_logs | createdAt                   | timestamp with time zone    | NO
+ customer_migration_logs | updatedAt                   | timestamp with time zone    | NO
+ organizations           | id                          | character varying           | NO
+ organizations           | createdAt                   | timestamp with time zone    | NO
+ organizations           | updatedAt                   | timestamp with time zone    | NO
+ organizations           | name                        | character varying           | NO
+ organizations           | type                        | USER-DEFINED                | NO
+ organizations           | settings                    | json                        | NO
+ organizations           | isActive                    | boolean                     | NO
+ organizations           | businessType                | USER-DEFINED                | YES
+ organizations           | taxId                       | character varying           | YES
+ organizations           | personalId                  | character varying           | YES
+ organizations           | businessLicenseNumber       | character varying           | YES
+ organizations           | contactPerson               | character varying           | YES
+ organizations           | contactPhone                | character varying           | YES
+ organizations           | contactEmail                | character varying           | YES
+ organizations           | address                     | character varying           | YES
+ organizations           | invitedByOrganizationId     | character varying           | YES
+ organizations           | invitationAcceptedAt        | timestamp with time zone    | YES
+ organizations           | onboardingStatus            | USER-DEFINED                | YES
+ organizations           | onboardingProgress          | json                        | NO
+ organizations           | onboardingCompletedAt       | timestamp with time zone    | YES
+ organizations           | deliveryZones               | json                        | NO
+ organizations           | productCategories           | json                        | NO
+ organizations           | certifications              | json                        | NO
+ product_categories      | id                          | character varying           | NO
+ product_categories      | code                        | character varying           | NO
+ product_categories      | name                        | character varying           | NO
+ product_categories      | nameEn                      | character varying           | YES
+ product_categories      | parentId                    | character varying           | YES
+ product_categories      | level                       | integer                     | NO
+ product_categories      | sortOrder                   | integer                     | YES
+ product_categories      | description                 | text                        | YES
+ product_categories      | metadata                    | json                        | YES
+ product_categories      | isActive                    | boolean                     | NO
+ product_categories      | createdAt                   | timestamp with time zone    | NO
+ product_categories      | updatedAt                   | timestamp with time zone    | NO
+ product_skus            | id                          | character varying           | NO
+ product_skus            | productId                   | character varying           | NO
+ product_skus            | skuCode                     | character varying           | NO
+ product_skus            | name                        | character varying           | NO
+ product_skus            | variant                     | json                        | NO
+ product_skus            | stockQuantity               | integer                     | NO
+ product_skus            | reservedQuantity            | integer                     | NO
+ product_skus            | minStock                    | integer                     | NO
+ product_skus            | maxStock                    | integer                     | YES
+ product_skus            | weight                      | double precision            | YES
+ product_skus            | dimensions                  | json                        | YES
+ product_skus            | packageType                 | character varying           | YES
+ product_skus            | shelfLifeDays               | integer                     | YES
+ product_skus            | storageConditions           | character varying           | YES
+ product_skus            | batchTrackingEnabled        | boolean                     | NO
+ product_skus            | isActive                    | boolean                     | NO
+ product_skus            | type                        | USER-DEFINED                | NO
+ product_skus            | creator_type                | USER-DEFINED                | NO
+ product_skus            | creator_id                  | character varying           | YES
+ product_skus            | standard_info               | json                        | YES
+ product_skus            | approval_status             | USER-DEFINED                | NO
+ product_skus            | approved_by                 | character varying           | YES
+ product_skus            | approved_at                 | timestamp without time zone | YES
+ product_skus            | version                     | integer                     | NO
+ product_skus            | pricingMethod               | USER-DEFINED                | YES
+ product_skus            | pricingUnit                 | character varying           | NO
+ product_skus            | unitPrice                   | double precision            | YES
+ product_skus            | minOrderQuantity            | double precision            | YES
+ product_skus            | quantityIncrement           | double precision            | YES
+ product_skus            | originCountry               | character varying           | YES
+ product_skus            | originRegion                | character varying           | YES
+ product_skus            | createdAt                   | timestamp with time zone    | NO
+ product_skus            | updatedAt                   | timestamp with time zone    | NO
+ products                | id                          | character varying           | NO
+ products                | categoryId                  | character varying           | NO
+ products                | code                        | character varying           | NO
+ products                | name                        | character varying           | NO
+ products                | nameEn                      | character varying           | YES
+ products                | description                 | character varying           | YES
+ products                | descriptionEn               | character varying           | YES
+ products                | images                      | json                        | YES
+ products                | tags                        | json                        | YES
+ products                | unitOfMeasure               | character varying           | NO
+ products                | isActive                    | boolean                     | NO
+ products                | createdAt                   | timestamp with time zone    | NO
+ products                | updatedAt                   | timestamp with time zone    | NO
+ products                | supplierId                  | character varying           | YES
+ products                | supplierProductId           | character varying           | YES
+ products                | originCountry               | character varying           | YES
+ products                | originRegion                | character varying           | YES
+ products                | minStock                    | integer                     | YES
+ products                | maxStock                    | integer                     | YES
+ products                | leadTimeDays                | integer                     | YES
+ products                | status                      | character varying           | YES
+ products                | allergens                   | json                        | YES
+ products                | nutritionalInfo             | json                        | YES
+ products                | certifications              | json                        | YES
+ products                | metadata                    | json                        | YES
+ products                | brand                       | character varying           | YES
+ products                | origin                      | character varying           | YES
+ products                | productState                | character varying           | YES
+ products                | taxStatus                   | character varying           | YES
+ products                | allergenTrackingEnabled     | boolean                     | YES
+ products                | baseUnit                    | character varying           | YES
+ products                | pricingUnit                 | character varying           | YES
+ products                | pricingMethod               | character varying           | YES
+ products                | specifications              | jsonb                       | YES
+ products                | version                     | integer                     | YES
+ products                | isPublic                    | boolean                     | YES
+ products                | safetyInfo                  | jsonb                       | YES
+ products                | createdBy                   | character varying           | YES
+ products                | updatedBy                   | character varying           | YES
+ sku_code_sequences      | id                          | character varying           | NO
+ sku_code_sequences      | category                    | character varying           | NO
+ sku_code_sequences      | prefix                      | character varying           | NO
+ sku_code_sequences      | current_sequence            | integer                     | NO
+ sku_code_sequences      | created_at                  | timestamp with time zone    | NO
+ sku_code_sequences      | updated_at                  | timestamp with time zone    | NO
+ supplier_invitations    | id                          | character varying           | NO
+ supplier_invitations    | code                        | character varying           | NO
+ supplier_invitations    | inviterOrganizationId       | character varying           | NO
+ supplier_invitations    | inviterUserId               | character varying           | NO
+ supplier_invitations    | inviteeEmail                | character varying           | NO
+ supplier_invitations    | inviteeCompanyName          | character varying           | NO
+ supplier_invitations    | inviteeContactPerson        | character varying           | YES
+ supplier_invitations    | inviteePhone                | character varying           | YES
+ supplier_invitations    | status                      | USER-DEFINED                | NO
+ supplier_invitations    | sentAt                      | timestamp with time zone    | NO
+ supplier_invitations    | expiresAt                   | timestamp with time zone    | NO
+ supplier_invitations    | acceptedAt                  | timestamp with time zone    | YES
+ supplier_invitations    | acceptedOrganizationId      | character varying           | YES
+ supplier_invitations    | invitationMessage           | text                        | YES
+ supplier_invitations    | createdAt                   | timestamp with time zone    | NO
+ supplier_invitations    | updatedAt                   | timestamp with time zone    | NO
+ supplier_product_skus   | id                          | character varying           | NO
+ supplier_product_skus   | supplierId                  | character varying           | NO
+ supplier_product_skus   | productSkuId                | character varying           | NO
+ supplier_product_skus   | supplierSkuCode             | character varying           | YES
+ supplier_product_skus   | unitPrice                   | double precision            | NO
+ supplier_product_skus   | minOrderQuantity            | double precision            | NO
+ supplier_product_skus   | leadTimeDays                | integer                     | NO
+ supplier_product_skus   | isActive                    | boolean                     | NO
+ supplier_product_skus   | metadata                    | json                        | YES
+ supplier_product_skus   | createdAt                   | timestamp with time zone    | NO
+ supplier_product_skus   | updatedAt                   | timestamp with time zone    | NO
+ users                   | id                          | character varying           | NO
+ users                   | createdAt                   | timestamp with time zone    | NO
+ users                   | updatedAt                   | timestamp with time zone    | NO
+ users                   | email                       | character varying           | NO
+ users                   | passwordHash                | character varying           | YES
+ users                   | organizationId              | character varying           | NO
+ users                   | role                        | character varying           | NO
+ users                   | isActive                    | boolean                     | NO
+ users                   | lastLoginAt                 | timestamp with time zone    | YES
+ users                   | metadata                    | json                        | NO
+ users                   | tokenVersion                | integer                     | NO
+ users                   | isSuperUser                 | boolean                     | NO
+ users                   | emailVerified               | boolean                     | NO
+(259 rows)
+

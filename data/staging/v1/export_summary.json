@@ -1,0 +1,16 @@
+{
+  "export_timestamp": "2025-09-27T07:36:12.000378",
+  "export_duration_seconds": 0.135402,
+  "data_counts": {
+    "suppliers": 9,
+    "customers": 20,
+    "categories": 105,
+    "skus": 52
+  },
+  "files_created": [
+    "/Users/leeyude/Projects/Orderly/scripts/database/data/suppliers.json",
+    "/Users/leeyude/Projects/Orderly/scripts/database/data/customers.json",
+    "/Users/leeyude/Projects/Orderly/scripts/database/data/categories.json",
+    "/Users/leeyude/Projects/Orderly/scripts/database/data/skus.json"
+  ]
+}

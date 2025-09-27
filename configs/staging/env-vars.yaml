@@ -1,0 +1,79 @@
+# Staging Environment Variables Configuration - Permanent Version
+# This file contains standardized environment variables for all staging services
+
+# Database Configuration
+database:
+  host: "/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+  name: "orderly"
+  user: "orderly"
+  password_secret: "postgres-password:latest"
+  url_template: "postgresql+asyncpg://orderly:${POSTGRES_PASSWORD}@/orderly?host=${DATABASE_HOST}"
+
+# Cloud Configuration
+cloud:
+  project_id: "orderly-472413"
+  region: "asia-east1"
+  cloud_sql_instance: "orderly-472413:asia-east1:orderly-db-v2"
+
+# Service Account Configuration (Service-specific)
+service_accounts:
+  api-gateway: "orderly-apigw-fastapi@orderly-472413.iam.gserviceaccount.com"
+  user: "orderly-user-fastapi@orderly-472413.iam.gserviceaccount.com" 
+  order: "orderly-order-fastapi@orderly-472413.iam.gserviceaccount.com"
+  product: "orderly-product-fastapi@orderly-472413.iam.gserviceaccount.com"
+  customer-hierarchy: "orderly-ch-fastapi@orderly-472413.iam.gserviceaccount.com"
+  supplier: "orderly-supplier-fastapi@orderly-472413.iam.gserviceaccount.com"
+  acceptance: "orderly-accept-fastapi@orderly-472413.iam.gserviceaccount.com"
+  notification: "orderly-notify-fastapi@orderly-472413.iam.gserviceaccount.com"
+
+# Service URLs (for inter-service communication)
+service_urls:
+  api_gateway: "https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  user_service: "https://orderly-user-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  order_service: "https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  product_service: "https://orderly-product-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  customer_hierarchy_service: "https://orderly-customer-hierarchy-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  supplier_service: "https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  acceptance_service: "https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  notification_service: "https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+
+# Common Environment Variables
+common_env_vars:
+  DATABASE_HOST: "/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+  DATABASE_NAME: "orderly"
+  DATABASE_USER: "orderly"
+  REDEPLOY_TIME: "$(date +%Y%m%d-%H%M%S)"
+
+# Service-specific Environment Variables
+services:
+  api-gateway:
+    env_vars:
+      USER_SERVICE_URL: "https://orderly-user-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      ORDER_SERVICE_URL: "https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app"  
+      PRODUCT_SERVICE_URL: "https://orderly-product-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      CUSTOMER_HIERARCHY_SERVICE_URL: "https://orderly-customer-hierarchy-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      SUPPLIER_SERVICE_URL: "https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      ACCEPTANCE_SERVICE_URL: "https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      NOTIFICATION_SERVICE_URL: "https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  
+  # Other services use common_env_vars by default
+  user:
+    env_vars: {}
+  
+  order:  
+    env_vars: {}
+    
+  product:
+    env_vars: {}
+    
+  customer-hierarchy:
+    env_vars: {}
+    
+  supplier:
+    env_vars: {}
+    
+  acceptance:
+    env_vars: {}
+    
+  notification:
+    env_vars: {}

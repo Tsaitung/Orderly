@@ -1,0 +1,20 @@
+                 List of relations
+ Schema |          Name           | Type  |  Owner  
+--------+-------------------------+-------+---------
+ public | alembic_version         | table | orderly
+ public | alembic_version_user    | table | orderly
+ public | business_units          | table | orderly
+ public | customer_companies      | table | orderly
+ public | customer_groups         | table | orderly
+ public | customer_locations      | table | orderly
+ public | customer_migration_logs | table | orderly
+ public | organizations           | table | orderly
+ public | product_categories      | table | orderly
+ public | product_skus            | table | orderly
+ public | products                | table | orderly
+ public | sku_code_sequences      | table | orderly
+ public | supplier_invitations    | table | orderly
+ public | supplier_product_skus   | table | orderly
+ public | users                   | table | orderly
+(15 rows)
+

@@ -1,0 +1,15 @@
+[
+    {"id": "cg-001", "name": "VIP客戶", "description": "大型連鎖餐廳", "discount_rate": 0.05},
+    {"id": "cg-002", "name": "優質客戶", "description": "中型餐廳連鎖", "discount_rate": 0.03},
+    {"id": "cg-003", "name": "一般客戶", "description": "單店餐廳", "discount_rate": 0.00},
+    {"id": "cg-004", "name": "新客戶", "description": "新註冊客戶", "discount_rate": 0.00},
+    {"id": "cg-005", "name": "快餐連鎖", "description": "快餐類型客戶", "discount_rate": 0.02},
+    {"id": "cg-006", "name": "精緻餐廳", "description": "高檔餐廳", "discount_rate": 0.04},
+    {"id": "cg-007", "name": "火鍋店", "description": "火鍋類餐廳", "discount_rate": 0.02},
+    {"id": "cg-008", "name": "咖啡廳", "description": "咖啡輕食", "discount_rate": 0.01},
+    {"id": "cg-009", "name": "小吃店", "description": "傳統小吃", "discount_rate": 0.01},
+    {"id": "cg-010", "name": "烘焙坊", "description": "麵包烘焙", "discount_rate": 0.02},
+    {"id": "cg-011", "name": "飲料店", "description": "手搖飲料", "discount_rate": 0.01},
+    {"id": "cg-012", "name": "團膳業者", "description": "團體膳食", "discount_rate": 0.03},
+    {"id": "cg-013", "name": "測試客戶", "description": "測試用途", "discount_rate": 0.00}
+]

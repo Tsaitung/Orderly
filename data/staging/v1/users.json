@@ -1,0 +1,32 @@
+[
+    {
+        "id": "user-test-001",
+        "email": "admin@orderly.test", 
+        "username": "admin",
+        "full_name": "Test Administrator",
+        "is_active": true,
+        "is_superuser": true,
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": "2024-01-01T00:00:00"
+    },
+    {
+        "id": "user-test-002", 
+        "email": "restaurant@orderly.test",
+        "username": "restaurant_user",
+        "full_name": "Restaurant Test User",
+        "is_active": true,
+        "is_superuser": false,
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": "2024-01-01T00:00:00"
+    },
+    {
+        "id": "user-test-003",
+        "email": "supplier@orderly.test", 
+        "username": "supplier_user",
+        "full_name": "Supplier Test User",
+        "is_active": true,
+        "is_superuser": false,
+        "created_at": "2024-01-01T00:00:00",
+        "updated_at": "2024-01-01T00:00:00"
+    }
+]

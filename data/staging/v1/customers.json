@@ -1,0 +1,988 @@
+{
+  "companies": [
+    {
+      "id": "f8fe00c3-0369-4266-b935-2ba28de96ca7",
+      "group_id": null,
+      "name": "老王餐廳股份有限公司",
+      "legal_name": "老王餐廳股份有限公司",
+      "tax_id": "12345678",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "台北市",
+        "street": "台北市大安區信義路四段123號",
+        "district": "大安區",
+        "postal_code": "10650"
+      },
+      "billing_contact": {
+        "name": "王老闆",
+        "email": "boss@laowang.com",
+        "phone": "02-12345678"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "261589f5-658f-44be-842d-8e298372466a",
+      "group_id": null,
+      "name": "美味小館有限公司",
+      "legal_name": "美味小館有限公司",
+      "tax_id": "23456789",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "台中市",
+        "street": "台中市西屯區台灣大道三段99號",
+        "district": "西屯區",
+        "postal_code": "40756"
+      },
+      "billing_contact": {
+        "name": "林經理",
+        "email": "manager@meiwei.com",
+        "phone": "04-23456789"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "3eb6594c-f80b-479f-9790-56e08e6dd913",
+      "group_id": null,
+      "name": "海鮮大排檔股份有限公司",
+      "legal_name": "海鮮大排檔股份有限公司",
+      "tax_id": "34567890",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "高雄市",
+        "street": "高雄市前金區中正四路151號",
+        "district": "前金區",
+        "postal_code": "80144"
+      },
+      "billing_contact": {
+        "name": "陳老板",
+        "email": "boss@seafood.com",
+        "phone": "07-34567890"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "36b089c4-1be9-4f60-9095-b119aef1d2ba",
+      "group_id": null,
+      "name": "義式風情餐廳有限公司",
+      "legal_name": "義式風情餐廳有限公司",
+      "tax_id": "45678901",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "台北市",
+        "street": "台北市信義區松高路19號",
+        "district": "信義區",
+        "postal_code": "11049"
+      },
+      "billing_contact": {
+        "name": "義大利主廚 Marco",
+        "email": "marco@italian.com",
+        "phone": "02-45678901"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "28f7e681-d89a-493e-9d20-b61bdfdbcb79",
+      "group_id": null,
+      "name": "炸雞王國企業股份有限公司",
+      "legal_name": "炸雞王國企業股份有限公司",
+      "tax_id": "56789012",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "桃園市",
+        "street": "桃園市桃園區中正路100號",
+        "district": "桃園區",
+        "postal_code": "33041"
+      },
+      "billing_contact": {
+        "name": "雞王老闆",
+        "email": "king@chicken.com",
+        "phone": "03-56789012"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "7cf09136-b98b-4e5a-b176-16399da97ed0",
+      "group_id": null,
+      "name": "麵條工坊有限公司",
+      "legal_name": "麵條工坊有限公司",
+      "tax_id": "67890123",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "台南市",
+        "street": "台南市東區勝利路75號",
+        "district": "東區",
+        "postal_code": "70101"
+      },
+      "billing_contact": {
+        "name": "麵條師傅",
+        "email": "noodle@master.com",
+        "phone": "06-67890123"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "836c963c-1b0d-4f05-a1ab-acfeaf7275a4",
+      "group_id": null,
+      "name": "咖啡香氛股份有限公司",
+      "legal_name": "咖啡香氛股份有限公司",
+      "tax_id": "78901234",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "新竹市",
+        "street": "新竹市東區光復路二段101號",
+        "district": "東區",
+        "postal_code": "30072"
+      },
+      "billing_contact": {
+        "name": "咖啡師 Kevin",
+        "email": "kevin@coffee.com",
+        "phone": "03-78901234"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "c472daf3-420d-4744-8f6a-17c4048a15ed",
+      "group_id": null,
+      "name": "烘焙坊企業有限公司",
+      "legal_name": "烘焙坊企業有限公司",
+      "tax_id": "89012345",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "彰化市",
+        "street": "彰化市中山路二段88號",
+        "district": "",
+        "postal_code": "50042"
+      },
+      "billing_contact": {
+        "name": "烘焙師父阿福",
+        "email": "baker@bread.com",
+        "phone": "04-89012345"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "516393d9-4cc2-4b15-bc2a-0278d1d67335",
+      "group_id": null,
+      "name": "壽司職人股份有限公司",
+      "legal_name": "壽司職人股份有限公司",
+      "tax_id": "90123456",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "基隆市",
+        "street": "基隆市仁愛區愛一路25號",
+        "district": "仁愛區",
+        "postal_code": "20041"
+      },
+      "billing_contact": {
+        "name": "壽司師父田中",
+        "email": "tanaka@sushi.com",
+        "phone": "02-90123456"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "b1fd97df-b0ce-4b53-8f43-a9bf4c50d942",
+      "group_id": null,
+      "name": "熱炒100股份有限公司",
+      "legal_name": "熱炒100股份有限公司",
+      "tax_id": "01234567",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "宜蘭縣",
+        "street": "宜蘭縣宜蘭市中山路三段168號",
+        "district": "宜蘭市",
+        "postal_code": "26044"
+      },
+      "billing_contact": {
+        "name": "熱炒老闆阿忠",
+        "email": "achung@hotcook.com",
+        "phone": "03-01234567"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "c4798ab2-58b2-49cf-9754-e758264a34d4",
+      "group_id": null,
+      "name": "甜點夢工廠有限公司",
+      "legal_name": "甜點夢工廠有限公司",
+      "tax_id": "11111111",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "花蓮縣",
+        "street": "花蓮縣花蓮市中正路500號",
+        "district": "花蓮市",
+        "postal_code": "97048"
+      },
+      "billing_contact": {
+        "name": "甜點師 Patty",
+        "email": "patty@dessert.com",
+        "phone": "03-11111111"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "824c8cf3-81d0-47f5-9520-39cb76ac47d1",
+      "group_id": null,
+      "name": "燒烤達人企業股份有限公司",
+      "legal_name": "燒烤達人企業股份有限公司",
+      "tax_id": "22222222",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "台東縣",
+        "street": "台東縣台東市中華路一段350號",
+        "district": "台東市",
+        "postal_code": "95041"
+      },
+      "billing_contact": {
+        "name": "燒烤大師阿達",
+        "email": "ada@bbq.com",
+        "phone": "089-22222222"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "b99fa88d-ed48-4ad2-831f-fb42d47f2a46",
+      "group_id": null,
+      "name": "火鍋世界股份有限公司",
+      "legal_name": "火鍋世界股份有限公司",
+      "tax_id": "33333333",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "屏東縣",
+        "street": "屏東縣屏東市民生路200號",
+        "district": "屏東市",
+        "postal_code": "90047"
+      },
+      "billing_contact": {
+        "name": "火鍋老闆娘",
+        "email": "boss@hotpot.com",
+        "phone": "08-33333333"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "64c35799-d441-4769-bdca-c5364db1d19a",
+      "group_id": null,
+      "name": "素食天地有限公司",
+      "legal_name": "素食天地有限公司",
+      "tax_id": "44444444",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "雲林縣",
+        "street": "雲林縣斗六市雲林路123號",
+        "district": "斗六市",
+        "postal_code": "64044"
+      },
+      "billing_contact": {
+        "name": "素食達人阿蓮",
+        "email": "lian@vegetarian.com",
+        "phone": "05-44444444"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "7e32b300-1d58-4221-8229-8eb1d4ef8599",
+      "group_id": null,
+      "name": "早餐王國股份有限公司",
+      "legal_name": "早餐王國股份有限公司",
+      "tax_id": "55555555",
+      "tax_id_type": "company",
+      "billing_address": {
+        "city": "嘉義市",
+        "street": "嘉義市西區中山路88號",
+        "district": "西區",
+        "postal_code": "60045"
+      },
+      "billing_contact": {
+        "name": "早餐店長阿明",
+        "email": "ming@breakfast.com",
+        "phone": "05-55555555"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "d0655c86-9f56-42ee-b072-f68d0d79eb20",
+      "group_id": null,
+      "name": "陳小明個人工作室",
+      "legal_name": "陳小明個人工作室",
+      "tax_id": "A123456789",
+      "tax_id_type": "individual",
+      "billing_address": {
+        "city": "台北市",
+        "street": "台北市中正區羅斯福路一段4號",
+        "district": "中正區",
+        "postal_code": "10048"
+      },
+      "billing_contact": {
+        "name": "陳小明",
+        "email": "ming@personal.com",
+        "phone": "0912345678"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "55f0d551-2bb1-4646-ab99-075145e45722",
+      "group_id": null,
+      "name": "林美美小吃店",
+      "legal_name": "林美美小吃店",
+      "tax_id": "B234567890",
+      "tax_id_type": "individual",
+      "billing_address": {
+        "city": "台中市",
+        "street": "台中市北區三民路三段67號",
+        "district": "北區",
+        "postal_code": "40444"
+      },
+      "billing_contact": {
+        "name": "林美美",
+        "email": "meimei@snack.com",
+        "phone": "0923456789"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "37f09398-5af0-417d-8753-eb212283b4a7",
+      "group_id": null,
+      "name": "王大頭牛肉麵",
+      "legal_name": "王大頭牛肉麵",
+      "tax_id": "C345678901",
+      "tax_id_type": "individual",
+      "billing_address": {
+        "city": "高雄市",
+        "street": "高雄市左營區博愛二路99號",
+        "district": "左營區",
+        "postal_code": "81342"
+      },
+      "billing_contact": {
+        "name": "王大頭",
+        "email": "datou@beef.com",
+        "phone": "0934567890"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "ba6d7dcb-a8d6-4499-a13b-b8b77b490de7",
+      "group_id": null,
+      "name": "張阿姨便當店",
+      "legal_name": "張阿姨便當店",
+      "tax_id": "D456789012",
+      "tax_id_type": "individual",
+      "billing_address": {
+        "city": "桃園市",
+        "street": "桃園市中壢區中大路300號",
+        "district": "中壢區",
+        "postal_code": "32041"
+      },
+      "billing_contact": {
+        "name": "張阿姨",
+        "email": "aunt@lunch.com",
+        "phone": "0945678901"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "dfb8c75a-3624-44ac-8698-93f469378448",
+      "group_id": null,
+      "name": "李師傅燒餅店",
+      "legal_name": "李師傅燒餅店",
+      "tax_id": "E567890123",
+      "tax_id_type": "individual",
+      "billing_address": {
+        "city": "台南市",
+        "street": "台南市中西區民權路一段158號",
+        "district": "中西區",
+        "postal_code": "70041"
+      },
+      "billing_contact": {
+        "name": "李師傅",
+        "email": "master@bread.com",
+        "phone": "0956789012"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    }
+  ],
+  "locations": [
+    {
+      "id": "34437047-e256-4541-a5e3-f67a62fedede",
+      "company_id": "f8fe00c3-0369-4266-b935-2ba28de96ca7",
+      "name": "老王餐廳大安店",
+      "code": "LAOWANG_DA",
+      "address": {
+        "city": "台北市",
+        "street": "台北市大安區信義路四段123號1樓",
+        "district": "大安區",
+        "postal_code": "10650"
+      },
+      "delivery_contact": {
+        "name": "店長小李",
+        "phone": "02-12345679"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "dabda3f4-fd65-4a0d-b25d-a8f99e978b51",
+      "company_id": "261589f5-658f-44be-842d-8e298372466a",
+      "name": "美味小館台中店",
+      "code": "MEIWEI_TC",
+      "address": {
+        "city": "台中市",
+        "street": "台中市西屯區台灣大道三段99號1樓",
+        "district": "西屯區",
+        "postal_code": "40756"
+      },
+      "delivery_contact": {
+        "name": "廚師長張師傅",
+        "phone": "04-23456790"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "74478e9a-b5ae-4ca0-90ab-17e690cb9fd5",
+      "company_id": "3eb6594c-f80b-479f-9790-56e08e6dd913",
+      "name": "海鮮大排檔前金店",
+      "code": "SEAFOOD_QJ",
+      "address": {
+        "city": "高雄市",
+        "street": "高雄市前金區中正四路151號",
+        "district": "前金區",
+        "postal_code": "80144"
+      },
+      "delivery_contact": {
+        "name": "廚房主管阿明",
+        "phone": "07-34567891"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "e65ea726-eb2f-4949-8d96-9aeb77487414",
+      "company_id": "36b089c4-1be9-4f60-9095-b119aef1d2ba",
+      "name": "義式風情信義店",
+      "code": "ITALIAN_XY",
+      "address": {
+        "city": "台北市",
+        "street": "台北市信義區松高路19號2樓",
+        "district": "信義區",
+        "postal_code": "11049"
+      },
+      "delivery_contact": {
+        "name": "助理廚師 Anna",
+        "phone": "02-45678902"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "d2b7f23e-deff-43a9-acc7-5cbad3b03e2c",
+      "company_id": "28f7e681-d89a-493e-9d20-b61bdfdbcb79",
+      "name": "炸雞王國桃園店",
+      "code": "CHICKEN_TY",
+      "address": {
+        "city": "桃園市",
+        "street": "桃園市桃園區中正路100號1樓",
+        "district": "桃園區",
+        "postal_code": "33041"
+      },
+      "delivery_contact": {
+        "name": "炸雞師傅阿德",
+        "phone": "03-56789013"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "93e9e486-ae75-425d-8ff6-ced5a10c4430",
+      "company_id": "7cf09136-b98b-4e5a-b176-16399da97ed0",
+      "name": "麵條工坊東區店",
+      "code": "NOODLE_EAST",
+      "address": {
+        "city": "台南市",
+        "street": "台南市東區勝利路75號",
+        "district": "東區",
+        "postal_code": "70101"
+      },
+      "delivery_contact": {
+        "name": "麵條助手小王",
+        "phone": "06-67890124"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "e0de9f76-c4d5-4dbf-bd2d-2b747398d72b",
+      "company_id": "836c963c-1b0d-4f05-a1ab-acfeaf7275a4",
+      "name": "咖啡香氛光復店",
+      "code": "COFFEE_GF",
+      "address": {
+        "city": "新竹市",
+        "street": "新竹市東區光復路二段101號1樓",
+        "district": "東區",
+        "postal_code": "30072"
+      },
+      "delivery_contact": {
+        "name": "吧台手 Lisa",
+        "phone": "03-78901235"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "478d0474-3e66-42af-84c2-4a85931370e4",
+      "company_id": "c472daf3-420d-4744-8f6a-17c4048a15ed",
+      "name": "烘焙坊彰化店",
+      "code": "BAKERY_CH",
+      "address": {
+        "city": "彰化市",
+        "street": "彰化市中山路二段88號",
+        "district": "",
+        "postal_code": "50042"
+      },
+      "delivery_contact": {
+        "name": "麵包助手小美",
+        "phone": "04-89012346"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "de04e19a-733d-417c-bf3d-ea83724e9ef9",
+      "company_id": "516393d9-4cc2-4b15-bc2a-0278d1d67335",
+      "name": "壽司職人基隆店",
+      "code": "SUSHI_KL",
+      "address": {
+        "city": "基隆市",
+        "street": "基隆市仁愛區愛一路25號1樓",
+        "district": "仁愛區",
+        "postal_code": "20041"
+      },
+      "delivery_contact": {
+        "name": "壽司助手小田",
+        "phone": "02-90123457"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "416157b6-08fa-4959-b73d-55f760180095",
+      "company_id": "b1fd97df-b0ce-4b53-8f43-a9bf4c50d942",
+      "name": "熱炒100宜蘭店",
+      "code": "HOTCOOK_YL",
+      "address": {
+        "city": "宜蘭縣",
+        "street": "宜蘭縣宜蘭市中山路三段168號",
+        "district": "宜蘭市",
+        "postal_code": "26044"
+      },
+      "delivery_contact": {
+        "name": "炒菜師傅阿豪",
+        "phone": "03-01234568"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "ac9512b5-16b0-4335-9fa5-74c09d1ea1a8",
+      "company_id": "c4798ab2-58b2-49cf-9754-e758264a34d4",
+      "name": "甜點夢工廠花蓮店",
+      "code": "DESSERT_HL",
+      "address": {
+        "city": "花蓮縣",
+        "street": "花蓮縣花蓮市中正路500號2樓",
+        "district": "花蓮市",
+        "postal_code": "97048"
+      },
+      "delivery_contact": {
+        "name": "糕點助手小雅",
+        "phone": "03-11111112"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "ca3e9314-632a-4286-93f2-2898278fa40f",
+      "company_id": "824c8cf3-81d0-47f5-9520-39cb76ac47d1",
+      "name": "燒烤達人台東店",
+      "code": "BBQ_TT",
+      "address": {
+        "city": "台東縣",
+        "street": "台東縣台東市中華路一段350號1樓",
+        "district": "台東市",
+        "postal_code": "95041"
+      },
+      "delivery_contact": {
+        "name": "燒烤助手小強",
+        "phone": "089-22222223"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "6df8dbd2-50d3-4455-9474-6042a54b7f13",
+      "company_id": "b99fa88d-ed48-4ad2-831f-fb42d47f2a46",
+      "name": "火鍋世界屏東店",
+      "code": "HOTPOT_PT",
+      "address": {
+        "city": "屏東縣",
+        "street": "屏東縣屏東市民生路200號1樓",
+        "district": "屏東市",
+        "postal_code": "90047"
+      },
+      "delivery_contact": {
+        "name": "火鍋師傅老王",
+        "phone": "08-33333334"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "bb5cac2c-a024-4d97-ae51-749b2e227aa5",
+      "company_id": "64c35799-d441-4769-bdca-c5364db1d19a",
+      "name": "素食天地斗六店",
+      "code": "VEG_DL",
+      "address": {
+        "city": "雲林縣",
+        "street": "雲林縣斗六市雲林路123號",
+        "district": "斗六市",
+        "postal_code": "64044"
+      },
+      "delivery_contact": {
+        "name": "素食廚師小慧",
+        "phone": "05-44444445"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "c97a89e4-07b8-4786-a001-b74863de7d97",
+      "company_id": "7e32b300-1d58-4221-8229-8eb1d4ef8599",
+      "name": "早餐王國嘉義店",
+      "code": "BREAKFAST_CY",
+      "address": {
+        "city": "嘉義市",
+        "street": "嘉義市西區中山路88號1樓",
+        "district": "西區",
+        "postal_code": "60045"
+      },
+      "delivery_contact": {
+        "name": "早餐師傅小華",
+        "phone": "05-55555556"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "a12aa0cc-f41e-4ced-a332-2af0320fbf46",
+      "company_id": "d0655c86-9f56-42ee-b072-f68d0d79eb20",
+      "name": "小明咖啡攤",
+      "code": "MING_COFFEE",
+      "address": {
+        "city": "台北市",
+        "street": "台北市中正區羅斯福路一段4號B1",
+        "district": "中正區",
+        "postal_code": "10048"
+      },
+      "delivery_contact": {
+        "name": "陳小明",
+        "phone": "0912345678"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "e444928b-8c88-4823-9535-eb503e2e3a5e",
+      "company_id": "55f0d551-2bb1-4646-ab99-075145e45722",
+      "name": "美美小吃攤",
+      "code": "MEIMEI_SNACK",
+      "address": {
+        "city": "台中市",
+        "street": "台中市北區三民路三段67號1樓",
+        "district": "北區",
+        "postal_code": "40444"
+      },
+      "delivery_contact": {
+        "name": "林美美",
+        "phone": "0923456789"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "84425b48-8c9e-4d7d-9be7-970fa16aab63",
+      "company_id": "37f09398-5af0-417d-8753-eb212283b4a7",
+      "name": "大頭牛肉麵店",
+      "code": "DATOU_BEEF",
+      "address": {
+        "city": "高雄市",
+        "street": "高雄市左營區博愛二路99號",
+        "district": "左營區",
+        "postal_code": "81342"
+      },
+      "delivery_contact": {
+        "name": "王大頭",
+        "phone": "0934567890"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "d4eb3e26-fd06-4caa-8682-0407386e1bde",
+      "company_id": "ba6d7dcb-a8d6-4499-a13b-b8b77b490de7",
+      "name": "阿姨便當店",
+      "code": "AUNT_LUNCH",
+      "address": {
+        "city": "桃園市",
+        "street": "桃園市中壢區中大路300號1樓",
+        "district": "中壢區",
+        "postal_code": "32041"
+      },
+      "delivery_contact": {
+        "name": "張阿姨",
+        "phone": "0945678901"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "ae58d605-209d-419f-89d9-9a75189e0d0a",
+      "company_id": "dfb8c75a-3624-44ac-8698-93f469378448",
+      "name": "師傅燒餅攤",
+      "code": "MASTER_BREAD",
+      "address": {
+        "city": "台南市",
+        "street": "台南市中西區民權路一段158號",
+        "district": "中西區",
+        "postal_code": "70041"
+      },
+      "delivery_contact": {
+        "name": "李師傅",
+        "phone": "0956789012"
+      },
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    }
+  ],
+  "business_units": [
+    {
+      "id": "8d77dfd4-2e72-485d-9656-92c1f205be0b",
+      "location_id": "34437047-e256-4541-a5e3-f67a62fedede",
+      "name": "主廚房",
+      "code": "KITCHEN",
+      "type": "kitchen",
+      "budget_monthly": 50000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "4ea9ae5c-b6ed-4850-9417-004036c22b77",
+      "location_id": "dabda3f4-fd65-4a0d-b25d-a8f99e978b51",
+      "name": "中餐廚房",
+      "code": "CHINESE",
+      "type": "kitchen",
+      "budget_monthly": 40000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "bf2ee918-b6ed-4ce6-a2a7-1fd8fe024ba7",
+      "location_id": "74478e9a-b5ae-4ca0-90ab-17e690cb9fd5",
+      "name": "海鮮處理區",
+      "code": "SEAFOOD",
+      "type": "kitchen",
+      "budget_monthly": 80000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "5afa5d3a-cb41-4a03-940f-5c2e4ea13011",
+      "location_id": "e65ea726-eb2f-4949-8d96-9aeb77487414",
+      "name": "義式廚房",
+      "code": "PASTA",
+      "type": "kitchen",
+      "budget_monthly": 60000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "8755e373-8833-4f41-9362-e8e7416aaf2b",
+      "location_id": "d2b7f23e-deff-43a9-acc7-5cbad3b03e2c",
+      "name": "炸物區",
+      "code": "FRY",
+      "type": "kitchen",
+      "budget_monthly": 35000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "dc478f20-5c39-45fb-9f0c-0d965933fc53",
+      "location_id": "93e9e486-ae75-425d-8ff6-ced5a10c4430",
+      "name": "製麵區",
+      "code": "NOODLE",
+      "type": "prep",
+      "budget_monthly": 30000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "c34261fe-2a68-4474-818d-2cc4cd4b51dc",
+      "location_id": "e0de9f76-c4d5-4dbf-bd2d-2b747398d72b",
+      "name": "咖啡吧台",
+      "code": "BAR",
+      "type": "bar",
+      "budget_monthly": 25000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "1284d3d8-6595-4a97-84c0-239108cec275",
+      "location_id": "478d0474-3e66-42af-84c2-4a85931370e4",
+      "name": "烘焙廚房",
+      "code": "BAKERY",
+      "type": "bakery",
+      "budget_monthly": 45000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "11c62984-8a31-4bad-a276-6209873c8235",
+      "location_id": "de04e19a-733d-417c-bf3d-ea83724e9ef9",
+      "name": "壽司吧台",
+      "code": "SUSHI",
+      "type": "sushi",
+      "budget_monthly": 70000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "cb33906a-724a-4898-8f00-32580aabe73a",
+      "location_id": "416157b6-08fa-4959-b73d-55f760180095",
+      "name": "熱炒區",
+      "code": "STIRFRY",
+      "type": "kitchen",
+      "budget_monthly": 55000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "be64390c-ad96-4551-bd6f-535580b3a045",
+      "location_id": "ac9512b5-16b0-4335-9fa5-74c09d1ea1a8",
+      "name": "甜點廚房",
+      "code": "PASTRY",
+      "type": "pastry",
+      "budget_monthly": 38000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "5901cd14-758c-40bd-99ee-df043a948de0",
+      "location_id": "ca3e9314-632a-4286-93f2-2898278fa40f",
+      "name": "燒烤區",
+      "code": "GRILL",
+      "type": "grill",
+      "budget_monthly": 42000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "5a819540-0c5e-4526-a9ab-241573368709",
+      "location_id": "6df8dbd2-50d3-4455-9474-6042a54b7f13",
+      "name": "火鍋廚房",
+      "code": "HOTPOT",
+      "type": "hot_pot",
+      "budget_monthly": 65000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "668d434f-b6e6-4e93-9ea0-f8ef60aa52bc",
+      "location_id": "bb5cac2c-a024-4d97-ae51-749b2e227aa5",
+      "name": "素食廚房",
+      "code": "VEGETARIAN",
+      "type": "kitchen",
+      "budget_monthly": 28000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "01380b57-231c-4e08-bda1-f9182f10de98",
+      "location_id": "c97a89e4-07b8-4786-a001-b74863de7d97",
+      "name": "早餐廚房",
+      "code": "BREAKFAST",
+      "type": "kitchen",
+      "budget_monthly": 20000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "6bb99ea8-8876-4048-b503-1c6c72b31da3",
+      "location_id": "a12aa0cc-f41e-4ced-a332-2af0320fbf46",
+      "name": "咖啡製作區",
+      "code": "COFFEE",
+      "type": "bar",
+      "budget_monthly": 15000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "d1c39a8f-fa84-4059-b051-4278e18548f3",
+      "location_id": "e444928b-8c88-4823-9535-eb503e2e3a5e",
+      "name": "小吃廚房",
+      "code": "SNACK",
+      "type": "kitchen",
+      "budget_monthly": 12000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "980d2885-46df-450c-963e-f1bbbd64b87b",
+      "location_id": "84425b48-8c9e-4d7d-9be7-970fa16aab63",
+      "name": "麵食區",
+      "code": "NOODLE",
+      "type": "noodle",
+      "budget_monthly": 18000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "fbdea3aa-0c68-47c1-b94a-f7c40740c56d",
+      "location_id": "d4eb3e26-fd06-4caa-8682-0407386e1bde",
+      "name": "便當廚房",
+      "code": "LUNCHBOX",
+      "type": "kitchen",
+      "budget_monthly": 22000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    },
+    {
+      "id": "185212e0-a735-43b0-b1f5-cc0f3d76e382",
+      "location_id": "ae58d605-209d-419f-89d9-9a75189e0d0a",
+      "name": "燒餅製作區",
+      "code": "BREAD",
+      "type": "bakery",
+      "budget_monthly": 10000.0,
+      "createdAt": "2025-09-21T23:02:40.243983+00:00",
+      "updatedAt": "2025-09-21T23:02:40.243983+00:00"
+    }
+  ]
+}

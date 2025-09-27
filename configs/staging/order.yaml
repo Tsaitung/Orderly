@@ -1,0 +1,85 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/urls: '["https://orderly-order-service-fastapi-staging-655602747430.asia-east1.run.app","https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app"]'
+  labels:
+    cloud.googleapis.com/location: asia-east1
+    environment: staging
+    git_ref: staging
+    git_sha: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
+    service: order-service-fastapi
+    version: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
+  name: orderly-order-service-fastapi-staging
+  namespace: '655602747430'
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '10'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 539.0.0
+        run.googleapis.com/cloudsql-instances: orderly-472413:asia-east1:orderly-db-v2
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: tbsxdbwfqo
+        environment: staging
+        git_ref: staging
+        git_sha: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
+        run.googleapis.com/startupProbeType: Default
+        service: order-service-fastapi
+        version: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
+    spec:
+      containerConcurrency: 100
+      containers:
+      - env:
+        - name: NODE_ENV
+          value: staging
+        - name: REDIS_HOST
+          value: 10.153.164.75
+        - name: REDIS_PORT
+          value: '6379'
+        - name: DATABASE_HOST
+          value: /cloudsql/orderly-472413:asia-east1:orderly-db-v2
+        - name: DATABASE_NAME
+          value: orderly
+        - name: DATABASE_USER
+          value: orderly
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: postgres-password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: jwt-secret
+        - name: JWT_REFRESH_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: latest
+              name: jwt-refresh-secret
+        - name: DATABASE_URL
+          value: postgresql+asyncpg://orderly:OtAEG5%2F1h78R%2BEGHStvtabQjOhjKtXNq%2FPse3d6ZTDs%3D@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
+        image: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-order-service-fastapi:2059855a2628ba5af33d150c233259a829b09537
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: orderly-order-fastapi@orderly-472413.iam.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - percent: 100
+    revisionName: orderly-order-service-fastapi-staging-00026-52v
