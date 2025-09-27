@@ -138,12 +138,35 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     console.log(`[BFF] Making request to: ${target}`)
     console.log(`[BFF] Request headers:`, JSON.stringify(headers, null, 2))
 
+    // Add timeout for all requests (30 seconds for backend services)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000)
+    init.signal = controller.signal
+
     let res = await fetch(target, init)
+    clearTimeout(timeoutId)
     console.log(`[BFF] Response status: ${res.status}`)
     console.log(
       `[BFF] Response headers:`,
       JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2)
     )
+
+    // Special handling for hierarchy/tree endpoint with server errors
+    if (subPath.includes('hierarchy/tree') && (res.status >= 500 || [404, 502, 503].includes(res.status))) {
+      console.warn(`[BFF] Hierarchy tree returned ${res.status}, providing fallback response`)
+      return new NextResponse(
+        JSON.stringify({
+          data: [],
+          totalCount: 0,
+          lastModified: new Date().toISOString(),
+          message: "Hierarchy data temporarily unavailable. Please try again later."
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
 
     // 在本地開發環境中，若 Gateway 回傳錯誤，對特定資源（如 products/skus）自動回退直連服務
     const isLocal = environment !== 'production'
@@ -191,6 +214,23 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
       stack: error.stack,
     })
 
+    // Special handling for hierarchy/tree endpoint - provide fallback response
+    if (subPath.includes('hierarchy/tree')) {
+      console.warn(`[BFF] Hierarchy tree request failed, providing fallback response`)
+      return new NextResponse(
+        JSON.stringify({
+          data: [],
+          totalCount: 0,
+          lastModified: new Date().toISOString(),
+          message: "Hierarchy data temporarily unavailable. Please try again later."
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // 本地環境：主要請求失敗時，嘗試對產品域名執行直連回退
     const isLocal = environment !== 'production'
     const directUrl = getDirectServiceUrl(subPath, environment)
@@ -220,7 +260,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     // 如果是本地開發且服務不可用，返回友好的錯誤信息
     if (environment !== 'production' && error.cause?.code === 'ECONNREFUSED') {
       const serviceName =
-        routingStrategy === 'direct' ? target.split('//')[1].split('/')[0] : 'API Gateway'
+        routingStrategy === 'direct' ? target.split('//')[1]?.split('/')[0] || 'Unknown Service' : 'API Gateway'
       return new NextResponse(
         JSON.stringify({
           error: 'Service Unavailable',
