@@ -370,6 +370,7 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
           CONFIG_PATH: ${{ steps.config.outputs.config }}
+          GOOGLE_CLOUD_PROJECT: orderly-472413
         run: |
           gcloud builds submit . \
             --config "$CONFIG_PATH" \
