@@ -3,7 +3,7 @@ options:
 
 substitutions:
   _IMAGE_TAG: latest
-  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-supplier-service-fastapi
+  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-user-service-fastapi
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -14,8 +14,8 @@ steps:
       - '-t'
       - '${_IMAGE_REPOSITORY}:latest'
       - '-f'
-      - backend/supplier-service-fastapi/Dockerfile
-      - '.'
+      - backend/user-service-fastapi/Dockerfile
+      - 'backend'
 
 images:
   - '${_IMAGE_REPOSITORY}:${_IMAGE_TAG}'

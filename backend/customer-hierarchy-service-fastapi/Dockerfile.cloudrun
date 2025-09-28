@@ -11,13 +11,17 @@ WORKDIR /app
 # 依賴安裝階段
 FROM base AS deps
 
+# 允許覆寫來源路徑，預設為 repo 子目錄
+ARG SERVICE_PATH=backend/customer-hierarchy-service-fastapi
+ARG LIBS_PATH=backend/libs
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY backend/customer-hierarchy-service-fastapi/requirements.txt ./
+COPY ${SERVICE_PATH}/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -33,15 +37,22 @@ RUN apt-get update && apt-get install -y \
 COPY --from=deps /root/.local /root/.local
 
 # 複製共享庫
-COPY backend/libs ./libs
+COPY ${LIBS_PATH} ./libs
 
 # 複製應用程式
-COPY backend/customer-hierarchy-service-fastapi/app ./app
-COPY backend/customer-hierarchy-service-fastapi/alembic.ini ./alembic.ini
-COPY backend/customer-hierarchy-service-fastapi/alembic ./alembic
+COPY ${SERVICE_PATH}/app ./app
+COPY ${SERVICE_PATH}/alembic.ini ./alembic.ini
+COPY ${SERVICE_PATH}/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/app/libs
+ENV PYTHONPATH=/app/libs:${PYTHONPATH}
+
+# 驗證共用程式庫是否可匯入
+RUN python - <<'PY'
+import sys
+print('PYTHONPATH:', sys.path)
+import orderly_fastapi_core
+PY
 
 # 動態端口配置 - Cloud Run 兼容 (預設8080)
 ARG DEFAULT_PORT=8080

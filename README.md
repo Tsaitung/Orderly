@@ -29,6 +29,8 @@
 
 ## 📚 重要文檔
 
+- **[完整文件索引](docs/INDEX.md)** — 所有 Markdown 文件的用途與分類一覽。
+
 ### 🧑‍💻 開發協作（唯一指南）
 
 - **[開發助手與代碼協作指南](CLAUDE.md)** — 以此為唯一開發助理/代理使用與協作指引
@@ -43,7 +45,7 @@
 
 ### 📖 技術文檔
 
-- **[計劃與任務追蹤](docs/Plan-and-Tasks.md)** - 詳細開發計劃和進度
+- **[Staging 永久化計畫](plan.md)** - 最新環境修復與部署待辦
 - **[技術架構文檔](docs/Technical-Architecture-Summary.md)** - 系統架構設計
 - **[API 規格文檔](docs/api-specification.yaml)** - RESTful API 定義
 - **[資料庫架構](docs/Database-Schema-Core.md)** - 完整資料庫設計

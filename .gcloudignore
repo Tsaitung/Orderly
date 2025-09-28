@@ -2,15 +2,15 @@
 .gcloudignore
 .git
 .gitignore
-node_modules
+node_modules/
 npm-debug.log
 .env
 .env.local
-__pycache__
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
-.pytest_cache
+.pytest_cache/
 .coverage
 *.log
 dist/
@@ -20,11 +20,72 @@ build/
 .vscode/
 .idea/
 
-# Include important build files
-!scripts/cloudbuild/Dockerfile.seed
-!scripts/cloudbuild/Dockerfile.migration-fix
-!scripts/cloudbuild/run-migrations.sh
-!scripts/cloudbuild/seed-data.yaml
-!scripts/database/
-!scripts/database/data/*.json
-!scripts/database/seed_from_real_data.py
+# Frontend exclusions (large files)
+.next/
+out/
+*.map
+public/assets/
+public/images/
+coverage/
+.turbo/
+
+# Backend test/doc exclusions  
+**/tests/
+**/test_*.py
+**/__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+docs/
+*.md
+!README.md
+
+# Database and data files
+*.db
+*.sqlite
+data/
+scripts/database/data/
+migrations/
+# SQL files excluded except needed ones
+*.sql
+!backend/*/alembic/versions/*.sql
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Package files
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# Media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ico
+*.svg
+*.mp4
+*.mov
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~
+
+# Only include essential build files
+!backend/*/requirements.txt
+!backend/*/Dockerfile
+!backend/*/app/
+!backend/libs/
+!backend/*/alembic.ini
+!backend/*/alembic/

@@ -11,13 +11,15 @@ WORKDIR /app
 # 依賴安裝階段
 FROM base AS deps
 
+ARG SERVICE_PATH=backend/customer-hierarchy-service-fastapi
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY ${SERVICE_PATH}/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -32,16 +34,23 @@ RUN apt-get update && apt-get install -y \
 # 複製依賴
 COPY --from=deps /root/.local /root/.local
 
-# 複製共享庫（從backend目錄複製）
-COPY ../libs ./libs
+# 重新定義變數以在運行階段使用
+ARG SERVICE_PATH=backend/customer-hierarchy-service-fastapi
+ARG LIBS_PATH=backend/libs
+
+# 複製共享庫
+COPY ${LIBS_PATH} ./libs
 
 # 複製應用程式
-COPY app ./app
-COPY alembic.ini ./alembic.ini
-COPY alembic ./alembic
+COPY ${SERVICE_PATH}/app ./app
+COPY ${SERVICE_PATH}/alembic.ini ./alembic.ini
+COPY ${SERVICE_PATH}/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
-ENV PYTHONPATH=/app/libs
+ENV PYTHONPATH=/app/libs:${PYTHONPATH}
+
+# 驗證共用程式庫是否可匯入
+RUN python -c "import sys; print('PYTHONPATH:', sys.path); import orderly_fastapi_core"
 
 # 動態端口配置 - Cloud Run 兼容 (預設8080)
 ARG DEFAULT_PORT=8080

@@ -20,6 +20,7 @@ from app.api.v1.skus_simple import router as skus_router
 from app.api.v1.sku_upload import router as sku_upload_router
 from app.api.v1.sku_analytics import router as sku_analytics_router
 from app.api.v1.sku_sharing import router as sku_sharing_router
+from app.api.bff import router as bff_router
 from app.middleware.error_handler import ErrorHandlerMiddleware, RequestValidationMiddleware
 
 
@@ -222,6 +223,12 @@ app.include_router(
     sku_sharing_router,
     prefix="/api/products",
     tags=["SKU Sharing System"]
+)
+
+# BFF routes consumed by the frontend platform (exposed under /api/bff)
+app.include_router(
+    bff_router,
+    tags=["BFF"],
 )
 
 

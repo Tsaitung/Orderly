@@ -57,6 +57,36 @@ interface SupplierCardProps {
 }
 
 function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCardProps) {
+  const safeNumber = (value: unknown, fallback = 0): number => {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : fallback
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : fallback
+  }
+
+  const formatCurrency = (value: unknown): string => {
+    const amount = safeNumber(value)
+    return amount.toLocaleString('zh-TW')
+  }
+
+  const formatPercent = (value: unknown): string => {
+    const number = safeNumber(value)
+    return Number.isFinite(number) ? number.toString() : '0'
+  }
+
+  const formatDate = (value: unknown): string => {
+    if (!value) return '未知'
+    const date = new Date(value as string)
+    return Number.isNaN(date.getTime()) ? '未知' : date.toLocaleDateString('zh-TW')
+  }
+
+  const monthlyGMV = safeNumber(supplier.monthly_gmv)
+  const monthlyOrders = safeNumber(supplier.monthly_orders)
+  const fulfillmentRate = safeNumber(supplier.fulfillment_rate)
+  const gmvGrowthRate = safeNumber(supplier.gmv_growth_rate)
+  const ordersGrowthRate = safeNumber(supplier.orders_growth_rate)
+  const qualityScore = safeNumber(supplier.quality_score)
+  const minimumOrderAmount = safeNumber(supplier.minimum_order_amount)
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'VERIFIED':
@@ -157,44 +187,44 @@ function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCa
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              NT$ {(supplier.monthly_gmv / 1000).toFixed(0)}K
+              NT$ {(monthlyGMV / 1000).toFixed(0)}K
             </div>
             <div className="text-xs text-gray-500">月 GMV</div>
             <div
               className={cn(
                 'flex items-center justify-center text-xs',
-                supplier.gmv_growth_rate >= 0 ? 'text-green-600' : 'text-red-600'
+                gmvGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'
               )}
             >
-              {supplier.gmv_growth_rate >= 0 ? (
+              {gmvGrowthRate >= 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3" />
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3" />
               )}
-              {supplier.gmv_growth_rate >= 0 ? '+' : ''}
-              {supplier.gmv_growth_rate}%
+              {gmvGrowthRate >= 0 ? '+' : ''}
+              {formatPercent(gmvGrowthRate)}%
             </div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{supplier.monthly_orders}</div>
+            <div className="text-lg font-bold text-gray-900">{monthlyOrders}</div>
             <div className="text-xs text-gray-500">月訂單</div>
             <div
               className={cn(
                 'flex items-center justify-center text-xs',
-                supplier.orders_growth_rate >= 0 ? 'text-green-600' : 'text-red-600'
+                ordersGrowthRate >= 0 ? 'text-green-600' : 'text-red-600'
               )}
             >
-              {supplier.orders_growth_rate >= 0 ? (
+              {ordersGrowthRate >= 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3" />
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3" />
               )}
-              {supplier.orders_growth_rate >= 0 ? '+' : ''}
-              {supplier.orders_growth_rate}%
+              {ordersGrowthRate >= 0 ? '+' : ''}
+              {formatPercent(ordersGrowthRate)}%
             </div>
           </div>
           <div className="text-center">
-            <div className="text-lg font-bold text-gray-900">{supplier.fulfillment_rate}%</div>
+            <div className="text-lg font-bold text-gray-900">{formatPercent(fulfillmentRate)}%</div>
             <div className="text-xs text-gray-500">履約率</div>
             <div className="flex items-center justify-center">
               <div className="flex items-center">
@@ -203,7 +233,7 @@ function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCa
                     key={i}
                     className={cn(
                       'h-3 w-3',
-                      i < Math.floor(supplier.quality_score)
+                      i < Math.floor(qualityScore)
                         ? 'fill-current text-yellow-400'
                         : 'text-gray-300'
                     )}
@@ -214,7 +244,7 @@ function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCa
           </div>
           <div className="text-center">
             <div className="text-lg font-bold text-gray-900">
-              NT$ {supplier.minimum_order_amount.toLocaleString()}
+              NT$ {formatCurrency(minimumOrderAmount)}
             </div>
             <div className="text-xs text-gray-500">最小訂購</div>
             <div className="text-xs text-gray-600">{supplier.payment_terms_display}</div>
@@ -242,9 +272,9 @@ function SupplierCard({ supplier, onViewDetails, onEdit, onSuspend }: SupplierCa
 
         {/* 底部資訊 */}
         <div className="flex items-center justify-between border-t pt-2 text-xs text-gray-500">
-          <span>加入日期: {new Date(supplier.join_date).toLocaleDateString('zh-TW')}</span>
+          <span>加入日期: {formatDate(supplier.join_date)}</span>
           {supplier.last_order_date ? (
-            <span>最後訂單: {new Date(supplier.last_order_date).toLocaleDateString('zh-TW')}</span>
+            <span>最後訂單: {formatDate(supplier.last_order_date)}</span>
           ) : (
             <span>尚無訂單</span>
           )}

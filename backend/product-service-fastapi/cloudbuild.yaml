@@ -1,11 +1,26 @@
+options:
+  substitutionOption: ALLOW_LOOSE
+
+substitutions:
+  _IMAGE_TAG: latest
+  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-product-service-fastapi
+
 steps:
-- name: 'gcr.io/cloud-builders/docker'
-  args:
-  - 'build'
-  - '-t'
-  - 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-product-service-fastapi:v1.0.3'
-  - '-f'
-  - 'backend/product-service-fastapi/Dockerfile'
-  - '.'
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - '-t'
+      - '${_IMAGE_REPOSITORY}:${_IMAGE_TAG}'
+      - '-t'
+      - '${_IMAGE_REPOSITORY}:latest'
+      - '-f'
+      - backend/product-service-fastapi/Dockerfile
+      - '--build-arg'
+      - SERVICE_PATH=backend/product-service-fastapi
+      - '--build-arg'
+      - LIBS_PATH=backend/libs
+      - '.'
+
 images:
-- 'asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-product-service-fastapi:v1.0.3'
+  - '${_IMAGE_REPOSITORY}:${_IMAGE_TAG}'
+  - '${_IMAGE_REPOSITORY}:latest'

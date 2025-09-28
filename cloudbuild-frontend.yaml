@@ -1,9 +1,12 @@
 options:
   substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
 
 substitutions:
   _IMAGE_TAG: latest
-  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-customer-hierarchy-service-fastapi
+  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-frontend
+  _NEXT_PUBLIC_API_BASE_URL: https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app/api
 
 steps:
   - name: 'gcr.io/cloud-builders/docker'
@@ -14,11 +17,9 @@ steps:
       - '-t'
       - '${_IMAGE_REPOSITORY}:latest'
       - '-f'
-      - backend/customer-hierarchy-service-fastapi/Dockerfile
+      - Dockerfile.frontend
       - '--build-arg'
-      - SERVICE_PATH=backend/customer-hierarchy-service-fastapi
-      - '--build-arg'
-      - LIBS_PATH=backend/libs
+      - NEXT_PUBLIC_API_BASE_URL=${_NEXT_PUBLIC_API_BASE_URL}
       - '.'
 
 images:

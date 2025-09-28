@@ -334,93 +334,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Multi-layer caching setup
-      - name: Set up Docker Buildx with cache
-        uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: image=moby/buildkit:latest
-          buildkitd-flags: --allow-insecure-entitlement security.insecure
-      
-      - name: Setup pip cache
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ matrix.service }}-${{ hashFiles(format('backend/{0}/requirements.txt', matrix.service)) }}
-          restore-keys: |
-            pip-${{ matrix.service }}-
-            pip-
-      
-      - name: Setup build cache
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: buildx-${{ matrix.service }}-${{ github.sha }}
-          restore-keys: |
-            buildx-${{ matrix.service }}-
-            buildx-
-      
-      - name: Check if service exists
-        id: check-service
+      - name: Resolve Cloud Build configuration
+        id: config
         run: |
-          SERVICE_DIR="backend/${{ matrix.service }}"
-          if [ -d "$SERVICE_DIR" ] && [ -f "$SERVICE_DIR/Dockerfile" ]; then
-            echo "✅ Found service at $SERVICE_DIR"
-            echo "exists=true" >> $GITHUB_OUTPUT
+          case "${{ matrix.service }}" in
+            api-gateway-fastapi) CONFIG="backend/api-gateway-fastapi/cloudbuild.yaml" ;;
+            user-service-fastapi) CONFIG="backend/user-service-fastapi/cloudbuild.yaml" ;;
+            order-service-fastapi) CONFIG="backend/order-service-fastapi/cloudbuild.yaml" ;;
+            product-service-fastapi) CONFIG="backend/product-service-fastapi/cloudbuild.yaml" ;;
+            acceptance-service-fastapi) CONFIG="backend/acceptance-service-fastapi/cloudbuild.yaml" ;;
+            notification-service-fastapi) CONFIG="backend/notification-service-fastapi/cloudbuild.yaml" ;;
+            customer-hierarchy-service-fastapi) CONFIG="backend/customer-hierarchy-service-fastapi/cloudbuild.yaml" ;;
+            supplier-service-fastapi) CONFIG="backend/supplier-service-fastapi/cloudbuild.yaml" ;;
+            *) CONFIG="" ;;
+          esac
+
+          if [ -n "$CONFIG" ] && [ -f "$CONFIG" ]; then
+            echo "config=$CONFIG" >> $GITHUB_OUTPUT
+            echo "✅ Using Cloud Build config $CONFIG"
           else
-            echo "❌ Service not found at $SERVICE_DIR"
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Debug: Listing actual FastAPI services:"
-            ls -la backend/ | grep fastapi || echo "No FastAPI services found"
+            echo "config=" >> $GITHUB_OUTPUT
+            echo "❌ Missing Cloud Build config for service '${{ matrix.service }}'"
+            exit 1
           fi
-      
+
       - name: Authenticate to Google Cloud
-        if: steps.check-service.outputs.exists == 'true'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: steps.check-service.outputs.exists == 'true'
         uses: google-github-actions/setup-gcloud@v2
-      
-      - name: Configure Docker to use gcloud as credential helper
-        if: steps.check-service.outputs.exists == 'true'
-        run: gcloud auth configure-docker asia-east1-docker.pkg.dev
-      
-      - name: Build and push Docker image with enhanced caching
-        if: steps.check-service.outputs.exists == 'true'
-        uses: docker/build-push-action@v5
+
+      - name: Submit Cloud Build for ${{ matrix.service }}
         env:
           IMAGE_TAG: ${{ github.sha }}
-          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
-        with:
-          # Build from backend root so shared 'libs' is available to all service Dockerfiles
-          context: backend
-          file: backend/${{ matrix.service }}/Dockerfile
-          push: true
-          platforms: linux/amd64  # Specify platform for consistency
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:latest
-            ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/orderly-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
-          # Enhanced multi-layer caching
-          cache-from: |
-            type=local,src=/tmp/.buildx-cache-${{ matrix.service }}
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:${{ needs.determine-environment.outputs.environment }}
-          cache-to: |
-            type=local,dest=/tmp/.buildx-cache-${{ matrix.service }}-new,mode=max
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/orderly/cache-${{ matrix.service }}:latest,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-            SERVICE_NAME=${{ matrix.service }}
-      
-      - name: Optimize cache
-        if: steps.check-service.outputs.exists == 'true'
+          CONFIG_PATH: ${{ steps.config.outputs.config }}
         run: |
-          # Move cache to optimize for next build
-          rm -rf /tmp/.buildx-cache-${{ matrix.service }}
-          mv /tmp/.buildx-cache-${{ matrix.service }}-new /tmp/.buildx-cache-${{ matrix.service }} || true
+          gcloud builds submit . \
+            --config "$CONFIG_PATH" \
+            --substitutions _IMAGE_TAG=$IMAGE_TAG \
+            --project "$GOOGLE_CLOUD_PROJECT"
 
   deploy-infrastructure:
     name: Deploy Infrastructure
@@ -594,6 +548,20 @@ jobs:
             fi
           fi
 
+          ENV_VARS="NODE_ENV=$ENVIRONMENT,REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379,DATABASE_HOST=/cloudsql/$DB_CONNECTION_NAME,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+
+          if [ "${{ matrix.service }}" = "product-service-fastapi" ]; then
+            HIERARCHY_URL=$(gcloud run services describe "orderly-customer-hierarchy-service-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
+              --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+              --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+            if [ -n "$HIERARCHY_URL" ]; then
+              ENV_VARS+="\,CUSTOMER_HIERARCHY_SERVICE_URL=$HIERARCHY_URL"
+              echo "🔗 Injecting CUSTOMER_HIERARCHY_SERVICE_URL=$HIERARCHY_URL"
+            else
+              echo "⚠️ Unable to resolve Customer Hierarchy service URL; tree BFF may fail"
+            fi
+          fi
+
           gcloud run deploy "$SERVICE_NAME" \
             --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-${{ matrix.service }}:$IMAGE_TAG" \
             --platform=managed \
@@ -605,9 +573,7 @@ jobs:
             --max-instances="$MAX_INSTANCES" \
             --concurrency="$CONCURRENCY" \
             --timeout=300 \
-            --set-env-vars="NODE_ENV=$ENVIRONMENT" \
-            --set-env-vars="REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379" \
-            --set-env-vars="DATABASE_HOST=/cloudsql/$DB_CONNECTION_NAME,DATABASE_NAME=orderly,DATABASE_USER=orderly" \
+            --set-env-vars="$ENV_VARS" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
@@ -714,13 +680,6 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        
-      - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker asia-east1-docker.pkg.dev
-        
       - name: Build and deploy frontend
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
@@ -743,14 +702,11 @@ jobs:
           
           echo "📡 Backend URL for frontend: $BACKEND_URL"
           
-          # Build frontend image (no build-time backend URL needed)
-          docker buildx build \
-            --platform linux/amd64 \
-            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
-            --tag "$REGISTRY/$GOOGLE_CLOUD_PROJECT/orderly/orderly-frontend:$ENVIRONMENT-latest" \
-            --push \
-            -f Dockerfile.frontend \
-            .
+          # Build frontend image via Cloud Build (staging URL used for build-time API base; runtime vars set below)
+          gcloud builds submit . \
+            --config cloudbuild-frontend.yaml \
+            --substitutions _IMAGE_TAG=$ENVIRONMENT-${{ github.sha }},_NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api \
+            --project "$GOOGLE_CLOUD_PROJECT"
           
           # Deploy to Cloud Run with backend URL as runtime variable
           gcloud run deploy "orderly-frontend-$ENVIRONMENT${SERVICE_SUFFIX}" \

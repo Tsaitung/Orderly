@@ -25,6 +25,9 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
+# Use a dedicated version table so各服務的 migration 狀態互不干擾。
+VERSION_TABLE = "alembic_version_customer_hierarchy"
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -72,7 +75,8 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
-        render_as_batch=True,  # For better PostgreSQL support
+        render_as_batch=True,
+        version_table=VERSION_TABLE,
     )
 
     with context.begin_transaction():
@@ -86,9 +90,9 @@ def do_run_migrations(connection):
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
-        render_as_batch=True,  # For better PostgreSQL support
-        # Include schema comparison
+        render_as_batch=True,
         include_schemas=True,
+        version_table=VERSION_TABLE,
     )
 
     with context.begin_transaction():

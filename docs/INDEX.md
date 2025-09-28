@@ -1,87 +1,113 @@
-# Orderly 文檔索引（Canonical Docs Index）
+# Orderly Documentation Index (v3.0 · 2025-09-27)
 
-> 目的：統一文檔入口，明確唯一維護版本，避免重複與分歧。
-
----
-
-## 🎯 權威文檔（Canonical）
-
-- 開發助手指南：`CLAUDE.md`（唯一開發助理/代理使用與協作指引）
-- 產品需求（PRD）：`docs/PRD-Complete.md`
-- 使用者 Onboarding 流程：`docs/PRD-Onboarding-Process.md`
-- 雙向推薦系統：`docs/PRD-Referral-System.md`
-- 設計系統：`docs/design-system.md`
-- 技術架構：`docs/Technical-Architecture-Summary.md`
-- API（精要）：`docs/API-Endpoints-Essential.md`
-- API（OpenAPI 3）：`docs/api-specification.yaml`
-- 資料庫（架構核心）：`docs/Database-Schema-Core.md`
-- 資料庫（部署運維）：`docs/database.md`
-- 資料庫管理工具：`scripts/database/README.md`（統一資料庫管理解決方案）
-- CI/CD 部署配置：`docs/ci-secrets.md`（GitHub Secrets 與環境變數完整設定）
-- 部署檢查清單：`docs/DEPLOYMENT-CHECKLIST.md`（前後端服務部署驗證流程）
-- 環境管理指南：`docs/DEPLOYMENT-ENVIRONMENTS.md`（多環境架構與維護策略）
-- 故障排除指南：`docs/DEPLOYMENT-TROUBLESHOOTING.md`（部署問題診斷與解決方案）
+> 單一入口導覽。本索引涵蓋所有 Markdown 文件，並依用途分組，方便開發、營運與產品團隊快速定位資訊。新增或異動文件時，請同步更新此表。
 
 ---
 
-## 🧭 使用指引（Which doc to use?）
-
-- 規劃/驗收：讀 `PRD-Complete.md`（唯一需求事實來源）
-- 使用者引導：讀 `PRD-Onboarding-Process.md`（新用戶註冊流程設計）
-- 推薦系統：讀 `PRD-Referral-System.md`（雙向邀請機制設計）
-- 設計/組件：讀 `design-system.md`（UI/UX、樣式、語意色）
-- 架構決策：讀 `Technical-Architecture-Summary.md`（實作就緒視圖）
-- API 開發：
-  - 人類可讀 → `API-Endpoints-Essential.md`
-  - 機器對接 → `api-specification.yaml`（OpenAPI）
-- 數據模型：讀 `Database-Schema-Core.md`
-- DB 運維：讀 `database.md`
-- DB 管理工具：讀 `scripts/database/README.md`（資料導出/導入、測試資料創建、環境遷移）
-- 部署配置：讀 `ci-secrets.md`（GitHub Actions、Cloud Run、Secret Manager 設定）
-- 部署驗證：讀 `DEPLOYMENT-CHECKLIST.md`（完整的前後端部署檢查流程）
-- 環境切換：讀 `DEPLOYMENT-ENVIRONMENTS.md`（Development/Staging/Production 環境管理）
-- 問題排除：讀 `DEPLOYMENT-TROUBLESHOOTING.md`（常見故障診斷與緊急響應）
+## 1. 起點與治理（Start Here & Governance）
+- `README.md` — 專案概覽、架構與快速啟動說明。
+- `docs/README.md` — 文件資料夾導覽指南。
+- `docs/PROJECT-OVERVIEW.md` — Orderly 平台願景、目標與里程碑摘要。
+- `plan.md` — Staging 永久化計畫（v3.0），列出近期環境修復與待辦。
+- `CLAUDE.md` — 代理/協作守則與開發輔助流程（唯一權威版本）。
+- `CLAUDE.local.md` — 本機代理設定補充。
 
 ---
 
-## 🛠️ 維護規範（Maintenance Rules）
-
-- 單一真相：涉及需求的變更，先更新 `PRD-Complete.md`
-- 不重複：新增文檔前，先檢查是否已有對應權威文件
-- 同步鏈結：新增或重命名文檔時，更新相關交叉引用
-- PR 驗收：文檔變更需包含「影響範圍 + 更新的鏈結」
-
----
-
-## ♻️ 本次整併（2025-09-18）
-
-- 合併至 PRD：`docs/PRD.md`、`requirement.md` → `docs/PRD-Complete.md`
-- 合併至 設計系統：根目錄 `Orderly Design System.md` → `docs/design-system.md`
-- 合併至 技術架構：`docs/technical-architecture.md` → `docs/Technical-Architecture-Summary.md`
-- 合併至 API：`docs/api-specification.md` → `docs/API-Endpoints-Essential.md` + `docs/api-specification.yaml`
-
-## 🔧 資料庫管理工具整合（2025-09-22）
-
-- 整合資料庫腳本：5個分散腳本 → 2個核心工具
-  - 統一管理工具：`scripts/database/database_manager.py`（導出、導入、測試資料、清理）
-  - 真實資料腳本：`scripts/database/seed_from_real_data.py`（基於生產資料的完整測試）
-- 刪除一次性腳本：`export_production_data.py`、`generate_seed_from_export.py`、`seed_test_customers.py`、`import_to_staging.py`
-- 更新文檔：`CLAUDE.md`、`docs/database.md`、`scripts/database/README.md`
-
-## 🚀 部署文檔系統化（2025-09-24）
-
-- 新增部署文檔系列：涵蓋完整的 CI/CD 與多環境部署管理
-  - `docs/ci-secrets.md`：GitHub Secrets、Cloud SQL 配置、新版 workflow inputs
-  - `docs/DEPLOYMENT-CHECKLIST.md`：前後端服務部署驗證（8個微服務 + 前端）
-  - `docs/DEPLOYMENT-ENVIRONMENTS.md`：Development/Staging/Production 環境架構
-  - `docs/DEPLOYMENT-TROUBLESHOOTING.md`：故障排除與緊急響應流程
-- 實作診斷端點：為 6個後端服務添加 `/db/health` 資料庫健康檢查
-- 統一診斷工具：`scripts/db/diag.sh` 批量檢查所有服務狀態
-- 支援 v2 平行部署：orderly-db-v2 Cloud SQL 實例與服務後綴機制
+## 2. 企劃、進度與決策（Planning & Status）
+- `docs/DEVELOPMENT-PROGRESS-REPORT.md` — 專案進度現況分析。
+- `docs/CRITICAL-GAPS-ANALYSIS.md` — 關鍵風險與缺口彙總。
+- `docs/NEXT-SPRINT-PLAN.md` — 下一階段衝刺計畫與交付目標。
+- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md` — 深度狀況盤點與策略結論。
+- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md` — 永久性修復方案一覽。
+- `DEPLOYMENT-FIX-SUMMARY.md` — 部署修復摘要。
+- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` — API 資料缺失調查報告。
+- `temp_deploy_trigger.md` — 2025-09-24 臨時部署觸發紀錄。
 
 ---
 
-## 📌 提醒
+## 3. 產品需求與體驗（Product & UX）
+- 核心 PRD：
+  - `docs/PRD-Complete.md` — 產品需求唯一事實來源。
+  - `docs/PRD-Auth-Module.md`
+  - `docs/PRD-Billing-Master.md`
+  - `docs/PRD-Customer-Hierarchy.md`
+  - `docs/PRD-Customer-Hierarchy-Dashboard-Redesign.md`
+  - `docs/PRD-Onboarding-Process.md`
+  - `docs/PRD-Referral-System.md`
+  - `docs/PRD-SKU-Management-Enhanced.md`
+  - `docs/PRD-SKU-Sharing-System.md`
+  - `docs/PRD-User-Management.md`
+  - `docs/Orderly_Contracts_Config_PRD_Reconciliation.md`
+  - `backend/supplier-service-fastapi/docs/PRD-Supplier-Frontend-Refactoring.md`
+- 使用者體驗：
+  - `docs/User-Interface-Wireframes.md`
+  - `docs/supplier-onboarding-playbook.md`
+  - `docs/super-admin-guide.md`
+- 設計系統：
+  - `docs/design-system.md`（概覽）
+  - 子文件位於 `docs/design-system/`：`README.md`、`index.md`、`color-system.md`、`component-guidelines.md`、`layout-system.md`、`spacing-system.md`、`new-module-guide.md`
 
-- 若需要復原歷史內容，請使用 Git 歷史（blame/log）查閱已刪除文件版本。
-- `docs/blue-green-deployment-guide.md` 已標記為歷史參考文件，實際部署請依本索引列出的權威文檔。
+---
+
+## 4. 架構與工程設計（Architecture & Engineering）
+- `docs/Technical-Architecture-Summary.md` — 全域技術架構說明。
+- `docs/technical-architecture-auth.md` — 身分驗證模組架構。
+- `docs/PERFORMANCE-OPTIMIZATION-SUMMARY.md` — 系統效能優化與量測。
+- `docs/docker-containerization-summary.md` — 容器化策略與部署考量。
+- `CICD-init-guide.md` — GitHub Actions / CI 初始化指引。
+
+---
+
+## 5. 資料庫、資料與 API（Data & API）
+- `docs/Database-Schema-Core.md` — 主要資料庫結構。
+- `docs/database.md` — 資料庫操作、環境與維運。
+- `docs/SQLALCHEMY-MIGRATION.md` — SQLAlchemy/Alembic 遷移指南。
+- `docs/product_categories_final.md` — 產品分類資料定義。
+- `docs/API-Endpoints-Essential.md` — API 端點摘要。
+- `docs/smoke-tests.md` — API Smoke Test 列表。
+- `docs/erp-integration-guide.md` — ERP 整合指引。
+- `scripts/database/README.md` — 資料庫工具與腳本說明。
+
+---
+
+## 6. 營運與部署（Operations & Deployment）
+- `docs/DEPLOYMENT-CHECKLIST.md` — 部署前/後檢查表。
+- `docs/DEPLOYMENT-ENVIRONMENTS.md` — 多環境切換策略。
+- `docs/DEPLOYMENT-TROUBLESHOOTING.md` — 故障排除手冊。
+- `docs/staging-permanent-guide.md` — Staging 永久化部署指南。
+- `docs/Infra-Runbook.md` — 雲端基礎架構 Runbook。
+- `docs/ci-secrets.md` 與 `docs/github-secrets-setup.md` — GitHub / Cloud Secrets 配置。
+- `docs/blue-green-deployment-guide.md` — 藍綠部署（歷史參考）。
+- `scripts/docker-deployment-guide.md` — Docker 部署流程。
+- `temp_deploy_trigger.md` — 臨時部署紀錄（亦見第 2 節）。
+
+---
+
+## 7. 工具與其他資源（Tooling & Misc）
+- `docs/design-system/` 子資料夾所含原型指南（見第 3 節）。
+- `public/images/hero/README.md` — 行銷素材使用說明。
+
+---
+
+## 8. 規格、需求模板與草稿（Specifications & Templates）
+- `specs/requirements.md` — 專案需求範本。
+- `specs-cloud-run-port/requirements.md` — Cloud Run PORT 變更需求。
+- `requirements.md` — Cloud Run PORT 修復需求草稿模板。
+
+---
+
+## 9. 歷史紀錄與事後檢討（Historical Archive）
+> 與第 2 節內容互相參照，保留完整調查與修復紀錄。
+- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md`
+- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md`
+- `DEPLOYMENT-FIX-SUMMARY.md`
+- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md`
+- `temp_deploy_trigger.md`
+
+---
+
+## 10. 維護準則
+- 所有新增文件需於本索引加入條目與簡介。
+- 若文件被取代或合併，請在此標註「歷史紀錄」並更新指向。
+- 嚴禁建立重複用途文件；若需差異化版本，請明確標示用途與維護者。

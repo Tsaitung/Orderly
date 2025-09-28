@@ -1,5 +1,7 @@
 # Staging 環境永久化部署指南
 
+> 最後更新：2025-09-28 18:20
+
 ## 概述
 
 本文檔描述井然 Orderly 專案 staging 環境的完整部署流程、配置管理和運維指南。所有配置已實現永久化，支援可重複部署和故障恢復。
@@ -56,6 +58,9 @@ DATABASE_NAME: orderly
 DATABASE_USER: orderly
 DATABASE_URL: postgresql+asyncpg://orderly:PASSWORD@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
 
+# 2025-09-28 18:10 更新：FastAPI core 已支援 POSTGRES_PASSWORD / DATABASE_PASSWORD / DB_PASSWORD 多重 fallback，
+# Cloud Run 建議統一使用 Secret Manager `DATABASE_PASSWORD`
+
 # Service Account（每個服務都有專用 SA）
 - orderly-apigw-fastapi@orderly-472413.iam.gserviceaccount.com     # API Gateway
 - orderly-product-fastapi@orderly-472413.iam.gserviceaccount.com   # Product Service
@@ -65,6 +70,33 @@ DATABASE_URL: postgresql+asyncpg://orderly:PASSWORD@/orderly?host=/cloudsql/orde
 # Cloud SQL 連接（自動注入）
 --add-cloudsql-instances=orderly-472413:asia-east1:orderly-db-v2
 ```
+
+### BFF 端點（平台前端入口）
+
+- `/api/bff/products/stats` → Product Service `/api/products/stats`
+- `/api/bff/products` → Product Service `/api/products`
+- `/api/bff/products/skus/search` → Product Service `/api/products/skus/search`
+- `/api/bff/v2/hierarchy/tree` → Customer Hierarchy Service `/api/v2/hierarchy/tree`
+
+> **注意**：`orderly_fastapi_core` 需重新部署後才會套用密碼 fallback；部署完成後請執行 `scripts/test-bff-endpoints.sh` 驗證上述端點是否正常。
+
+### Cloud Build 建置指令
+
+最新 CI/CD 以每個服務的 `cloudbuild.yaml` 為準，可手動執行下列指令確認建置（於 repo 根目錄）：
+
+```bash
+gcloud builds submit . --config backend/api-gateway-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/user-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/order-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/product-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/acceptance-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/notification-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/customer-hierarchy-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config backend/supplier-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config cloudbuild-frontend.yaml --substitutions _IMAGE_TAG=local-test
+```
+
+CI Pipeline 會自動以 `_IMAGE_TAG=${GITHUB_SHA}` 執行上述建置，並同時推送 `latest` 標籤至 Artifact Registry。
 
 ## 部署腳本
 
@@ -85,6 +117,11 @@ done
 ```
 
 ### 資料庫管理
+
+> **2025-09-28 更新**：
+> - 各 FastAPI 服務的 Alembic 版本表已拆分，不再共用 `alembic_version`。請確認下列版本表已存在並包含對應 revision：`alembic_version_user`、`alembic_version_product`、`alembic_version_customer_hierarchy`、`alembic_version_supplier`、`alembic_version_order`、`alembic_version_acceptance`、`alembic_version_notification`。
+>   若尚未建立，可重新執行該服務的 Alembic 遷移以產生對應表。
+> - `.gcloudignore` 已重新納入 `backend/*/alembic.ini` 與 `backend/*/alembic/`，避免遷移檔在 Cloud Build 遺失；請確保建置時從專案根目錄執行。
 
 #### 遷移腳本
 `scripts/database/run-migrations.sh` - 執行所有服務的資料庫遷移：
@@ -323,6 +360,18 @@ gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.serv
 - **2025-09-27**: 初始版本，記錄永久化部署配置
 - **2025-09-27**: 修復 SKU enum 類型不匹配問題
 - **2025-09-27**: 添加供應商測試資料和 API 端點文檔
+- **2025-09-28 13:05**: 成功部署更新
+  - Customer Hierarchy Service: revision 00038-57p（修復 ModuleNotFoundError）
+  - Frontend: revision 00067-jww（包含 safeNumber 防呆函式）
+  - 創建 cloudbuild-frontend.yaml 支援前端 Cloud Build
+  - BFF 端點待實作：/api/bff/products/stats、/api/bff/v2/hierarchy/tree、/api/bff/products/skus/search
+- **2025-09-28 14:15**: 執行計畫部署更新
+  - Customer Hierarchy Service: revision 00039-rmm（新建映像成功）
+  - Product Service: revision 00039-bjl（使用現有映像）
+  - API Gateway: revision 00074-86f（使用 latest 映像）
+  - 基礎 API 驗證通過（Products: 52 items, Categories: 105 items）
+  - 建置問題待修復：Dockerfile heredoc 語法、建置上下文路徑
+  - Alembic 版本管理衝突需解決
 
 ---
 

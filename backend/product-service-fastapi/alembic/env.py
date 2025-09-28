@@ -22,6 +22,10 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
+# Track migrations for this service in an isolated version table so multiple
+# services can share the same database without conflicting revision IDs.
+VERSION_TABLE = "alembic_version_product"
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -62,6 +66,7 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        version_table=VERSION_TABLE,
     )
 
     with context.begin_transaction():
@@ -74,6 +79,7 @@ def do_run_migrations(connection):
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        version_table=VERSION_TABLE,
     )
 
     with context.begin_transaction():

@@ -282,18 +282,7 @@ class UnifiedSettings(BaseSettings):
             if self.database_url.startswith("postgresql+asyncpg://"):
                 return self.database_url
 
-        # Cloud Run 傳入的 Secret 可能命名為 POSTGRES_PASSWORD 或 DATABASE_PASSWORD，統一在此處做 fallback。
-        password = (
-            os.getenv("POSTGRES_PASSWORD")
-            or os.getenv("DATABASE_PASSWORD")
-            or os.getenv("DB_PASSWORD")
-            or "orderly_dev_password"
-        )
-        if password == "orderly_dev_password" and self.environment not in {"development", "testing"}:
-            logger.warning(
-                "database_password.default_fallback",
-                extra={"service": getattr(self, "app_name", "unknown"), "environment": self.environment},
-            )
+        password = os.getenv("POSTGRES_PASSWORD", "orderly_dev_password")
         if self.database_host.startswith("/cloudsql/"):
             return (
                 f"postgresql+asyncpg://{self.database_user}:{password}@/"

@@ -31,6 +31,17 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+venv/
+**/venv/
+
+# Python caches
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+**/.pytest_cache/
 
 # TypeScript
 *.tsbuildinfo
@@ -68,7 +79,10 @@ jest.config.js
 # Documentation
 README.md
 docs/
+
+# Markdown files but keep alembic.ini
 *.md
+!alembic.ini
 
 # Scripts
 scripts/

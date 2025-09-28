@@ -10,6 +10,7 @@ import time
 import uuid
 import logging
 from datetime import datetime
+from dataclasses import dataclass
 from typing import Optional, Dict, Any
 
 from fastapi import FastAPI, Request, Response, HTTPException
@@ -38,6 +39,47 @@ SERVICE_URLS = {
     # Supplier service exposes '/api/*' and '/*' paths
     "suppliers": os.getenv("SUPPLIER_SERVICE_URL", "http://localhost:3008"),
 }
+
+
+@dataclass(frozen=True)
+class ProxyMappingEntry:
+    """Mapping rule telling the gateway how to reach a downstream service."""
+
+    service: str
+    base_url: str
+    strip_segments: int
+    note: str = ""
+
+
+# Static mapping table for '/api/*' prefixes. Keep definitions in one place to
+# avoid scattering proxy rules throughout the codebase.
+PROXY_MAPPING: Dict[str, ProxyMappingEntry] = {
+    # '/api/users/*' -> user-service '/*' (service exposes '/auth/*' and '/api/auth/*')
+    "users": ProxyMappingEntry("users", SERVICE_URLS["users"], 2, "User service root"),
+    # '/api/auth/*' -> user-service '/api/auth/*'
+    "auth": ProxyMappingEntry("users", SERVICE_URLS["users"], 0, "User auth endpoints"),
+    # '/api/platform/suppliers/*' -> user-service '/api/suppliers/*' (admin/platform functions)
+    "platform": ProxyMappingEntry("users", SERVICE_URLS["users"], 1, "Platform supplier management"),
+    # '/api/suppliers/*' -> supplier-service '/api/suppliers/*'
+    "suppliers": ProxyMappingEntry("suppliers", SERVICE_URLS["suppliers"], 0, "Supplier core service"),
+    # '/api/orders/*' -> order-service '/*'
+    "orders": ProxyMappingEntry("orders", SERVICE_URLS["orders"], 2, "Order service"),
+    # '/api/products/*' -> product-service '/api/products/*'
+    "products": ProxyMappingEntry("products", SERVICE_URLS["products"], 0, "Product catalog"),
+    # '/api/acceptance/*' -> acceptance-service '/acceptance/*'
+    "acceptance": ProxyMappingEntry("acceptance", SERVICE_URLS["acceptance"], 2, "Acceptance workflows"),
+    # '/api/notifications/*' -> notification-service '/*'
+    "notifications": ProxyMappingEntry("notifications", SERVICE_URLS["notifications"], 2, "Notification delivery"),
+}
+
+# BFF endpoints (/api/bff/*) are served by the product-service FastAPI layer,
+# which aggregates product data and proxies hierarchy requests.
+PROXY_MAPPING["bff"] = ProxyMappingEntry(
+    service="products",
+    base_url=SERVICE_URLS["products"],
+    strip_segments=0,
+    note="Frontend BFF layer",
+)
 
 logger = logging.getLogger("api_gateway")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -317,27 +359,10 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
             final_url = base.rstrip("/") + "/api/v2" + remainder
         return {"service": "customer_hierarchy_v2", "url": final_url}
 
-    mapping = {
-        # '/api/users/*' -> user-service '/*' (service exposes '/auth/*' and '/api/auth/*')
-        "users": ("users", SERVICE_URLS["users"], 2),
-        # '/api/auth/*' -> user-service '/api/auth/*' (service exposes '/api/auth/*')
-        "auth": ("users", SERVICE_URLS["users"], 0),
-        # '/api/platform/suppliers/*' -> user-service '/api/suppliers/*' (admin/platform functions)
-        "platform": ("users", SERVICE_URLS["users"], 1),
-        # '/api/suppliers/*' -> supplier-service '/api/suppliers/*' (core supplier business logic)
-        "suppliers": ("suppliers", SERVICE_URLS["suppliers"], 0),
-        # '/api/orders/*' -> order-service '/*' (service exposes '/orders/*' at root and '/api/orders/*')
-        "orders": ("orders", SERVICE_URLS["orders"], 2),
-        # '/api/products/*' -> product-service '/api/products/*' (keep full path, includes SKUs)
-        "products": ("products", SERVICE_URLS["products"], 0),
-        # '/api/acceptance/*' -> acceptance-service '/acceptance/*'
-        "acceptance": ("acceptance", SERVICE_URLS["acceptance"], 2),
-        # '/api/notifications/*' -> notification-service '/*'
-        "notifications": ("notifications", SERVICE_URLS["notifications"], 2),
-    }
-    if key not in mapping:
+    entry = PROXY_MAPPING.get(key)
+    if not entry:
         return None
-    service_name, base, strip_n = mapping[key]
+    service_name, base, strip_n = entry.service, entry.base_url, entry.strip_segments
     remainder = "/" + "/".join(segments[strip_n:]) if len(segments) > strip_n else "/"
     return {"service": service_name, "url": base + remainder}
 
