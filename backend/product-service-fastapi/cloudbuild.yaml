@@ -7,9 +7,7 @@ steps:
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'
       - '-t'
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
-      - '-f'
-      - 'backend/${_SERVICE}/Dockerfile'
-      - 'backend/${_SERVICE}'
+      - 'backend/product-service-fastapi'
 
   # Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -21,7 +19,6 @@ steps:
 substitutions:
   _LOCATION: asia-east1
   _REPOSITORY: orderly
-  _SERVICE: product-service-fastapi
   _IMAGE: orderly-product-service-fastapi
   _TAG: ${SHORT_SHA}
 

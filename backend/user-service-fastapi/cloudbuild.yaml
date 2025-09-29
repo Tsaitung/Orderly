@@ -7,9 +7,7 @@ steps:
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'
       - '-t'
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
-      - '-f'
-      - 'backend/${_SERVICE}/Dockerfile'
-      - 'backend/${_SERVICE}'
+      - 'backend/user-service-fastapi'
 
   # Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'

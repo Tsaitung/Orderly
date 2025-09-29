@@ -446,7 +446,7 @@ jobs:
         run: |
           gcloud builds submit . \
             --config "$CONFIG_PATH" \
-            --substitutions _IMAGE_TAG=$IMAGE_TAG \
+            --substitutions SHORT_SHA=$IMAGE_TAG \
             --project "$GOOGLE_CLOUD_PROJECT"
 
   deploy-infrastructure:
