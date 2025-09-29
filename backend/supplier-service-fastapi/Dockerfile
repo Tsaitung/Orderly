@@ -11,13 +11,15 @@ WORKDIR /app
 # 依賴安裝階段
 FROM base AS deps
 
+ARG SERVICE_PATH=backend/supplier-service-fastapi
+
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY backend/supplier-service-fastapi/requirements.txt ./
+COPY ${SERVICE_PATH}/requirements.txt ./
 RUN pip install --user --no-warn-script-location -r requirements.txt
 
 # 運行階段
@@ -36,9 +38,10 @@ COPY --from=deps /root/.local /root/.local
 COPY backend/libs ./libs
 
 # 複製應用程式
-COPY backend/supplier-service-fastapi/app ./app
-COPY backend/supplier-service-fastapi/alembic.ini ./alembic.ini
-COPY backend/supplier-service-fastapi/alembic ./alembic
+ARG SERVICE_PATH=backend/supplier-service-fastapi
+COPY ${SERVICE_PATH}/app ./app
+COPY ${SERVICE_PATH}/alembic.ini ./alembic.ini
+COPY ${SERVICE_PATH}/alembic ./alembic
 
 ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONPATH=/app/libs
