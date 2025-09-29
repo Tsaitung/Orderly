@@ -140,26 +140,21 @@ jobs:
       - name: Resolve workflow flags
         id: flags
         run: |
-          SUFFIX=""
-          USE_V2=false
-          USE_SA=false
-          
-          # For staging branch, always use -v2 suffix unless manually overridden
+          # Staging branch ALWAYS uses -v2, no exceptions
           if [ "${{ github.ref }}" = "refs/heads/staging" ]; then
             SUFFIX="-v2"
             USE_V2=true
             USE_SA=true
-          fi
-          
-          # Allow manual override via workflow_dispatch (only if explicitly provided and non-empty)
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Only override suffix if a non-empty value was explicitly provided
-            INPUT_SUFFIX="${{ github.event.inputs.service_suffix }}"
-            if [ -n "$INPUT_SUFFIX" ] && [ "$INPUT_SUFFIX" != "" ]; then
-              SUFFIX="$INPUT_SUFFIX"
+          else
+            # Other branches can use manual inputs
+            SUFFIX=""
+            USE_V2=false
+            USE_SA=false
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              SUFFIX="${{ github.event.inputs.service_suffix }}"
+              [ "${{ github.event.inputs.use_v2_backends }}" = "true" ] && USE_V2=true
+              [ "${{ github.event.inputs.use_service_accounts }}" = "true" ] && USE_SA=true
             fi
-            [ "${{ github.event.inputs.use_v2_backends }}" = "true" ] && USE_V2=true
-            [ "${{ github.event.inputs.use_service_accounts }}" = "true" ] && USE_SA=true
           fi
           
           # Debug output
