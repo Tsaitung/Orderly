@@ -83,7 +83,8 @@ jobs:
           echo "Running post-deployment health checks..."
           if [ -f "scripts/health-check-simple.sh" ]; then
             chmod +x scripts/health-check-simple.sh
-            ./scripts/health-check-simple.sh
+            # Set ENV to staging-v2 to match the actual deployment
+            ENV=staging-v2 ./scripts/health-check-simple.sh
           else
             echo "⚠️ Health check script not found, running basic API test..."
             curl -f "https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app/ready"
