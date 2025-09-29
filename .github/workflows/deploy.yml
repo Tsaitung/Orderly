@@ -975,6 +975,8 @@ jobs:
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
+          GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
+          GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
         run: |
           # Service name generation function (matches deployment logic)
           get_service_name() {

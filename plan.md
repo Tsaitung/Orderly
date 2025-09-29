@@ -1,6 +1,29 @@
 # Orderly Platform Remediation Plan (2025-09-29)
 
-## 🚨 最新更新（2025-09-30 16:55）
+## 🚨 最新更新（2025-09-30 17:05）
+
+### Frontend 部署問題深度分析與修復
+
+#### 問題根因
+1. **Cloud Build substitution 錯誤**
+   - 錯誤：`INVALID_ARGUMENT: key "_NEXT_PUBLIC_API_BASE_URL" in substitution data is not matched`
+   - 原因：deploy.yml 傳入 `_NEXT_PUBLIC_API_BASE_URL` 但 cloudbuild.yaml 沒有使用
+   - 影響：Frontend 無法構建，整個部署流程失敗
+
+#### 修復措施（已實施）
+1. **frontend/cloudbuild.yaml**
+   - 新增 `--build-arg NEXT_PUBLIC_API_BASE_URL=${_NEXT_PUBLIC_API_BASE_URL}`
+   - 新增 substitution 預設值
+   
+2. **Dockerfile.frontend**
+   - 新增 `ARG NEXT_PUBLIC_API_BASE_URL`
+   - 新增 `ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}`
+
+#### 驗證狀態
+- Run ID 18091215885: ✅ Frontend 部署成功！
+- 整體狀態：8 個 jobs 成功（包括 Frontend）
+
+## 🚨 之前的更新（2025-09-30 16:55）
 
 ### 根本問題修復進度 - 實際驗證結果
 
@@ -314,10 +337,13 @@
 
 ---
 
-**最後更新時間**: 2025-09-30 16:58  
+**最後更新時間**: 2025-09-30 17:15
 **更新者**: Claude Code  
-**狀態**: 本次 3 個根本問題修復結果
-- ✅ 後端服務全量部署：8/8 服務成功構建和部署（Run ID 18090856176）
+**狀態**: CI/CD 部署成功但健康檢查有問題
+- ✅ 後端服務全量部署：8/8 服務成功構建和部署
 - ✅ 服務名稱驗證：validate-service-names job 成功通過
 - ✅ GCP SA 權限：確認有效，能正常構建和部署
-- ❌ Frontend 部署失敗：_NEXT_PUBLIC_API_BASE_URL substitution 錯誤（與本次修復無關）
+- ✅ Frontend 部署：修復 substitution 錯誤後成功部署（Run ID 18091215885）
+- ⚠️ Health Check 失敗：但手動測試服務實際正常運行（curl 返回 200）
+  - 可能原因：URL 格式差異或區域配置問題
+  - 實際服務狀態：正常（手動驗證 https://orderly-apigw-staging-v2-usg6y7o2ba-de.a.run.app/health 返回 200）
