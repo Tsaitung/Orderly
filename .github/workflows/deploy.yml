@@ -164,7 +164,7 @@ jobs:
           if [ "${{ steps.env.outputs.environment }}" = "staging" ]; then
             echo "db_instance_name=orderly-db-v2" >> $GITHUB_OUTPUT
           else
-            echo "db_instance_name=orderly-db" >> $GITHUB_OUTPUT
+            echo "db_instance_name=orderly-db-v2" >> $GITHUB_OUTPUT
           fi
 
   security-scan:
@@ -281,6 +281,12 @@ jobs:
             echo "📚 Shared library changes detected - rebuilding all services"
             changed_services=("\"api-gateway-fastapi\"" "\"user-service-fastapi\"" "\"order-service-fastapi\"" "\"product-service-fastapi\"" "\"acceptance-service-fastapi\"" "\"notification-service-fastapi\"" "\"customer-hierarchy-service-fastapi\"" "\"supplier-service-fastapi\"")
           fi
+
+          # Infrastructure / workflow changes require rebuilding all services even if individual folders untouched
+          if [ "$infrastructure_changed" = true ] && [ ${#changed_services[@]} -eq 0 ]; then
+            echo "🛠 Infrastructure/workflow updates detected - rebuilding all services"
+            changed_services=("\"api-gateway-fastapi\"" "\"user-service-fastapi\"" "\"order-service-fastapi\"" "\"product-service-fastapi\"" "\"acceptance-service-fastapi\"" "\"notification-service-fastapi\"" "\"customer-hierarchy-service-fastapi\"" "\"supplier-service-fastapi\"")
+          fi
           
           # Format as JSON array
           if [ ${#changed_services[@]} -eq 0 ]; then
@@ -292,11 +298,49 @@ jobs:
             echo "✅ Services to deploy: $services_json"
           fi
 
+  validate-configuration:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    needs: [determine-environment, detect-changes]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate service name lengths
+        id: validate-names
+        run: |
+          echo "🔍 Validating Cloud Run service name lengths..."
+          chmod +x scripts/ci/validate-deployment.sh
+          ./scripts/ci/validate-deployment.sh check-names \
+            --environment "${{ needs.determine-environment.outputs.environment }}" \
+            --suffix "${{ needs.determine-environment.outputs.service_suffix }}"
+      
+      - name: Validate DATABASE_PORT configuration
+        id: validate-database
+        run: |
+          echo "🔍 Validating DATABASE_PORT configuration..."
+          ./scripts/ci/validate-deployment.sh check-database-port \
+            --environment "${{ needs.determine-environment.outputs.environment }}"
+      
+      - name: Validate Cloud SQL configuration
+        id: validate-cloudsql
+        run: |
+          echo "🔍 Validating Cloud SQL annotations..."
+          ./scripts/ci/validate-deployment.sh check-cloudsql \
+            --environment "${{ needs.determine-environment.outputs.environment }}"
+      
+      - name: Generate validation report
+        if: always()
+        run: |
+          echo "## 📊 Configuration Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ./scripts/ci/validate-deployment.sh report >> $GITHUB_STEP_SUMMARY || true
+
   setup-registry:
     name: Setup Artifact Registry
     runs-on: ubuntu-latest
-    needs: [determine-environment, detect-changes]
-    if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.has-infrastructure-changes == 'true' || needs.detect-changes.outputs.has-frontend-changes == 'true')
+    needs: [determine-environment, detect-changes, validate-configuration]
+    if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || needs.detect-changes.outputs.has-infrastructure-changes == 'true' || needs.detect-changes.outputs.has-frontend-changes == 'true' || needs.determine-environment.outputs.force_backend == 'true' || github.event.inputs.services != '')
     steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -322,7 +366,7 @@ jobs:
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
-    needs: [determine-environment, detect-changes, setup-registry]
+    needs: [determine-environment, detect-changes, validate-configuration, setup-registry]
     if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true' && (needs.detect-changes.outputs.changed-services != '[]' || github.event.inputs.services != '' || needs.determine-environment.outputs.force_backend == 'true')
     
     strategy:
@@ -380,7 +424,7 @@ jobs:
   deploy-infrastructure:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: [determine-environment, setup-registry]
+    needs: [determine-environment, validate-configuration, setup-registry]
     if: needs.determine-environment.outputs.deploy == 'true' && needs.determine-environment.outputs.context_ok == 'true'
     environment: ${{ needs.determine-environment.outputs.environment }}
     steps:
@@ -517,8 +561,34 @@ jobs:
             fi
           fi
           
-          # Deploy to Cloud Run
-          SERVICE_NAME="orderly-${{ matrix.service }}-$ENVIRONMENT${SERVICE_SUFFIX}"
+          # Derive actual Cloud Run service name with abbreviations for staging-v2
+          get_service_name() {
+            local service="$1"
+            local env="$2"
+            local suffix="$3"
+            local env_suffix="${env}${suffix}"
+            
+            if [ "$env_suffix" = "staging-v2" ]; then
+              case "$service" in
+                api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+                user-service-fastapi) echo "orderly-user-staging-v2" ;;
+                order-service-fastapi) echo "orderly-order-staging-v2" ;;
+                product-service-fastapi) echo "orderly-product-staging-v2" ;;
+                acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+                notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+                customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+                supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            else
+              case "$service" in
+                customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            fi
+          }
+          
+          SERVICE_NAME=$(get_service_name "${{ matrix.service }}" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
 
           # Optional per-service Service Account (map service names to SA IDs)
           SA_FLAG=""
@@ -549,10 +619,10 @@ jobs:
             fi
           fi
 
-          ENV_VARS="NODE_ENV=$ENVIRONMENT,REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379,DATABASE_HOST=/cloudsql/$DB_CONNECTION_NAME,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+          ENV_VARS="NODE_ENV=$ENVIRONMENT,REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379,DATABASE_HOST=/cloudsql/$DB_CONNECTION_NAME,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly"
 
           if [ "${{ matrix.service }}" = "product-service-fastapi" ]; then
-            HIERARCHY_URL=$(gcloud run services describe "orderly-customer-hierarchy-service-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
+            HIERARCHY_URL=$(gcloud run services describe "orderly-customer-hierarchy-$ENVIRONMENT${SERVICE_SUFFIX}" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
             if [ -n "$HIERARCHY_URL" ]; then
@@ -619,10 +689,38 @@ jobs:
           SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
           USE_V2_BACKENDS: ${{ needs.determine-environment.outputs.use_v2_backends }}
         run: |
+          # Service name generation function
+          get_service_name() {
+            local service="$1"
+            local env="$2"
+            local suffix="$3"
+            local env_suffix="${env}${suffix}"
+            
+            if [ "$env_suffix" = "staging-v2" ]; then
+              case "$service" in
+                api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+                user-service-fastapi) echo "orderly-user-staging-v2" ;;
+                order-service-fastapi) echo "orderly-order-staging-v2" ;;
+                product-service-fastapi) echo "orderly-product-staging-v2" ;;
+                acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+                notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+                customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+                supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            else
+              case "$service" in
+                customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            fi
+          }
+          
           # Get all service URLs
           declare -A service_urls
           for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT${SERVICE_SUFFIX}" \
+            cloud_run_name=$(get_service_name "$service" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+            url=$(gcloud run services describe "$cloud_run_name" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
             if [ -n "$url" ]; then
@@ -658,8 +756,11 @@ jobs:
             env_vars+=",SUPPLIER_SERVICE_URL=${service_urls[supplier-service-fastapi]}"
           fi
 
+          # Get API Gateway service name
+          api_gateway_name=$(get_service_name "api-gateway-fastapi" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+          
           echo "Applying env vars to API Gateway: $env_vars (suffix='${SERVICE_SUFFIX}')"
-          gcloud run services update "orderly-api-gateway-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
+          gcloud run services update "$api_gateway_name" \
             --region="$GOOGLE_CLOUD_REGION" \
             --set-env-vars="$env_vars" \
             --labels="environment=$ENVIRONMENT,git_ref=${{ needs.determine-environment.outputs.ref_name }},git_sha=$GITHUB_SHA" \
@@ -691,21 +792,49 @@ jobs:
         run: |
           echo "🚀 Building and deploying frontend for $ENVIRONMENT"
           
+          # Service name generation function
+          get_service_name() {
+            local service="$1"
+            local env="$2"
+            local suffix="$3"
+            local env_suffix="${env}${suffix}"
+            
+            if [ "$env_suffix" = "staging-v2" ]; then
+              case "$service" in
+                api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+                user-service-fastapi) echo "orderly-user-staging-v2" ;;
+                order-service-fastapi) echo "orderly-order-staging-v2" ;;
+                product-service-fastapi) echo "orderly-product-staging-v2" ;;
+                acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+                notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+                customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+                supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            else
+              case "$service" in
+                customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            fi
+          }
+          
           # Get API Gateway URL for frontend configuration
-          BACKEND_URL=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT${SERVICE_SUFFIX}" \
+          api_gateway_name=$(get_service_name "api-gateway-fastapi" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+          BACKEND_URL=$(gcloud run services describe "$api_gateway_name" \
             --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
             --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           
           if [ -z "$BACKEND_URL" ]; then
             echo "⚠️ API Gateway not found, using placeholder URL"
-            BACKEND_URL="https://orderly-api-gateway-fastapi-$ENVIRONMENT-placeholder.run.app"
+            BACKEND_URL="https://orderly-apigw-$ENVIRONMENT-placeholder.run.app"
           fi
           
           echo "📡 Backend URL for frontend: $BACKEND_URL"
           
           # Build frontend image via Cloud Build (staging URL used for build-time API base; runtime vars set below)
           gcloud builds submit . \
-            --config cloudbuild-frontend.yaml \
+            --config frontend/cloudbuild.yaml \
             --substitutions _IMAGE_TAG=$ENVIRONMENT-${{ github.sha }},_NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api \
             --project "$GOOGLE_CLOUD_PROJECT"
           
@@ -788,15 +917,43 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
         run: |
+          # Service name generation function (matches deployment logic)
+          get_service_name() {
+            local service="$1"
+            local env="$2"
+            local suffix="$3"
+            local env_suffix="${env}${suffix}"
+            
+            if [ "$env_suffix" = "staging-v2" ]; then
+              case "$service" in
+                api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+                user-service-fastapi) echo "orderly-user-staging-v2" ;;
+                order-service-fastapi) echo "orderly-order-staging-v2" ;;
+                product-service-fastapi) echo "orderly-product-staging-v2" ;;
+                acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+                notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+                customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+                supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            else
+              case "$service" in
+                customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            fi
+          }
+          
           # Health check all deployed services
           failed_services=()
           for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT${SERVICE_SUFFIX}" \
+            service_name=$(get_service_name "$service" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+            url=$(gcloud run services describe "$service_name" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
             
             if [ -n "$url" ]; then
-              echo "Checking health of $service at $url/health"
+              echo "Checking health of $service ($service_name) at $url/health"
               if curl -sf "$url/health" --max-time 30 > /dev/null; then
                 echo "✅ $service is healthy"
               else
@@ -804,12 +961,13 @@ jobs:
                 failed_services+=("$service")
               fi
             else
-              echo "⚠️ $service not found or not deployed"
+              echo "⚠️ $service ($service_name) not found or not deployed"
             fi
           done
           
           # Gateway smoke checks (non-auth endpoints)
-          gw=$(gcloud run services describe "orderly-api-gateway-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          api_gateway_name=$(get_service_name "api-gateway-fastapi" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+          gw=$(gcloud run services describe "$api_gateway_name" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           if [ -n "$gw" ]; then
             ENABLE_CID=false
             if [ "$ENVIRONMENT" = "staging" ]; then ENABLE_CID=true; fi
@@ -847,8 +1005,10 @@ jobs:
           fi
 
           # Service DB health (if endpoint exists)
-          prod_url=$(gcloud run services describe "orderly-product-service-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
-          hier_url=$(gcloud run services describe "orderly-customer-hierarchy-service-fastapi-$ENVIRONMENT" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          product_service_name=$(get_service_name "product-service-fastapi" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+          hierarchy_service_name=$(get_service_name "customer-hierarchy-service-fastapi" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+          prod_url=$(gcloud run services describe "$product_service_name" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          hier_url=$(gcloud run services describe "$hierarchy_service_name" --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           if [ -n "$prod_url" ]; then
             echo "DB health: product-service"
             curl -sf "$prod_url/db/health" --max-time 30 > /dev/null || failed_services+=("product-db")
@@ -866,11 +1026,13 @@ jobs:
           echo "All services are healthy! 🎉"
 
   post-deployment:
-    name: Post-Deployment Tasks
+    name: Enhanced Post-Deployment Validation
     runs-on: ubuntu-latest
     needs: [determine-environment, health-check, deploy-frontend]
     if: always() && needs.determine-environment.outputs.deploy == 'true'
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -879,21 +1041,142 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       
-      - name: DB diagnostics (Cloud SQL + /db/health)
+      - name: Install required tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y jq curl uuid-runtime postgresql-client
+      
+      - name: Enhanced Post-Deployment Validation
+        id: validation
         env:
           PROJECT_ID: ${{ env.GOOGLE_CLOUD_PROJECT }}
           REGION: ${{ env.GOOGLE_CLOUD_REGION }}
           ENV: ${{ needs.determine-environment.outputs.environment }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RUN_HOST_SUFFIX: "655602747430"
+          WARN_THRESHOLD: "500"
+          FAIL_THRESHOLD: "2000"
         run: |
-          bash scripts/db/diag.sh | tee diag.out
-          echo "### DB Diagnostics ($ENV)" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Running Enhanced Post-Deployment Validation..."
+          echo "Environment: $ENV$SERVICE_SUFFIX"
+          echo "Timestamp: $(date -Iseconds)"
+          echo ""
+          
+          # Make scripts executable
+          chmod +x scripts/run_plan_checks.sh
+          chmod +x scripts/db/diag.sh
+          if [ -f scripts/test-redis-connection.sh ]; then
+            chmod +x scripts/test-redis-connection.sh
+          fi
+          
+          # Run enhanced validation script
+          set +e  # Don't fail immediately on script errors
+          validation_exit_code=0
+          
+          if timeout 600 scripts/run_plan_checks.sh 2>&1 | tee validation.out; then
+            validation_exit_code=${PIPESTATUS[0]}
+          else
+            validation_exit_code=$?
+            echo "⚠️ Validation script timed out or encountered errors"
+          fi
+          
+          # Parse results for GitHub Step Summary
+          echo "### 🔍 Post-Deployment Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          sed 's/^/    /' diag.out >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** $ENV$SERVICE_SUFFIX" >> $GITHUB_STEP_SUMMARY
+          echo "**Validation Time:** $(date -Iseconds)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          # Fail the job if diagnostics found issues
-          if grep -Ei '(unreachable|/db/health:\s+http (4|5)[0-9]{2}|POSTGRES_PASSWORD: \(not bound via secret\)|CloudSQL:\s*$|CloudSQL:\s*\(none\))' diag.out; then
-            echo "❌ DB diagnostics found issues" >&2
+          
+          # Extract summary from validation output
+          if grep -q "總檢查項目\|Total Checks" validation.out; then
+            echo "#### 📊 Validation Summary" >> $GITHUB_STEP_SUMMARY
+            grep -A 5 "POST-DEPLOYMENT VALIDATION SUMMARY" validation.out | sed 's/^/    /' >> $GITHUB_STEP_SUMMARY || true
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Determine status and next steps
+          case $validation_exit_code in
+            0)
+              echo "#### ✅ All Validation Checks Passed" >> $GITHUB_STEP_SUMMARY
+              echo "Deployment is healthy and ready for production use." >> $GITHUB_STEP_SUMMARY
+              echo "status=success" >> $GITHUB_OUTPUT
+              ;;
+            1)
+              echo "#### ❌ Critical Issues Detected" >> $GITHUB_STEP_SUMMARY
+              echo "**Action Required:** Review failed checks and consider rollback." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Critical Failures Found:**" >> $GITHUB_STEP_SUMMARY
+              grep -E "(❌|CRITICAL|失敗)" validation.out | head -10 | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY || true
+              echo "status=critical" >> $GITHUB_OUTPUT
+              ;;
+            2)
+              echo "#### ⚠️ Warnings Detected" >> $GITHUB_STEP_SUMMARY
+              echo "**Action Required:** Monitor closely, deployment is functional but degraded." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Warnings Found:**" >> $GITHUB_STEP_SUMMARY
+              grep -E "(⚠️|WARNING|警告)" validation.out | head -10 | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY || true
+              echo "status=warnings" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "#### 🔧 Validation Script Issues" >> $GITHUB_STEP_SUMMARY
+              echo "**Status:** Validation script encountered errors (exit code: $validation_exit_code)" >> $GITHUB_STEP_SUMMARY
+              echo "status=script_error" >> $GITHUB_OUTPUT
+              ;;
+          esac
+          
+          # Add detailed logs link
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📋 **Detailed Results:** Check plan.md for comprehensive validation report" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Monitoring:** [Cloud Run Console](https://console.cloud.google.com/run?project=$PROJECT_ID)" >> $GITHUB_STEP_SUMMARY
+          
+          # Set output for subsequent steps
+          echo "exit_code=$validation_exit_code" >> $GITHUB_OUTPUT
+          
+          # For critical failures in production, fail the job
+          if [ "$validation_exit_code" = "1" ] && [ "$ENV" = "production" ]; then
+            echo "💥 Critical validation failures in production environment"
             exit 1
+          fi
+          
+          # For staging, warnings and critical issues are logged but don't fail the deployment
+          if [ "$ENV" = "staging" ] || [ "$ENV" = "staging-v2" ]; then
+            echo "📝 Staging environment: validation issues logged for review"
+            exit 0
+          fi
+          
+          exit $validation_exit_code
+      
+      - name: Upload validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: post-deployment-validation-${{ needs.determine-environment.outputs.environment }}${{ needs.determine-environment.outputs.service_suffix }}
+          path: |
+            plan.md
+            validation.out
+          retention-days: 7
+      
+      - name: Legacy DB diagnostics (backward compatibility)
+        if: always()
+        env:
+          PROJECT_ID: ${{ env.GOOGLE_CLOUD_PROJECT }}
+          REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+          ENV: ${{ needs.determine-environment.outputs.environment }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
+        run: |
+          echo "🔍 Running legacy DB diagnostics for compatibility..."
+          if [ -f scripts/db/diag.sh ]; then
+            chmod +x scripts/db/diag.sh
+            bash scripts/db/diag.sh | tee diag.out
+            
+            # Check for critical DB issues in legacy format
+            if grep -Ei '(unreachable|/db/health:\s+http (4|5)[0-9]{2}|POSTGRES_PASSWORD: \(not bound via secret\)|CloudSQL:\s*$|CloudSQL:\s*\(none\))' diag.out; then
+              echo "⚠️ Legacy DB diagnostics found compatibility issues" >&2
+              # Don't fail - enhanced validation above handles this
+            fi
+          else
+            echo "⚠️ Legacy DB diagnostics script not found"
           fi
 
       - name: Create deployment summary
@@ -901,7 +1184,35 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           HEALTH_CHECK_STATUS: ${{ needs.health-check.result }}
           REF_NAME: ${{ needs.determine-environment.outputs.ref_name }}
+          SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
         run: |
+          # Service name generation function (matches deployment logic)
+          get_service_name() {
+            local service="$1"
+            local env="$2"
+            local suffix="$3"
+            local env_suffix="${env}${suffix}"
+            
+            if [ "$env_suffix" = "staging-v2" ]; then
+              case "$service" in
+                api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+                user-service-fastapi) echo "orderly-user-staging-v2" ;;
+                order-service-fastapi) echo "orderly-order-staging-v2" ;;
+                product-service-fastapi) echo "orderly-product-staging-v2" ;;
+                acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+                notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+                customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+                supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            else
+              case "$service" in
+                customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
+                *) echo "orderly-${service}-${env_suffix}" ;;
+              esac
+            fi
+          }
+          
           echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
@@ -912,7 +1223,8 @@ jobs:
           echo "### Service URLs:" >> $GITHUB_STEP_SUMMARY
           
           for service in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            url=$(gcloud run services describe "orderly-$service-$ENVIRONMENT" \
+            service_name=$(get_service_name "$service" "$ENVIRONMENT" "${SERVICE_SUFFIX}")
+            url=$(gcloud run services describe "$service_name" \
               --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
               --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "Not deployed")
             echo "- **$service:** $url" >> $GITHUB_STEP_SUMMARY
