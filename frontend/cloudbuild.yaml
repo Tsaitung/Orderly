@@ -6,6 +6,7 @@ steps:
       '-f', 'Dockerfile.frontend',
       '-t', 'asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-frontend:${_IMAGE_TAG}',
       '-t', 'asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-frontend:latest',
+      '--build-arg', 'NEXT_PUBLIC_API_BASE_URL=${_NEXT_PUBLIC_API_BASE_URL}',
       '.'
     ]
     dir: '.'
@@ -28,5 +29,6 @@ options:
 
 substitutions:
   _IMAGE_TAG: 'latest'
+  _NEXT_PUBLIC_API_BASE_URL: 'https://orderly-api-gateway-fastapi-staging-v2-655602747430.asia-east1.run.app/api'
 
 timeout: '1800s'
