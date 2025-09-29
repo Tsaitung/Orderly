@@ -1,7 +1,7 @@
 # Orderly Platform Remediation Plan (2025-09-29)
 
-## 🚨 最新更新（2025-09-30 00:20）
-### CI/CD 配置修復完成 ✅
+## 🚨 最新更新（2025-09-30 01:15）
+### CI/CD 配置深度修復 - 第二輪完成 ✅
 - **執行時間**：2025-09-30 00:00-00:20
 - **執行者**：DevOps Deployment Engineer Agent
 - **根因分析**：發現並修復 5 個關鍵配置問題
@@ -15,10 +15,18 @@
   - `missing-github-secrets.md`：創建 Secrets 設定指南
   - 統一服務名稱解析函數
   - 增強部署後驗證
-- **部署狀態**：✅ 已推送到 GitHub (commit: a914b0d)
+- **部署狀態**：✅ 已推送到 GitHub 
+  - 第一次修復 (commit: a914b0d) - 修復 DB instance 和 DATABASE_PORT
+  - 第二次修復 (commit: f2febfe) - 修復 service_suffix 預設值問題
+  - 第三次修復 (commit: 3fd2dde) - 改善 workflow_dispatch 空值處理
 - **剩餘工作**：
-  - 管理員設定 3 個缺失的 GitHub Secrets
-  - 觸發 CI/CD workflow 驗證部署
+  - 管理員設定 3 個缺失的 GitHub Secrets (POSTGRES_PASSWORD, JWT_SECRET, JWT_REFRESH_SECRET)
+  - 使用明確參數觸發 workflow: `gh workflow run deploy.yml --ref staging -f service_suffix=-v2`
+  
+### 已知問題與解決方案
+- **問題**：GitHub workflow_dispatch 可能傳遞空字串而非 null，導致 service_suffix 被覆蓋
+- **臨時解決方案**：手動指定 service_suffix 參數：`-f service_suffix=-v2`
+- **長期方案**：考慮將 staging-v2 的配置硬編碼到 workflow 中，避免依賴輸入參數
 
 ## 🌐 環境概況
 - 目標環境：Cloud Run `staging-v2`，資料庫使用 Cloud SQL `orderly-db-v2`（Unix socket 連線）。

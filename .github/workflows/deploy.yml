@@ -327,6 +327,9 @@ jobs:
         id: validate-names
         run: |
           echo "🔍 Validating Cloud Run service name lengths..."
+          echo "Environment: ${{ needs.determine-environment.outputs.environment }}"
+          echo "Service suffix: '${{ needs.determine-environment.outputs.service_suffix }}'"
+          echo "Full environment string: ${{ needs.determine-environment.outputs.environment }}${{ needs.determine-environment.outputs.service_suffix }}"
           chmod +x scripts/ci/validate-deployment.sh
           ./scripts/ci/validate-deployment.sh check-names \
             --environment "${{ needs.determine-environment.outputs.environment }}" \
