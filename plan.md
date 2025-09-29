@@ -1,5 +1,25 @@
 # Orderly Platform Remediation Plan (2025-09-29)
 
+## 🚨 最新更新（2025-09-30 00:20）
+### CI/CD 配置修復完成 ✅
+- **執行時間**：2025-09-30 00:00-00:20
+- **執行者**：DevOps Deployment Engineer Agent
+- **根因分析**：發現並修復 5 個關鍵配置問題
+  1. Database instance 錯誤：`orderly-db` → `orderly-db-v2`
+  2. 缺少 DATABASE_PORT=5432 環境變數
+  3. 服務名稱解析不一致
+  4. 健康檢查使用錯誤的服務名稱
+  5. 缺少必要的 GitHub Secrets
+- **修復內容**：
+  - `.github/workflows/deploy.yml`：7 處關鍵修復
+  - `missing-github-secrets.md`：創建 Secrets 設定指南
+  - 統一服務名稱解析函數
+  - 增強部署後驗證
+- **部署狀態**：✅ 已推送到 GitHub (commit: a914b0d)
+- **剩餘工作**：
+  - 管理員設定 3 個缺失的 GitHub Secrets
+  - 觸發 CI/CD workflow 驗證部署
+
 ## 🌐 環境概況
 - 目標環境：Cloud Run `staging-v2`，資料庫使用 Cloud SQL `orderly-db-v2`（Unix socket 連線）。
 - 統一配置：所有 FastAPI 服務依 `DATABASE_HOST / PORT / USER / NAME / POSTGRES_PASSWORD` 自動組裝 DSN，Product Service 為正常對照組。
@@ -21,7 +41,7 @@
 - ✅ CI/CD Pipeline 構建正常：所有微服務映像構建成功
 - ⚠️ GitHub 配置版本落後：repository 上的 deploy.yml 仍使用舊的 `orderly-db`
 - ✅ Secrets 清理狀態健康：所有舊 DATABASE_URL secrets 已移除
-- ✅ 本地改進有效：需推送最新配置到 GitHub 完成最後一哩路
+- ✅ 配置已推送：deploy.yml 修復完成並已推送到 GitHub（2025-09-30 00:18）
 
 ### 關鍵成效
 - **服務可用性**：100%（7/7 服務）
@@ -215,14 +235,14 @@
 ### 綜合評估
 - **staging-v2 環境狀態**：100% 健康（7/7 服務正常）
 - **配置清理狀態**：100% 完成（DATABASE_URL 遷移）
-- **CI/CD 流程狀態**：部分完成（需推送最新配置到 GitHub）
+- **CI/CD 流程狀態**：✅ 配置修復完成（已推送最新配置到 GitHub，commit: a914b0d）
 - **自動化覆蓋率**：98%（僅剩 secrets 設定需手動操作）
 
 ## ✅ 已完成行動（2025-09-29 23:50）
 1. **CI/CD Workflow 驗證** ✅ 測試完成：
    - ✅ 成功觸發 workflow (Run ID: 18085514841)
    - ✅ 確認構建流程正常（8個服務全部成功）
-   - ⚠️ 發現 GitHub 配置版本落後，需推送最新變更
+   - ✅ GitHub 配置已更新（2025-09-30 00:18，commit: a914b0d）
    - ✅ 驗證腳本和流程均已就緒
 
 2. **GitHub Secrets 清理** ✅ 驗證完成：

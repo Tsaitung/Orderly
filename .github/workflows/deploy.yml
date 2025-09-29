@@ -151,14 +151,24 @@ jobs:
             USE_SA=true
           fi
           
-          # Allow manual override via workflow_dispatch
+          # Allow manual override via workflow_dispatch (only if explicitly provided and non-empty)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ -n "${{ github.event.inputs.service_suffix }}" ]; then
-              SUFFIX="${{ github.event.inputs.service_suffix }}"
+            # Only override suffix if a non-empty value was explicitly provided
+            INPUT_SUFFIX="${{ github.event.inputs.service_suffix }}"
+            if [ -n "$INPUT_SUFFIX" ] && [ "$INPUT_SUFFIX" != "" ]; then
+              SUFFIX="$INPUT_SUFFIX"
             fi
             [ "${{ github.event.inputs.use_v2_backends }}" = "true" ] && USE_V2=true
             [ "${{ github.event.inputs.use_service_accounts }}" = "true" ] && USE_SA=true
           fi
+          
+          # Debug output
+          echo "🔍 Resolved configuration:"
+          echo "   Branch: ${{ github.ref }}"
+          echo "   Event: ${{ github.event_name }}"
+          echo "   Service suffix: $SUFFIX"
+          echo "   Use v2 backends: $USE_V2"
+          echo "   Use service accounts: $USE_SA"
           
           echo "service_suffix=$SUFFIX" >> $GITHUB_OUTPUT
           echo "use_v2_backends=$USE_V2" >> $GITHUB_OUTPUT
