@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from functools import lru_cache
+from urllib.parse import quote
 
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -238,9 +239,10 @@ class UnifiedSettings(BaseSettings):
         @field_validator('environment')
         @classmethod
         def validate_environment(cls, v):
-            """驗證環境名稱"""
+            """驗證環境名稱，允許附加版本後綴"""
             valid_envs = ['development', 'staging', 'production', 'testing']
-            if v not in valid_envs:
+            normalized = v.lower()
+            if normalized not in valid_envs and not any(normalized.startswith(f"{env}-") for env in valid_envs):
                 logger.warning(f"未知的環境: {v}，有效值: {valid_envs}")
             return v
     else:
@@ -260,9 +262,10 @@ class UnifiedSettings(BaseSettings):
         
         @validator('environment')
         def validate_environment(cls, v):
-            """驗證環境名稱"""
+            """驗證環境名稱，允許附加版本後綴"""
             valid_envs = ['development', 'staging', 'production', 'testing']
-            if v not in valid_envs:
+            normalized = v.lower()
+            if normalized not in valid_envs and not any(normalized.startswith(f"{env}-") for env in valid_envs):
                 logger.warning(f"未知的環境: {v}，有效值: {valid_envs}")
             return v
     
@@ -282,15 +285,36 @@ class UnifiedSettings(BaseSettings):
             if self.database_url.startswith("postgresql+asyncpg://"):
                 return self.database_url
 
-        password = os.getenv("POSTGRES_PASSWORD", "orderly_dev_password")
-        if self.database_host.startswith("/cloudsql/"):
-            return (
-                f"postgresql+asyncpg://{self.database_user}:{password}@/"
-                f"{self.database_name}?host={self.database_host}"
+        # Cloud Run 傳入的 Secret 可能命名為 POSTGRES_PASSWORD 或 DATABASE_PASSWORD，統一在此處做 fallback。
+        password = (
+            os.getenv("POSTGRES_PASSWORD")
+            or os.getenv("DATABASE_PASSWORD")
+            or os.getenv("DB_PASSWORD")
+            or "orderly_dev_password"
+        )
+        if password == "orderly_dev_password" and self.environment not in {"development", "testing"}:
+            logger.warning(
+                "database_password.default_fallback",
+                extra={"service": getattr(self, "app_name", "unknown"), "environment": self.environment},
             )
+        encoded_user = quote(self.database_user or "", safe="")
+        encoded_password = quote(password or "", safe="")
+        encoded_db_name = quote(self.database_name or "", safe="")
+
+        credentials = encoded_user
+        if encoded_password:
+            credentials = f"{encoded_user}:{encoded_password}"
+
+        if self.database_host.startswith("/cloudsql/"):
+            encoded_host = quote(self.database_host, safe="/:._-")
+            query_parts = [f"host={encoded_host}"]
+            if self.database_port:
+                query_parts.append(f"port={self.database_port}")
+            query_string = "&".join(query_parts)
+            return f"postgresql+asyncpg://{credentials}@/{encoded_db_name}?{query_string}"
+
         return (
-            f"postgresql+asyncpg://{self.database_user}:{password}@"
-            f"{self.database_host}:{self.database_port}/{self.database_name}"
+            f"postgresql+asyncpg://{credentials}@{self.database_host}:{self.database_port}/{encoded_db_name}"
         )
     
     def get_database_url_sync(self) -> str:
@@ -318,17 +342,25 @@ class UnifiedSettings(BaseSettings):
         """檢查是否運行在 Cloud Run 環境"""
         return bool(os.getenv("K_SERVICE"))
     
+    def environment_family(self) -> str:
+        """取得標準化環境名稱（忽略後綴，例如 staging-v2 -> staging）"""
+        env = (self.environment or "").lower()
+        for canonical in ("development", "staging", "production", "testing"):
+            if env == canonical or env.startswith(f"{canonical}-"):
+                return canonical
+        return env
+
     def is_development(self) -> bool:
         """檢查是否為開發環境"""
-        return self.environment == "development"
+        return self.environment_family() == "development"
     
     def is_production(self) -> bool:
         """檢查是否為生產環境"""
-        return self.environment == "production"
+        return self.environment_family() == "production"
     
     def is_staging(self) -> bool:
         """檢查是否為測試環境"""
-        return self.environment == "staging"
+        return self.environment_family() == "staging"
     
     def get_config_summary(self) -> Dict[str, Any]:
         """獲取配置摘要（用於調試）"""
