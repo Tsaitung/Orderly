@@ -32,7 +32,7 @@ service_urls:
   user_service: "https://orderly-user-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
   order_service: "https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
   product_service: "https://orderly-product-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
-  customer_hierarchy_service: "https://orderly-customer-hierarchy-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+  customer_hierarchy_service: "https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app"
   supplier_service: "https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
   acceptance_service: "https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
   notification_service: "https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
@@ -42,6 +42,7 @@ common_env_vars:
   DATABASE_HOST: "/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
   DATABASE_NAME: "orderly"
   DATABASE_USER: "orderly"
+  DATABASE_PORT: "5432"
   REDEPLOY_TIME: "$(date +%Y%m%d-%H%M%S)"
 
 # Service-specific Environment Variables
@@ -51,7 +52,8 @@ services:
       USER_SERVICE_URL: "https://orderly-user-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
       ORDER_SERVICE_URL: "https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app"  
       PRODUCT_SERVICE_URL: "https://orderly-product-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
-      CUSTOMER_HIERARCHY_SERVICE_URL: "https://orderly-customer-hierarchy-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
+      CUSTOMER_HIERARCHY_SERVICE_URL: "https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app"
+      # staging-v2 服務改用短名稱：orderly-custhier-staging-v2-*.run.app
       SUPPLIER_SERVICE_URL: "https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
       ACCEPTANCE_SERVICE_URL: "https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
       NOTIFICATION_SERVICE_URL: "https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app"
