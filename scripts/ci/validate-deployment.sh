@@ -43,6 +43,24 @@ declare -a ERRORS=()
 declare -a WARNINGS=()
 declare -a INFO=()
 
+trim_whitespace() {
+  local input="${1:-}"
+  printf '%s' "$input" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+normalize_suffix() {
+  local environment="$1"
+  local suffix="${2-}"
+  local trimmed
+  trimmed=$(trim_whitespace "$suffix")
+
+  if [[ "$environment" == "staging" && -z "$trimmed" ]]; then
+    echo "-v2"
+  else
+    echo "$trimmed"
+  fi
+}
+
 # Helper functions
 print_error() {
   echo -e "${RED}❌ $1${NC}" >&2
@@ -98,8 +116,19 @@ get_cloud_run_name() {
 check_service_names() {
   local environment="${1:-staging}"
   local suffix="${2:-}"
+  local original_suffix="$suffix"
   local failed=0
   
+  suffix=$(normalize_suffix "$environment" "$suffix")
+
+  if [[ "$environment" == "staging" ]]; then
+    local trimmed_original
+    trimmed_original=$(trim_whitespace "$original_suffix")
+    if [[ -z "$trimmed_original" && "$suffix" == "-v2" ]]; then
+      print_info "No service suffix provided for staging environment; defaulting to '-v2'"
+    fi
+  fi
+
   echo "🔍 Checking service name lengths for environment: ${environment}${suffix}"
   echo "   Maximum allowed length: ${MAX_SERVICE_NAME_LENGTH} characters"
   echo ""

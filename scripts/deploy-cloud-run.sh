@@ -99,6 +99,20 @@ cloud_run_service_name() {
   fi
 }
 
+# Validate Cloud Run service name length (must be <= 30 chars)
+validate_service_name_length() {
+  local service_name="$1"
+  local max_length=30
+  
+  if [[ ${#service_name} -gt $max_length ]]; then
+    print_error "Service name '$service_name' is ${#service_name} chars, exceeds $max_length char limit!"
+    print_error "Cloud Run will truncate this name, causing deployment failures."
+    print_error "Please use a shorter service name."
+    return 1
+  fi
+  return 0
+}
+
 # Map Cloud Run service names to local directories
 resolve_service_path() {
   case "$1" in
@@ -312,6 +326,12 @@ deploy_services() {
         local service_port="${SERVICES[$service_name]}"
         local cloud_run_name
         cloud_run_name=$(cloud_run_service_name "$service_name")
+        
+        # Validate service name length before deployment
+        if ! validate_service_name_length "$cloud_run_name"; then
+            print_error "Aborting deployment of $service_name due to name length violation"
+            exit 1
+        fi
 
         print_status "Deploying $service_name..."
 
