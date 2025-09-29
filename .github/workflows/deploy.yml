@@ -254,12 +254,20 @@ jobs:
           # Get changed files (compare with previous commit or main if first push)
           if [ "${{ github.event_name }}" = "push" ] && [ -n "$(git rev-parse --verify HEAD~1 2>/dev/null)" ]; then
             changed_files=$(git diff --name-only HEAD~1 HEAD)
-          else
-            # First commit or manual trigger - deploy all services
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual trigger without force_backend - still deploy all services by default
+            # This ensures manual runs always work, even without explicit force flag
             echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
             echo "infrastructure=true" >> $GITHUB_OUTPUT
             echo "frontend=true" >> $GITHUB_OUTPUT
-            echo "📦 Manual trigger or first commit - deploying all services"
+            echo "📦 Manual workflow_dispatch - deploying all services by default"
+            exit 0
+          else
+            # First commit - deploy all services
+            echo "services=$ALL_SERVICES" >> $GITHUB_OUTPUT
+            echo "infrastructure=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "📦 First commit - deploying all services"
             exit 0
           fi
           

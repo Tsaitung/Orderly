@@ -1,22 +1,30 @@
-options:
-  substitutionOption: ALLOW_LOOSE
-
-substitutions:
-  _IMAGE_TAG: latest
-  _IMAGE_REPOSITORY: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-acceptance-service-fastapi
-
 steps:
+  # Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
-      - build
+      - 'build'
       - '-t'
-      - '${_IMAGE_REPOSITORY}:${_IMAGE_TAG}'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'
       - '-t'
-      - '${_IMAGE_REPOSITORY}:latest'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
       - '-f'
-      - backend/acceptance-service-fastapi/Dockerfile
-      - 'backend'
+      - 'backend/${_SERVICE}/Dockerfile'
+      - 'backend/${_SERVICE}'
 
-images:
-  - '${_IMAGE_REPOSITORY}:${_IMAGE_TAG}'
-  - '${_IMAGE_REPOSITORY}:latest'
+  # Push Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}'
+
+substitutions:
+  _LOCATION: asia-east1
+  _REPOSITORY: orderly
+  _SERVICE: acceptance-service-fastapi
+  _IMAGE: orderly-acceptance-service-fastapi
+  _TAG: ${SHORT_SHA}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
