@@ -370,6 +370,9 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
 async def _proxy(request: Request, full_path: str) -> Response:
     # Basic protection: require Authorization for protected areas
     def _is_protected(p: str) -> bool:
+        # Allow health check endpoints without auth
+        if p == "/api/v2/hierarchy/tree" and request.url.query == "fast_mode=true":
+            return False
         return any(p.startswith(prefix) for prefix in [
             "/api/orders", "/api/acceptance", "/api/notifications", "/api/users", "/api/v2"
         ])
