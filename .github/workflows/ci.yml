@@ -174,7 +174,11 @@ jobs:
         working-directory: backend/${{ matrix.service }}
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://orderly:orderly_test@localhost:5432/orderly_test
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_NAME: orderly_test
+          DATABASE_USER: orderly
+          POSTGRES_PASSWORD: orderly_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           JWT_SECRET: test_jwt_secret_for_testing_only
@@ -271,7 +275,11 @@ jobs:
           python-version: '3.11'
       - name: Install, migrate, and run smoke tests
         env:
-          DATABASE_URL: postgresql+asyncpg://orderly:orderly_test@localhost:5432/orderly
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: orderly
+          DATABASE_NAME: orderly
+          POSTGRES_PASSWORD: orderly_test
         run: |
           set -e
           pip install pytest pytest-asyncio httpx
@@ -389,7 +397,11 @@ jobs:
       - name: Start services for integration testing
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://orderly:orderly_test@localhost:5432/orderly_test
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: orderly
+          DATABASE_NAME: orderly_test
+          POSTGRES_PASSWORD: orderly_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           JWT_SECRET: test_jwt_secret_for_integration_testing
@@ -459,7 +471,11 @@ jobs:
           python-version: '3.11'
       - name: Run FastAPI tests
         env:
-          DATABASE_URL: postgresql+asyncpg://orderly:orderly_test@localhost:5432/orderly
+          DATABASE_HOST: localhost
+          DATABASE_PORT: 5432
+          DATABASE_USER: orderly
+          DATABASE_NAME: orderly
+          POSTGRES_PASSWORD: orderly_test
         run: |
           set -e
           pip install pytest pytest-asyncio httpx
