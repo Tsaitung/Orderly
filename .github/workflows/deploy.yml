@@ -975,9 +975,15 @@ jobs:
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           SERVICE_SUFFIX: ${{ needs.determine-environment.outputs.service_suffix }}
-          GOOGLE_CLOUD_PROJECT: ${{ env.GOOGLE_CLOUD_PROJECT }}
-          GOOGLE_CLOUD_REGION: ${{ env.GOOGLE_CLOUD_REGION }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || 'orderly-472413' }}
+          GOOGLE_CLOUD_REGION: asia-east1
         run: |
+          # Debug: Check environment variables
+          echo "DEBUG: ENVIRONMENT=$ENVIRONMENT"
+          echo "DEBUG: SERVICE_SUFFIX=$SERVICE_SUFFIX"
+          echo "DEBUG: GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
+          echo "DEBUG: GOOGLE_CLOUD_REGION=$GOOGLE_CLOUD_REGION"
+          
           # Service name generation function (matches deployment logic)
           get_service_name() {
             local service="$1"

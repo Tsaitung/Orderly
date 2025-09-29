@@ -337,13 +337,14 @@
 
 ---
 
-**最後更新時間**: 2025-09-30 17:15
+**最後更新時間**: 2025-09-30 17:20
 **更新者**: Claude Code  
-**狀態**: CI/CD 部署成功但健康檢查有問題
-- ✅ 後端服務全量部署：8/8 服務成功構建和部署
+**狀態**: 核心問題已解決，Health Check 需要進一步調查
+- ✅ 後端服務全量部署：8/8 服務成功構建和部署（Run ID 18091641706）
 - ✅ 服務名稱驗證：validate-service-names job 成功通過
 - ✅ GCP SA 權限：確認有效，能正常構建和部署
-- ✅ Frontend 部署：修復 substitution 錯誤後成功部署（Run ID 18091215885）
-- ⚠️ Health Check 失敗：但手動測試服務實際正常運行（curl 返回 200）
-  - 可能原因：URL 格式差異或區域配置問題
-  - 實際服務狀態：正常（手動驗證 https://orderly-apigw-staging-v2-usg6y7o2ba-de.a.run.app/health 返回 200）
+- ✅ Frontend 部署：修復 substitution 錯誤後成功部署
+- ❌ Health Check 持續失敗：即使添加環境變數後仍然失敗
+  - 已嘗試修復：添加 GOOGLE_CLOUD_PROJECT 和 GOOGLE_CLOUD_REGION
+  - 實際服務狀態：正常運行（手動驗證返回 200）
+  - 需要進一步調查：可能是認證或網路問題
