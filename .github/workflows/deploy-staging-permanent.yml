@@ -68,18 +68,15 @@ jobs:
           echo "Submitting migration job to Cloud Build..."
           gcloud builds submit \
             --config=scripts/cloudbuild/migration-job.yaml \
-            --substitutions=_INSTANCE="orderly-472413:asia-east1:orderly-db-v2",_SERVICE_ACCOUNT="orderly-cicd@orderly-472413.iam.gserviceaccount.com" \
+            --substitutions=_INSTANCE_CONNECTION_NAME="orderly-472413:asia-east1:orderly-db-v2",_REGION="asia-east1" \
             --project=${{ secrets.GCP_PROJECT_ID }} \
             || echo "⚠️ Cloud Build submission failed - migrations may need to be run manually"
           
       - name: Import/Verify Data
         run: |
-          if [ -f "scripts/database/import-staging-data.sh" ]; then
-            chmod +x scripts/database/import-staging-data.sh
-            ./scripts/database/import-staging-data.sh
-          else
-            echo "⚠️ Data import script not found, skipping..."
-          fi
+          echo "⚠️ Data import is not supported in CI/CD environment"
+          echo "Note: Data import should be run manually from a machine with Cloud SQL Proxy"
+          echo "Or use Cloud Run Jobs for data seeding"
           
       - name: Health Check
         run: |
