@@ -92,27 +92,14 @@ if [ ${#FAILED_SERVICES[@]} -gt 0 ]; then
     echo "❌ Failed deployments: ${FAILED_SERVICES[*]}"
 fi
 
-# Phase 2: Run database migrations
-log_section "🗄️ Phase 2: Running database migrations"
+# Phase 2: Database migrations notice
+log_section "🗄️ Phase 2: Database Migrations"
 
-if [ -f "scripts/database/run-migrations.sh" ]; then
-    # Set database environment variables for Cloud SQL connection
-    export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
-    export DATABASE_PORT="5432"
-    export DATABASE_NAME="orderly"
-    export DATABASE_USER="orderly"
-    # POSTGRES_PASSWORD should be set from GitHub secrets
-    
-    log_info "Database connection configured for Cloud SQL"
-    
-    if ./scripts/database/run-migrations.sh; then
-        log_info "✅ Database migrations completed"
-    else
-        log_warning "⚠️ Some database migrations failed (this may be expected)"
-    fi
-else
-    log_warning "⚠️ Migration script not found: scripts/database/run-migrations.sh"
-fi
+log_info "Database migrations should be run separately using Cloud Build or Cloud Run Jobs"
+log_info "To run migrations manually, use:"
+echo "  gcloud builds submit --config=scripts/cloudbuild/migration-job.yaml \\"
+echo "    --substitutions=_INSTANCE='orderly-472413:asia-east1:orderly-db-v2' \\"
+echo "    --project=orderly-472413"
 
 # Phase 3: Verify data integrity
 log_section "🔍 Phase 3: Verifying data integrity"

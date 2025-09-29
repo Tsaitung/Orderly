@@ -55,19 +55,22 @@ jobs:
           
       - name: Run Database Migrations
         run: |
-          # Set database environment variables for Cloud SQL connection
-          export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
-          export DATABASE_PORT="5432"
-          export DATABASE_NAME="orderly"
-          export DATABASE_USER="orderly"
-          export POSTGRES_PASSWORD="${{ secrets.POSTGRES_PASSWORD }}"
+          echo "🗄️ Running database migrations via Cloud Build..."
           
-          if [ -f "scripts/database/run-migrations.sh" ]; then
-            chmod +x scripts/database/run-migrations.sh
-            ./scripts/database/run-migrations.sh
-          else
-            echo "⚠️ Migration script not found, skipping..."
+          # Check if migration Cloud Build config exists
+          if [ ! -f "scripts/cloudbuild/migration-job.yaml" ]; then
+            echo "⚠️ Migration Cloud Build config not found, skipping database migrations"
+            echo "Note: Database migrations should be run separately using Cloud Build or Cloud Run Jobs"
+            exit 0
           fi
+          
+          # Submit migration job to Cloud Build
+          echo "Submitting migration job to Cloud Build..."
+          gcloud builds submit \
+            --config=scripts/cloudbuild/migration-job.yaml \
+            --substitutions=_INSTANCE="orderly-472413:asia-east1:orderly-db-v2",_SERVICE_ACCOUNT="orderly-cicd@orderly-472413.iam.gserviceaccount.com" \
+            --project=${{ secrets.GCP_PROJECT_ID }} \
+            || echo "⚠️ Cloud Build submission failed - migrations may need to be run manually"
           
       - name: Import/Verify Data
         run: |
