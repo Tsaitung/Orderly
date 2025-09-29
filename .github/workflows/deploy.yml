@@ -143,11 +143,23 @@ jobs:
           SUFFIX=""
           USE_V2=false
           USE_SA=false
+          
+          # For staging branch, always use -v2 suffix unless manually overridden
+          if [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            SUFFIX="-v2"
+            USE_V2=true
+            USE_SA=true
+          fi
+          
+          # Allow manual override via workflow_dispatch
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            SUFFIX="${{ github.event.inputs.service_suffix }}"
+            if [ -n "${{ github.event.inputs.service_suffix }}" ]; then
+              SUFFIX="${{ github.event.inputs.service_suffix }}"
+            fi
             [ "${{ github.event.inputs.use_v2_backends }}" = "true" ] && USE_V2=true
             [ "${{ github.event.inputs.use_service_accounts }}" = "true" ] && USE_SA=true
           fi
+          
           echo "service_suffix=$SUFFIX" >> $GITHUB_OUTPUT
           echo "use_v2_backends=$USE_V2" >> $GITHUB_OUTPUT
           echo "use_service_accounts=$USE_SA" >> $GITHUB_OUTPUT
