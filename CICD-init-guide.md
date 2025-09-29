@@ -233,8 +233,11 @@ Decisions: PROCEED_FAST_TRACK, PROCEED_STANDARD, PROCEED_CAUTIOUS, REVIEW_REQUIR
 
 - [ ] `GCP_PROJECT_ID`: Your Google Cloud project ID
 - [ ] `GCP_SA_KEY`: Service account key (base64 encoded)
-- [ ] `DATABASE_URL_STAGING`: Staging database connection string
-- [ ] `DATABASE_URL_PROD`: Production database connection string
+- [ ] `DATABASE_HOST`: Cloud SQL connection name or host value (e.g. `/cloudsql/<PROJECT:REGION:INSTANCE>`)
+- [ ] `DATABASE_NAME`: Database name (`orderly`)
+- [ ] `DATABASE_USER`: Database user (`orderly`)
+- [ ] `POSTGRES_PASSWORD_STAGING`: Secret Manager reference or password for staging
+- [ ] `POSTGRES_PASSWORD_PROD`: Secret Manager reference or password for production
 
 #### ML & Automation Secrets
 

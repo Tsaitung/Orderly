@@ -108,15 +108,15 @@ group_id, is_active, created_by, legal_name
 
 ```bash
 # Direct service health: ✅ HEALTHY
-curl https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app/health
+curl https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app/health
 {"status":"healthy","service":"customer-hierarchy-service","version":"1.0.0"}
 
 # Database health: ✅ HEALTHY  
-curl https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app/db/health
+curl https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app/db/health
 {"status":"healthy"}
 
 # V2 API endpoints: ❌ NOT RESPONDING
-curl https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app/api/v2/companies
+curl https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app/api/v2/companies
 # Returns empty response or timeout
 ```
 
@@ -146,7 +146,7 @@ if key == "v2":
 ### Service URL Configuration
 ```bash
 # From service map:
-"customer_hierarchy_service": "https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app"
+"customer_hierarchy_service": "https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app"
 ```
 
 ## Permanent Fixes Required

@@ -1,0 +1,231 @@
+# Orderly Service Manifest
+# Centralized service configuration for CI/CD pipeline
+# Defines service dependencies, build triggers, and deployment order
+
+version: "1.0"
+metadata:
+  description: "Orderly microservices dependency and build configuration"
+  last_updated: "2025-09-29"
+
+# Service definitions with dependencies
+services:
+  # Core authentication and user management
+  user-service-fastapi:
+    path: backend/user-service-fastapi
+    depends_on: []
+    cloud_build: backend/user-service-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 3001
+    deploy_order: 1
+    triggers:
+      - backend/user-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # Order processing service
+  order-service-fastapi:
+    path: backend/order-service-fastapi
+    depends_on:
+      - user-service-fastapi
+      - product-service-fastapi
+    cloud_build: backend/order-service-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 3002
+    deploy_order: 3
+    triggers:
+      - backend/order-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # Product catalog service
+  product-service-fastapi:
+    path: backend/product-service-fastapi
+    depends_on:
+      - customer-hierarchy-service-fastapi
+    cloud_build: backend/product-service-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 3003
+    deploy_order: 2
+    triggers:
+      - backend/product-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # Receipt and acceptance verification
+  acceptance-service-fastapi:
+    path: backend/acceptance-service-fastapi
+    depends_on:
+      - order-service-fastapi
+    cloud_build: backend/acceptance-service-fastapi/cloudbuild.yaml
+    health_check: /acceptance/health
+    db_health_check: /acceptance/db/health
+    port: 3004
+    deploy_order: 4
+    triggers:
+      - backend/acceptance-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # Notification service
+  notification-service-fastapi:
+    path: backend/notification-service-fastapi
+    depends_on: []
+    cloud_build: backend/notification-service-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 3006
+    deploy_order: 1
+    triggers:
+      - backend/notification-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # Customer hierarchy management
+  customer-hierarchy-service-fastapi:
+    path: backend/customer-hierarchy-service-fastapi
+    depends_on: []
+    cloud_build: backend/customer-hierarchy-service-fastapi/cloudbuild.yaml
+    health_check: /api/v2/health
+    db_health_check: /api/v2/health/ready
+    port: 3007
+    deploy_order: 1
+    triggers:
+      - backend/customer-hierarchy-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+    redis_required: true
+    vpc_connector_required: true
+
+  # Supplier management
+  supplier-service-fastapi:
+    path: backend/supplier-service-fastapi
+    depends_on:
+      - user-service-fastapi
+    cloud_build: backend/supplier-service-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 3008
+    deploy_order: 2
+    triggers:
+      - backend/supplier-service-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
+  # API Gateway - must deploy last
+  api-gateway-fastapi:
+    path: backend/api-gateway-fastapi
+    depends_on:
+      - user-service-fastapi
+      - order-service-fastapi
+      - product-service-fastapi
+      - acceptance-service-fastapi
+      - notification-service-fastapi
+      - customer-hierarchy-service-fastapi
+      - supplier-service-fastapi
+    cloud_build: backend/api-gateway-fastapi/cloudbuild.yaml
+    health_check: /health
+    db_health_check: /db/health
+    port: 8000
+    deploy_order: 10
+    triggers:
+      - backend/api-gateway-fastapi/**
+      - backend/libs/orderly_fastapi_core/**
+
+# Infrastructure dependencies that trigger full deployment
+infrastructure:
+  triggers:
+    - .github/workflows/**
+    - infrastructure/**
+    - docker-compose*.yml
+    - scripts/deploy*.sh
+    - scripts/iam/**
+    - ci/**
+
+# Frontend configuration
+frontend:
+  path: .
+  cloud_build: frontend/cloudbuild.yaml
+  health_check: /
+  port: 8080
+  triggers:
+    - app/**
+    - components/**
+    - frontend/**
+    - lib/**
+    - public/**
+    - styles/**
+    - package.json
+    - package-lock.json
+    - next.config.js
+    - tsconfig.json
+    - tailwind.config.js
+    - postcss.config.js
+    - Dockerfile.frontend
+
+# Deployment environments
+environments:
+  staging:
+    suffix: "-staging"
+    service_suffix: ""
+    min_instances: 0
+    max_instances: 10
+    memory: "512Mi"
+    cpu: "1"
+    
+  staging-v2:
+    suffix: "-staging"
+    service_suffix: "-v2"
+    min_instances: 0
+    max_instances: 10
+    memory: "512Mi"
+    cpu: "1"
+    
+  production:
+    suffix: ""
+    service_suffix: ""
+    min_instances: 1
+    max_instances: 20
+    memory: "1Gi"
+    cpu: "2"
+
+# Build optimization rules
+optimization:
+  # Services that should always build together
+  build_groups:
+    - [user-service-fastapi, supplier-service-fastapi]
+    - [order-service-fastapi, acceptance-service-fastapi]
+    
+  # Services that require special handling
+  special_handling:
+    customer-hierarchy-service-fastapi:
+      - ensure_vpc_connector
+      - check_redis_connectivity
+      
+  # Maximum parallel builds
+  max_parallel_builds: 8
+  
+  # Cache settings
+  docker_cache:
+    enabled: true
+    ttl_hours: 168  # 1 week
+
+# Validation rules
+validation:
+  required_secrets:
+    - GCP_SA_KEY
+    - GCP_PROJECT_ID
+    - POSTGRES_PASSWORD
+    - JWT_SECRET
+    - JWT_REFRESH_SECRET
+    
+  required_apis:
+    - run.googleapis.com
+    - cloudbuild.googleapis.com
+    - artifactregistry.googleapis.com
+    - secretmanager.googleapis.com
+    - compute.googleapis.com
+    - vpcaccess.googleapis.com
+    - redis.googleapis.com

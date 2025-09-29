@@ -88,45 +88,88 @@ deploy_new_version() {
     
     # 根據服務類型設定不同配置
     local port_config=""
-    local env_vars=""
     local memory_config="--memory=512Mi"
     local cpu_config="--cpu=1"
-    
+    local env_pairs=()
+    local secret_binding=""
+
+    build_db_env_pairs() {
+        local -n _target=$1
+        if [[ -n "${DATABASE_HOST:-}" ]]; then
+            _target+=("DATABASE_HOST=${DATABASE_HOST}")
+        fi
+        if [[ -n "${DATABASE_PORT:-}" ]]; then
+            _target+=("DATABASE_PORT=${DATABASE_PORT}")
+        fi
+        if [[ -n "${DATABASE_NAME:-}" ]]; then
+            _target+=("DATABASE_NAME=${DATABASE_NAME}")
+        fi
+        if [[ -n "${DATABASE_USER:-}" ]]; then
+            _target+=("DATABASE_USER=${DATABASE_USER}")
+        fi
+        if [[ -n "${POSTGRES_PASSWORD_SECRET:-}" ]]; then
+            secret_binding="POSTGRES_PASSWORD=${POSTGRES_PASSWORD_SECRET}"
+        elif [[ -n "${POSTGRES_PASSWORD:-}" ]]; then
+            _target+=("POSTGRES_PASSWORD=${POSTGRES_PASSWORD}")
+        fi
+    }
+
+    join_env_pairs() {
+        local IFS=','
+        echo "$*"
+    }
+
     case $service_name in
         "api-gateway-fastapi")
             port_config="--port=8000"
-            env_vars="NODE_ENV=${ENVIRONMENT},JWT_SECRET=${JWT_SECRET}"
             memory_config="--memory=1Gi"
+            env_pairs=("NODE_ENV=${ENVIRONMENT}" "JWT_SECRET=${JWT_SECRET}")
             ;;
         "user-service-fastapi")
             port_config="--port=3001"
-            env_vars="NODE_ENV=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
+            env_pairs=("NODE_ENV=${ENVIRONMENT}")
+            build_db_env_pairs env_pairs
             ;;
         "product-service-fastapi")
             port_config="--port=3003"
-            env_vars="ENVIRONMENT=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
+            env_pairs=("ENVIRONMENT=${ENVIRONMENT}")
+            build_db_env_pairs env_pairs
             ;;
         "acceptance-service-fastapi")
             port_config="--port=3004"
-            env_vars="NODE_ENV=${ENVIRONMENT},DATABASE_URL=${DATABASE_URL}"
+            env_pairs=("NODE_ENV=${ENVIRONMENT}")
+            build_db_env_pairs env_pairs
             ;;
     esac
-    
-    # 部署新版本 (0% 流量)
-    gcloud run deploy "$service_full_name" \
-        --image="$image_url" \
-        --region="$REGION" \
-        --platform=managed \
-        --allow-unauthenticated \
-        $memory_config \
-        $cpu_config \
-        --max-instances=10 \
-        --min-instances=0 \
-        $port_config \
-        --set-env-vars="$env_vars" \
-        --tag="$new_version" \
-        --no-traffic \
+
+    local env_arg=""
+    if [[ ${#env_pairs[@]} -gt 0 ]]; then
+        env_arg="--set-env-vars=$(join_env_pairs "${env_pairs[@]}")"
+    fi
+
+    local args=(
+        --image="$image_url"
+        --region="$REGION"
+        --platform=managed
+        --allow-unauthenticated
+        $memory_config
+        $cpu_config
+        --max-instances=10
+        --min-instances=0
+        $port_config
+        --tag="$new_version"
+        --no-traffic
         --quiet
+    )
+
+    if [[ -n "$env_arg" ]]; then
+        args+=("$env_arg")
+    fi
+    if [[ -n "$secret_binding" ]]; then
+        args+=("--set-secrets=${secret_binding}")
+    fi
+
+    gcloud run deploy "$service_full_name" "${args[@]}"
     
     log_success "${service_name} ${new_version} 版本部署完成"
 }
@@ -351,7 +394,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
         echo "環境變量:"
         echo "  GCP_PROJECT_ID     GCP 專案 ID"
         echo "  GCP_REGION         GCP 區域"
-        echo "  DATABASE_URL       資料庫連接字串"
+        echo "  DATABASE_HOST      Cloud SQL 連線名稱或主機"
+        echo "  DATABASE_PORT      PostgreSQL 連線埠 (預設 5432)"
+        echo "  DATABASE_NAME      資料庫名稱"
+        echo "  DATABASE_USER      資料庫使用者"
+        echo "  POSTGRES_PASSWORD  資料庫密碼（或設定 POSTGRES_PASSWORD_SECRET）"
+        echo "  POSTGRES_PASSWORD_SECRET  Secret Manager 參考 (例: postgres-password:latest)"
         echo "  JWT_SECRET         JWT 密鑰"
         exit 1
     fi

@@ -656,9 +656,17 @@ $$ LANGUAGE plpgsql;
 
 ```typescript
 // SQLAlchemy connection configuration
+const databaseUrl = buildDatabaseUrl({
+  host: process.env.DATABASE_HOST,
+  port: process.env.DATABASE_PORT ?? '5432',
+  name: process.env.DATABASE_NAME,
+  user: process.env.DATABASE_USER,
+  password: process.env.POSTGRES_PASSWORD,
+});
+
 const prisma = new PrismaClient({
   datasources: {
-    db: { url: DATABASE_URL },
+    db: { url: databaseUrl },
   },
   // Connection pool settings
   connection_limit: 25,

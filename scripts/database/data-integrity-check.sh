@@ -34,7 +34,7 @@ if ! nc -z 127.0.0.1 $LOCAL_PORT 2>/dev/null; then
     exit 1
 fi
 
-# Expected data counts (from plan.md)
+# Expected data counts (from plan.md - updated 2025-09-29)
 EXPECTED_COUNTS="
 users:3
 organizations:10
@@ -45,6 +45,7 @@ product_categories:105
 products:55
 product_skus:52
 supplier_product_skus:52
+supplier_profiles:9
 "
 
 # Files to track issues
@@ -106,6 +107,43 @@ else
         echo "" >> "$INTEGRITY_REPORT"
         echo "Tables needing data import:" >> "$INTEGRITY_REPORT"
         cat "$MISSING_DATA_FILE" >> "$INTEGRITY_REPORT"
+    fi
+fi
+
+echo ""
+
+# Additional supplier data validation
+echo "" >> "$INTEGRITY_REPORT"
+echo "Supplier Data Validation" >> "$INTEGRITY_REPORT"
+echo "-----------------------" >> "$INTEGRITY_REPORT"
+
+# Check products with supplier assignments
+PRODUCTS_WITH_SUPPLIER=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
+    psql -h 127.0.0.1 -p $LOCAL_PORT -U $DB_USER -d $DB_NAME \
+    -t -c "SELECT COUNT(*) FROM products WHERE \"supplierId\" IS NOT NULL" 2>/dev/null | xargs)
+
+if [ -n "$PRODUCTS_WITH_SUPPLIER" ]; then
+    echo "Products with supplier: $PRODUCTS_WITH_SUPPLIER" >> "$INTEGRITY_REPORT"
+    if [ "$PRODUCTS_WITH_SUPPLIER" -ge 50 ]; then
+        log_info "✅ Supplier-Product relationships: $PRODUCTS_WITH_SUPPLIER products assigned"
+        echo "  Status: GOOD ✅" >> "$INTEGRITY_REPORT"
+    else
+        log_warning "⚠️ Only $PRODUCTS_WITH_SUPPLIER products have supplier assignments"
+        echo "  Status: LOW_COVERAGE ⚠️" >> "$INTEGRITY_REPORT"
+    fi
+fi
+
+# Check supplier organizations
+SUPPLIER_ORGS=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
+    psql -h 127.0.0.1 -p $LOCAL_PORT -U $DB_USER -d $DB_NAME \
+    -t -c "SELECT COUNT(*) FROM organizations WHERE type = 'supplier'" 2>/dev/null | xargs)
+
+if [ -n "$SUPPLIER_ORGS" ]; then
+    echo "Supplier organizations: $SUPPLIER_ORGS" >> "$INTEGRITY_REPORT"
+    if [ "$SUPPLIER_ORGS" -ge 9 ]; then
+        log_info "✅ Supplier organizations: $SUPPLIER_ORGS found"
+    else
+        log_warning "⚠️ Only $SUPPLIER_ORGS supplier organizations (expected >= 9)"
     fi
 fi
 

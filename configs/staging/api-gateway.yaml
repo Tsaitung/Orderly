@@ -42,13 +42,14 @@ spec:
         - name: ORDER_SERVICE_URL
           value: https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: PRODUCT_SERVICE_URL
-          value: https://orderly-product-service-fastapi-staging-655602747430.asia-east1.run.app
+          value: https://orderly-product-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: ACCEPTANCE_SERVICE_URL
           value: https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app/acceptance
         - name: NOTIFICATION_SERVICE_URL
           value: https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: CUSTOMER_HIERARCHY_SERVICE_URL
-          value: https://orderly-customer-hierarchy-service-fastapi-staging-655602747430.asia-east1.run.app
+          value: https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app
+          # staging-v2 服務使用 https://orderly-custhier-staging-v2-<hash>.run.app
         - name: SUPPLIER_SERVICE_URL
           value: https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app
         - name: DATABASE_HOST
@@ -64,8 +65,6 @@ spec:
               name: postgres-password
         - name: REDEPLOY_TIME
           value: 20250927-081918
-        - name: DATABASE_URL
-          value: postgresql+asyncpg://orderly:OtAEG5%2F1h78R%2BEGHStvtabQjOhjKtXNq%2FPse3d6ZTDs%3D@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
         image: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-api-gateway-fastapi@sha256:0fef1b896d6e61c730b3f67b6b0a9848079810b6b812cf55d8b6e39e84b6588d
         ports:
         - containerPort: 8080

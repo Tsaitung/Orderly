@@ -119,7 +119,11 @@ def main():
     
     # 設置環境變數以確保能正確載入配置
     os.environ.setdefault('ENVIRONMENT', 'development')
-    os.environ.setdefault('DATABASE_URL', 'postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly')
+    os.environ.setdefault('DATABASE_HOST', 'localhost')
+    os.environ.setdefault('DATABASE_PORT', '5432')
+    os.environ.setdefault('DATABASE_NAME', 'orderly')
+    os.environ.setdefault('DATABASE_USER', 'orderly')
+    os.environ.setdefault('POSTGRES_PASSWORD', 'orderly_dev_password')
     os.environ.setdefault('REDIS_URL', 'redis://localhost:6379/0')
     
     # 運行測試

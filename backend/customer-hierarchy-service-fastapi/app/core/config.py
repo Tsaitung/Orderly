@@ -11,7 +11,7 @@ from typing import Optional, List
 sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs"))
 
 from orderly_fastapi_core import UnifiedSettings, get_settings
-from pydantic import Field
+from pydantic import Field, validator
 
 
 class CustomerHierarchyServiceSettings(UnifiedSettings):
@@ -44,6 +44,7 @@ class CustomerHierarchyServiceSettings(UnifiedSettings):
     cache_tree_ttl: int = Field(default=600, description="層級樹緩存 TTL（10分鐘）")
     cache_entity_ttl: int = Field(default=300, description="個別實體緩存 TTL（5分鐘）")
     redis_ttl: int = Field(default=300, description="Redis 預設 TTL（5分鐘）")
+    cache_mode: str = Field(default="degraded", description="快取運作模式：strict｜degraded｜off")
     
     # 客戶管理配置
     enable_customer_verification: bool = Field(default=True, description="啟用客戶驗證")
@@ -127,6 +128,14 @@ class CustomerHierarchyServiceSettings(UnifiedSettings):
     def database_url_sync(self) -> str:
         """Get sync database URL for Alembic"""
         return self.get_database_url_sync()
+
+    @validator("cache_mode", pre=True, always=True)
+    def _validate_cache_mode(cls, value: str) -> str:
+        normalized = (value or "degraded").strip().lower()
+        allowed = {"strict", "degraded", "off"}
+        if normalized not in allowed:
+            raise ValueError(f"cache_mode must be one of {sorted(allowed)}")
+        return normalized
 
 
 # 創建配置實例

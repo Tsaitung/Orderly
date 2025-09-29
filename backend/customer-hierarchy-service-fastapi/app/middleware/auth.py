@@ -25,6 +25,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
     PUBLIC_PATHS = {
         "/health",
         "/health/detailed", 
+        "/db/health",
+        "/db/info",
         "/ready",
         "/live",
         "/metrics",
@@ -44,6 +46,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if (request.url.path in self.PUBLIC_PATHS or 
             request.url.path.startswith("/docs") or
             request.url.path.startswith("/redoc") or
+            request.url.path.startswith("/api/v2/health") or
             request.url.path.endswith("/openapi.json")):
             return await call_next(request)
         

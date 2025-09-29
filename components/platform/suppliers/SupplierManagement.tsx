@@ -512,7 +512,7 @@ export function SupplierManagement() {
       {/* 供應商列表 */}
       <div>
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">供應商列表 ({total.toLocaleString()})</h3>
+          <h3 className="text-lg font-semibold">供應商列表 ({(total || 0).toLocaleString()})</h3>
           <div className="flex items-center space-x-2">
             <Button variant="outline" size="sm" onClick={refetch} disabled={loading}>
               <RefreshCw className={cn('mr-2 h-4 w-4', loading && 'animate-spin')} />
@@ -553,7 +553,7 @@ export function SupplierManagement() {
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-gray-700">
                   顯示第 {(page - 1) * filters.page_size! + 1} -{' '}
-                  {Math.min(page * filters.page_size!, total)} 項， 共 {total.toLocaleString()} 項
+                  {Math.min(page * filters.page_size!, total || 0)} 項， 共 {(total || 0).toLocaleString()} 項
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button

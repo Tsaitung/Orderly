@@ -143,7 +143,12 @@ async def main():
         print("\n💡 建議：如果 staging 缺少資料表，可執行以下命令同步：")
         print("1. 執行 Alembic 遷移：")
         print("   cd backend/product-service-fastapi")
-        print("   DATABASE_URL=postgresql://orderly:orderly_secure_password_2024@localhost:5433/orderly alembic upgrade head")
+        print("   export DATABASE_HOST=localhost")
+        print("   export DATABASE_PORT=5433")
+        print("   export DATABASE_NAME=orderly")
+        print("   export DATABASE_USER=orderly")
+        print("   export POSTGRES_PASSWORD=orderly_secure_password_2024")
+        print("   alembic upgrade head")
         print("\n2. 匯入測試資料：")
         print("   python scripts/database/seed_from_real_data.py --target staging")
 

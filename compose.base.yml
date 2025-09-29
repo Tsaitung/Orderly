@@ -14,7 +14,6 @@ x-env-common: &env_common
   DATABASE_NAME: ${DATABASE_NAME:-orderly}
   DATABASE_USER: ${DATABASE_USER:-orderly}
   POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderly_dev_password}
-  DATABASE_URL: postgresql+asyncpg://orderly:${POSTGRES_PASSWORD:-orderly_dev_password}@postgres:5432/orderly
   DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE:-10}
   DATABASE_MAX_OVERFLOW: ${DATABASE_MAX_OVERFLOW:-20}
   DATABASE_ECHO: ${DATABASE_ECHO:-false}
@@ -123,4 +122,3 @@ volumes:
 networks:
   orderly-network:
     driver: bridge
-

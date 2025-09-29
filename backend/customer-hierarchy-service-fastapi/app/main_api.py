@@ -90,13 +90,19 @@ app.add_middleware(
 
 # Health check endpoints
 @app.get("/health")
-async def health_check() -> Dict[str, str]:
+async def health_check() -> Dict[str, Any]:
     """Basic health check endpoint"""
+    cache_info = (
+        cache_service.get_status()
+        if cache_service
+        else {"mode": settings.cache_mode, "state": "uninitialized", "has_connection": False}
+    )
     return {
         "status": "healthy",
         "service": "customer-hierarchy-service",
         "version": settings.API_VERSION,
-        "timestamp": str(time.time())
+        "timestamp": str(time.time()),
+        "cache": cache_info,
     }
 
 
@@ -125,7 +131,21 @@ async def detailed_health_check() -> Dict[str, Any]:
             "error": str(e)
         }
         health_status["status"] = "unhealthy"
-    
+
+    # Cache health check (enhanced cache service)
+    cache_info = (
+        cache_service.get_status()
+        if cache_service
+        else {"mode": settings.cache_mode, "state": "uninitialized", "has_connection": False}
+    )
+    cache_state = cache_info.get("state", "unknown")
+    cache_report = {"status": cache_state, **cache_info}
+    health_status["checks"]["cache"] = cache_report
+    if cache_info.get("mode") != "off" and cache_state not in {"ready", "disabled"}:
+        # mark overall status degraded but not fully unhealthy unless already so
+        if health_status["status"] == "healthy":
+            health_status["status"] = "degraded"
+
     return health_status
 
 

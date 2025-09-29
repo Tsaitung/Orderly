@@ -25,15 +25,20 @@ log_section() {
 }
 
 # Service URLs
+ENVIRONMENT="${ENV:-staging}"
 SUFFIX="usg6y7o2ba-de.a.run.app"
-API_GATEWAY="https://orderly-api-gateway-fastapi-staging-${SUFFIX}"
-USER_SERVICE="https://orderly-user-service-fastapi-staging-${SUFFIX}"
-ORDER_SERVICE="https://orderly-order-service-fastapi-staging-${SUFFIX}"
-PRODUCT_SERVICE="https://orderly-product-service-fastapi-staging-655602747430.asia-east1.run.app"
-CUSTOMER_SERVICE="https://orderly-customer-hierarchy-service-fastapi-stagin-${SUFFIX}"
-FRONTEND="https://orderly-frontend-staging-${SUFFIX}"
+API_GATEWAY="https://orderly-api-gateway-fastapi-${ENVIRONMENT}-${SUFFIX}"
+USER_SERVICE="https://orderly-user-service-fastapi-${ENVIRONMENT}-${SUFFIX}"
+ORDER_SERVICE="https://orderly-order-service-fastapi-${ENVIRONMENT}-${SUFFIX}"
+PRODUCT_SERVICE="https://orderly-product-service-fastapi-${ENVIRONMENT}-655602747430.asia-east1.run.app"
+if [[ "$ENVIRONMENT" == "staging-v2" ]]; then
+    CUSTOMER_SERVICE="https://orderly-custhier-staging-v2-${SUFFIX}"
+else
+    CUSTOMER_SERVICE="https://orderly-customer-hierarchy-${ENVIRONMENT}-${SUFFIX}"
+fi
+FRONTEND="https://orderly-frontend-${ENVIRONMENT}-${SUFFIX}"
 
-log_section "🏥 Staging Environment Health Check"
+log_section "🏥 ${ENVIRONMENT} Environment Health Check"
 echo "Timestamp: $(date)"
 echo ""
 

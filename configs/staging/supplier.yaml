@@ -57,8 +57,6 @@ spec:
           value: orderly
         - name: DATABASE_USER
           value: orderly
-        - name: DATABASE_URL
-          value: postgresql+asyncpg://orderly:OtAEG5%2F1h78R%2BEGHStvtabQjOhjKtXNq%2FPse3d6ZTDs%3D@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
         image: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-supplier-service-fastapi:v1.0.1
         ports:
         - containerPort: 8080

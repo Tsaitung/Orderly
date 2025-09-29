@@ -7,6 +7,12 @@ steps:
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:${_TAG}'
       - '-t'
       - '${_LOCATION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_IMAGE}:latest'
+      - '-f'
+      - 'backend/api-gateway-fastapi/Dockerfile'
+      - '--build-arg'
+      - 'SERVICE_PATH=backend/api-gateway-fastapi'
+      - '--build-arg'
+      - 'LIBS_PATH=backend/libs'
       - '.'
 
   # Push Docker image to Artifact Registry
@@ -20,7 +26,7 @@ substitutions:
   _LOCATION: asia-east1
   _REPOSITORY: orderly
   _IMAGE: orderly-api-gateway-fastapi
-  _TAG: ${SHORT_SHA}
+  # _TAG will be provided by GitHub Actions
 
 options:
   logging: CLOUD_LOGGING_ONLY

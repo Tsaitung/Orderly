@@ -4,15 +4,47 @@
 """
 
 import asyncio
+import os
 import uuid
 from datetime import datetime
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
 import json
+from urllib.parse import quote
+
+def get_database_url():
+    """智慧獲取資料庫 URL，優先使用分離式變數"""
+    # 1. 優先使用 DATABASE_URL 環境變數（向後兼容）
+    if db_url := os.getenv("DATABASE_URL"):
+        return db_url
+    
+    # 2. 組裝分離式變數
+    host = os.getenv("DATABASE_HOST", "localhost")
+    port = os.getenv("DATABASE_PORT", "5432")
+    user = os.getenv("DATABASE_USER", "orderly")
+    name = os.getenv("DATABASE_NAME", "orderly")
+    
+    # 支援多種密碼環境變數名稱（Cloud Run 相容性）
+    password = (
+        os.getenv("POSTGRES_PASSWORD") or
+        os.getenv("DATABASE_PASSWORD") or
+        os.getenv("DB_PASSWORD") or
+        "orderly_dev_password"
+    )
+    
+    # URL 編碼密碼以處理特殊字符
+    encoded_password = quote(password, safe="")
+    encoded_user = quote(user, safe="")
+    
+    # 判斷是否為 Cloud SQL Unix Socket 連接
+    if host.startswith("/cloudsql/"):
+        return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@/{name}?host={host}"
+    
+    return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@{host}:{port}/{name}"
 
 # 資料庫連接設定
-DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost:5432/orderly"
+DATABASE_URL = get_database_url()
 
 # 獨立客戶資料
 INDEPENDENT_CUSTOMERS = [

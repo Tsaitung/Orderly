@@ -73,6 +73,10 @@ pip-delete-this-directory.txt
 *.svg
 *.mp4
 *.mov
+# But keep app icons for Next.js 15
+!app/favicon.ico
+!app/icon.svg
+!app/apple-icon.png
 
 # Temporary files
 tmp/

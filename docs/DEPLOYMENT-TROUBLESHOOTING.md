@@ -82,7 +82,7 @@ async def initialize(self):
 ### 驗證修復
 ```bash
 # 直接測試服務
-curl "https://orderly-customer-hierarchy-service-fastapi-staging-655602747430.asia-east1.run.app/health"
+curl "https://orderly-customer-hierarchy-staging-655602747430.asia-east1.run.app/health"
 
 # 測試 BFF 路由
 curl "https://orderly-frontend-staging-usg6y7o2ba-de.a.run.app/api/bff/v2/hierarchy/tree"
@@ -141,6 +141,7 @@ gcloud logging read 'resource.type="cloud_run_revision" \
 # 修復1：確保DATABASE_HOST使用正確的Unix socket路徑
 # 正確格式：/cloudsql/orderly-472413:asia-east1:orderly-db-v2
 DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
+DATABASE_PORT=5432
 
 # 修復2：添加必要的IAM權限
 gcloud projects add-iam-policy-binding orderly-472413 \
@@ -152,10 +153,44 @@ gcloud run deploy orderly-product-service-fastapi-staging \
   --image=asia-east1-docker.pkg.dev/orderly-472413/orderly/product-service-fastapi:latest \
   --region=asia-east1 \
   --service-account=orderly-product-fastapi@orderly-472413.iam.gserviceaccount.com \
-  --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_NAME=orderly,DATABASE_USER=orderly \
+  --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly \
   --set-secrets=POSTGRES_PASSWORD=postgres-password:latest \
   --add-cloudsql-instances=orderly-472413:asia-east1:orderly-db-v2
 ```
+
+### Cloud SQL Proxy 尚未就緒（staging-v2 常見）
+
+**症狀**：
+```
+asyncpg.exceptions.CannotConnectNowError: [Errno 111] Connection refused
+```
+
+**診斷步驟**：
+```bash
+# 1. 讀 sidecar 日誌（請替換 <service> 與 <revision>）
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND resource.labels.service_name="orderly-<service>-staging-v2" \
+   AND jsonPayload.component="cloudsql-proxy"' \
+  --limit=50 --project=orderly-472413 --format="value(textPayload)"
+
+# 2. 對比 Product Service 與失敗服務的環境變數
+gcloud run services describe orderly-product-service-fastapi-staging-v2 \
+  --region=asia-east1 --project=orderly-472413 \
+  --format="yaml(spec.template.spec.containers[0].env)"
+
+# 3. 檢查 Cloud SQL 連線數與白名單
+gcloud sql instances describe orderly-db-v2 --project=orderly-472413 \
+  --format="yaml(settings.ipConfiguration,settings.databaseFlags,maxDiskSize,currentDiskSize)"
+```
+
+**快速修復**：
+1. 確認每個 Cloud Run 服務皆有 `DATABASE_PORT=5432`（可套用 `configs/staging/env-vars.yaml` 共用設定）
+2. 若網址被截斷為 `-stagid`，重新部署服務（`staging` 使用 `orderly-customer-hierarchy-staging`，`staging-v2` 使用 `orderly-custhier-staging-v2`）並同步更新 API Gateway `CUSTOMER_HIERARCHY_SERVICE_URL`
+3. 偵測 sidecar 尚未啟動時，可先調高 CPU/記憶體或延後健康檢查，再重建最新 revision
+4. **2025-09-29 架構升級**：系統已完全遷移至分離式環境變數架構：
+   - ✅ 使用：`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `POSTGRES_PASSWORD`
+   - ❌ 已淘汰：`DATABASE_URL`（避免密碼編碼問題）
+   - 智慧 DSN 組裝：自動處理 URL 編碼、Cloud SQL socket、多環境配置
 
 ### 認證失敗 Authentication Failed
 
@@ -251,7 +286,7 @@ gcloud run services describe orderly-user-service-fastapi-staging-v2 \
 # 修復：更新環境變數
 gcloud run services update orderly-user-service-fastapi-staging-v2 \
   --region=asia-east1 \
-  --set-env-vars="DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_NAME=orderly"
+  --set-env-vars="DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_PORT=5432,DATABASE_NAME=orderly"
 ```
 
 ### 服務健康檢查失敗

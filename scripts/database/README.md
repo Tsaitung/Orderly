@@ -178,14 +178,18 @@ postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly
 ```
 
 **自訂連接：**
-所有命令都支援 `--database-url` 參數來指定自訂資料庫連接。
+所有命令都支援 `--database-url` 參數來指定自訂資料庫連接；如未提供，可透過 `DATABASE_HOST`、`DATABASE_PORT`、`DATABASE_NAME`、`DATABASE_USER`、`POSTGRES_PASSWORD` 自動組合。
 
 ### 環境變數
 
 也可以透過環境變數設定：
 
 ```bash
-export DATABASE_URL="postgresql+asyncpg://user:pass@host:port/database"
+export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+export DATABASE_PORT="5432"
+export DATABASE_NAME="orderly"
+export DATABASE_USER="orderly"
+export POSTGRES_PASSWORD="<password>"
 python scripts/database/database_manager.py export
 ```
 

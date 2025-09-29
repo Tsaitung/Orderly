@@ -68,7 +68,13 @@ graph TD
 ```bash
 export GCP_PROJECT_ID="orderly-472413"
 export GCP_REGION="asia-east1"
-export DATABASE_URL="postgresql://..."
+export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+export DATABASE_NAME="orderly"
+export DATABASE_USER="orderly"
+export DATABASE_PORT="5432"
+# 二擇一：提供平面密碼或 Secret Manager 名稱
+export POSTGRES_PASSWORD="<actual-password>"
+# export POSTGRES_PASSWORD_SECRET="postgres-password:latest"
 export JWT_SECRET="your-jwt-secret"
 ```
 

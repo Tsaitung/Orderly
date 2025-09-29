@@ -1,6 +1,6 @@
 # Staging 環境永久化部署指南
 
-> 最後更新：2025-09-28 18:20
+> 最後更新：2025-09-28 22:45
 
 ## 概述
 
@@ -25,7 +25,9 @@
 | Order Service | https://orderly-order-service-fastapi-staging-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 訂單處理 |
 | Acceptance Service | https://orderly-acceptance-service-fastapi-staging-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 驗收管理 |
 | Notification Service | https://orderly-notification-service-fastapi-staging-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 通知服務 |
-| Customer Hierarchy Service | https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 客戶層級 |
+| Customer Hierarchy Service | https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 客戶層級 |
+
+> ℹ️ `staging-v2` Cloud Run 服務名稱為 `orderly-custhier-staging-v2`，請使用對應的自動產生域名（`https://orderly-custhier-staging-v2-<hash>.run.app`）。
 | Supplier Service | https://orderly-supplier-service-fastapi-staging-usg6y7o2ba-de.a.run.app | ✅ `/health`, `/db/health` | 供應商管理 |
 | Frontend | https://orderly-frontend-staging-usg6y7o2ba-de.a.run.app | ✅ | Next.js 應用 |
 
@@ -56,10 +58,13 @@ configs/staging/
 DATABASE_HOST: /cloudsql/orderly-472413:asia-east1:orderly-db-v2
 DATABASE_NAME: orderly
 DATABASE_USER: orderly
-DATABASE_URL: postgresql+asyncpg://orderly:PASSWORD@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
+DATABASE_PORT: "5432"
+POSTGRES_PASSWORD: (由 Secret Manager 注入)
 
 # 2025-09-28 18:10 更新：FastAPI core 已支援 POSTGRES_PASSWORD / DATABASE_PASSWORD / DB_PASSWORD 多重 fallback，
-# Cloud Run 建議統一使用 Secret Manager `DATABASE_PASSWORD`
+# Cloud Run 建議統一使用 Secret Manager `postgres-password`
+# 2025-09-28 22:40 更新：Customer Hierarchy Service 新增 `CACHE_MODE`（strict｜degraded｜off），
+# staging 預設 `degraded` 以允許 Redis 故障自動退化；正式環境建議使用 `strict`。
 
 # Service Account（每個服務都有專用 SA）
 - orderly-apigw-fastapi@orderly-472413.iam.gserviceaccount.com     # API Gateway
@@ -79,6 +84,36 @@ DATABASE_URL: postgresql+asyncpg://orderly:PASSWORD@/orderly?host=/cloudsql/orde
 - `/api/bff/v2/hierarchy/tree` → Customer Hierarchy Service `/api/v2/hierarchy/tree`
 
 > **注意**：`orderly_fastapi_core` 需重新部署後才會套用密碼 fallback；部署完成後請執行 `scripts/test-bff-endpoints.sh` 驗證上述端點是否正常。
+> Product Service 透過環境變數 `CUSTOMER_HIERARCHY_SERVICE_URL` 轉發層級資料；CI/CD 已於部署時自動注入對應 Cloud Run URL。
+
+### Customer Hierarchy 快取與 VPC
+
+- Memorystore 實例：`orderly-cache (10.153.164.75:6379)` 位於 VPC，Cloud Run 必須透過 **Serverless VPC Connector** 連線。
+- 若部署後 `/api/bff/v2/hierarchy/tree` 或 `/health` 回傳 503，請確認下列步驟：
+  1. 啟用 API：`gcloud services enable vpcaccess.googleapis.com --project orderly-472413`
+  2. 建立 Connector（首選）：
+     ```bash
+     gcloud compute networks vpc-access connectors create orderly-svpc-asia-east1 \
+       --region=asia-east1 \
+       --network=default \
+       --range=10.8.0.0/28 \
+       --project=orderly-472413
+     ```
+  3. 重新部署 Customer Hierarchy Service：
+     ```bash
+     gcloud run deploy orderly-customer-hierarchy-staging \
+       --image asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-customer-hierarchy-service-fastapi:latest \
+       --region asia-east1 \
+       --vpc-connector orderly-svpc-asia-east1 \
+       --set-env-vars CACHE_MODE=degraded \
+       --project orderly-472413
+    ```
+    若仍留有舊長名稱服務，請先刪除 `orderly-customer-hierarchy-service-fastapi-staging` 以釋放主機名稱。
+- `CACHE_MODE` 說明：
+  - `strict`：Redis 初始化失敗即終止服務，適用正式環境。
+  - `degraded`（預設）：Redis 不可用時退化成資料庫直讀，健康檢查顯示 `degraded`，但仍可回傳最小資料。
+  - `off`：完全停用 Redis（快取邏輯略過，僅適用於除錯或無快取需求環境）。
+- 健康檢查 `/health` 會回傳 `cache.state` 與 `has_connection`，可據此監控快取狀態。
 
 ### Cloud Build 建置指令
 
@@ -93,7 +128,7 @@ gcloud builds submit . --config backend/acceptance-service-fastapi/cloudbuild.ya
 gcloud builds submit . --config backend/notification-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
 gcloud builds submit . --config backend/customer-hierarchy-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
 gcloud builds submit . --config backend/supplier-service-fastapi/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
-gcloud builds submit . --config cloudbuild-frontend.yaml --substitutions _IMAGE_TAG=local-test
+gcloud builds submit . --config frontend/cloudbuild.yaml --substitutions _IMAGE_TAG=local-test
 ```
 
 CI Pipeline 會自動以 `_IMAGE_TAG=${GITHUB_SHA}` 執行上述建置，並同時推送 `latest` 標籤至 Artifact Registry。
@@ -363,7 +398,7 @@ gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.serv
 - **2025-09-28 13:05**: 成功部署更新
   - Customer Hierarchy Service: revision 00038-57p（修復 ModuleNotFoundError）
   - Frontend: revision 00067-jww（包含 safeNumber 防呆函式）
-  - 創建 cloudbuild-frontend.yaml 支援前端 Cloud Build
+  - 創建 frontend/cloudbuild.yaml 支援前端 Cloud Build
   - BFF 端點待實作：/api/bff/products/stats、/api/bff/v2/hierarchy/tree、/api/bff/products/skus/search
 - **2025-09-28 14:15**: 執行計畫部署更新
   - Customer Hierarchy Service: revision 00039-rmm（新建映像成功）

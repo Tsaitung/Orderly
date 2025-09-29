@@ -54,14 +54,18 @@ RUN echo '#!/bin/bash' > /app/run-migrations.sh && \
     echo '# 設置 Python 路徑' >> /app/run-migrations.sh && \
     echo 'export PYTHONPATH=/app:/app/libs' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
-    echo '# 構建資料庫 URL' >> /app/run-migrations.sh && \
-    echo 'export DATABASE_URL="postgresql://${DATABASE_USER}:${POSTGRES_PASSWORD}@/${DATABASE_NAME}?host=${DATABASE_HOST}"' >> /app/run-migrations.sh && \
+    echo '# 設定 PostgreSQL 連線參數' >> /app/run-migrations.sh && \
+    echo 'export PGHOST="${DATABASE_HOST}"' >> /app/run-migrations.sh && \
+    echo 'export PGPORT="${DATABASE_PORT:-5432}"' >> /app/run-migrations.sh && \
+    echo 'export PGDATABASE="${DATABASE_NAME}"' >> /app/run-migrations.sh && \
+    echo 'export PGUSER="${DATABASE_USER}"' >> /app/run-migrations.sh && \
+    echo 'export PGPASSWORD="${POSTGRES_PASSWORD}"' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo 'echo "Checking database connection..."' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT version();" || exit 1' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT version();" || exit 1' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo 'echo "Current tables:"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo '# 執行各服務的遷移' >> /app/run-migrations.sh && \
     echo 'echo "Running User Service migrations..."' >> /app/run-migrations.sh && \
@@ -77,13 +81,13 @@ RUN echo '#!/bin/bash' > /app/run-migrations.sh && \
     echo 'alembic upgrade head || echo "Order service migration completed or no changes needed"' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo 'echo "Final table list:"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT tablename FROM pg_tables WHERE schemaname = '"'"'public'"'"' ORDER BY tablename;"' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo 'echo "Checking critical tables:"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.products'"'"') as products_table;"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.product_categories'"'"') as categories_table;"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.users'"'"') as users_table;"' >> /app/run-migrations.sh && \
-    echo 'psql "$DATABASE_URL" -c "SELECT to_regclass('"'"'public.orders'"'"') as orders_table;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT to_regclass('"'"'public.products'"'"') as products_table;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT to_regclass('"'"'public.product_categories'"'"') as categories_table;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT to_regclass('"'"'public.users'"'"') as users_table;"' >> /app/run-migrations.sh && \
+    echo 'psql -c "SELECT to_regclass('"'"'public.orders'"'"') as orders_table;"' >> /app/run-migrations.sh && \
     echo '' >> /app/run-migrations.sh && \
     echo 'echo "All migrations completed!"' >> /app/run-migrations.sh && \
     chmod +x /app/run-migrations.sh

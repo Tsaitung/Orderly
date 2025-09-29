@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 import os
+from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +177,28 @@ def main():
     # Get database URL from environment
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
-        raise ValueError("DATABASE_URL environment variable not set")
+        host = os.getenv("DATABASE_HOST", "localhost")
+        port = os.getenv("DATABASE_PORT", "5432")
+        user = os.getenv("DATABASE_USER", "orderly")
+        name = os.getenv("DATABASE_NAME", "orderly")
+        
+        # Support multiple password environment variable names (Cloud Run compatibility)
+        password = (
+            os.getenv("POSTGRES_PASSWORD") or
+            os.getenv("DATABASE_PASSWORD") or
+            os.getenv("DB_PASSWORD") or
+            "orderly_dev_password"
+        )
+        
+        # URL encode to handle special characters
+        encoded_password = quote(password, safe="")
+        encoded_user = quote(user, safe="")
+        
+        # Check if it's a Cloud SQL Unix Socket connection
+        if host.startswith("/cloudsql/"):
+            database_url = f"postgresql://{encoded_user}:{encoded_password}@/{name}?host={host}"
+        else:
+            database_url = f"postgresql://{encoded_user}:{encoded_password}@{host}:{port}/{name}"
     
     manager = MigrationSafetyManager(database_url)
     

@@ -35,7 +35,6 @@ class CacheService:
     - Fallback handling for cache failures
     - JSON and binary serialization support
     """
-    
     def __init__(self):
         self.redis_pool = None
         self.connection_retries = 3
@@ -49,10 +48,22 @@ class CacheService:
             "deletes": 0,
             "errors": 0
         }
+        self.cache_mode = getattr(settings, "cache_mode", "degraded").strip().lower()
+        initial_state = "disabled" if self.cache_mode == "off" else "initializing"
+        self.status: Dict[str, Any] = {
+            "mode": self.cache_mode,
+            "state": initial_state,
+            "last_error": None,
+        }
     
     async def initialize(self):
         """Initialize Redis connection pool"""
         try:
+            if self.cache_mode == "off":
+                logger.info("Cache service disabled via CACHE_MODE config", cache_mode=self.cache_mode)
+                self.status["state"] = "disabled"
+                return
+
             self.redis_pool = redis.ConnectionPool.from_url(
                 settings.redis_url,
                 max_connections=20,
@@ -65,11 +76,18 @@ class CacheService:
                 await conn.ping()
             
             logger.info("Cache service initialized successfully", redis_url=settings.redis_url)
+            self.status["state"] = "ready"
+            self.status["last_error"] = None
             
         except Exception as e:
             logger.error("Failed to initialize cache service", error=str(e))
-            logger.warning("Cache service will operate in fallback mode without Redis")
+            logger.warning("Cache service will operate in fallback mode without Redis - all cache operations will be bypassed")
             self.redis_pool = None  # Ensure pool is None for fallback operations
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
+            if self.cache_mode == "strict":
+                logger.critical("CACHE_MODE=strict -> failing startup due to Redis initialization error")
+                raise
     
     @asynccontextmanager
     async def _get_connection(self):
@@ -77,6 +95,8 @@ class CacheService:
         if not self.redis_pool:
             # If redis_pool is None, it means Redis is not available
             # Don't retry initialization, just raise an exception for graceful fallback
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             raise Exception("Redis connection not available")
         
         conn = redis.Redis(connection_pool=self.redis_pool)
@@ -97,6 +117,13 @@ class CacheService:
             Cached value or default
         """
         try:
+            # If Redis is not available, return default immediately
+            if not self.redis_pool:
+                logger.debug("Cache get skipped - Redis not available", key=key)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return default
+                
             if self._is_circuit_breaker_open():
                 logger.warning("Cache circuit breaker open, skipping get", key=key)
                 return default
@@ -145,6 +172,13 @@ class CacheService:
             True if successful, False otherwise
         """
         try:
+            # If Redis is not available, return False immediately
+            if not self.redis_pool:
+                logger.debug("Cache set skipped - Redis not available", key=key)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return False
+                
             if self._is_circuit_breaker_open():
                 logger.warning("Cache circuit breaker open, skipping set", key=key)
                 return False
@@ -159,7 +193,7 @@ class CacheService:
             else:
                 serialized_value = pickle.dumps(value)
             
-            ttl = ttl or settings.REDIS_TTL
+            ttl = ttl or settings.redis_ttl
             
             async with self._get_connection() as conn:
                 await conn.setex(key, ttl, serialized_value)
@@ -192,6 +226,12 @@ class CacheService:
             True if key was deleted, False otherwise
         """
         try:
+            # If Redis is not available, return False immediately
+            if not self.redis_pool:
+                logger.debug("Cache delete skipped - Redis not available", key=key)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return False
             if self._is_circuit_breaker_open():
                 logger.warning("Cache circuit breaker open, skipping delete", key=key)
                 return False
@@ -221,6 +261,13 @@ class CacheService:
             Number of keys deleted
         """
         try:
+            # If Redis is not available, return 0 immediately
+            if not self.redis_pool:
+                logger.debug("Cache delete_pattern skipped - Redis not available", pattern=pattern)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return 0
+                
             if self._is_circuit_breaker_open():
                 logger.warning("Cache circuit breaker open, skipping pattern delete", pattern=pattern)
                 return 0
@@ -267,6 +314,13 @@ class CacheService:
             True if key exists, False otherwise
         """
         try:
+            # If Redis is not available, return False immediately
+            if not self.redis_pool:
+                logger.debug("Cache exists check skipped - Redis not available", key=key)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return False
+                
             if self._is_circuit_breaker_open():
                 return False
             
@@ -294,6 +348,13 @@ class CacheService:
             New value after increment, or None on error
         """
         try:
+            # If Redis is not available, return None immediately
+            if not self.redis_pool:
+                logger.debug("Cache increment skipped - Redis not available", key=key)
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return None
+                
             if self._is_circuit_breaker_open():
                 return None
             
@@ -327,6 +388,13 @@ class CacheService:
             Dictionary of key-value pairs
         """
         try:
+            # If Redis is not available, return empty dict immediately
+            if not self.redis_pool:
+                logger.debug("Cache get_multi skipped - Redis not available", key_count=len(keys))
+                if self.status.get("state") != "disabled":
+                    self.status["state"] = "degraded"
+                return {}
+                
             if self._is_circuit_breaker_open():
                 return {}
             
@@ -505,9 +573,21 @@ class CacheService:
         self.circuit_breaker_failures += 1
         self.circuit_breaker_last_failure = datetime.utcnow()
         self.performance_stats["errors"] += 1
-    
+        if self.status.get("state") != "disabled":
+            self.status["state"] = "degraded"
+
     def _reset_circuit_breaker(self):
         """Reset circuit breaker on successful operation"""
         if self.circuit_breaker_failures > 0:
             self.circuit_breaker_failures = 0
             self.circuit_breaker_last_failure = None
+        if self.redis_pool and self.status.get("state") not in ("disabled", "ready"):
+            self.status["state"] = "ready"
+            self.status["last_error"] = None
+
+    def get_status(self) -> Dict[str, Any]:
+        """Expose current cache health status"""
+        status_copy = dict(self.status)
+        status_copy["circuit_breaker_open"] = self._is_circuit_breaker_open()
+        status_copy["has_connection"] = self.redis_pool is not None
+        return status_copy

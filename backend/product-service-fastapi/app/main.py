@@ -226,10 +226,7 @@ app.include_router(
 )
 
 # BFF routes consumed by the frontend platform (exposed under /api/bff)
-app.include_router(
-    bff_router,
-    tags=["BFF"],
-)
+app.include_router(bff_router)
 
 
 # Simple products endpoints for compatibility

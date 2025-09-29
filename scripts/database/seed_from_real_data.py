@@ -29,13 +29,44 @@ from sqlalchemy import text
 from sqlalchemy.engine.url import URL, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import quote
 
 # Import ORM models after PATH adjustments
 from app.models.customer_company import CustomerCompany  # type: ignore  # noqa: E402
 from app.models.customer_location import CustomerLocation  # type: ignore  # noqa: E402
 from app.models.business_unit import BusinessUnit  # type: ignore  # noqa: E402
 
-DEFAULT_DATABASE_URL = "postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly"
+def get_database_url():
+    """智慧獲取資料庫 URL，優先使用分離式變數"""
+    # 1. 優先使用 DATABASE_URL 環境變數（向後兼容）
+    if db_url := os.getenv("DATABASE_URL"):
+        return db_url
+    
+    # 2. 組裝分離式變數
+    host = os.getenv("DATABASE_HOST", "localhost")
+    port = os.getenv("DATABASE_PORT", "5432")
+    user = os.getenv("DATABASE_USER", "orderly")
+    name = os.getenv("DATABASE_NAME", "orderly")
+    
+    # 支援多種密碼環境變數名稱（Cloud Run 相容性）
+    password = (
+        os.getenv("POSTGRES_PASSWORD") or
+        os.getenv("DATABASE_PASSWORD") or
+        os.getenv("DB_PASSWORD") or
+        "orderly_dev_password"
+    )
+    
+    # URL 編碼密碼以處理特殊字符
+    encoded_password = quote(password, safe="")
+    encoded_user = quote(user, safe="")
+    
+    # 判斷是否為 Cloud SQL Unix Socket 連接
+    if host.startswith("/cloudsql/"):
+        return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@/{name}?host={host}"
+    
+    return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@{host}:{port}/{name}"
+
+DEFAULT_DATABASE_URL = get_database_url()
 DATA_DIR = CURRENT_FILE.parent / "data"
 SEED_SOURCE_KEY = "seed_from_real_data"
 

@@ -24,6 +24,8 @@ orderly-{service-name}-{environment}${SERVICE_SUFFIX}
 - 測試環境：`orderly-user-service-fastapi-staging`
 - v2測試：`orderly-order-service-fastapi-staging-v2`
 
+> ℹ️ **環境後綴說明**：`ENVIRONMENT` 允許附帶版本後綴（如 `staging-v2`、`production-blue`），後端統一設定會自動將其歸類為 `staging` / `production` 等原始環境，確保功能旗標與健康檢查不再因截斷字串而失效。
+
 ## 🔧 Development 環境
 
 ### 本地開發配置

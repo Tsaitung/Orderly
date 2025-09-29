@@ -332,7 +332,7 @@ API Gateway 需要以下環境變數來路由請求到各微服務：
 | `PRODUCT_SERVICE_URL`       | 產品服務URL                 | https://orderly-product-service-fastapi-staging-v2-xxx.run.app |
 | `ACCEPTANCE_SERVICE_URL`    | 驗收服務URL（含/acceptance） | https://orderly-acceptance-service-fastapi-staging-v2-xxx.run.app/acceptance |
 | `NOTIFICATION_SERVICE_URL`  | 通知服務URL                 | https://orderly-notification-service-fastapi-staging-v2-xxx.run.app |
-| `CUSTOMER_HIERARCHY_SERVICE_URL` | 客戶層級服務URL        | https://orderly-customer-hierarchy-service-fastapi-stagid-xxx.run.app |
+| `CUSTOMER_HIERARCHY_SERVICE_URL` | 客戶層級服務URL        | https://orderly-custhier-staging-v2-xxx.run.app |
 | `SUPPLIER_SERVICE_URL`      | 供應商服務URL               | https://orderly-supplier-service-fastapi-staging-v2-xxx.run.app |
 | `USE_V2_BACKENDS`           | 是否使用v2後端服務           | true/false                               |
 
@@ -347,6 +347,9 @@ for service in api-gateway-fastapi user-service-fastapi order-service-fastapi ..
     --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)")
   # 設置對應的環境變數
 done
+
+# 特例：customer-hierarchy-service-fastapi 搭配 ENV=staging、SERVICE_SUFFIX=-v2 時
+# 服務實際名稱為 orderly-custhier-staging-v2，需改用短名稱查詢。
 ```
 
 ### 故障排除

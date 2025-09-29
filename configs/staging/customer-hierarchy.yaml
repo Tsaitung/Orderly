@@ -4,7 +4,7 @@ metadata:
   annotations:
     run.googleapis.com/ingress: all
     run.googleapis.com/ingress-status: all
-    run.googleapis.com/urls: '["https://orderly-customer-hierarchy-service-fastapi-staging-655602747430.asia-east1.run.app","https://orderly-customer-hierarchy-service-fastapi-stagin-usg6y7o2ba-de.a.run.app"]'
+    run.googleapis.com/urls: '["https://orderly-customer-hierarchy-staging-655602747430.asia-east1.run.app","https://orderly-customer-hierarchy-staging-usg6y7o2ba-de.a.run.app"]'
   labels:
     cloud.googleapis.com/location: asia-east1
     environment: staging
@@ -12,7 +12,7 @@ metadata:
     git_sha: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
     service: customer-hierarchy-service-fastapi
     version: d910bcb5a6e08ed9c8c37e643b439cac3ee254d9
-  name: orderly-customer-hierarchy-service-fastapi-staging
+  name: orderly-customer-hierarchy-staging
   namespace: '655602747430'
 spec:
   template:
@@ -58,8 +58,6 @@ spec:
           value: orderly
         - name: REDEPLOY_TIME
           value: 20250927-081929
-        - name: DATABASE_URL
-          value: postgresql+asyncpg://orderly:OtAEG5%2F1h78R%2BEGHStvtabQjOhjKtXNq%2FPse3d6ZTDs%3D@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
         - name: REDIS_URL
           value: redis://10.153.164.75:6379
         image: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-customer-hierarchy-service-fastapi:1c10eed7044e9c28e81a09dd78d284de7dba82af

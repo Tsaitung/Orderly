@@ -62,8 +62,6 @@ spec:
             secretKeyRef:
               key: latest
               name: jwt-refresh-secret
-        - name: DATABASE_URL
-          value: postgresql+asyncpg://orderly:OtAEG5%2F1h78R%2BEGHStvtabQjOhjKtXNq%2FPse3d6ZTDs%3D@/orderly?host=/cloudsql/orderly-472413:asia-east1:orderly-db-v2
         image: asia-east1-docker.pkg.dev/orderly-472413/orderly/orderly-notification-service-fastapi:latest
         ports:
         - containerPort: 8080

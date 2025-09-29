@@ -54,21 +54,41 @@ class EnhancedCacheService:
         self.redis_client: Optional[redis.Redis] = None
         self.activity_service = ActivityScoringService(session)
         self.mock_service = MockDataService()
-    
+        self.cache_mode = getattr(settings, "cache_mode", "degraded").strip().lower()
+        initial_state = "disabled" if self.cache_mode == "off" else "initializing"
+        self.status: Dict[str, Any] = {
+            "mode": self.cache_mode,
+            "state": initial_state,
+            "last_error": None,
+        }
+
     async def initialize_redis(self):
         """Initialize Redis connection"""
         try:
             # Use Redis URL from environment or default to local
+            if self.cache_mode == "off":
+                logger.info("Enhanced cache disabled via CACHE_MODE config", cache_mode=self.cache_mode)
+                self.status["state"] = "disabled"
+                self.redis_client = None
+                return
+
             redis_url = getattr(settings, 'redis_url', 'redis://localhost:6379/0')
             self.redis_client = redis.from_url(redis_url, decode_responses=True)
             
             # Test connection
             await self.redis_client.ping()
             logger.info("Redis cache initialized successfully", redis_url=redis_url)
+            self.status["state"] = "ready"
+            self.status["last_error"] = None
             
         except Exception as e:
             logger.warning("Redis unavailable, falling back to no-cache mode", error=str(e))
             self.redis_client = None
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
+            if self.cache_mode == "strict":
+                logger.critical("CACHE_MODE=strict -> failing startup due to Redis initialization error")
+                raise
     
     async def close_redis(self):
         """Close Redis connection"""
@@ -92,6 +112,8 @@ class EnhancedCacheService:
     async def _get_cached_data(self, cache_key: str) -> Optional[Dict[str, Any]]:
         """Retrieve data from cache"""
         if not self.redis_client:
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             return None
         
         try:
@@ -99,13 +121,20 @@ class EnhancedCacheService:
             if cached_data:
                 data = json.loads(cached_data)
                 logger.debug("Cache hit", cache_key=cache_key)
+                if self.status.get("state") not in ("disabled", "ready"):
+                    self.status["state"] = "ready"
+                    self.status["last_error"] = None
                 return data
             else:
                 logger.debug("Cache miss", cache_key=cache_key)
+                if self.status.get("state") not in ("disabled", "ready"):
+                    self.status["state"] = "ready"
                 return None
                 
         except Exception as e:
             logger.error("Cache retrieval failed", cache_key=cache_key, error=str(e))
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
             return None
     
     async def _set_cached_data(
@@ -116,28 +145,42 @@ class EnhancedCacheService:
     ) -> bool:
         """Store data in cache"""
         if not self.redis_client:
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             return False
         
         try:
             serialized_data = json.dumps(data, default=str)  # Convert datetime to string
             await self.redis_client.setex(cache_key, ttl_seconds, serialized_data)
             logger.debug("Cache set", cache_key=cache_key, ttl=ttl_seconds)
+            if self.status.get("state") not in ("disabled", "ready"):
+                self.status["state"] = "ready"
+                self.status["last_error"] = None
             return True
             
         except Exception as e:
             logger.error("Cache storage failed", cache_key=cache_key, error=str(e))
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
             return False
     
     async def _check_cache_freshness(self, cache_key: str) -> Optional[int]:
         """Check remaining TTL for cache key"""
         if not self.redis_client:
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             return None
         
         try:
             ttl = await self.redis_client.ttl(cache_key)
+            if self.status.get("state") not in ("disabled", "ready"):
+                self.status["state"] = "ready"
+                self.status["last_error"] = None
             return ttl if ttl > 0 else None
         except Exception as e:
             logger.error("Cache TTL check failed", cache_key=cache_key, error=str(e))
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
             return None
     
     async def get_dashboard_metrics_cached(
@@ -335,6 +378,8 @@ class EnhancedCacheService:
     async def invalidate_cache(self, pattern: Optional[str] = None):
         """Invalidate cache entries"""
         if not self.redis_client:
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             return
         
         try:
@@ -343,7 +388,7 @@ class EnhancedCacheService:
                 keys = await self.redis_client.keys(pattern)
                 if keys:
                     await self.redis_client.delete(*keys)
-                    logger.info("Cache invalidated", pattern=pattern, keys_deleted=len(keys))
+                logger.info("Cache invalidated", pattern=pattern, keys_deleted=len(keys))
             else:
                 # Clear all hierarchy cache
                 patterns = [
@@ -361,13 +406,20 @@ class EnhancedCacheService:
                         total_deleted += len(keys)
                 
                 logger.info("All hierarchy cache invalidated", total_keys_deleted=total_deleted)
+            if self.status.get("state") not in ("disabled", "ready"):
+                self.status["state"] = "ready"
+                self.status["last_error"] = None
                 
         except Exception as e:
             logger.error("Cache invalidation failed", pattern=pattern, error=str(e))
-    
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
+
     async def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         if not self.redis_client:
+            if self.status.get("state") != "disabled":
+                self.status["state"] = "degraded"
             return {"cache_enabled": False}
         
         try:
@@ -397,4 +449,12 @@ class EnhancedCacheService:
             
         except Exception as e:
             logger.error("Failed to get cache stats", error=str(e))
+            self.status["state"] = "degraded"
+            self.status["last_error"] = str(e)
             return {"cache_enabled": False, "error": str(e)}
+
+    def get_status(self) -> Dict[str, Any]:
+        """Expose current enhanced cache status"""
+        status_copy = dict(self.status)
+        status_copy["has_connection"] = self.redis_client is not None
+        return status_copy

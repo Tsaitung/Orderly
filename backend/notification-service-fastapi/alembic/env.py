@@ -29,12 +29,23 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    # Support DATABASE_URL from environment
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        # Convert asyncpg to psycopg2 for sync operations
-        if database_url.startswith("postgresql+asyncpg://"):
+    # Use unified configuration system for database URL
+    import sys
+    from pathlib import Path
+    
+    # Add parent directory to path to import app modules
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    
+    try:
+        from app.core.config import settings
+        database_url = settings.get_database_url_sync()
+    except ImportError:
+        # Fallback to environment variable if unified config not available
+        database_url = os.getenv("DATABASE_URL")
+        if database_url and database_url.startswith("postgresql+asyncpg://"):
             database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+    
+    if database_url:
         connectable = create_engine(database_url, poolclass=pool.NullPool)
     else:
         connectable = engine_from_config(

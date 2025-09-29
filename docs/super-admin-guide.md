@@ -158,7 +158,11 @@ The script will prompt for:
 
 ```bash
 # Required for database connection
-DATABASE_URL="postgresql://user:password@localhost:5432/orderly"
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_NAME=orderly
+DATABASE_USER=orderly
+POSTGRES_PASSWORD=orderly_dev_password
 
 # Required to allow creation in production
 ALLOW_SUPER_ADMIN_CREATION=true  # Only set in production if needed
@@ -305,11 +309,12 @@ if (!platformOrg) {
 
 2. **User service not reachable**
    - Ensure FastAPI user-service is running on port 3001 and DB is migrated (alembic upgrade head)
-   - Ensure DATABASE_URL is set correctly
+   - Ensure `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `POSTGRES_PASSWORD` 已正確設定
 
 3. **"Database connection failed"**
    - Verify PostgreSQL is running
-   - Check DATABASE_URL format: `postgresql://user:password@host:port/database`
+   - 系統使用分離式環境變數：`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `POSTGRES_PASSWORD`
+   - 如需手動連線測試，可臨時組裝 DSN：`postgresql://user:password@host:port/database`
    - Ensure database exists and is accessible
 
 4. **"User already exists" when creating**

@@ -143,8 +143,8 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
 - [ ] 資料庫健康：`GET /db/health` 返回 healthy
 - [ ] 資料庫連接配置：同用戶服務
 
-#### 客戶層級服務 (customer-hierarchy-service-fastapi)
-- [ ] 服務已部署：`orderly-customer-hierarchy-service-fastapi-{environment}{suffix}`
+#### 客戶層級服務 (customer-hierarchy-staging)
+- [ ] 服務已部署：`orderly-customer-hierarchy-{environment}{suffix}`（`staging-v2` 例外：請確認 `orderly-custhier-staging-v2`）
 - [ ] 健康檢查：`GET /health` 返回 200
 - [ ] 資料庫健康：`GET /db/health` 返回 healthy
 - [ ] API v2健康：`GET /api/v2/health` 返回 200
@@ -199,7 +199,7 @@ gcloud run jobs create orderly-seed-data \
   --region=asia-east1 \
   --service-account=orderly-migration@orderly-472413.iam.gserviceaccount.com \
   --add-cloudsql-instances=orderly-472413:asia-east1:orderly-db-v2 \
-  --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_NAME=orderly,DATABASE_USER=orderly \
+  --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly \
   --set-secrets=POSTGRES_PASSWORD=postgres-password:latest
 
 gcloud run jobs execute orderly-seed-data --region=asia-east1 --wait

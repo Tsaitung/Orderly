@@ -71,7 +71,7 @@ The workflow builds/pushes images, deploys services with Cloud SQL binding and S
       --region=asia-east1 \
       --service-account=orderly-migration@orderly-472413.iam.gserviceaccount.com \
       --add-cloudsql-instances=orderly-472413:asia-east1:orderly-db-v2 \
-      --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_NAME=orderly,DATABASE_USER=orderly \
+      --set-env-vars=DATABASE_HOST=/cloudsql/orderly-472413:asia-east1:orderly-db-v2,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly \
       --set-secrets=POSTGRES_PASSWORD=postgres-password:latest
     gcloud run jobs execute orderly-seed-data --region=asia-east1
     ```
@@ -111,3 +111,53 @@ The workflow builds/pushes images, deploys services with Cloud SQL binding and S
 
 ## 7) Cleanup
 - After stable period, delete old Cloud Run services and (optionally) old SQL instance.
+
+## 8) Monitoring & Alerting
+- Cloud SQL 連線拒絕告警：
+  - 指標：`logging.googleapis.com/user/cloudsql-proxy`（或 Cloud SQL `connections` 失敗計數）。
+  - 條件：5 分鐘內出現 `connection refused` / `CannotConnectNow` 日誌 ≥ 3 次。
+  - 動作：通知值班人員或 Slack `#orderly-infra`。
+- 自動化腳本：`scripts/monitoring/setup-staging-v2-alerts.sh` 會一次性建立上述三個策略（需先設定 `GOOGLE_CLOUD_PROJECT`、`NOTIFICATION_CHANNEL`）。
+- Serverless VPC Connector 監控：
+  - 指標：`run.googleapis.com/instance/connectors/restarts`。
+  - 條件：1 小時內重啟次數 > 0 即發出告警，並附上對應 Cloud Run 服務名稱。
+- Redis（Memorystore）快取：
+  - 指標：`redis.googleapis.com/memory_usage_percent`、`redis.googleapis.com/connected_clients`。
+  - 門檻：記憶體使用率 > 80%，或連線數趨於 0（服務可能離線）。
+  - 搭配 `scripts/test-redis-connection.sh` 自動化腳本，部署後驗證 `cache.state` 是否為 `ready`。
+
+## 9) Retire “staging” Legacy Environment（詳細計畫）
+### Phase 0 ─ Kickoff
+- 指派 RACI（Infra：R、Backend/Frontend：A/C、Biz QA：I）。
+- 建立追蹤表（gSheet/Notion），欄位：資源類型、名稱、用途、遷移狀態、回滾方案、Owner、ETA。
+
+### Phase 1 ─ 資產盤點
+- 指令：
+  - `gcloud run services list --region=asia-east1 --filter="name~staging$"`
+  - `gcloud secrets list --filter="staging"`
+  - `gcloud scheduler jobs list --filter="staging"`
+- 文件掃描：`rg "-staging" docs scripts`, `rg "staging-" docs scripts`。
+- 產出：Cloud Run、Secret Manager、Scheduler、Artifact Registry、CI 工作流程、Terraform 變數的完整清單。
+
+### Phase 2 ─ 遷移準備
+- 更新程式碼/文件：改用 `staging-v2` 或參數化環境名稱，PR 需附驗證（健康檢查 / 關鍵 API 呼叫）。
+- Secrets：✅ 已完成遷移至分離式變數架構（`DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `POSTGRES_PASSWORD`）；清理遺留的 `DATABASE_URL_*` GitHub Secrets。
+- CI/CD：
+  - Workflow 預設 `service_suffix=-v2`。
+  - 加入服務名稱長度與 `DATABASE_PORT` 靜態檢查。
+- Terraform：更新變數、資源名稱，跑 `terraform plan` 確認僅有預期變更。
+
+### Phase 3 ─ 切換與驗證
+- 宣告凍結窗並通知團隊（Slack/Email）。
+- 在 `staging-v2` 執行完整驗證：
+  - `ENV=staging-v2 ./scripts/health-check-simple.sh`
+  - `ENV=staging-v2 SERVICE_SUFFIX=-v2 ./scripts/run_plan_checks.sh`
+  - 手動驗證主要 BFF / UI 流程。
+- 監控確認：Cloud SQL、VPC、Redis 告警無觸發。
+- 收到 Backend/Frontend/QA 三方書面 sign-off。
+
+### Phase 4 ─ 執行退場
+- 停止舊服務流量：`gcloud run services update-traffic <svc> --region=asia-east1 --to-revisions=<latest>=0`，保留 24h。
+- 備份並刪除：舊 Cloud Run、Scheduler、Secrets、Artifact Registry 映像與自動化腳本；必要時另存 GCS。
+- Terraform & Docs 清理：移除舊環境設定，更新 runbook 與 README。
+- 最終驗證：再次跑健康檢查腳本、確認告警儀表；產出退場報告與回滾步驟（可重新部署舊映像並恢復 Secret 版本）。

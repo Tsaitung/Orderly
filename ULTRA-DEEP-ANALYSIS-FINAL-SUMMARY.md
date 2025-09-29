@@ -130,7 +130,7 @@ if key == "v2":
 ### 🔥 IMMEDIATE (Deploy Today)
 1. **Fix Customer Hierarchy Service V2 Router**
    ```bash
-   gcloud run deploy orderly-customer-hierarchy-service-fastapi-staging \
+gcloud run deploy orderly-customer-hierarchy-staging \
      --image=latest --region=asia-east1
    ```
 

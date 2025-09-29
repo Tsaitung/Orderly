@@ -339,9 +339,11 @@ gcloud run deploy orderly-product-service-fastapi-$ENV \
   --image=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-product-service-fastapi:$SHA \
   --region=$REGION --project=$PROJECT_ID --allow-unauthenticated
 
-gcloud run deploy orderly-customer-hierarchy-service-fastapi-$ENV \
+gcloud run deploy orderly-customer-hierarchy-$ENV \
   --image=asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/orderly-customer-hierarchy-service-fastapi:$SHA \
   --region=$REGION --project=$PROJECT_ID --allow-unauthenticated
+
+> ℹ️ 若部署目標為 `staging-v2`，請改用 `orderly-custhier-staging-v2` 作為服務名稱。
 ```
 
 4) 確保 Cloud SQL 連接器與 DB 環境變數/Secret（保險覆蓋一次）
@@ -355,11 +357,13 @@ gcloud run services update orderly-product-service-fastapi-$ENV \
   --update-secrets=POSTGRES_PASSWORD=postgres-password:latest \
   --set-env-vars="DATABASE_HOST=/cloudsql/$INSTANCE_CONN,DATABASE_NAME=orderly,DATABASE_USER=orderly"
 
-gcloud run services update orderly-customer-hierarchy-service-fastapi-$ENV \
+gcloud run services update orderly-customer-hierarchy-$ENV \
   --region=$REGION --project=$PROJECT_ID \
   --add-cloudsql-instances="$INSTANCE_CONN" \
   --update-secrets=POSTGRES_PASSWORD=postgres-password:latest \
   --set-env-vars="DATABASE_HOST=/cloudsql/$INSTANCE_CONN,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+
+> ℹ️ `staging-v2` 請改用 `orderly-custhier-staging-v2` 作為服務名稱。
 ```
 
 5) 成功訊號清單（務必逐項通過）

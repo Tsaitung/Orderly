@@ -20,7 +20,7 @@ All reported "API data incompleteness" issues were **configuration and routing p
 **PERMANENT FIX**:
 ```bash
 # Redeploy Customer Hierarchy Service with proper v2 router configuration
-gcloud run deploy orderly-customer-hierarchy-service-fastapi-staging \
+gcloud run deploy orderly-customer-hierarchy-staging \
   --image=asia-east1-docker.pkg.dev/orderly-472413/orderly/customer-hierarchy-service-fastapi:latest \
   --region=asia-east1 \
   --service-account=orderly-hierarchy-fastapi@orderly-472413.iam.gserviceaccount.com
@@ -91,7 +91,7 @@ if claims:
 ```bash
 # For testing, Customer Hierarchy Service should accept dev requests:
 # Set ENVIRONMENT=development for staging service if needed
-gcloud run services update orderly-customer-hierarchy-service-fastapi-staging \
+gcloud run services update orderly-customer-hierarchy-staging \
   --update-env-vars ENVIRONMENT=development
 ```
 

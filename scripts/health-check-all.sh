@@ -30,12 +30,17 @@ BASE_URL="https://orderly"
 SUFFIX="usg6y7o2ba-de.a.run.app"
 
 # Service definitions
+CUSTOMER_SERVICE_HOST="${BASE_URL}-customer-hierarchy-${ENV}-${SUFFIX}"
+if [[ "$ENV" == "staging-v2" ]]; then
+    CUSTOMER_SERVICE_HOST="${BASE_URL}-custhier-staging-v2-${SUFFIX}"
+fi
+
 declare -A SERVICES=(
     ["api-gateway"]="${BASE_URL}-api-gateway-fastapi-${ENV}-${SUFFIX}"
     ["user"]="${BASE_URL}-user-service-fastapi-${ENV}-${SUFFIX}"
     ["order"]="${BASE_URL}-order-service-fastapi-${ENV}-${SUFFIX}"
     ["product"]="${BASE_URL}-product-service-fastapi-${ENV}-655602747430.asia-east1.run.app"
-    ["customer-hierarchy"]="${BASE_URL}-customer-hierarchy-service-fastapi-stagin-${SUFFIX}"
+    ["customer-hierarchy"]="${CUSTOMER_SERVICE_HOST}"
     ["supplier"]="${BASE_URL}-supplier-service-fastapi-${ENV}-${SUFFIX}"
     ["acceptance"]="${BASE_URL}-acceptance-service-fastapi-${ENV}-${SUFFIX}"
     ["notification"]="${BASE_URL}-notification-service-fastapi-${ENV}-${SUFFIX}"

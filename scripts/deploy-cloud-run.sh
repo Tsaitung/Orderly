@@ -19,6 +19,10 @@ REGION="asia-east1"
 ZONE="asia-east1-a"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# Deployment target (defaults for shared staging environment)
+ENVIRONMENT="${ENVIRONMENT:-staging}"
+SERVICE_SUFFIX="${SERVICE_SUFFIX:-}"
+
 # Database Configuration
 DB_INSTANCE_NAME="${DB_INSTANCE_NAME:-orderly-db}"
 DB_NAME="orderly"
@@ -64,6 +68,35 @@ service_exists() {
     *) 
       return 1 ;;
   esac
+}
+
+# Translate logical service key into the actual Cloud Run service name
+cloud_run_service_name() {
+  local service_name="$1"
+  local env_suffix="${ENVIRONMENT}${SERVICE_SUFFIX}"
+  
+  # For staging-v2, use abbreviated service names to stay within 30 char limit
+  if [[ "$env_suffix" == "staging-v2" ]]; then
+    case "$service_name" in
+      api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
+      user-service-fastapi) echo "orderly-user-staging-v2" ;;
+      order-service-fastapi) echo "orderly-order-staging-v2" ;;
+      product-service-fastapi) echo "orderly-product-staging-v2" ;;
+      acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
+      notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
+      customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
+      supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
+      *) echo "orderly-${service_name}-${env_suffix}" ;;
+    esac
+  else
+    # For other environments, use existing logic
+    case "$service_name" in
+      customer-hierarchy-service-fastapi)
+        echo "orderly-customer-hierarchy-${env_suffix}"
+        ;;
+      *) echo "orderly-${service_name}-${env_suffix}" ;;
+    esac
+  fi
 }
 
 # Map Cloud Run service names to local directories
@@ -277,11 +310,24 @@ deploy_services() {
     
     for service_name in "${!SERVICES[@]}"; do
         local service_port="${SERVICES[$service_name]}"
-        
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+
         print_status "Deploying $service_name..."
+
+        # Build environment variables
+        local env_vars="NODE_ENV=production"
+        env_vars+=",REDIS_HOST=$redis_host,REDIS_PORT=6379"
+        env_vars+=",DATABASE_HOST=/cloudsql/$db_connection_name,DATABASE_NAME=$DB_NAME,DATABASE_USER=$DB_USER"
+        
+        # Special handling for customer-hierarchy-service in staging
+        if [[ "$service_name" == "customer-hierarchy-service-fastapi" ]] && [[ "$ENVIRONMENT" == "staging" ]]; then
+            print_warning "Setting ENVIRONMENT=development for $service_name in staging (bypasses auth for testing)"
+            env_vars+=",ENVIRONMENT=development"
+        fi
         
         # Deploy to Cloud Run
-        gcloud run deploy "orderly-$service_name" \
+        gcloud run deploy "$cloud_run_name" \
             --image="$REGISTRY/$PROJECT_ID/$REPOSITORY/orderly-$service_name:latest" \
             --platform=managed \
             --region="$REGION" \
@@ -293,9 +339,7 @@ deploy_services() {
             --max-instances=10 \
             --concurrency=100 \
             --timeout=300 \
-            --set-env-vars="NODE_ENV=production" \
-            --set-env-vars="REDIS_HOST=$redis_host,REDIS_PORT=6379" \
-            --set-env-vars="DATABASE_HOST=/cloudsql/$db_connection_name,DATABASE_NAME=$DB_NAME,DATABASE_USER=$DB_USER" \
+            --set-env-vars="$env_vars" \
             --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
@@ -316,7 +360,9 @@ configure_service_mesh() {
     declare -A service_urls
     for service_name in "${!SERVICES[@]}"; do
         local service_url
-        service_url=$(gcloud run services describe "orderly-$service_name" \
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+        service_url=$(gcloud run services describe "$cloud_run_name" \
             --region="$REGION" --format="value(status.url)" --project="$PROJECT_ID")
         service_urls["$service_name"]="$service_url"
         
@@ -376,7 +422,9 @@ health_check() {
     
     for service_name in "${!SERVICES[@]}"; do
         local service_url
-        service_url=$(gcloud run services describe "orderly-$service_name" \
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+        service_url=$(gcloud run services describe "$cloud_run_name" \
             --region="$REGION" --format="value(status.url)" --project="$PROJECT_ID" 2>/dev/null)
         
         if [[ -n "$service_url" ]]; then
@@ -405,7 +453,9 @@ show_summary() {
     
     for service_name in "${!SERVICES[@]}"; do
         local service_url
-        service_url=$(gcloud run services describe "orderly-$service_name" \
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+        service_url=$(gcloud run services describe "$cloud_run_name" \
             --region="$REGION" --format="value(status.url)" --project="$PROJECT_ID" 2>/dev/null)
         
         if [[ -n "$service_url" ]]; then
@@ -466,14 +516,17 @@ update_service() {
         local service_path
         service_path=$(resolve_service_path "$service_name")
         
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+
         # Build and push
         gcloud builds submit "$service_path" \
             --tag="gcr.io/$PROJECT_ID/orderly-$service_name:latest" \
             --dockerfile="Dockerfile.cloudrun" \
             --project="$PROJECT_ID"
-        
+
         # Deploy
-        gcloud run deploy "orderly-$service_name" \
+        gcloud run deploy "$cloud_run_name" \
             --image="gcr.io/$PROJECT_ID/orderly-$service_name:latest" \
             --platform=managed \
             --region="$REGION" \
@@ -497,7 +550,10 @@ show_logs() {
         exit 1
     fi
     
-    gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=orderly-$service_name" \
+    local cloud_run_name
+    cloud_run_name=$(cloud_run_service_name "$service_name")
+
+    gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=\"$cloud_run_name\"" \
         --limit=100 \
         --format="table(timestamp,severity,textPayload)" \
         --project="$PROJECT_ID"
@@ -516,8 +572,10 @@ cleanup() {
     
     # Delete Cloud Run services
     for service_name in "${!SERVICES[@]}"; do
-        print_status "Deleting orderly-$service_name..."
-        gcloud run services delete "orderly-$service_name" \
+        local cloud_run_name
+        cloud_run_name=$(cloud_run_service_name "$service_name")
+        print_status "Deleting $cloud_run_name..."
+        gcloud run services delete "$cloud_run_name" \
             --region="$REGION" \
             --quiet \
             --project="$PROJECT_ID" || true
@@ -581,7 +639,9 @@ main() {
         "urls")
             for service_name in "${!SERVICES[@]}"; do
                 local service_url
-                service_url=$(gcloud run services describe "orderly-$service_name" \
+                local cloud_run_name
+                cloud_run_name=$(cloud_run_service_name "$service_name")
+                service_url=$(gcloud run services describe "$cloud_run_name" \
                     --region="$REGION" --format="value(status.url)" --project="$PROJECT_ID" 2>/dev/null)
                 echo "$service_name: $service_url"
             done

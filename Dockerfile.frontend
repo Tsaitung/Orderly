@@ -30,6 +30,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 # Copy public folder from source (not builder) since standalone doesn't include it
 COPY public ./public
+# Copy app icons for Next.js 15 App Router (from source, not builder)
+COPY app/favicon.ico ./app/favicon.ico
+COPY app/icon.svg ./app/icon.svg
+COPY app/apple-icon.png ./app/apple-icon.png
 
 # Cloud Run provides PORT automatically; listen on dynamic port
 ENV PORT=8080

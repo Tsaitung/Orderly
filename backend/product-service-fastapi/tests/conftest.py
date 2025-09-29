@@ -9,16 +9,45 @@ from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 import os
 from typing import AsyncGenerator
+from urllib.parse import quote
 
 from app.main import app
 from app.core.database import get_async_session
 from app.models.base import Base
 
+def get_test_database_url():
+    """Get test database URL with support for separated variables"""
+    # 1. Check for TEST_DATABASE_URL first
+    if test_url := os.getenv("TEST_DATABASE_URL"):
+        return test_url
+    
+    # 2. Use separated test database variables
+    host = os.getenv("TEST_DATABASE_HOST", os.getenv("DATABASE_HOST", "localhost"))
+    port = os.getenv("TEST_DATABASE_PORT", os.getenv("DATABASE_PORT", "5432"))
+    user = os.getenv("TEST_DATABASE_USER", os.getenv("DATABASE_USER", "test_user"))
+    name = os.getenv("TEST_DATABASE_NAME", os.getenv("DATABASE_NAME", "test_orderly"))
+    
+    # Support multiple password environment variable names
+    password = (
+        os.getenv("TEST_DATABASE_PASSWORD") or
+        os.getenv("TEST_POSTGRES_PASSWORD") or
+        os.getenv("DATABASE_PASSWORD") or
+        os.getenv("POSTGRES_PASSWORD") or
+        "test_pass"
+    )
+    
+    # URL encode to handle special characters
+    encoded_password = quote(password, safe="")
+    encoded_user = quote(user, safe="")
+    
+    # Check if it's a Cloud SQL Unix Socket connection
+    if host.startswith("/cloudsql/"):
+        return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@/{name}?host={host}"
+    
+    return f"postgresql+asyncpg://{encoded_user}:{encoded_password}@{host}:{port}/{name}"
+
 # Test database URL
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", 
-    "postgresql+asyncpg://test_user:test_pass@localhost:5432/test_orderly"
-)
+TEST_DATABASE_URL = get_test_database_url()
 
 # Create test engine
 test_engine = create_async_engine(

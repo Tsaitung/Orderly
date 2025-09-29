@@ -26,6 +26,9 @@ echo ""
 
 for svc in "${services[@]}"; do
   name="orderly-${svc}-${ENV}${SERVICE_SUFFIX:-}"
+  if [[ "$svc" == "customer-hierarchy-service-fastapi" && "${ENV}${SERVICE_SUFFIX:-}" == "staging-v2" ]]; then
+    name="orderly-custhier-staging-v2"
+  fi
   echo "=== Service: $name ==="
   url=$(gcloud run services describe "$name" --region="$REGION" --project="$PROJECT_ID" --format='value(status.url)' 2>/dev/null || true)
   if [[ -z "$url" ]]; then

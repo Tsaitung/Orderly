@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#a47864;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b6f47;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#gradient)" stroke="#6b5b73" stroke-width="4"/>
+  
+  <!-- Main Icon: Chinese Character "井" (Well/Order) -->
+  <g transform="translate(256,256)">
+    <!-- Horizontal lines -->
+    <rect x="-80" y="-60" width="160" height="12" fill="white" rx="6"/>
+    <rect x="-80" y="-20" width="160" height="12" fill="white" rx="6"/>
+    <rect x="-80" y="20" width="160" height="12" fill="white" rx="6"/>
+    <rect x="-80" y="48" width="160" height="12" fill="white" rx="6"/>
+    
+    <!-- Vertical lines -->
+    <rect x="-60" y="-80" width="12" height="160" fill="white" rx="6"/>
+    <rect x="-20" y="-80" width="12" height="160" fill="white" rx="6"/>
+    <rect x="20" y="-80" width="12" height="160" fill="white" rx="6"/>
+    <rect x="48" y="-80" width="12" height="160" fill="white" rx="6"/>
+  </g>
+  
+  <!-- Orderly subtitle -->
+  <text x="256" y="420" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="28" font-weight="bold">Orderly</text>
+</svg>

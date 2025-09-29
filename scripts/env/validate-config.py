@@ -50,7 +50,6 @@ class ConfigValidator:
         self.required_vars = {
             # 核心配置
             'ENVIRONMENT': ['development', 'staging', 'production'],
-            'DATABASE_URL': None,  # 任何有效的資料庫 URL
             'SECRET_KEY': None,
             'JWT_SECRET': None,
             
@@ -113,12 +112,7 @@ class ConfigValidator:
             return False
             
         # 特殊驗證
-        if key == 'DATABASE_URL':
-            if not (value.startswith('postgresql://') or value.startswith('postgresql+asyncpg://')):
-                self.errors.append(f"DATABASE_URL 格式不正確: {value}")
-                return False
-                
-        elif key == 'REDIS_URL':
+        if key == 'REDIS_URL':
             if not value.startswith('redis://'):
                 self.errors.append(f"REDIS_URL 格式不正確: {value}")
                 return False
@@ -173,11 +167,12 @@ class ConfigValidator:
         db_user = env_vars.get('DATABASE_USER', 'orderly')
         db_password = env_vars.get('POSTGRES_PASSWORD', '')
         
-        expected_db_url = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
         actual_db_url = env_vars.get('DATABASE_URL', '')
-        
-        if actual_db_url and actual_db_url != expected_db_url:
-            self.warnings.append(f"DATABASE_URL 與其他資料庫配置不一致\n  期望: {expected_db_url}\n  實際: {actual_db_url}")
+        if actual_db_url:
+            self.warnings.append(
+                "偵測到舊的 DATABASE_URL 設定，建議改用 DATABASE_HOST / DATABASE_PORT / DATABASE_NAME / "
+                "DATABASE_USER / POSTGRES_PASSWORD 由程式自動組裝連線字串"
+            )
             
         # 檢查 Redis 配置一致性
         redis_host = env_vars.get('REDIS_HOST', 'localhost')
@@ -211,6 +206,66 @@ class ConfigValidator:
                     self.warnings.append(f"RATE_LIMIT_PER_MINUTE 設置過低 ({limit})，可能影響正常使用")
             except ValueError:
                 self.errors.append(f"RATE_LIMIT_PER_MINUTE 不是有效數字: {rate_limit}")
+
+    def validate_service_name_lengths(self, environment: str = 'staging', suffix: str = ''):
+        """驗證 Cloud Run 服務名稱長度（必須 ≤30 字元）"""
+        MAX_LENGTH = 30
+        services = [
+            'api-gateway-fastapi',
+            'user-service-fastapi',
+            'order-service-fastapi',
+            'product-service-fastapi',
+            'acceptance-service-fastapi',
+            'notification-service-fastapi',
+            'customer-hierarchy-service-fastapi',
+            'supplier-service-fastapi',
+        ]
+        
+        print_info(f"檢查服務名稱長度 (環境: {environment}{suffix}, 最大長度: {MAX_LENGTH})")
+        
+        for service in services:
+            # 特殊處理 customer-hierarchy-service
+            if service == 'customer-hierarchy-service-fastapi':
+                if f"{environment}{suffix}" == "staging-v2":
+                    cloud_run_name = "orderly-custhier-staging-v2"
+                else:
+                    cloud_run_name = f"orderly-customer-hierarchy-{environment}{suffix}"
+            else:
+                cloud_run_name = f"orderly-{service}-{environment}{suffix}"
+            
+            name_length = len(cloud_run_name)
+            
+            if name_length > MAX_LENGTH:
+                self.errors.append(
+                    f"服務名稱過長: {cloud_run_name} ({name_length} 字元 > {MAX_LENGTH})"
+                )
+                # 提供縮寫建議
+                if 'customer-hierarchy' in service:
+                    self.info.append("  建議: 使用 'custhier' 縮寫")
+                elif 'notification' in service:
+                    self.info.append("  建議: 使用 'notify' 縮寫")
+                elif 'acceptance' in service:
+                    self.info.append("  建議: 使用 'accept' 縮寫")
+            else:
+                self.info.append(f"✓ {cloud_run_name} ({name_length} 字元)")
+    
+    def validate_database_port(self, env_vars: Dict[str, str]):
+        """驗證 DATABASE_PORT 配置（必須為 5432）"""
+        REQUIRED_PORT = "5432"
+        
+        db_port = env_vars.get('DATABASE_PORT', '')
+        
+        if not db_port:
+            self.errors.append(
+                "缺少必要的 DATABASE_PORT 環境變數（所有 FastAPI 服務都需要）"
+            )
+            self.info.append(f"  請設置: DATABASE_PORT=\"{REQUIRED_PORT}\"")
+        elif db_port != REQUIRED_PORT:
+            self.errors.append(
+                f"DATABASE_PORT 值不正確: '{db_port}' (應為 '{REQUIRED_PORT}')"
+            )
+        else:
+            self.info.append(f"✓ DATABASE_PORT 正確設置為 {REQUIRED_PORT}")
 
     def validate_docker_compose(self):
         """驗證 Docker Compose 配置"""
@@ -311,6 +366,12 @@ class ConfigValidator:
         self.validate_business_rules(env_vars)
         self.validate_docker_compose()
         self.validate_service_configs()
+        
+        # 新增: Cloud Run 相關驗證
+        environment = env_vars.get('ENVIRONMENT', 'staging')
+        service_suffix = env_vars.get('SERVICE_SUFFIX', '')
+        self.validate_service_name_lengths(environment, service_suffix)
+        self.validate_database_port(env_vars)
         
         # 輸出結果
         print("\n" + "="*60)

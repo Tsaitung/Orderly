@@ -8,9 +8,13 @@ This repo now uses PostgreSQL with SQLAlchemy ORM and Alembic migrations across 
   - `docker-compose up -d postgres`
 - Create database/user if needed:
   - DB: `orderly`, User: `orderly`, Password: `orderly_dev_password`
-- Set `DATABASE_URL` in environment files for each FastAPI service (async connection string):
-  - `postgresql+asyncpg://orderly:orderly_dev_password@localhost:5432/orderly`
-  - Services: `backend/user-service-fastapi/.env`, `backend/order-service-fastapi/.env`, `backend/product-service-fastapi/.env`
+- For each FastAPI 服務，設定基礎環境變數；統一設定會自動組合連線字串：
+  - `DATABASE_HOST=localhost`
+  - `DATABASE_PORT=5432`
+  - `DATABASE_NAME=orderly`
+  - `DATABASE_USER=orderly`
+  - `POSTGRES_PASSWORD=orderly_dev_password`
+  - 推薦放在 `backend/*-service-fastapi/.env`
 
 ## Staging/Production (Cloud SQL)
 
@@ -21,8 +25,9 @@ This repo now uses PostgreSQL with SQLAlchemy ORM and Alembic migrations across 
   - `DB_PASSWORD=<secure-secret>`
   - `DB_NAME=orderly`
   - `CLOUD_SQL_CONNECTION_NAME=<PROJECT:REGION:INSTANCE>`
-- Connection strings:
-  - SQLAlchemy (Python, asyncpg): `postgresql+asyncpg://orderly:<password>@/orderly?host=/cloudsql/<PROJECT:REGION:INSTANCE>`
+- FastAPI 服務：僅需提供上述分離的環境變數，統一設定會自動產生 asyncpg 連線 URL。
+- 其他工具（例如 `psql` 或資料匯入腳本）需要 DSN 時，可即時以以下格式組合：
+  - `postgresql+asyncpg://<USER>:<PASSWORD>@/<DB>?host=/cloudsql/<PROJECT:REGION:INSTANCE>`
 
 ## Migration
 
