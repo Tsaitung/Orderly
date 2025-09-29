@@ -33,6 +33,9 @@ ORDER_SERVICE="https://orderly-order-service-fastapi-${ENVIRONMENT}-${SUFFIX}"
 PRODUCT_SERVICE="https://orderly-product-service-fastapi-${ENVIRONMENT}-655602747430.asia-east1.run.app"
 if [[ "$ENVIRONMENT" == "staging-v2" ]]; then
     CUSTOMER_SERVICE="https://orderly-custhier-staging-v2-${SUFFIX}"
+elif [[ "$ENVIRONMENT" == "staging" ]]; then
+    # Use the shorter service name (without 'service-fastapi' to avoid truncation)
+    CUSTOMER_SERVICE="https://orderly-customer-hierarchy-staging-${SUFFIX}"
 else
     CUSTOMER_SERVICE="https://orderly-customer-hierarchy-${ENVIRONMENT}-${SUFFIX}"
 fi

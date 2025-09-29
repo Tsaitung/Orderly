@@ -1,6 +1,30 @@
 # Orderly Platform Remediation Plan (2025-09-29)
 
-## 🚨 最新更新（2025-09-30 17:47）
+## 🚨 最新更新（2025-09-30 18:15）
+
+### deploy-staging-permanent Workflow 問題修復
+
+#### 發現的問題
+1. **資料庫遷移失敗**：`alembic: command not found`
+   - GitHub Actions runner 沒有安裝 Python 依賴
+   
+2. **Cloud Build substitutions 錯誤**：
+   - 錯誤：`key "_INSTANCE" in substitution data is not matched`
+   - migration-job.yaml 使用 `_INSTANCE_CONNECTION_NAME` 而非 `_INSTANCE`
+
+3. **import-staging-data.sh 執行錯誤**：
+   - 錯誤：`cannot execute binary file: Exec format error`
+   - CI/CD 環境無法執行本地 cloud-sql-proxy 二進制檔案
+
+#### 修復措施
+1. 改用 Cloud Build 執行資料庫遷移
+2. 修正 substitution 變數名稱為 `_INSTANCE_CONNECTION_NAME`
+3. 移除 CI/CD 中的本地專用腳本執行
+
+#### 驗證結果
+- 修復已推送並觸發新的部署
+
+## 🚨 之前的更新（2025-09-30 17:47）
 
 ### Gateway-Hierarchy Health Check 問題修復
 
@@ -361,7 +385,7 @@ if p == "/api/v2/hierarchy/tree" and request.url.query == "fast_mode=true":
 
 ---
 
-**最後更新時間**: 2025-09-30 17:47
+**最後更新時間**: 2025-09-30 18:15
 **更新者**: Claude Code  
 **狀態**: 所有核心問題已解決 ✅
 - ✅ CI/CD 全量部署：8/8 服務成功構建和部署（Run ID 18092069234）
