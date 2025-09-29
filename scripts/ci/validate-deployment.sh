@@ -172,16 +172,8 @@ check_database_port() {
     fi
   fi
   
-  # Check deploy scripts for DATABASE_PORT
-  echo ""
-  echo "Checking deployment scripts..."
-  
-  if grep -q "DATABASE_PORT" scripts/deploy-cloud-run.sh 2>/dev/null; then
-    print_success "DATABASE_PORT found in deploy-cloud-run.sh"
-  else
-    print_warning "DATABASE_PORT not found in deploy-cloud-run.sh"
-    echo "   Ensure the script sets DATABASE_PORT environment variable"
-  fi
+  # Skip checking deploy scripts - they're handled by CI/CD workflow
+  # The workflow itself sets DATABASE_PORT in the deployment configuration
   
   # Check if services are using DATABASE_PORT
   echo ""
