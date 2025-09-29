@@ -19,20 +19,38 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-LOCAL_PORT="${1:-5433}"
-DB_NAME="${2:-orderly}"
-DB_USER="${3:-orderly}"
+# Support both local and Cloud SQL connections
+if [ -n "$DATABASE_HOST" ] && [[ "$DATABASE_HOST" == /cloudsql/* ]]; then
+    # Running in Cloud environment
+    DB_HOST="$DATABASE_HOST"
+    DB_PORT="${DATABASE_PORT:-5432}"
+    DB_NAME="${DATABASE_NAME:-orderly}"
+    DB_USER="${DATABASE_USER:-orderly}"
+    IS_CLOUD="true"
+else
+    # Running locally with Cloud SQL Proxy
+    LOCAL_PORT="${1:-5433}"
+    DB_HOST="localhost"
+    DB_PORT="$LOCAL_PORT"
+    DB_NAME="${2:-orderly}"
+    DB_USER="${3:-orderly}"
+    IS_CLOUD="false"
+fi
 
 echo "🔍 Running data integrity checks..."
-echo "Database: $DB_NAME on localhost:$LOCAL_PORT"
-echo ""
-
-# Check if Cloud SQL Proxy is running
-if ! nc -z 127.0.0.1 $LOCAL_PORT 2>/dev/null; then
-    log_error "Cannot connect to localhost:$LOCAL_PORT"
-    echo "Please ensure Cloud SQL Proxy is running"
-    exit 1
+if [ "$IS_CLOUD" = "true" ]; then
+    echo "Database: $DB_NAME on Cloud SQL"
+else
+    echo "Database: $DB_NAME on localhost:$DB_PORT"
+    
+    # Check if Cloud SQL Proxy is running (only for local)
+    if ! nc -z 127.0.0.1 $DB_PORT 2>/dev/null; then
+        log_error "Cannot connect to localhost:$DB_PORT"
+        echo "Please ensure Cloud SQL Proxy is running"
+        exit 1
+    fi
 fi
+echo ""
 
 # Expected data counts (from plan.md - updated 2025-09-29)
 EXPECTED_COUNTS="
@@ -70,9 +88,15 @@ for TABLE_COUNT in $EXPECTED_COUNTS; do
     EXPECTED="${TABLE_COUNT##*:}"
     
     # Get actual count
-    ACTUAL=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
-             psql -h 127.0.0.1 -p $LOCAL_PORT -U $DB_USER -d $DB_NAME \
-             -t -c "SELECT COUNT(*) FROM $TABLE" 2>/dev/null | xargs)
+    if [ "$IS_CLOUD" = "true" ]; then
+        # Use environment variable for password in Cloud
+        ACTUAL=$(psql "host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USER" \
+                 -t -c "SELECT COUNT(*) FROM $TABLE" 2>/dev/null | xargs)
+    else
+        ACTUAL=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
+                 psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME \
+                 -t -c "SELECT COUNT(*) FROM $TABLE" 2>/dev/null | xargs)
+    fi
     
     if [ $? -ne 0 ] || [ -z "$ACTUAL" ]; then
         log_error "❌ $TABLE: Table not found or query failed"
@@ -118,9 +142,14 @@ echo "Supplier Data Validation" >> "$INTEGRITY_REPORT"
 echo "-----------------------" >> "$INTEGRITY_REPORT"
 
 # Check products with supplier assignments
-PRODUCTS_WITH_SUPPLIER=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
-    psql -h 127.0.0.1 -p $LOCAL_PORT -U $DB_USER -d $DB_NAME \
-    -t -c "SELECT COUNT(*) FROM products WHERE \"supplierId\" IS NOT NULL" 2>/dev/null | xargs)
+if [ "$IS_CLOUD" = "true" ]; then
+    PRODUCTS_WITH_SUPPLIER=$(psql "host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USER" \
+        -t -c "SELECT COUNT(*) FROM products WHERE \"supplierId\" IS NOT NULL" 2>/dev/null | xargs)
+else
+    PRODUCTS_WITH_SUPPLIER=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
+        psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME \
+        -t -c "SELECT COUNT(*) FROM products WHERE \"supplierId\" IS NOT NULL" 2>/dev/null | xargs)
+fi
 
 if [ -n "$PRODUCTS_WITH_SUPPLIER" ]; then
     echo "Products with supplier: $PRODUCTS_WITH_SUPPLIER" >> "$INTEGRITY_REPORT"
@@ -134,9 +163,14 @@ if [ -n "$PRODUCTS_WITH_SUPPLIER" ]; then
 fi
 
 # Check supplier organizations
-SUPPLIER_ORGS=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
-    psql -h 127.0.0.1 -p $LOCAL_PORT -U $DB_USER -d $DB_NAME \
-    -t -c "SELECT COUNT(*) FROM organizations WHERE type = 'supplier'" 2>/dev/null | xargs)
+if [ "$IS_CLOUD" = "true" ]; then
+    SUPPLIER_ORGS=$(psql "host=$DB_HOST port=$DB_PORT dbname=$DB_NAME user=$DB_USER" \
+        -t -c "SELECT COUNT(*) FROM organizations WHERE type = 'supplier'" 2>/dev/null | xargs)
+else
+    SUPPLIER_ORGS=$(PGPASSWORD="$(gcloud secrets versions access latest --secret=postgres-password 2>/dev/null)" \
+        psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME \
+        -t -c "SELECT COUNT(*) FROM organizations WHERE type = 'supplier'" 2>/dev/null | xargs)
+fi
 
 if [ -n "$SUPPLIER_ORGS" ]; then
     echo "Supplier organizations: $SUPPLIER_ORGS" >> "$INTEGRITY_REPORT"

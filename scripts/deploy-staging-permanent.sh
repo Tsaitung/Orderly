@@ -96,6 +96,15 @@ fi
 log_section "🗄️ Phase 2: Running database migrations"
 
 if [ -f "scripts/database/run-migrations.sh" ]; then
+    # Set database environment variables for Cloud SQL connection
+    export DATABASE_HOST="/cloudsql/orderly-472413:asia-east1:orderly-db-v2"
+    export DATABASE_PORT="5432"
+    export DATABASE_NAME="orderly"
+    export DATABASE_USER="orderly"
+    # POSTGRES_PASSWORD should be set from GitHub secrets
+    
+    log_info "Database connection configured for Cloud SQL"
+    
     if ./scripts/database/run-migrations.sh; then
         log_info "✅ Database migrations completed"
     else
