@@ -25,6 +25,7 @@ RUN pip install --user --no-warn-script-location -r requirements.txt
 # 運行階段
 FROM base AS runtime
 
+ARG LIBS_PATH=backend/libs
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
@@ -35,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=deps /root/.local /root/.local
 
 # 複製共享庫
-COPY libs ./libs
+COPY ${LIBS_PATH} ./libs
 
 # 複製應用程式
 ARG SERVICE_PATH=backend/notification-service-fastapi
