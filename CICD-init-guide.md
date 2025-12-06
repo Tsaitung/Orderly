@@ -1,5 +1,7 @@
 # 🚀 Ultra-Automated Enterprise CI/CD System Blueprint (v4.0)
 
+> ⚠️ **Deprecated reference** — 2025-09-30 起，官方 CI/CD 流程與設計請改查 `docs/CI-CD-ARCHITECTURE.md`。本文件僅保留歷史紀錄，內容未再維護。
+
 ![Automation](https://img.shields.io/badge/Automation-98%25-brightgreen) ![ML-Powered](https://img.shields.io/badge/ML--Powered-Active-blue) ![Self-Healing](https://img.shields.io/badge/Self--Healing-Enabled-orange) ![Multi-Region](https://img.shields.io/badge/Multi--Region-Ready-purple)
 
 **ML-Powered, Self-Healing, Zero-Downtime CI/CD System with Enterprise-Grade Automation**

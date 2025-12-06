@@ -1,9 +1,9 @@
 name: 🔒 Security Audit - Continuous Compliance Scanning
 
 on:
-  schedule:
-    # Every 4 hours security scanning
-    - cron: '0 */4 * * *'
+  # schedule:
+  #   # Every 4 hours security scanning (DISABLED)
+  #   - cron: '0 */4 * * *'
   push:
     branches: [ main, develop ]
   pull_request:

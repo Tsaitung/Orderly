@@ -91,9 +91,7 @@
 ---
 
 ## 8. 規格、需求模板與草稿（Specifications & Templates）
-- `specs/requirements.md` — 專案需求範本。
-- `specs-cloud-run-port/requirements.md` — Cloud Run PORT 變更需求。
-- `requirements.md` — Cloud Run PORT 修復需求草稿模板。
+- ~~已清理過期模板（2025-12-07）~~ — 所有草稿模板已刪除或整合至主要文檔。
 
 ---
 

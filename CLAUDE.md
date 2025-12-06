@@ -80,6 +80,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 行為、契約或設計調整時，務必同步更新對應主檔（PRD、架構、API、資料庫、設計等）並修正索引與交叉引用。
 - 新增或重命名檔案後使用 `rg` 檢查舊連結：`rg -n "api-specification\.md|technical-architecture\.md|PRD\.md|Orderly Design System\.md|requirement\.md"`
 
+#### 已清理的過期檔案（2025-12-07）
+
+**一次性遷移腳本**（已被 `database_manager.py` 取代）：
+- `migrate_local_to_staging.py`, `migrate_core_tables_to_staging.py`
+- `copy_products_to_staging.py`, `migrate_core_data.py`
+- `database/sync_missing_staging_tables.py`, `check_staging_tables.py`
+- 所有 SQL 遷移檔案（`create_core_tables.sql`, `create_product_tables.sql` 等）
+
+**分析報告**（內容已整合至主要文檔）：
+- `PLAN-COMPLETION-SUMMARY.md` → 合併至 `plan.md`
+- `DEPLOYMENT-FIX-SUMMARY.md` → 整合至 `docs/CI-CD-ARCHITECTURE.md`
+- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` → 合併至相關API文檔
+- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md`, `PERMANENT-SOLUTIONS-IMPLEMENTATION.md`, `missing-github-secrets.md`
+
+**檢查清單**（一次性專案審查工具）：
+- `docs/Configuration-Drift-Prevention-System.md`
+- `docs/Final-Validation-Checklist.md`
+- `docs/GitHub-Secrets-Audit-Checklist.md`
+- `docs/separated-variables-configuration-guide.md`
+
+**臨時目錄**：
+- `awesome-claude-agents/` → 改用外部依賴
+- `specs-cloud-run-port/` → 臨時測試目錄
+- `specs/` → 空目錄已移除
+
+**微服務一次性腳本**：
+- `backend/customer-hierarchy-service-fastapi/scripts/create_tables.py` → 已被Alembic取代
+- `backend/customer-hierarchy-service-fastapi/scripts/seed_test_data.py` → 已被 `seed_from_real_data.py` 取代
+- `backend/customer-hierarchy-service-fastapi/Dockerfile.cloudrun` → 已被統一Dockerfile取代
+- `backend/product-service-fastapi/scripts/migration_safety.py` → 功能已整併至CI/CD流程
+
+**測試檔案重新定位**：
+- `scripts/test-configs.py` → 移至 `tests/unit/`
+- `scripts/test-supplier-flow.js` → 移至 `tests/e2e/`
+
+新增檔案前請檢查 `docs/INDEX.md` 確認無重複內容。
+
 ### Security & Configuration
 
 - 機敏設定僅放於 `.env.local` 或授權密鑰庫，依 `docs/ci-secrets.md` 流程管理。
