@@ -542,7 +542,7 @@ update_service() {
         # Build and push
         gcloud builds submit "$service_path" \
             --tag="gcr.io/$PROJECT_ID/orderly-$service_name:latest" \
-            --dockerfile="Dockerfile.cloudrun" \
+            --dockerfile="$service_path/Dockerfile" \
             --project="$PROJECT_ID"
 
         # Deploy

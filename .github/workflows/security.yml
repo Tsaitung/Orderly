@@ -97,16 +97,16 @@ jobs:
       - name: Check if service exists
         id: check-service
         run: |
-          if [ -d "backend/${{ matrix.service }}" ] && [ -f "backend/${{ matrix.service }}/Dockerfile.cloudrun" ]; then
+          if [ -d "backend/${{ matrix.service }}" ] && [ -f "backend/${{ matrix.service }}/Dockerfile" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Build Docker image for security scan
         if: steps.check-service.outputs.exists == 'true'
         run: |
-          docker build -f backend/${{ matrix.service }}/Dockerfile.cloudrun \
+          docker build -f backend/${{ matrix.service }}/Dockerfile \
             -t orderly-${{ matrix.service }}:scan \
             backend/${{ matrix.service }}
       
