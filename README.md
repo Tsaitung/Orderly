@@ -491,7 +491,7 @@ cd backend/product-service-fastapi && alembic upgrade head && cd -
 npm run build 2>&1 | tee build.log
 
 # 驗證 Docker 映像
-docker build -f Dockerfile.cloudrun -t test-build .
+docker build -f Dockerfile -t test-build .
 docker run --rm test-build
 ```
 

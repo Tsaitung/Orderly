@@ -164,8 +164,8 @@ export POSTGRES_PASSWORD="your_secure_password"
 ### Cloud Run 部署
 
 ```bash
-# 使用 Cloud Run 優化 Dockerfile
-docker build -f Dockerfile.cloudrun -t service-name .
+# 使用統一 Dockerfile（支援動態 PORT）
+docker build -f Dockerfile -t service-name .
 
 # 本地測試
 docker run -p 8080:8080 -e PORT=8080 service-name
@@ -200,7 +200,7 @@ docker run -p 8080:8080 -e PORT=8080 service-name
 
 此容器化實施為以下任務奠定基礎：
 
-1. **Cloud Run 部署腳本** - 使用 Dockerfile.cloudrun
+1. **Cloud Run 部署腳本** - 使用統一 Dockerfile（支援動態 PORT）
 2. **GitHub Actions CI/CD** - 自動化構建和部署
 3. **監控與日誌設置** - 容器化環境監控
 4. **性能測試與優化** - 容器性能基準測試

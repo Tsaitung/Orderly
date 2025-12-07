@@ -18,11 +18,6 @@
 - `docs/DEVELOPMENT-PROGRESS-REPORT.md` — 專案進度現況分析。
 - `docs/CRITICAL-GAPS-ANALYSIS.md` — 關鍵風險與缺口彙總。
 - `docs/NEXT-SPRINT-PLAN.md` — 下一階段衝刺計畫與交付目標。
-- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md` — 深度狀況盤點與策略結論。
-- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md` — 永久性修復方案一覽。
-- `DEPLOYMENT-FIX-SUMMARY.md` — 部署修復摘要。
-- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` — API 資料缺失調查報告。
-- `temp_deploy_trigger.md` — 2025-09-24 臨時部署觸發紀錄。
 
 ---
 
@@ -96,12 +91,17 @@
 ---
 
 ## 9. 歷史紀錄與事後檢討（Historical Archive）
-> 與第 2 節內容互相參照，保留完整調查與修復紀錄。
-- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md`
-- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md`
-- `DEPLOYMENT-FIX-SUMMARY.md`
-- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md`
-- `temp_deploy_trigger.md`
+
+> ⚠️ **2025-12-07 文檔整合通知**：以下歷史分析報告已整合至主文檔並移除，避免資訊分散。
+
+**已整合檔案清單**：
+- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md` → 內容已整合至 `plan.md` 和 `docs/CRITICAL-GAPS-ANALYSIS.md`
+- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md` 和 `docs/DEPLOYMENT-CHECKLIST.md`
+- `DEPLOYMENT-FIX-SUMMARY.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md`
+- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` → 內容已整合至 `docs/API-Endpoints-Essential.md`
+- `temp_deploy_trigger.md` → 臨時部署觸發記錄（已完成，無需保留）
+
+如需查閱歷史版本，請使用：`git log --all --full-history -- <filename>`
 
 ---
 
