@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const ACCESS_COOKIE_NAME = 'orderly_session'
+const REFRESH_COOKIE_NAME = 'orderly_refresh'
+
 // 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
 const LOCAL_SERVICE_URLS = {
   USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
@@ -11,8 +14,43 @@ const LOCAL_SERVICE_URLS = {
     process.env.CUSTOMER_HIERARCHY_SERVICE_URL || 'http://localhost:3007',
   PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003',
   ORDER_SERVICE_URL: process.env.ORDER_SERVICE_URL || 'http://localhost:3002',
-  ACCEPTANCE_SERVICE_URL: process.env.ACCEPTANCE_SERVICE_URL || 'http://localhost:3004',
+  ACCEPTANCE_SERVICE_URL: process.env.ACCEPTANCE_SERVICE_URL || 'http://localhost:3004/acceptance',
   NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006',
+}
+
+// 避免直連模式路徑拼錯：預設會補 /api，若 base 已含 /api 或 /acceptance 則避免重複
+function joinBaseAndSubPath(base: string, subPath: string): string {
+  const cleanBase = base.replace(/\/+$/, '')
+  const segments = subPath.split('/').filter(Boolean)
+  const baseSegments = cleanBase.split('/').filter(Boolean)
+  const baseLast = baseSegments[baseSegments.length - 1]
+  if (baseLast && segments[0] && baseLast === segments[0]) {
+    segments.shift()
+  }
+
+  // acceptance 服務：服務自身已掛載 /acceptance，避免重複 /api
+  if (cleanBase.endsWith('/acceptance')) {
+    const joined = segments.join('/')
+    return joined ? `${cleanBase}/${joined}` : cleanBase
+  }
+
+  // base 已含 /api 或 /api/v* 則直接拼接
+  const baseHasApi = /\/api(\/v\d+)?$/.test(cleanBase)
+  if (baseHasApi) {
+    const joined = segments.join('/')
+    return joined ? `${cleanBase}/${joined}` : cleanBase
+  }
+
+  // 如果 subPath 已經以 api/ 開頭，不需要再加 /api 前綴
+  const subPathStartsWithApi = segments[0] === 'api'
+  if (subPathStartsWithApi) {
+    const joined = segments.join('/')
+    return joined ? `${cleanBase}/${joined}` : cleanBase
+  }
+
+  // 預設加上 /api 前綴
+  const joined = segments.join('/')
+  return joined ? `${cleanBase}/api/${joined}` : `${cleanBase}/api`
 }
 
 // 智能服務路由 - 僅在本地開發且 Gateway 不可用時使用
@@ -28,7 +66,10 @@ function getDirectServiceUrl(path: string, environment: string): string | null {
   if (path.startsWith('v1/users')) {
     return LOCAL_SERVICE_URLS.USER_SERVICE_URL
   }
-  if (path.startsWith('suppliers')) {
+  if (path.startsWith('v1/organizations') || path.startsWith('organizations')) {
+    return LOCAL_SERVICE_URLS.USER_SERVICE_URL
+  }
+  if (path.startsWith('suppliers') || path.startsWith('api/suppliers')) {
     return LOCAL_SERVICE_URLS.SUPPLIER_SERVICE_URL
   }
   if (path.startsWith('v1/products') || path.startsWith('products')) {
@@ -45,6 +86,121 @@ function getDirectServiceUrl(path: string, environment: string): string | null {
   }
 
   return null
+}
+
+function isProbablyJwt(token: string): boolean {
+  return token.split('.').length === 3
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split('.')
+  if (parts.length < 2) return null
+  const raw = parts[1]
+  const padded = raw.padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
+  const base64 = padded.replace(/-/g, '+').replace(/_/g, '/')
+  try {
+    const json = Buffer.from(base64, 'base64').toString('utf8')
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+function getJwtMaxAgeSeconds(token: string, fallbackSeconds: number): number {
+  const payload = decodeJwtPayload(token)
+  const exp = typeof payload?.exp === 'number' ? payload.exp : null
+  if (!exp) return fallbackSeconds
+  const now = Math.floor(Date.now() / 1000)
+  const delta = exp - now
+  return delta > 0 ? delta : 0
+}
+
+function setAuthCookies(resp: NextResponse, accessToken: string, refreshToken?: string): void {
+  const accessMaxAge = getJwtMaxAgeSeconds(accessToken, 15 * 60)
+  resp.cookies.set(ACCESS_COOKIE_NAME, accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: accessMaxAge,
+  })
+
+  if (refreshToken) {
+    const refreshMaxAge = getJwtMaxAgeSeconds(refreshToken, 7 * 24 * 60 * 60)
+    resp.cookies.set(REFRESH_COOKIE_NAME, refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: refreshMaxAge,
+    })
+  }
+}
+
+function clearAuthCookies(resp: NextResponse): void {
+  resp.cookies.set(ACCESS_COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+  resp.cookies.set(REFRESH_COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+}
+
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+async function tryRefreshTokens(params: {
+  req: NextRequest
+  backendBaseUrl: string
+  routingStrategy: 'gateway' | 'direct'
+}): Promise<{ accessToken: string; refreshToken?: string } | null> {
+  const refresh = params.req.cookies.get(REFRESH_COOKIE_NAME)?.value
+  if (!refresh || !isProbablyJwt(refresh)) return null
+
+  const refreshBase =
+    params.routingStrategy === 'gateway' ? params.backendBaseUrl : LOCAL_SERVICE_URLS.USER_SERVICE_URL
+
+  const refreshUrl = joinBaseAndSubPath(refreshBase, 'auth/refresh')
+  const res = await fetchWithTimeout(
+    refreshUrl,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${refresh}`,
+      },
+      body: JSON.stringify({}),
+    },
+    15000
+  )
+
+  const data = await res.json().catch(() => ({} as any))
+  if (!res.ok || !data?.success) return null
+
+  const accessToken: string | undefined = data.token || data.access_token
+  const newRefresh: string | undefined = data.refresh_token
+  if (!accessToken || !isProbablyJwt(accessToken)) return null
+
+  return { accessToken, refreshToken: newRefresh && isProbablyJwt(newRefresh) ? newRefresh : refresh }
 }
 
 export async function handler(req: NextRequest, { params }: { params: { path: string[] } }) {
@@ -99,7 +255,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     } catch {
       // Gateway 不可用，嘗試直連服務
       if (directServiceUrl) {
-        target = `${directServiceUrl}/api/${subPath}${qs}`
+        target = `${joinBaseAndSubPath(directServiceUrl, subPath)}${qs}`
         routingStrategy = 'direct'
       }
     }
@@ -115,58 +271,28 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
   })
 
   // Inject Authorization from httpOnly cookie for server-side auth
-  const access = req.cookies.get('orderly_session')?.value
-  // Only forward valid JWT tokens (must have 3 parts separated by dots)
-  if (access && access.split('.').length === 3) {
+  const access = req.cookies.get(ACCESS_COOKIE_NAME)?.value
+  if (access && isProbablyJwt(access)) {
     headers['authorization'] = `Bearer ${access}`
   }
 
   const init: RequestInit = { method, headers }
 
   if (!['GET', 'HEAD'].includes(method)) {
-    const contentType = req.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      const body = await req.text()
-      init.body = body
-    } else {
-      // For other types (form-data, etc.) just stream
-      init.body = req.body as any
-    }
+    const body = await req.arrayBuffer()
+    init.body = body
   }
 
   try {
     console.log(`[BFF] Making request to: ${target}`)
     console.log(`[BFF] Request headers:`, JSON.stringify(headers, null, 2))
 
-    // Add timeout for all requests (30 seconds for backend services)
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000)
-    init.signal = controller.signal
-
-    let res = await fetch(target, init)
-    clearTimeout(timeoutId)
+    let res = await fetchWithTimeout(target, init, 30000)
     console.log(`[BFF] Response status: ${res.status}`)
     console.log(
       `[BFF] Response headers:`,
       JSON.stringify(Object.fromEntries(res.headers.entries()), null, 2)
     )
-
-    // Special handling for hierarchy/tree endpoint with server errors
-    if (subPath.includes('hierarchy/tree') && (res.status >= 500 || [404, 502, 503].includes(res.status))) {
-      console.warn(`[BFF] Hierarchy tree returned ${res.status}, providing fallback response`)
-      return new NextResponse(
-        JSON.stringify({
-          data: [],
-          totalCount: 0,
-          lastModified: new Date().toISOString(),
-          message: "Hierarchy data temporarily unavailable. Please try again later."
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )
-    }
 
     // 在本地開發環境中，若 Gateway 回傳錯誤，對特定資源（如 products/skus）自動回退直連服務
     const isLocal = environment !== 'production'
@@ -176,19 +302,41 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     const isProductDomain = subPath.startsWith('products') || subPath.startsWith('v1/products')
 
     if (isLocal && isGateway && isServerError && canDirect && isProductDomain) {
-      const fallbackTarget = `${directServiceUrl}/api/${subPath}${qs}`
+      const fallbackTarget = `${joinBaseAndSubPath(directServiceUrl, subPath)}${qs}`
       console.warn(
         `[BFF] Gateway returned ${res.status}. Falling back to direct service: ${fallbackTarget}`
       )
       try {
-        const fallbackRes = await fetch(fallbackTarget, init)
+        const fallbackRes = await fetchWithTimeout(fallbackTarget, init, 30000)
         console.log(`[BFF] Fallback response status: ${fallbackRes.status}`)
         if (fallbackRes.ok || fallbackRes.status !== res.status) {
           res = fallbackRes
           routingStrategy = 'direct'
+          target = fallbackTarget
         }
       } catch (fallbackErr) {
         console.error('[BFF] Fallback fetch failed:', fallbackErr)
+      }
+    }
+
+    // Token expired / missing token: if we have refresh token cookie, refresh then retry once.
+    let refreshedTokens: { accessToken: string; refreshToken?: string } | null = null
+    const canAttemptRefresh =
+      req.method !== 'OPTIONS' &&
+      res.status === 401 &&
+      !subPath.startsWith('auth/') &&
+      !subPath.startsWith('api/auth/')
+
+    if (canAttemptRefresh) {
+      refreshedTokens = await tryRefreshTokens({
+        req,
+        backendBaseUrl: BACKEND_URL,
+        routingStrategy,
+      }).catch(() => null)
+
+      if (refreshedTokens) {
+        headers['authorization'] = `Bearer ${refreshedTokens.accessToken}`
+        res = await fetchWithTimeout(target, init, 30000)
       }
     }
 
@@ -206,7 +354,16 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
       console.error(`[BFF] Error response body:`, textData)
     }
 
-    return new NextResponse(data, { status: res.status, headers: respHeaders })
+    const resp = new NextResponse(data, { status: res.status, headers: respHeaders })
+
+    if (refreshedTokens) {
+      setAuthCookies(resp, refreshedTokens.accessToken, refreshedTokens.refreshToken)
+    } else if (canAttemptRefresh && res.status === 401) {
+      // Refresh failed; clear cookies so client can force re-login.
+      clearAuthCookies(resp)
+    }
+
+    return resp
   } catch (error: any) {
     console.error(`[BFF] Error fetching ${target}:`, {
       message: error.message,
@@ -214,29 +371,12 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
       stack: error.stack,
     })
 
-    // Special handling for hierarchy/tree endpoint - provide fallback response
-    if (subPath.includes('hierarchy/tree')) {
-      console.warn(`[BFF] Hierarchy tree request failed, providing fallback response`)
-      return new NextResponse(
-        JSON.stringify({
-          data: [],
-          totalCount: 0,
-          lastModified: new Date().toISOString(),
-          message: "Hierarchy data temporarily unavailable. Please try again later."
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
     // 本地環境：主要請求失敗時，嘗試對產品域名執行直連回退
     const isLocal = environment !== 'production'
     const directUrl = getDirectServiceUrl(subPath, environment)
     const isProductDomain = subPath.startsWith('products') || subPath.startsWith('v1/products')
     if (isLocal && directUrl && isProductDomain) {
-      const fallbackTarget = `${directUrl}/api/${subPath}${qs}`
+      const fallbackTarget = `${joinBaseAndSubPath(directUrl, subPath)}${qs}`
       console.warn(`[BFF] Primary fetch failed. Trying fallback: ${fallbackTarget}`)
       try {
         const fallbackRes = await fetch(fallbackTarget, init)

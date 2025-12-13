@@ -8,6 +8,7 @@ from fastapi import FastAPI
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
 from orderly_fastapi_core.errors import register_exception_handlers
+from orderly_fastapi_core.middleware import AuthMiddleware, DEFAULT_PUBLIC_PATHS
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -15,7 +16,14 @@ from app.core.config import settings
 from app.core.database import async_engine
 from sqlalchemy import text
 from app.api.v1.auth import router as auth_router
+from app.api.v1.mfa import router as mfa_router
+from app.api.v1.oauth import router as oauth_router
+from app.api.v1.super_user import router as super_user_router
+from app.api.v1.sessions import router as sessions_router
+from app.api.v1.business_verification import router as verification_router
+from app.api.v1.audit import router as audit_router
 from app.api.v1.suppliers import router as suppliers_router
+from app.api.v1.organizations import router as organizations_router
 # from app.api.v1.invitations import router as invitations_router
 
 
@@ -77,6 +85,37 @@ app.add_middleware(
 # Consistent error responses
 register_exception_handlers(app)
 
+public_auth_paths = DEFAULT_PUBLIC_PATHS.union({
+    "/auth/login",
+    "/auth/register",
+    "/auth/refresh",
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/auth/refresh",
+    # MFA verify (user doesn't have token during MFA challenge)
+    "/auth/mfa/verify",
+    "/api/auth/mfa/verify",
+    # Password reset (user doesn't have token during reset flow)
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+    # OAuth endpoints (initiate and callback are public)
+    "/auth/oauth/providers",
+    "/auth/oauth/line/initiate",
+    "/auth/oauth/google/initiate",
+    "/auth/oauth/line/callback",
+    "/auth/oauth/google/callback",
+    "/auth/oauth/complete-registration",
+    "/api/auth/oauth/providers",
+    "/api/auth/oauth/line/initiate",
+    "/api/auth/oauth/google/initiate",
+    "/api/auth/oauth/line/callback",
+    "/api/auth/oauth/google/callback",
+    "/api/auth/oauth/complete-registration",
+})
+app.add_middleware(AuthMiddleware, settings=settings, public_paths=public_auth_paths)
+
 
 @app.get("/health")
 async def health():
@@ -131,9 +170,37 @@ app.include_router(auth_router, prefix="/api", tags=["Auth"])
 # Also expose without '/api' so API Gateway '/api/users' -> '' works for '/auth/*'
 app.include_router(auth_router, prefix="", tags=["Auth"])
 
+# MFA APIs
+app.include_router(mfa_router, prefix="/api", tags=["MFA"])
+app.include_router(mfa_router, prefix="", tags=["MFA"])
+
+# OAuth APIs
+app.include_router(oauth_router, prefix="/api", tags=["OAuth"])
+app.include_router(oauth_router, prefix="", tags=["OAuth"])
+
+# Super User APIs
+app.include_router(super_user_router, prefix="/api", tags=["Super User"])
+app.include_router(super_user_router, prefix="", tags=["Super User"])
+
+# Session management APIs
+app.include_router(sessions_router, prefix="/api", tags=["Sessions"])
+app.include_router(sessions_router, prefix="", tags=["Sessions"])
+
+# Business verification APIs
+app.include_router(verification_router, prefix="/api", tags=["Verification"])
+app.include_router(verification_router, prefix="", tags=["Verification"])
+
+# Audit log APIs
+app.include_router(audit_router, prefix="/api", tags=["Audit"])
+app.include_router(audit_router, prefix="", tags=["Audit"])
+
 # Supplier management APIs
 app.include_router(suppliers_router, prefix="/api", tags=["Suppliers"])
 app.include_router(suppliers_router, prefix="", tags=["Suppliers"])
+
+# Organization management APIs (for platform admin view switching)
+app.include_router(organizations_router, prefix="/api/v1", tags=["Organizations"])
+app.include_router(organizations_router, prefix="/v1", tags=["Organizations"])
 
 # Supplier invitations - temporarily disabled
 # app.include_router(invitations_router, prefix="/api/invitations", tags=["Invitations"])

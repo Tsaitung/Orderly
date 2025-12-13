@@ -221,37 +221,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Load all organizations for platform admin
   const loadOrganizations = async () => {
     try {
-      // Mock organizations data - in production, fetch from API
-      const mockOrganizations: Organization[] = [
-        {
-          id: 'restaurant-001',
-          name: '美味餐廳',
-          type: 'restaurant',
-          isActive: true,
-        },
-        {
-          id: 'restaurant-002',
-          name: '快樂小館',
-          type: 'restaurant',
-          isActive: true,
-        },
-        {
-          id: 'supplier-001',
-          name: '新鮮供應商',
-          type: 'supplier',
-          isActive: true,
-        },
-        {
-          id: 'supplier-002',
-          name: '優質食材行',
-          type: 'supplier',
-          isActive: true,
-        },
-      ]
+      const response = await fetch('/api/bff/v1/organizations')
+      if (!response.ok) {
+        throw new Error('Failed to fetch organizations')
+      }
+      const data = await response.json()
 
-      setOrganizations(mockOrganizations)
+      // 轉換 API 回應為前端 Organization 型別
+      const orgs: Organization[] = data.organizations.map((org: {
+        id: string
+        name: string
+        type: string
+        isActive: boolean
+      }) => ({
+        id: org.id,
+        name: org.name,
+        type: org.type as 'restaurant' | 'supplier',
+        isActive: org.isActive
+      }))
+
+      setOrganizations(orgs)
     } catch (error) {
       console.error('Failed to load organizations:', error)
+      setOrganizations([])
     }
   }
 
@@ -315,7 +307,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           organizationId: data.user.organization.id,
           organizationType: data.user.organization.type,
           rememberMe: validation.data.rememberMe,
-          expiresIn: validation.data.rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60,
+          expiresIn: 7 * 24 * 60 * 60 * 1000,
         })
 
         const user: User = {
@@ -351,6 +343,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout function with secure cleanup
   const logout = () => {
+    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
     SecureStorage.clearTokens()
     setUser(null)
     setIsAuthenticated(false)
