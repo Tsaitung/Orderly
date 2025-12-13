@@ -87,9 +87,14 @@ class ProductServiceSettings(UnifiedSettings):
     max_products_per_page: int = Field(default=100, description="每頁最大產品數")
     max_search_results: int = Field(default=1000, description="最大搜索結果數")
     
-    # 雲端儲存配置
+    # 圖片存儲配置（本地存儲優先，可擴展至 GCS）
+    image_storage_type: str = Field(default="local", description="圖片存儲類型: local | gcs")
+    local_upload_dir: str = Field(default="/tmp/uploads/products", description="本地上傳目錄")
+    image_base_url: str = Field(default="/static/uploads/products", description="圖片基礎 URL")
+
+    # 雲端儲存配置（未來擴展）
     product_images_bucket: str = Field(default="orderly-product-images", description="產品圖片儲存桶")
-    enable_cdn: bool = Field(default=True, description="啟用 CDN")
+    enable_cdn: bool = Field(default=False, description="啟用 CDN")
     cdn_domain: str = Field(default="cdn.orderly.com", description="CDN 域名")
 
 

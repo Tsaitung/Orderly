@@ -4,7 +4,7 @@ Pydantic schemas for Supplier Service API requests and responses
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Dict, Optional, Any
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, EmailStr, validator, field_validator
 from enum import Enum
 
 
@@ -119,6 +119,85 @@ class SupplierProfileResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    @field_validator('quality_certifications', mode='before')
+    @classmethod
+    def normalize_certifications(cls, v):
+        """Normalize quality_certifications to List[str] format.
+
+        Database may contain either:
+        - String array: ["HACCP", "ISO 22000"]
+        - Object array: [{"name": "HACCP", "number": "...", "expires_at": "..."}]
+        - JSON string: '[{"name": "HACCP", ...}]'
+
+        This validator normalizes all formats to string array.
+        """
+        if not v:
+            return []
+
+        # Handle JSON string input
+        if isinstance(v, str):
+            try:
+                import json
+                v = json.loads(v)
+            except (json.JSONDecodeError, ValueError):
+                # Single string value
+                return [v]
+
+        # Handle non-iterable
+        if not hasattr(v, '__iter__'):
+            return [str(v)]
+
+        result = []
+        for cert in v:
+            if isinstance(cert, str):
+                result.append(cert)
+            elif isinstance(cert, dict):
+                # Extract name from dict, fallback to string representation
+                name = cert.get('name')
+                if name:
+                    result.append(str(name))
+                else:
+                    # No 'name' key, convert entire dict to string
+                    result.append(str(cert))
+            else:
+                result.append(str(cert))
+        return result
+
+    class Config:
+        from_attributes = True
+        json_encoders = {
+            Decimal: lambda v: float(v)
+        }
+
+
+class SupplierCardResponse(BaseModel):
+    """Response schema for supplier card in list view - matches frontend SupplierCard interface"""
+    id: str
+    name: str  # From organizations table
+    contact_person: Optional[str] = None  # From organizations.contactPerson
+    contact_phone: Optional[str] = None  # From organizations.contactPhone
+    contact_email: Optional[str] = None  # From organizations.contactEmail
+    address: Optional[str] = None  # From organizations.address
+    status: str
+    status_display: str
+    delivery_capacity: Optional[str] = None
+    capacity_display: str
+    minimum_order_amount: Decimal
+    payment_terms_display: str
+    product_categories: List[str] = []
+    certifications: List[str] = []
+    # Activity metrics (placeholders for now - would come from order data)
+    monthly_gmv: Decimal = Decimal("0.00")
+    monthly_orders: int = 0
+    fulfillment_rate: float = 0.0
+    quality_score: float = 0.0
+    gmv_growth_rate: float = 0.0
+    orders_growth_rate: float = 0.0
+    last_order_date: Optional[str] = None
+    activity_level: str = "low"
+    is_active: bool = True
+    join_date: str
+
     class Config:
         from_attributes = True
         json_encoders = {
@@ -178,15 +257,42 @@ class OnboardingProgressResponse(BaseModel):
         from_attributes = True
 
 
+class SupplierStats(BaseModel):
+    """Statistics for supplier list - matches frontend SupplierStats interface"""
+    total_suppliers: int = 0
+    active_suppliers: int = 0
+    pending_suppliers: int = 0
+    suspended_suppliers: int = 0
+    deactivated_suppliers: int = 0
+    total_gmv: Decimal = Decimal("0.00")
+    monthly_gmv: Decimal = Decimal("0.00")
+    avg_fulfillment_rate: float = 0.0
+    avg_quality_score: float = 0.0
+    total_orders: int = 0
+    monthly_orders: int = 0
+    supplier_growth_rate: float = 0.0
+    gmv_growth_rate: float = 0.0
+    orders_growth_rate: float = 0.0
+    capacity_distribution: Dict[str, int] = {}
+    region_distribution: Dict[str, int] = {}
+    category_distribution: Dict[str, int] = {}
+
+    class Config:
+        json_encoders = {
+            Decimal: lambda v: float(v)
+        }
+
+
 class SupplierListResponse(BaseModel):
     """Response schema for paginated supplier list"""
-    suppliers: List[SupplierProfileResponse]
+    suppliers: List[SupplierCardResponse]  # Changed from SupplierProfileResponse
     total_count: int
     page: int
     page_size: int
     total_pages: int
     has_next: bool
     has_previous: bool
+    stats: SupplierStats
 
 
 class SupplierCustomerListResponse(BaseModel):

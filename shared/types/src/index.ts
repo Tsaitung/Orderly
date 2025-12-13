@@ -4,13 +4,65 @@ export * from './customer-hierarchy'
 export * from './supplier'
 export * from './notification'
 
-// 用戶相關類型
+// 用戶／權限類型
+export type TenantType = 'restaurant' | 'supplier' | 'platform'
+
+export type UserRole =
+  | 'restaurant_admin'
+  | 'restaurant_manager'
+  | 'restaurant_operator'
+  | 'supplier_admin'
+  | 'supplier_manager'
+  | 'supplier_operator'
+  | 'platform_admin'
+  | 'platform_support'
+  | 'super_admin'
+
+export type UserStatus = 'active' | 'suspended' | 'pending'
+
+export interface UserPermissions {
+  features?: string[]
+  scopes?: string[]
+  [key: string]: unknown
+}
+
+export interface UserProfile {
+  id: string
+  tenantId: string
+  tenantType: TenantType
+  role: UserRole
+  permissions: UserPermissions | string[] // string[] for簡化的權限列表
+  email: string
+  phone?: string
+  displayName?: string
+  avatarUrl?: string
+  locale?: string
+  timezone?: string
+  status: UserStatus
+  mfaEnabled?: boolean
+  lastLoginAt?: string | Date
+  createdAt: string | Date
+  updatedAt: string | Date
+}
+
+// 兼容舊版的基本 User 介面
 export interface User {
   id: string
   email: string
-  role: 'RESTAURANT' | 'SUPPLIER' | 'ADMIN'
+  role: 'RESTAURANT' | 'SUPPLIER' | 'ADMIN' | UserRole
   createdAt: Date
   updatedAt: Date
+}
+
+export interface AuthClaims {
+  sub: string
+  email: string
+  tenant_id: string
+  role: UserRole
+  permissions?: UserPermissions | string[]
+  tenant_type?: TenantType
+  org_type?: TenantType
+  token_version?: number
 }
 
 // ============================================================================

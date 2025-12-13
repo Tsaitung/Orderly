@@ -32,13 +32,12 @@ import {
 import { CustomerHierarchyProvider } from '../../context/CustomerHierarchyContext'
 import { useCustomerHierarchy } from '../../hooks/useCustomerHierarchy'
 import { useDebounce } from '@/lib/hooks/useDebounce'
+import { hierarchyApi } from '@/lib/api/customer-hierarchy'
 
 // Import types
 import type {
   DashboardTab,
   DashboardStatistics,
-  ActivityMetrics,
-  CustomerMetrics,
   FilterOptions,
   SortOptions,
   ExportOptions,
@@ -55,50 +54,58 @@ import AnalyticsTab from './tabs/AnalyticsTab'
 // Import shared components (to be created)
 import SearchFilters from './shared/SearchFilters'
 
-// ============================================================================
-// Mock Data Service (to be replaced with real API calls)
-// ============================================================================
+// Dashboard Data Helpers
+const createEmptyDashboardData = (): DashboardStatistics => ({
+  totalCustomers: 0,
+  activeCustomers: 0,
+  inactiveCustomers: 0,
+  groupsCount: 0,
+  companiesCount: 0,
+  locationsCount: 0,
+  businessUnitsCount: 0,
+  totalMonthlyRevenue: 0,
+  revenueGrowth: 0,
+  avgActivityScore: 0,
+  topPerformers: [],
+})
 
-const mockDashboardData: DashboardStatistics = {
-  totalCustomers: 13,
-  activeCustomers: 11,
-  inactiveCustomers: 2,
-  groupsCount: 13,
-  companiesCount: 13,
-  locationsCount: 47,
-  businessUnitsCount: 125,
-  totalMonthlyRevenue: 2580000,
-  revenueGrowth: 15.8,
-  avgActivityScore: 78.5,
-  topPerformers: [
-    {
-      id: '1',
-      name: '王品集團',
-      type: 'group',
-      monthlyRevenue: 450000,
-      orderCount: 156,
-      activityScore: 92,
-      trend: 'up',
-    },
-    {
-      id: '2',
-      name: '瓦城集團',
-      type: 'group',
-      monthlyRevenue: 380000,
-      orderCount: 134,
-      activityScore: 88,
-      trend: 'up',
-    },
-    {
-      id: '3',
-      name: '漢來集團',
-      type: 'group',
-      monthlyRevenue: 320000,
-      orderCount: 112,
-      activityScore: 85,
-      trend: 'stable',
-    },
-  ],
+const mapStatsToDashboard = (stats: any): DashboardStatistics => {
+  const groupsCount = stats?.node_counts?.group ?? stats?.nodesByType?.group ?? 0
+  const companiesCount = stats?.node_counts?.company ?? stats?.nodesByType?.company ?? 0
+  const locationsCount = stats?.node_counts?.location ?? stats?.nodesByType?.location ?? 0
+  const businessUnitsCount =
+    stats?.node_counts?.business_unit ?? stats?.nodesByType?.business_unit ?? 0
+
+  const activeSum =
+    (stats?.active_counts?.group ?? 0) +
+    (stats?.active_counts?.company ?? 0) +
+    (stats?.active_counts?.location ?? 0) +
+    (stats?.active_counts?.business_unit ?? 0)
+  const inactiveSum =
+    (stats?.inactive_counts?.group ?? 0) +
+    (stats?.inactive_counts?.company ?? 0) +
+    (stats?.inactive_counts?.location ?? 0) +
+    (stats?.inactive_counts?.business_unit ?? 0)
+
+  const activeCustomers = activeSum || stats?.activeNodes || 0
+  const inactiveCustomers = inactiveSum || stats?.inactiveNodes || 0
+
+  const totalCustomers = activeCustomers + inactiveCustomers
+
+  return {
+    totalCustomers,
+    activeCustomers,
+    inactiveCustomers,
+    groupsCount,
+    companiesCount,
+    locationsCount,
+    businessUnitsCount,
+    // 目前後端未回傳營收與活躍度統計，先以 0 佔位
+    totalMonthlyRevenue: 0,
+    revenueGrowth: 0,
+    avgActivityScore: 0,
+    topPerformers: [],
+  }
 }
 
 // ============================================================================
@@ -129,6 +136,9 @@ function useDashboardState(): UseDashboardStateReturn {
   const [debouncedSearch] = useDebounce(searchQuery, 300)
   const [showFilters, setShowFilters] = useState(false)
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false)
+  const [dashboardData, setDashboardData] = useState<DashboardStatistics>(() =>
+    createEmptyDashboardData()
+  )
 
   const [filters, setFilters] = useState<FilterOptions>({
     types: ['group', 'company', 'location', 'business_unit'],
@@ -144,13 +154,20 @@ function useDashboardState(): UseDashboardStateReturn {
   const refreshDashboard = useCallback(async () => {
     setIsLoadingDashboard(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      // In real implementation, this would fetch fresh dashboard data
+      const statsResponse = await hierarchyApi.getStatistics()
+      const stats = (statsResponse as any).data ?? statsResponse
+      setDashboardData(mapStatsToDashboard(stats))
+    } catch (error) {
+      console.error('Failed to load hierarchy statistics', error)
+      setDashboardData(createEmptyDashboardData())
     } finally {
       setIsLoadingDashboard(false)
     }
   }, [])
+
+  useEffect(() => {
+    refreshDashboard()
+  }, [refreshDashboard])
 
   const exportData = useCallback(async (options: ExportOptions) => {
     // Simulate export functionality
@@ -170,7 +187,7 @@ function useDashboardState(): UseDashboardStateReturn {
     setSortOptions,
     showFilters,
     setShowFilters,
-    dashboardData: mockDashboardData,
+    dashboardData,
     isLoadingDashboard,
     refreshDashboard,
     exportData,
@@ -182,6 +199,7 @@ function useDashboardState(): UseDashboardStateReturn {
 // ============================================================================
 
 function CustomerHierarchyDashboardImplementation() {
+  // Dashboard state (filters/search and statistics)
   const {
     activeTab,
     setActiveTab,
@@ -200,7 +218,7 @@ function CustomerHierarchyDashboardImplementation() {
     exportData,
   } = useDashboardState()
 
-  // Get existing hierarchy data and functionality
+  // Get hierarchy data
   const {
     tree,
     selectedNodeId,

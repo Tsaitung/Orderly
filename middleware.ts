@@ -70,6 +70,7 @@ export async function middleware(request: NextRequest) {
 
   // 檢查 httpOnly cookie 是否存在（由 /api/auth/login 設置）
   const sessionCookie = request.cookies.get('orderly_session')
+  const refreshCookie = request.cookies.get('orderly_refresh')
 
   // 對於受保護的路由，若無 session 則重定向到首頁
   if (
@@ -78,7 +79,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/platform') ||
     pathname.startsWith('/settings')
   ) {
-    if (!sessionCookie) {
+    if (!sessionCookie && !refreshCookie) {
       const url = request.nextUrl.clone()
       url.pathname = '/'
       return NextResponse.redirect(url)

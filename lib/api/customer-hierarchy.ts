@@ -472,7 +472,7 @@ export const hierarchyApi = {
    * Get hierarchy statistics
    */
   getStatistics: async (): Promise<ApiResponse<HierarchyStatistics>> => {
-    return customerHierarchyHttp.get<ApiResponse<HierarchyStatistics>>('/hierarchy/statistics')
+    return customerHierarchyHttp.get<ApiResponse<HierarchyStatistics>>('/hierarchy/stats')
   },
 
   /**

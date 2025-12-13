@@ -4,31 +4,42 @@ import { useState, useEffect } from 'react'
 import { cn, formatRelativeTime } from '@/lib/utils'
 import type { ServiceHealth } from '@/types'
 
+const frontendUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '')
+const backendBase =
+  (process.env.ORDERLY_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:8000').replace(/\/+$/, '')
+const postgresUrl = (process.env.NEXT_PUBLIC_POSTGRES_URL || 'postgresql://localhost:5432').replace(/\/+$/, '')
+const redisUrl = (process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379').replace(/\/+$/, '')
+
+const withBackendPath = (path: string) => `${backendBase}${path}`
+
 // 模擬服務健康狀態數據模板
 const mockServicesTemplate = [
   {
     name: '前端應用',
     status: 'healthy' as const,
     responseTime: 45,
-    url: 'http://localhost:8000',
+    url: frontendUrl,
   },
   {
     name: 'API Gateway',
     status: 'healthy' as const,
     responseTime: 120,
-    url: 'http://localhost:3000/health',
+    url: withBackendPath('/health'),
   },
   {
     name: '對帳引擎',
     status: 'healthy' as const,
     responseTime: 95,
-    url: '/api/reconciliation/health',
+    url: withBackendPath('/api/reconciliations/health'),
   },
   {
     name: '用戶服務',
     status: 'healthy' as const,
     responseTime: 85,
-    url: '/api/users/health',
+    url: withBackendPath('/api/users/health'),
   },
   {
     name: 'ERP 整合',
@@ -40,19 +51,19 @@ const mockServicesTemplate = [
     name: 'PostgreSQL',
     status: 'healthy' as const,
     responseTime: 25,
-    url: 'postgresql://localhost:5432',
+    url: postgresUrl,
   },
   {
     name: 'Redis Cache',
     status: 'healthy' as const,
     responseTime: 15,
-    url: 'redis://localhost:6379',
+    url: redisUrl,
   },
   {
     name: '通知服務',
     status: 'healthy' as const,
     responseTime: 110,
-    url: '/api/notifications/health',
+    url: withBackendPath('/api/notifications/health'),
   },
 ]
 

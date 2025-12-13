@@ -2,16 +2,21 @@
 Product CRUD operations
 """
 from typing import Dict, List, Optional, Any, Union
+from uuid import uuid4
+from datetime import datetime, timezone
 from sqlalchemy import func, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.future import select
 from fastapi import HTTPException
+import structlog
 
 from app.models.product import Product, ProductState, TaxStatus
 from app.models.category import ProductCategory
-from app.schemas.product import ProductCreate, ProductUpdate, ProductStats, ProductSearchParams
+from app.schemas.product import ProductCreate, ProductUpdate, ProductStats, ProductSearchParams, ProductCreateRequest, ProductUpdateRequest
 from app.crud.base import CRUDBase
+
+logger = structlog.get_logger()
 
 
 class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
@@ -265,6 +270,312 @@ class CRUDProduct(CRUDBase[Product, ProductCreate, ProductUpdate]):
             return result.scalar_one_or_none()
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to fetch product: {str(e)}")
+
+
+    async def create_product(
+        self,
+        db: AsyncSession,
+        data: ProductCreateRequest,
+        created_by: Optional[str] = None,
+        tenant_id: Optional[str] = None
+    ) -> Product:
+        """
+        創建新產品
+
+        Args:
+            db: 資料庫會話
+            data: 產品創建請求資料
+            created_by: 創建者 ID
+
+        Returns:
+            Product: 創建的產品實例
+        """
+        try:
+            # 檢查產品代碼是否已存在
+            existing = await db.execute(
+                select(Product).where(Product.code == data.code)
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"產品代碼 '{data.code}' 已存在"
+                )
+
+            # 驗證類別是否存在
+            category_check = await db.execute(
+                select(ProductCategory).where(ProductCategory.id == data.categoryId)
+            )
+            if not category_check.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"類別 ID '{data.categoryId}' 不存在"
+                )
+
+            # 創建產品實例
+            product = Product(
+                id=str(uuid4()),
+                tenant_id=tenant_id,  # 多租戶隔離
+                code=data.code,
+                name=data.name,
+                name_en=data.nameEn,
+                description=data.description,
+                category_id=data.categoryId,
+                supplier_id=data.supplierId,
+                unit_of_measure=data.unitOfMeasure,
+                origin_country=data.originCountry,
+                origin_region=data.originRegion,
+                min_stock=data.minStock,
+                max_stock=data.maxStock,
+                lead_time_days=data.leadTimeDays,
+                is_active=data.isActive,
+                allergens=data.allergens or [],
+                nutritional_info=data.nutritionalInfo or {},
+                certifications=data.certifications or [],
+                tags=data.tags or [],
+                images=data.images or [],
+                status='active' if data.isActive else 'inactive',
+            )
+
+            db.add(product)
+            await db.commit()
+            await db.refresh(product)
+
+            logger.info(
+                "product_created",
+                product_id=product.id,
+                code=product.code,
+                name=product.name,
+                created_by=created_by
+            )
+
+            return product
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            logger.error("product_create_failed", error=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"創建產品失敗: {str(e)}"
+            )
+
+    async def update_product(
+        self,
+        db: AsyncSession,
+        product_id: str,
+        data: ProductUpdateRequest,
+        updated_by: Optional[str] = None
+    ) -> Product:
+        """
+        更新產品
+
+        Args:
+            db: 資料庫會話
+            product_id: 產品 ID
+            data: 更新資料
+            updated_by: 更新者 ID
+
+        Returns:
+            Product: 更新後的產品實例
+        """
+        try:
+            # 獲取現有產品
+            result = await db.execute(
+                select(Product).where(Product.id == product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"產品 ID '{product_id}' 不存在"
+                )
+
+            # 如果更新類別，驗證新類別是否存在
+            if data.categoryId:
+                category_check = await db.execute(
+                    select(ProductCategory).where(ProductCategory.id == data.categoryId)
+                )
+                if not category_check.scalar_one_or_none():
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"類別 ID '{data.categoryId}' 不存在"
+                    )
+
+            # 更新欄位（僅更新有值的欄位）
+            update_data = data.model_dump(exclude_unset=True)
+
+            # 欄位名稱映射（camelCase -> snake_case）
+            field_mapping = {
+                'nameEn': 'name_en',
+                'categoryId': 'category_id',
+                'supplierId': 'supplier_id',
+                'unitOfMeasure': 'unit_of_measure',
+                'originCountry': 'origin_country',
+                'originRegion': 'origin_region',
+                'minStock': 'min_stock',
+                'maxStock': 'max_stock',
+                'leadTimeDays': 'lead_time_days',
+                'isActive': 'is_active',
+                'nutritionalInfo': 'nutritional_info',
+            }
+
+            for key, value in update_data.items():
+                if value is not None:
+                    # 轉換欄位名稱
+                    db_field = field_mapping.get(key, key)
+                    setattr(product, db_field, value)
+
+            # 更新狀態欄位
+            if data.isActive is not None:
+                product.status = 'active' if data.isActive else 'inactive'
+
+            await db.commit()
+            await db.refresh(product)
+
+            logger.info(
+                "product_updated",
+                product_id=product.id,
+                updated_fields=list(update_data.keys()),
+                updated_by=updated_by
+            )
+
+            return product
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            logger.error("product_update_failed", product_id=product_id, error=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"更新產品失敗: {str(e)}"
+            )
+
+    async def delete_product(
+        self,
+        db: AsyncSession,
+        product_id: str,
+        soft_delete: bool = True
+    ) -> str:
+        """
+        刪除產品
+
+        Args:
+            db: 資料庫會話
+            product_id: 產品 ID
+            soft_delete: 是否軟刪除（預設為軟刪除，設為 is_active=False）
+
+        Returns:
+            str: 刪除的產品 ID
+        """
+        try:
+            # 獲取現有產品
+            result = await db.execute(
+                select(Product).where(Product.id == product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"產品 ID '{product_id}' 不存在"
+                )
+
+            if soft_delete:
+                # 軟刪除：設為非活躍
+                product.is_active = False
+                product.status = 'deleted'
+                await db.commit()
+                logger.info("product_soft_deleted", product_id=product_id)
+            else:
+                # 硬刪除
+                await db.delete(product)
+                await db.commit()
+                logger.info("product_hard_deleted", product_id=product_id)
+
+            return product_id
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            logger.error("product_delete_failed", product_id=product_id, error=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"刪除產品失敗: {str(e)}"
+            )
+
+    async def activate_product(
+        self,
+        db: AsyncSession,
+        product_id: str
+    ) -> Product:
+        """啟用產品"""
+        try:
+            result = await db.execute(
+                select(Product).where(Product.id == product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"產品 ID '{product_id}' 不存在"
+                )
+
+            product.is_active = True
+            product.status = 'active'
+            await db.commit()
+            await db.refresh(product)
+
+            logger.info("product_activated", product_id=product_id)
+            return product
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"啟用產品失敗: {str(e)}"
+            )
+
+    async def deactivate_product(
+        self,
+        db: AsyncSession,
+        product_id: str
+    ) -> Product:
+        """停用產品"""
+        try:
+            result = await db.execute(
+                select(Product).where(Product.id == product_id)
+            )
+            product = result.scalar_one_or_none()
+
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"產品 ID '{product_id}' 不存在"
+                )
+
+            product.is_active = False
+            product.status = 'inactive'
+            await db.commit()
+            await db.refresh(product)
+
+            logger.info("product_deactivated", product_id=product_id)
+            return product
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"停用產品失敗: {str(e)}"
+            )
 
 
 # Create instance

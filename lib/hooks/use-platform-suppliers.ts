@@ -102,7 +102,7 @@ export function useSuppliers(initialFilters: SupplierFilterParams = {}): UseSupp
       const data = await platformSupplierService.getSuppliers(filters)
 
       setSuppliers(data.suppliers)
-      setTotal(data.total)
+      setTotal(data.total_count)
       setPage(data.page)
       setTotalPages(data.total_pages)
       setStats(data.stats)

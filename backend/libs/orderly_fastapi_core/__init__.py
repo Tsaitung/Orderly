@@ -19,7 +19,11 @@ from .database import (
     get_async_session_dependency,
 )
 
+# Import unified_config first to avoid circular import
 from .unified_config import UnifiedSettings, get_settings
+
+# Import middleware after unified_config to avoid circular dependency
+from .middleware import AuthMiddleware, DEFAULT_PUBLIC_PATHS
 
 __all__ = [
     "create_db_engines",
@@ -28,5 +32,6 @@ __all__ = [
     "get_async_session_dependency",
     "UnifiedSettings",
     "get_settings",
+    "AuthMiddleware",
+    "DEFAULT_PUBLIC_PATHS",
 ]
-

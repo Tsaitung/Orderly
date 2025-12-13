@@ -19,6 +19,8 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse, StreamingResponse
 import httpx
 from jose import jwt, JWTError
+from app.middleware.redis_rate_limit import RedisRateLimiter
+from app.middleware.security_headers import SecurityHeadersMiddleware
 
 APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 ENVIRONMENT = os.getenv("NODE_ENV", os.getenv("ENVIRONMENT", "development"))
@@ -32,6 +34,8 @@ SERVICE_URLS = {
     "products": os.getenv("PRODUCT_SERVICE_URL", "http://localhost:3003"),
     # Acceptance service mounts under /acceptance (no /api prefix in service)
     "acceptance": os.getenv("ACCEPTANCE_SERVICE_URL", "http://localhost:3004/acceptance"),
+    # Billing service exposes /api/reconciliations, /api/billing-periods, /api/fee-configs
+    "billing": os.getenv("BILLING_SERVICE_URL", "http://localhost:3005"),
     # Notification service exposes /notifications at root (no /api prefix in service)
     "notifications": os.getenv("NOTIFICATION_SERVICE_URL", "http://localhost:3006"),
     # Customer Hierarchy service exposes '/api/v2/*'
@@ -70,6 +74,32 @@ PROXY_MAPPING: Dict[str, ProxyMappingEntry] = {
     "acceptance": ProxyMappingEntry("acceptance", SERVICE_URLS["acceptance"], 2, "Acceptance workflows"),
     # '/api/notifications/*' -> notification-service '/*'
     "notifications": ProxyMappingEntry("notifications", SERVICE_URLS["notifications"], 2, "Notification delivery"),
+    # '/api/reconciliations/*' -> billing-service '/api/reconciliations/*'
+    "reconciliations": ProxyMappingEntry("billing", SERVICE_URLS["billing"], 0, "Billing reconciliations"),
+    # '/api/billing-periods/*' -> billing-service '/api/billing-periods/*'
+    "billing-periods": ProxyMappingEntry("billing", SERVICE_URLS["billing"], 0, "Billing periods"),
+    # '/api/fee-configs/*' -> billing-service '/api/fee-configs/*'
+    "fee-configs": ProxyMappingEntry("billing", SERVICE_URLS["billing"], 0, "Fee configurations"),
+}
+
+# 端點驗證級別要求映射表
+# Level 0: 未驗證
+# Level 1: Email 已驗證（預設，大部分端點）
+# Level 2: Email + Phone 已驗證（下單、查看訂單）
+# Level 3: Email + Phone + 營業登記已驗證（帳單、供應商功能）
+ENDPOINT_VERIFICATION_REQUIREMENTS: Dict[str, int] = {
+    # Level 2 要求 - 核心交易功能
+    "/api/orders": 2,
+    "/api/acceptance": 2,
+
+    # Level 3 要求 - 進階功能（對帳、計費）
+    "/api/billing": 3,
+    "/api/reconciliations": 3,
+    "/api/billing-periods": 3,
+    "/api/fee-configs": 3,
+    "/api/products/create": 3,
+    "/api/suppliers/products": 3,
+    "/api/platform": 3,
 }
 
 # BFF endpoints (/api/bff/*) are served by the product-service FastAPI layer,
@@ -84,6 +114,10 @@ PROXY_MAPPING["bff"] = ProxyMappingEntry(
 logger = logging.getLogger("api_gateway")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
+# Redis-based distributed rate limiter
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+redis_rate_limiter = RedisRateLimiter(redis_url=REDIS_URL)
+
 
 async def get_client(request: Request) -> httpx.AsyncClient:
     client: Optional[httpx.AsyncClient] = request.state.__dict__.get("httpx_client")
@@ -96,6 +130,9 @@ async def get_client(request: Request) -> httpx.AsyncClient:
 def correlation_id(request: Request) -> str:
     cid = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
     return cid
+
+
+# Rate limit handler removed - using custom implementation
 
 
 app = FastAPI(
@@ -124,6 +161,17 @@ trusted_hosts = os.getenv("TRUSTED_HOSTS")
 if trusted_hosts:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[h.strip() for h in trusted_hosts.split(",") if h.strip()])
 
+# Security Headers middleware (CSP, HSTS, X-Frame-Options, etc.)
+IS_PRODUCTION = ENVIRONMENT == "production"
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    is_production=IS_PRODUCTION,
+    hsts_max_age=31536000,  # 1 year
+    hsts_include_subdomains=True,
+    frame_options="DENY",
+    referrer_policy="strict-origin-when-cross-origin"
+)
+
 
 @app.middleware("http")
 async def add_correlation_and_logging(request: Request, call_next):
@@ -146,10 +194,16 @@ async def add_correlation_and_logging(request: Request, call_next):
     return response
 
 
+@app.on_event("startup")
+async def startup():
+    """Initialize Redis rate limiter on startup."""
+    await redis_rate_limiter.connect()
+
+
 @app.on_event("shutdown")
-async def close_clients():
-    # No global client here; per-request client is closed by lifespan of request
-    pass
+async def shutdown():
+    """Close Redis connection on shutdown."""
+    await redis_rate_limiter.close()
 
 
 def health_payload() -> Dict[str, Any]:
@@ -359,6 +413,19 @@ def _target_info(path: str) -> Optional[Dict[str, str]]:
             final_url = base.rstrip("/") + "/api/v2" + remainder
         return {"service": "customer_hierarchy_v2", "url": final_url}
 
+    # Support '/api/v1/organizations/*' path for User Service organization listing
+    if key == "v1":
+        if len(segments) >= 3 and segments[2] == "organizations":
+            base = SERVICE_URLS["users"]
+            remainder = "/" + "/".join(segments[2:]) if len(segments) > 2 else "/"
+            # Be defensive: if base already contains '/api/v1', don't append again
+            if base.rstrip("/").endswith("/api/v1"):
+                final_url = base.rstrip("/") + remainder
+            else:
+                final_url = base.rstrip("/") + "/api/v1" + remainder
+            return {"service": "users", "url": final_url}
+        return None
+
     entry = PROXY_MAPPING.get(key)
     if not entry:
         return None
@@ -382,21 +449,69 @@ async def _proxy(request: Request, full_path: str) -> Response:
         auth = request.headers.get("authorization") or request.headers.get("Authorization")
         if not auth or not auth.lower().startswith("bearer "):
             raise HTTPException(status_code=401, detail="Missing bearer token")
-        # Optional: validate JWT if secret set
-        secret = os.getenv("JWT_SECRET")
-        if secret:
-            token = auth.split(" ", 1)[1].strip()
-            try:
-                claims = jwt.decode(token, secret, algorithms=["HS256"])  # basic validation
-                # Optional role enforcement
-                if os.getenv("GATEWAY_ENFORCE_ROLES", "false").lower() == "true":
-                    role = claims.get("role")
-                    sub = claims.get("sub")
-                    org_id = claims.get("org_id")
-                    if not role or not sub or not org_id:
-                        raise HTTPException(status_code=403, detail="Insufficient claims")
-            except JWTError:
-                raise HTTPException(status_code=401, detail="Invalid token")
+        secret = os.getenv("JWT_SECRET") or os.getenv("USER_SERVICE_JWT_SECRET")
+        if not secret:
+            if ENVIRONMENT.lower() == "development":
+                secret = "dev-jwt-secret-change-in-production"
+                logger.warning("JWT_SECRET not set; using dev default. DO NOT USE IN PRODUCTION.")
+            else:
+                logger.error("JWT_SECRET not configured, cannot validate token")
+                raise HTTPException(status_code=500, detail="Gateway JWT secret not configured")
+
+        token = auth.split(" ", 1)[1].strip()
+        try:
+            claims = jwt.decode(
+                token,
+                secret,
+                algorithms=["HS256"],
+                options={"verify_exp": True}
+            )
+            # Optional role enforcement
+            if os.getenv("GATEWAY_ENFORCE_ROLES", "false").lower() == "true":
+                role = claims.get("role")
+                sub = claims.get("sub")
+                org_id = claims.get("org_id") or claims.get("tenant_id")
+                if not role or not sub or not org_id:
+                    raise HTTPException(status_code=403, detail="Insufficient claims")
+
+            # 驗證級別檢查
+            user_verification_level = claims.get("verification_level", 0)
+            required_level = None
+
+            # 檢查端點是否需要特定驗證級別
+            for endpoint_prefix, level in ENDPOINT_VERIFICATION_REQUIREMENTS.items():
+                if full_path.startswith(endpoint_prefix):
+                    required_level = level
+                    break
+
+            # 如果端點需要驗證級別，檢查用戶是否符合
+            if required_level is not None and user_verification_level < required_level:
+                logger.warning(
+                    "verification_level_insufficient: path=%s, user_level=%s, required_level=%s, user_id=%s",
+                    full_path,
+                    user_verification_level,
+                    required_level,
+                    claims.get("sub"),
+                )
+
+                # 根據不同級別提供具體的錯誤訊息
+                level_messages = {
+                    1: "此功能需要驗證 Email",
+                    2: "此功能需要驗證 Email 和手機號碼",
+                    3: "此功能需要完整驗證（包含營業登記）",
+                }
+
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "insufficient_verification",
+                        "message": level_messages.get(required_level, f"需要驗證級別 {required_level}"),
+                        "current_level": user_verification_level,
+                        "required_level": required_level,
+                    }
+                )
+        except JWTError:
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     info = _target_info(full_path)
     if not info:
@@ -413,6 +528,14 @@ async def _proxy(request: Request, full_path: str) -> Response:
         if claims.get("sub"): headers["X-User-Id"] = str(claims.get("sub"))
         if claims.get("org_id"): headers["X-Org-Id"] = str(claims.get("org_id"))
         if claims.get("role"): headers["X-User-Role"] = str(claims.get("role"))
+        if claims.get("tenant_id"): headers["X-Tenant-Id"] = str(claims.get("tenant_id"))
+        if claims.get("tenant_type"): headers["X-Tenant-Type"] = str(claims.get("tenant_type"))
+        if claims.get("status"): headers["X-User-Status"] = str(claims.get("status"))
+        if claims.get("verification_level") is not None:
+            headers["X-Verification-Level"] = str(claims.get("verification_level"))
+        perms = claims.get("permissions") or []
+        if perms:
+            headers["X-Permissions"] = ",".join([str(p) for p in perms])
     # Remove host header to let httpx set it correctly
     headers.pop("host", None)
 
@@ -437,6 +560,104 @@ async def _proxy(request: Request, full_path: str) -> Response:
     # Stream back the response, preserving status and headers
     proxy_headers = [(k, v) for k, v in r.headers.items() if k.lower() not in {"content-encoding", "transfer-encoding", "connection"}]
     return Response(content=r.content, status_code=r.status_code, headers=dict(proxy_headers), media_type=r.headers.get("content-type"))
+
+
+# Dedicated auth endpoints with stricter rate limits
+@app.api_route("/api/auth/login", methods=["POST"])
+async def api_auth_login(request: Request):
+    # Check rate limit (5 requests per 15 minutes)
+    client_ip = request.client.host if request.client else "unknown"
+    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/login")
+
+    if not limit_result["allowed"]:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "success": False,
+                "error": f"Too many login attempts. Please try again in {limit_result['retry_after']} seconds.",
+                "retry_after": limit_result["retry_after"],
+            },
+            headers={
+                "X-RateLimit-Limit": str(limit_result["limit"]),
+                "X-RateLimit-Remaining": str(limit_result["remaining"]),
+                "X-RateLimit-Reset": str(limit_result["retry_after"]),
+                "Retry-After": str(limit_result["retry_after"]),
+            }
+        )
+
+    return await _proxy(request, "/api/auth/login")
+
+
+@app.api_route("/auth/login", methods=["POST"])
+async def auth_login_alias(request: Request):
+    # Check rate limit (same as /api/auth/login)
+    client_ip = request.client.host if request.client else "unknown"
+    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/login")
+
+    if not limit_result["allowed"]:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "success": False,
+                "error": f"Too many login attempts. Please try again in {limit_result['retry_after']} seconds.",
+                "retry_after": limit_result["retry_after"],
+            },
+            headers={
+                "X-RateLimit-Limit": str(limit_result["limit"]),
+                "X-RateLimit-Remaining": str(limit_result["remaining"]),
+                "Retry-After": str(limit_result["retry_after"]),
+            }
+        )
+
+    return await _proxy(request, "/auth/login")
+
+
+@app.api_route("/api/auth/register", methods=["POST"])
+async def api_auth_register(request: Request):
+    # Check rate limit (3 requests per hour)
+    client_ip = request.client.host if request.client else "unknown"
+    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/register")
+
+    if not limit_result["allowed"]:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "success": False,
+                "error": f"Too many registration attempts. Please try again in {limit_result['retry_after']} seconds.",
+                "retry_after": limit_result["retry_after"],
+            },
+            headers={
+                "X-RateLimit-Limit": str(limit_result["limit"]),
+                "X-RateLimit-Remaining": str(limit_result["remaining"]),
+                "Retry-After": str(limit_result["retry_after"]),
+            }
+        )
+
+    return await _proxy(request, "/api/auth/register")
+
+
+@app.api_route("/auth/register", methods=["POST"])
+async def auth_register_alias(request: Request):
+    # Check rate limit (same as /api/auth/register)
+    client_ip = request.client.host if request.client else "unknown"
+    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/register")
+
+    if not limit_result["allowed"]:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "success": False,
+                "error": f"Too many registration attempts. Please try again in {limit_result['retry_after']} seconds.",
+                "retry_after": limit_result["retry_after"],
+            },
+            headers={
+                "X-RateLimit-Limit": str(limit_result["limit"]),
+                "X-RateLimit-Remaining": str(limit_result["remaining"]),
+                "Retry-After": str(limit_result["retry_after"]),
+            }
+        )
+
+    return await _proxy(request, "/auth/register")
 
 
 # Catch-all route for /api/* to proxy

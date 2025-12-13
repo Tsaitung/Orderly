@@ -1,0 +1,22 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/billing-service-fastapi:$SHORT_SHA'
+      - '-f'
+      - 'backend/billing-service-fastapi/Dockerfile'
+      - '--build-arg'
+      - 'SERVICE_PATH=backend/billing-service-fastapi'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/billing-service-fastapi:$SHORT_SHA'
+
+images:
+  - 'asia-east1-docker.pkg.dev/$PROJECT_ID/orderly/billing-service-fastapi:$SHORT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

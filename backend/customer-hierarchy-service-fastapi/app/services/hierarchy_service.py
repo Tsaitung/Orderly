@@ -919,7 +919,7 @@ class HierarchyService:
             
             for group in groups:
                 group_node = await self._build_node_dict(group, "group", include_stats)
-                
+
                 # Add children if depth allows
                 if max_depth > 1:
                     group_node["children"] = await self._load_children(
@@ -927,9 +927,32 @@ class HierarchyService:
                     )
                     if group_node["children"]:
                         actual_depth = max(actual_depth, 1 + self._calculate_tree_depth(group_node["children"]))
-                
+
                 tree_nodes.append(group_node)
                 total_nodes += 1 + self._count_descendants(group_node)
+
+            # Also include standalone companies (companies without group_id) as root nodes
+            if not root_id and (node_types is None or "company" in node_types):
+                all_companies = await self.company_crud.get_multi(
+                    self.db,
+                    include_inactive=include_inactive,
+                    limit=1000
+                )
+                standalone_companies = [c for c in all_companies if not getattr(c, 'group_id', None)]
+
+                for company in standalone_companies:
+                    company_node = await self._build_node_dict(company, "company", include_stats)
+
+                    # Add children (locations) if depth allows
+                    if max_depth > 1:
+                        company_node["children"] = await self._load_children(
+                            company.id, "company", max_depth - 1, include_inactive, include_stats, node_types
+                        )
+                        if company_node["children"]:
+                            actual_depth = max(actual_depth, 1 + self._calculate_tree_depth(company_node["children"]))
+
+                    tree_nodes.append(company_node)
+                    total_nodes += 1 + self._count_descendants(company_node)
             
             # Calculate statistics
             for entity_type in ["group", "company", "location", "business_unit"]:

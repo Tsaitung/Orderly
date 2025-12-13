@@ -5,11 +5,16 @@ Replaces legacy Node.js product service
 import logging
 import structlog
 from contextlib import asynccontextmanager
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
+import os, sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
+from orderly_fastapi_core.middleware import AuthMiddleware
 
 from app.core.config import settings
 from app.core.database import async_engine
@@ -20,6 +25,12 @@ from app.api.v1.skus_simple import router as skus_router
 from app.api.v1.sku_upload import router as sku_upload_router
 from app.api.v1.sku_analytics import router as sku_analytics_router
 from app.api.v1.sku_sharing import router as sku_sharing_router
+from app.api.v1.price_history import router as price_history_router
+from app.api.v1.product_images import router as product_images_router
+from app.api.v1.promotions import router as promotions_router
+from app.api.v1.supplier_skus import router as supplier_skus_router
+from app.api.v1.customer_prices import router as customer_prices_router
+from app.api.v1.bulk_operations import router as bulk_operations_router
 from app.api.bff import router as bff_router
 from app.middleware.error_handler import ErrorHandlerMiddleware, RequestValidationMiddleware
 
@@ -101,12 +112,18 @@ app.add_middleware(
         "X-User-Permissions"
     ],
 )
+app.add_middleware(AuthMiddleware, settings=settings)
 
 if not settings.debug:
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=["*"]  # Configure as needed for production
     )
+
+# Static files for product images (local storage)
+UPLOAD_DIR = Path(getattr(settings, 'local_upload_dir', '/tmp/uploads/products'))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static/uploads/products", StaticFiles(directory=str(UPLOAD_DIR)), name="product_uploads")
 
 
 # Global exception handler
@@ -223,6 +240,42 @@ app.include_router(
     sku_sharing_router,
     prefix="/api/products",
     tags=["SKU Sharing System"]
+)
+
+app.include_router(
+    price_history_router,
+    prefix="/api/products",
+    tags=["Price History"]
+)
+
+app.include_router(
+    product_images_router,
+    prefix="/api/products",
+    tags=["Product Images"]
+)
+
+app.include_router(
+    promotions_router,
+    prefix="/api/products/promotions",
+    tags=["Promotions"]
+)
+
+app.include_router(
+    supplier_skus_router,
+    prefix="/api/products",
+    tags=["Supplier SKU Management"]
+)
+
+app.include_router(
+    customer_prices_router,
+    prefix="/api/products/customer-prices",
+    tags=["Customer Prices"]
+)
+
+app.include_router(
+    bulk_operations_router,
+    prefix="/api/products",
+    tags=["Bulk Operations"]
 )
 
 # BFF routes consumed by the frontend platform (exposed under /api/bff)

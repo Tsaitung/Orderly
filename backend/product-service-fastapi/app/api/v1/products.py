@@ -4,17 +4,22 @@ Maintains complete compatibility with existing Node.js API
 Matches the endpoints expected by ProductManagement.tsx and ProductService.ts
 """
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
 from app.crud.product import product_crud
 from app.schemas.product import (
     ProductSearchParams,
-    ProductSearchResponse, 
+    ProductSearchResponse,
     ProductStatsResponse,
     ProductDetailResponse,
-    ProductResponse
+    ProductResponse,
+    ProductCreateRequest,
+    ProductUpdateRequest,
+    ProductCreateResponse,
+    ProductUpdateResponse,
+    ProductDeleteResponse,
 )
 
 router = APIRouter()
@@ -237,6 +242,146 @@ async def get_product_by_id(
     return await get_product_by_id_legacy(product_id=product_id, db=db)
 
 
+# ============= CRUD 端點 =============
+
+def _get_user_id_from_request(request: Request) -> Optional[str]:
+    """從請求標頭取得用戶 ID（由 Gateway 轉發）"""
+    return request.headers.get("X-User-ID")
+
+
+def _get_tenant_id_from_request(request: Request) -> Optional[str]:
+    """從請求標頭取得租戶 ID（由 Gateway 轉發）"""
+    return request.headers.get("X-Tenant-Id") or request.headers.get("X-Org-Id")
+
+
+def _transform_product_to_response(product) -> ProductResponse:
+    """將 Product Model 轉換為 Response Schema"""
+    return ProductResponse(
+        id=str(product.id),
+        code=product.code,
+        name=product.name,
+        nameEn=product.name_en,
+        description=product.description,
+        brand=getattr(product, 'brand', None),
+        origin=getattr(product, 'origin', None),
+        productState=getattr(product, 'product_state', None),
+        taxStatus=getattr(product, 'tax_status', None),
+        categoryId=str(product.category_id) if product.category_id else None,
+        baseUnit=getattr(product, 'base_unit', None),
+        pricingUnit=getattr(product, 'pricing_unit', None),
+        allergenTrackingEnabled=getattr(product, 'allergen_tracking_enabled', False),
+        isActive=product.is_active,
+        isPublic=getattr(product, 'is_public', True),
+        specifications=getattr(product, 'specifications', {}),
+        certifications=getattr(product, 'certifications', []),
+        safetyInfo=getattr(product, 'safety_info', {}),
+        version=getattr(product, 'version', 1),
+        createdAt=product.created_at,
+        updatedAt=product.updated_at,
+        supplierId=str(product.supplier_id) if product.supplier_id else None,
+        createdBy=str(product.created_by) if getattr(product, 'created_by', None) else None,
+        updatedBy=str(product.updated_by) if getattr(product, 'updated_by', None) else None
+    )
+
+
+@router.post("", response_model=ProductCreateResponse, status_code=status.HTTP_201_CREATED)
+async def create_product(
+    request: Request,
+    data: ProductCreateRequest,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    創建新產品
+
+    - **code**: 產品代碼（必填，唯一）
+    - **name**: 產品名稱（必填）
+    - **categoryId**: 類別 ID（必填）
+    - **unitOfMeasure**: 計量單位（必填）
+    - 自動綁定 tenant_id（從 X-Tenant-Id header 讀取）
+    """
+    user_id = _get_user_id_from_request(request)
+    tenant_id = _get_tenant_id_from_request(request)
+    product = await product_crud.create_product(db, data, created_by=user_id, tenant_id=tenant_id)
+
+    return ProductCreateResponse(
+        success=True,
+        message="產品創建成功",
+        data=_transform_product_to_response(product)
+    )
+
+
+@router.put("/{product_id}", response_model=ProductUpdateResponse)
+async def update_product(
+    product_id: str,
+    request: Request,
+    data: ProductUpdateRequest,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    更新產品
+
+    僅更新請求中提供的欄位
+    """
+    user_id = _get_user_id_from_request(request)
+    product = await product_crud.update_product(db, product_id, data, updated_by=user_id)
+
+    return ProductUpdateResponse(
+        success=True,
+        message="產品更新成功",
+        data=_transform_product_to_response(product)
+    )
+
+
+@router.delete("/{product_id}", response_model=ProductDeleteResponse)
+async def delete_product(
+    product_id: str,
+    hard_delete: bool = Query(False, description="是否硬刪除（永久刪除）"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    刪除產品
+
+    預設為軟刪除（設為非活躍），可選硬刪除
+    """
+    deleted_id = await product_crud.delete_product(db, product_id, soft_delete=not hard_delete)
+
+    return ProductDeleteResponse(
+        success=True,
+        message="產品刪除成功" if hard_delete else "產品已停用",
+        deletedId=deleted_id
+    )
+
+
+@router.put("/{product_id}/activate", response_model=ProductUpdateResponse)
+async def activate_product(
+    product_id: str,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """啟用產品"""
+    product = await product_crud.activate_product(db, product_id)
+
+    return ProductUpdateResponse(
+        success=True,
+        message="產品已啟用",
+        data=_transform_product_to_response(product)
+    )
+
+
+@router.put("/{product_id}/deactivate", response_model=ProductUpdateResponse)
+async def deactivate_product(
+    product_id: str,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """停用產品"""
+    product = await product_crud.deactivate_product(db, product_id)
+
+    return ProductUpdateResponse(
+        success=True,
+        message="產品已停用",
+        data=_transform_product_to_response(product)
+    )
+
+
 # Health check for product endpoints
 @router.get("/products/health")
 async def products_health():
@@ -248,6 +393,11 @@ async def products_health():
         "endpoints": [
             "GET /products/stats",
             "GET /products",
-            "GET /products/{id}"
+            "GET /products/{id}",
+            "POST /products",
+            "PUT /products/{id}",
+            "DELETE /products/{id}",
+            "PUT /products/{id}/activate",
+            "PUT /products/{id}/deactivate"
         ]
     }

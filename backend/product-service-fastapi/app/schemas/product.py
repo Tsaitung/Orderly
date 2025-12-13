@@ -168,3 +168,91 @@ class ProductDetailResponse(BaseModel):
     """Single product detail response"""
     success: bool = Field(True, description="操作成功")
     data: ProductResponse = Field(..., description="產品詳細資訊")
+
+
+class ProductCreateRequest(BaseModel):
+    """
+    產品創建請求 Schema
+    與前端 ProductForm 對應
+    """
+    code: str = Field(..., min_length=1, max_length=50, description="產品代碼（唯一）")
+    name: str = Field(..., min_length=1, max_length=200, description="產品名稱")
+    nameEn: Optional[str] = Field(None, max_length=200, description="英文名稱")
+    description: Optional[str] = Field(None, max_length=2000, description="產品描述")
+    categoryId: str = Field(..., description="類別 ID")
+    supplierId: Optional[str] = Field(None, description="供應商 ID")
+    unitOfMeasure: str = Field(..., description="計量單位")
+    originCountry: Optional[str] = Field(None, description="產地國家")
+    originRegion: Optional[str] = Field(None, description="產地區域")
+    minStock: Optional[int] = Field(None, ge=0, description="最低庫存")
+    maxStock: Optional[int] = Field(None, ge=0, description="最高庫存")
+    leadTimeDays: Optional[int] = Field(None, ge=0, description="前置天數")
+    isActive: bool = Field(True, description="是否啟用")
+    allergens: Optional[List[str]] = Field(default_factory=list, description="過敏原")
+    nutritionalInfo: Optional[Dict[str, Any]] = Field(default_factory=dict, description="營養資訊")
+    certifications: Optional[List[str]] = Field(default_factory=list, description="認證標章")
+    tags: Optional[List[str]] = Field(default_factory=list, description="標籤")
+    images: Optional[List[str]] = Field(default_factory=list, description="圖片 URL")
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "code": "PROD-001",
+                "name": "有機高麗菜",
+                "nameEn": "Organic Cabbage",
+                "description": "新鮮有機高麗菜",
+                "categoryId": "cat-vegetables",
+                "unitOfMeasure": "kg",
+                "originCountry": "TW",
+                "isActive": True
+            }
+        }
+
+
+class ProductUpdateRequest(BaseModel):
+    """
+    產品更新請求 Schema
+    所有欄位皆為選填
+    """
+    name: Optional[str] = Field(None, min_length=1, max_length=200, description="產品名稱")
+    nameEn: Optional[str] = Field(None, max_length=200, description="英文名稱")
+    description: Optional[str] = Field(None, max_length=2000, description="產品描述")
+    categoryId: Optional[str] = Field(None, description="類別 ID")
+    supplierId: Optional[str] = Field(None, description="供應商 ID")
+    unitOfMeasure: Optional[str] = Field(None, description="計量單位")
+    originCountry: Optional[str] = Field(None, description="產地國家")
+    originRegion: Optional[str] = Field(None, description="產地區域")
+    minStock: Optional[int] = Field(None, ge=0, description="最低庫存")
+    maxStock: Optional[int] = Field(None, ge=0, description="最高庫存")
+    leadTimeDays: Optional[int] = Field(None, ge=0, description="前置天數")
+    isActive: Optional[bool] = Field(None, description="是否啟用")
+    allergens: Optional[List[str]] = Field(None, description="過敏原")
+    nutritionalInfo: Optional[Dict[str, Any]] = Field(None, description="營養資訊")
+    certifications: Optional[List[str]] = Field(None, description="認證標章")
+    tags: Optional[List[str]] = Field(None, description="標籤")
+    images: Optional[List[str]] = Field(None, description="圖片 URL")
+
+    class Config:
+        populate_by_name = True
+
+
+class ProductCreateResponse(BaseModel):
+    """產品創建響應"""
+    success: bool = Field(True, description="操作成功")
+    message: str = Field(..., description="操作訊息")
+    data: ProductResponse = Field(..., description="創建的產品")
+
+
+class ProductUpdateResponse(BaseModel):
+    """產品更新響應"""
+    success: bool = Field(True, description="操作成功")
+    message: str = Field(..., description="操作訊息")
+    data: ProductResponse = Field(..., description="更新後的產品")
+
+
+class ProductDeleteResponse(BaseModel):
+    """產品刪除響應"""
+    success: bool = Field(True, description="操作成功")
+    message: str = Field(..., description="操作訊息")
+    deletedId: str = Field(..., description="刪除的產品 ID")

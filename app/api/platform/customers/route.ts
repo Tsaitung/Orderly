@@ -1,23 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// 代理到 Customer Hierarchy Service 或 BFF
-const CUSTOMER_SERVICE_BASE =
-  process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  'http://localhost:3007/api/v2'
+// 代理到 Customer Hierarchy Service 或 Gateway
+const deriveBackendBase = (reqUrl?: URL): string => {
+  const ordered =
+    process.env.ORDERLY_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL
+
+  if (ordered) {
+    try {
+      const u = ordered.startsWith('http') ? new URL(ordered) : new URL(`http://${ordered.replace(/^\/+/, '')}`)
+      // 僅保留協定與 host，避免重複 /api
+      return `${u.protocol}//${u.host}`
+    } catch (err) {
+      console.warn('Failed to parse backend base, fallback to localhost:8000', err)
+    }
+  }
+
+  if (reqUrl) {
+    return `${reqUrl.protocol}//${reqUrl.host}`
+  }
+
+  return 'http://localhost:8000'
+}
+
+const resolveCustomerServiceBase = (reqUrl?: URL): string => {
+  const custom = process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL
+  if (custom) {
+    return custom.replace(/\/+$/, '')
+  }
+  const backendBase = deriveBackendBase(reqUrl).replace(/\/+$/, '')
+  return `${backendBase}/api/v2`
+}
 
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url)
     const searchParams = url.searchParams
 
+    // 取得原始請求的 Authorization header
+    const authHeader = req.headers.get('authorization')
+
     // 代理到 hierarchy/tree 端點
-    const target = `${CUSTOMER_SERVICE_BASE}/hierarchy/tree?${searchParams.toString()}`
+    const target = `${resolveCustomerServiceBase(url)}/hierarchy/tree?${searchParams.toString()}`
 
     const response = await fetch(target, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader && { Authorization: authHeader }),
       },
     })
 
@@ -80,12 +111,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const target = `${CUSTOMER_SERVICE_BASE}/hierarchy/${body.type}s`
+    const url = new URL(req.url)
+    const authHeader = req.headers.get('authorization')
+    const target = `${resolveCustomerServiceBase(url)}/hierarchy/${body.type}s`
 
     const response = await fetch(target, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader && { Authorization: authHeader }),
       },
       body: JSON.stringify(body),
     })

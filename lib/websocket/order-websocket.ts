@@ -27,6 +27,36 @@ interface OrderWebSocketOptions {
   maxReconnectAttempts?: number
 }
 
+const resolveWsBase = (): string => {
+  const explicit =
+    process.env.NEXT_PUBLIC_WS_ORDERS_URL ||
+    process.env.NEXT_PUBLIC_WS_URL ||
+    process.env.NEXT_PUBLIC_WS_BASE_URL
+
+  if (explicit) {
+    return explicit.replace(/\/+$/, '')
+  }
+
+  const httpBase =
+    process.env.ORDERLY_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:8000'
+
+  try {
+    const baseUrl = httpBase.startsWith('http') ? httpBase : `http://${httpBase.replace(/^\/+/, '')}`
+    const u = new URL(baseUrl)
+    u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:'
+    u.pathname = ''
+    u.search = ''
+    u.hash = ''
+    return u.toString().replace(/\/+$/, '')
+  } catch (err) {
+    console.warn('Failed to resolve WebSocket base URL, falling back to localhost:8000', err)
+    return 'ws://localhost:8000'
+  }
+}
+
 export class OrderWebSocket {
   private ws: WebSocket | null = null
   private organizationId: string
@@ -63,13 +93,8 @@ export class OrderWebSocket {
 
       this.isConnecting = true
 
-      // 在生產環境中，這將是真實的 WebSocket URL
-      // const wsUrl = process.env.NODE_ENV === 'production'
-      //   ? `wss://api.orderly.tw/ws/orders/${this.organizationId}`
-      //   : `ws://localhost:8000/ws/orders/${this.organizationId}`;
-
-      // Mock WebSocket URL for development
-      const wsUrl = `ws://localhost:8001/ws/orders/${this.organizationId}`
+      const wsBase = resolveWsBase()
+      const wsUrl = `${wsBase}/ws/orders/${this.organizationId}`
 
       try {
         this.ws = new WebSocket(wsUrl)

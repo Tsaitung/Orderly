@@ -22,10 +22,12 @@ from app.schemas.supplier import (
     SupplierProfileCreateRequest,
     SupplierProfileUpdateRequest,
     SupplierProfileResponse,
+    SupplierCardResponse,
     SupplierCustomerCreateRequest,
     SupplierCustomerResponse,
     SupplierCustomerListResponse,
     SupplierListResponse,
+    SupplierStats,
     OnboardingStepUpdateRequest,
     OnboardingProgressResponse,
     SupplierStatusUpdateRequest,
@@ -35,6 +37,7 @@ from app.schemas.supplier import (
     PaginationParams,
     SupplierFilterParams
 )
+from app.models.organization import Organization
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -176,27 +179,45 @@ async def list_suppliers(
 ):
     """List suppliers with pagination and filtering"""
     try:
-        # Build query with filters
-        query = select(SupplierProfile)
-        
+        # Build query with JOIN to organizations table
+        query = select(SupplierProfile, Organization).join(
+            Organization,
+            SupplierProfile.organization_id == Organization.id
+        )
+
         if filters.status:
             query = query.where(SupplierProfile.status == filters.status)
-        
+
         if filters.delivery_capacity:
             query = query.where(SupplierProfile.delivery_capacity == filters.delivery_capacity)
-        
+
         if filters.verified_only:
             query = query.where(SupplierProfile.status == SupplierStatus.VERIFIED)
-        
+
         if filters.min_capacity_kg:
             query = query.where(SupplierProfile.delivery_capacity_kg_per_day >= filters.min_capacity_kg)
-        
+
         if filters.max_capacity_kg:
             query = query.where(SupplierProfile.delivery_capacity_kg_per_day <= filters.max_capacity_kg)
-        
+
         # Count total with error handling
         try:
-            count_query = select(func.count()).select_from(query.subquery())
+            count_base_query = select(SupplierProfile).join(
+                Organization,
+                SupplierProfile.organization_id == Organization.id
+            )
+            if filters.status:
+                count_base_query = count_base_query.where(SupplierProfile.status == filters.status)
+            if filters.delivery_capacity:
+                count_base_query = count_base_query.where(SupplierProfile.delivery_capacity == filters.delivery_capacity)
+            if filters.verified_only:
+                count_base_query = count_base_query.where(SupplierProfile.status == SupplierStatus.VERIFIED)
+            if filters.min_capacity_kg:
+                count_base_query = count_base_query.where(SupplierProfile.delivery_capacity_kg_per_day >= filters.min_capacity_kg)
+            if filters.max_capacity_kg:
+                count_base_query = count_base_query.where(SupplierProfile.delivery_capacity_kg_per_day <= filters.max_capacity_kg)
+
+            count_query = select(func.count()).select_from(count_base_query.subquery())
             total_count_result = await db.execute(count_query)
             total_count = total_count_result.scalar()
         except Exception as count_error:
@@ -205,44 +226,150 @@ async def list_suppliers(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Database count query failed: {str(count_error)}"
             )
-        
+
         # Add pagination
         offset = (pagination.page - 1) * pagination.page_size
         query = query.offset(offset).limit(pagination.page_size)
-        
+
         # Add sorting
         if pagination.sort_by == "created_at":
             if pagination.sort_order == "desc":
                 query = query.order_by(SupplierProfile.created_at.desc())
             else:
                 query = query.order_by(SupplierProfile.created_at.asc())
-        
+
         # Execute query with error handling
         try:
             result = await db.execute(query)
-            suppliers = result.scalars().all()
+            rows = result.all()  # Returns tuples of (SupplierProfile, Organization)
         except Exception as query_error:
             logger.error(f"Failed to execute suppliers query: {query_error}", exc_info=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Database query failed: {str(query_error)}"
             )
-        
+
         # Calculate pagination info
         total_pages = (total_count + pagination.page_size - 1) // pagination.page_size
         has_next = pagination.page < total_pages
         has_previous = pagination.page > 1
-        
+
+        # Calculate supplier statistics by status
+        try:
+            # Count by status for stats
+            stats_query = select(
+                SupplierProfile.status,
+                func.count(SupplierProfile.id).label('count')
+            ).group_by(SupplierProfile.status)
+            stats_result = await db.execute(stats_query)
+            status_counts = {row.status: row.count for row in stats_result}
+
+            # Get total for all suppliers (not just filtered)
+            total_all_query = select(func.count()).select_from(SupplierProfile)
+            total_all_result = await db.execute(total_all_query)
+            total_all = total_all_result.scalar() or 0
+
+            # Build capacity distribution
+            capacity_query = select(
+                SupplierProfile.delivery_capacity,
+                func.count(SupplierProfile.id).label('count')
+            ).group_by(SupplierProfile.delivery_capacity)
+            capacity_result = await db.execute(capacity_query)
+            capacity_distribution = {
+                str(row.delivery_capacity.value) if row.delivery_capacity else 'UNKNOWN': row.count
+                for row in capacity_result
+            }
+
+            supplier_stats = SupplierStats(
+                total_suppliers=total_all,
+                active_suppliers=status_counts.get(SupplierStatus.VERIFIED, 0),
+                pending_suppliers=status_counts.get(SupplierStatus.PENDING, 0),
+                suspended_suppliers=status_counts.get(SupplierStatus.SUSPENDED, 0),
+                deactivated_suppliers=status_counts.get(SupplierStatus.DEACTIVATED, 0),
+                capacity_distribution=capacity_distribution
+            )
+        except Exception as stats_error:
+            logger.warning(f"Failed to calculate supplier stats: {stats_error}")
+            supplier_stats = SupplierStats(total_suppliers=total_count)
+
+        # Helper function for status display
+        def get_status_display(status_val):
+            status_map = {
+                SupplierStatus.PENDING: "待審核",
+                SupplierStatus.VERIFIED: "已驗證",
+                SupplierStatus.SUSPENDED: "已暫停",
+                SupplierStatus.DEACTIVATED: "已停用"
+            }
+            return status_map.get(status_val, str(status_val.value) if status_val else "未知")
+
+        def get_capacity_display(capacity_val):
+            capacity_map = {
+                DeliveryCapacity.SMALL: "小型",
+                DeliveryCapacity.MEDIUM: "中型",
+                DeliveryCapacity.LARGE: "大型"
+            }
+            return capacity_map.get(capacity_val, "未設定")
+
+        def normalize_certifications(certs):
+            """Normalize quality_certifications to List[str]"""
+            if not certs:
+                return []
+            result = []
+            for cert in certs:
+                if isinstance(cert, str):
+                    result.append(cert)
+                elif isinstance(cert, dict):
+                    result.append(cert.get('name', str(cert)))
+                else:
+                    result.append(str(cert))
+            return result
+
+        # Convert to SupplierCardResponse with organization data
+        supplier_responses = []
+        for row in rows:
+            s = row[0]  # SupplierProfile
+            org = row[1]  # Organization
+
+            # Build SupplierCardResponse with organization data
+            supplier_responses.append(SupplierCardResponse(
+                id=str(s.id),
+                name=org.name if org else "未知供應商",
+                contact_person=getattr(org, 'contactPerson', None) if org else None,
+                contact_phone=getattr(org, 'contactPhone', None) if org else None,
+                contact_email=getattr(org, 'contactEmail', None) if org else None,
+                address=getattr(org, 'address', None) if org else None,
+                status=s.status.value if s.status else "pending",
+                status_display=get_status_display(s.status),
+                delivery_capacity=s.delivery_capacity.value if s.delivery_capacity else None,
+                capacity_display=get_capacity_display(s.delivery_capacity),
+                minimum_order_amount=s.minimum_order_amount or 0,
+                payment_terms_display=f"月結 {s.payment_terms_days} 天" if s.payment_terms_days else "即付",
+                product_categories=getattr(org, 'productCategories', []) if org else [],
+                certifications=normalize_certifications(s.quality_certifications),
+                # Activity metrics (placeholders - would come from order service)
+                monthly_gmv=0,
+                monthly_orders=0,
+                fulfillment_rate=0.0,
+                quality_score=0.0,
+                gmv_growth_rate=0.0,
+                orders_growth_rate=0.0,
+                last_order_date=None,
+                activity_level="low",
+                is_active=s.status == SupplierStatus.VERIFIED,
+                join_date=s.created_at.isoformat() if s.created_at else ""
+            ))
+
         return SupplierListResponse(
-            suppliers=suppliers,
+            suppliers=supplier_responses,
             total_count=total_count,
             page=pagination.page,
             page_size=pagination.page_size,
             total_pages=total_pages,
             has_next=has_next,
-            has_previous=has_previous
+            has_previous=has_previous,
+            stats=supplier_stats
         )
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions
         raise

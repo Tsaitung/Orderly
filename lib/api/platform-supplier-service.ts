@@ -88,10 +88,12 @@ export interface SupplierStats {
 
 export interface SupplierListResponse {
   suppliers: SupplierCard[]
-  total: number
+  total_count: number
   page: number
   page_size: number
   total_pages: number
+  has_next: boolean
+  has_previous: boolean
   stats: SupplierStats
 }
 

@@ -32,7 +32,6 @@
   - `docs/PRD-Referral-System.md`
   - `docs/PRD-SKU-Management-Enhanced.md`
   - `docs/PRD-SKU-Sharing-System.md`
-  - `docs/PRD-User-Management.md`
   - `docs/Orderly_Contracts_Config_PRD_Reconciliation.md`
   - `backend/supplier-service-fastapi/docs/PRD-Supplier-Frontend-Refactoring.md`
 - 使用者體驗：
@@ -48,6 +47,7 @@
 ## 4. 架構與工程設計（Architecture & Engineering）
 - `docs/Technical-Architecture-Summary.md` — 全域技術架構說明。
 - `docs/technical-architecture-auth.md` — 身分驗證模組架構。
+- `docs/Frontend-Backend-Endpoint-Consistency.md` — 前後端端點與埠對齊檢查（初始紀錄）。
 - `docs/PERFORMANCE-OPTIMIZATION-SUMMARY.md` — 系統效能優化與量測。
 - `docs/docker-containerization-summary.md` — 容器化策略與部署考量。
 - `CICD-init-guide.md` — GitHub Actions / CI 初始化指引。
@@ -59,6 +59,7 @@
 - `docs/database.md` — 資料庫操作、環境與維運。
 - `docs/SQLALCHEMY-MIGRATION.md` — SQLAlchemy/Alembic 遷移指南。
 - `docs/product_categories_final.md` — 產品分類資料定義。
+- `docs/Documentation-Management-API.md` — 文檔管理 API 與端口登記設計（多角色可見性與治理）。
 - `docs/API-Endpoints-Essential.md` — API 端點摘要。
 - `docs/smoke-tests.md` — API Smoke Test 列表。
 - `docs/erp-integration-guide.md` — ERP 整合指引。
@@ -72,8 +73,7 @@
 - `docs/DEPLOYMENT-TROUBLESHOOTING.md` — 故障排除手冊。
 - `docs/staging-permanent-guide.md` — Staging 永久化部署指南。
 - `docs/Infra-Runbook.md` — 雲端基礎架構 Runbook。
-- `docs/ci-secrets.md` 與 `docs/github-secrets-setup.md` — GitHub / Cloud Secrets 配置。
-- `docs/blue-green-deployment-guide.md` — 藍綠部署（歷史參考）。
+- `docs/ci-secrets.md` — GitHub / Cloud Secrets 配置。
 - `scripts/docker-deployment-guide.md` — Docker 部署流程。
 - `temp_deploy_trigger.md` — 臨時部署紀錄（亦見第 2 節）。
 
@@ -82,6 +82,7 @@
 ## 7. 工具與其他資源（Tooling & Misc）
 - `docs/design-system/` 子資料夾所含原型指南（見第 3 節）。
 - `public/images/hero/README.md` — 行銷素材使用說明。
+- `docs/Static-Route-Conflict-Report.md` — 靜態資源路徑衝突掃描與預防紀錄。
 
 ---
 
@@ -99,6 +100,8 @@
 - `PERMANENT-SOLUTIONS-IMPLEMENTATION.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md` 和 `docs/DEPLOYMENT-CHECKLIST.md`
 - `DEPLOYMENT-FIX-SUMMARY.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md`
 - `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` → 內容已整合至 `docs/API-Endpoints-Essential.md`
+- `blue-green-deployment-guide.md` → 已棄用，流程併入 `docs/Infra-Runbook.md`、`docs/DEPLOYMENT-ENVIRONMENTS.md`、`docs/DEPLOYMENT-CHECKLIST.md`
+- `github-secrets-setup.md` → 已整合至 `docs/ci-secrets.md`
 - `temp_deploy_trigger.md` → 臨時部署觸發記錄（已完成，無需保留）
 
 如需查閱歷史版本，請使用：`git log --all --full-history -- <filename>`

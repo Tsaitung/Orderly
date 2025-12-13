@@ -8,7 +8,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 from app.models.base import Base  # noqa
-from app.models.order import Order, OrderItem  # noqa
+from app.models.enums import OrderStatus, PaymentStatus  # noqa
+from app.models.order import Order, OrderItem, OrderStatusHistory, OrderAdjustment  # noqa
 
 target_metadata = Base.metadata
 

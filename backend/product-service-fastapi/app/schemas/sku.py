@@ -387,3 +387,161 @@ class SKUSearchParams(BaseModel):
         json_encoders = {
             Decimal: str
         }
+
+
+# ============= 簡化版 CRUD Schemas（配合 sku_simple.py 模型）=============
+
+class SKUSimpleCreateRequest(BaseModel):
+    """
+    簡化版 SKU 創建請求
+    與 ProductSKU 模型對應
+    """
+    productId: str = Field(..., description="產品 ID")
+    skuCode: str = Field(..., min_length=1, max_length=50, description="SKU 代碼（唯一）")
+    name: str = Field(..., min_length=1, max_length=200, description="SKU 名稱")
+    variant: Dict[str, Any] = Field(default_factory=dict, description="變體資訊")
+    stockQuantity: int = Field(0, ge=0, description="庫存數量")
+    minStock: int = Field(0, ge=0, description="最低庫存")
+    maxStock: Optional[int] = Field(None, ge=0, description="最高庫存")
+    weight: Optional[float] = Field(None, description="重量")
+    dimensions: Optional[Dict[str, Any]] = Field(None, description="尺寸")
+    packageType: Optional[str] = Field(None, description="包裝類型")
+    shelfLifeDays: Optional[int] = Field(None, ge=0, description="保質期天數")
+    storageConditions: Optional[str] = Field(None, description="儲存條件")
+    batchTrackingEnabled: bool = Field(False, description="是否啟用批次追蹤")
+    isActive: bool = Field(True, description="是否啟用")
+    pricingMethod: Optional[str] = Field("UNIT", description="計價方式: UNIT/BULK/TIERED/VOLUME")
+    pricingUnit: str = Field("unit", description="計價單位")
+    unitPrice: Optional[float] = Field(None, ge=0, description="單位價格")
+    minOrderQuantity: Optional[float] = Field(None, ge=0, description="最小訂購量")
+    quantityIncrement: Optional[float] = Field(None, ge=0, description="數量增量")
+    originCountry: Optional[str] = Field(None, description="產地國家")
+    originRegion: Optional[str] = Field(None, description="產地區域")
+
+    class Config:
+        populate_by_name = True
+        json_schema_extra = {
+            "example": {
+                "productId": "prod-001",
+                "skuCode": "SKU-001-A",
+                "name": "有機高麗菜 1kg 包裝",
+                "variant": {"size": "1kg", "grade": "A"},
+                "pricingUnit": "kg",
+                "unitPrice": 45.0,
+                "isActive": True
+            }
+        }
+
+
+class SKUSimpleUpdateRequest(BaseModel):
+    """
+    簡化版 SKU 更新請求
+    所有欄位皆為選填
+    """
+    name: Optional[str] = Field(None, min_length=1, max_length=200, description="SKU 名稱")
+    variant: Optional[Dict[str, Any]] = Field(None, description="變體資訊")
+    stockQuantity: Optional[int] = Field(None, ge=0, description="庫存數量")
+    minStock: Optional[int] = Field(None, ge=0, description="最低庫存")
+    maxStock: Optional[int] = Field(None, ge=0, description="最高庫存")
+    weight: Optional[float] = Field(None, description="重量")
+    dimensions: Optional[Dict[str, Any]] = Field(None, description="尺寸")
+    packageType: Optional[str] = Field(None, description="包裝類型")
+    shelfLifeDays: Optional[int] = Field(None, ge=0, description="保質期天數")
+    storageConditions: Optional[str] = Field(None, description="儲存條件")
+    batchTrackingEnabled: Optional[bool] = Field(None, description="是否啟用批次追蹤")
+    isActive: Optional[bool] = Field(None, description="是否啟用")
+    pricingMethod: Optional[str] = Field(None, description="計價方式")
+    pricingUnit: Optional[str] = Field(None, description="計價單位")
+    unitPrice: Optional[float] = Field(None, ge=0, description="單位價格")
+    minOrderQuantity: Optional[float] = Field(None, ge=0, description="最小訂購量")
+    quantityIncrement: Optional[float] = Field(None, ge=0, description="數量增量")
+    originCountry: Optional[str] = Field(None, description="產地國家")
+    originRegion: Optional[str] = Field(None, description="產地區域")
+
+    class Config:
+        populate_by_name = True
+
+
+class SKUSimpleResponse(BaseModel):
+    """簡化版 SKU 響應"""
+    id: str
+    productId: str
+    skuCode: str
+    name: str
+    variant: Dict[str, Any] = Field(default_factory=dict)
+    stockQuantity: int = 0
+    reservedQuantity: int = 0
+    minStock: int = 0
+    maxStock: Optional[int] = None
+    weight: Optional[float] = None
+    dimensions: Optional[Dict[str, Any]] = None
+    packageType: Optional[str] = None
+    shelfLifeDays: Optional[int] = None
+    storageConditions: Optional[str] = None
+    batchTrackingEnabled: bool = False
+    isActive: bool = True
+    type: Optional[str] = "STANDARD"
+    creatorType: Optional[str] = "SYSTEM"
+    approvalStatus: Optional[str] = "APPROVED"
+    pricingMethod: Optional[str] = None
+    pricingUnit: str = "unit"
+    unitPrice: Optional[float] = None
+    minOrderQuantity: Optional[float] = None
+    quantityIncrement: Optional[float] = None
+    originCountry: Optional[str] = None
+    originRegion: Optional[str] = None
+    createdAt: Optional[datetime] = None
+    updatedAt: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class SKUSimpleCreateResponse(BaseModel):
+    """SKU 創建響應"""
+    success: bool = True
+    message: str
+    data: SKUSimpleResponse
+
+
+class SKUSimpleUpdateResponse(BaseModel):
+    """SKU 更新響應"""
+    success: bool = True
+    message: str
+    data: SKUSimpleResponse
+
+
+class SKUSimpleDeleteResponse(BaseModel):
+    """SKU 刪除響應"""
+    success: bool = True
+    message: str
+    deletedId: str
+
+
+class SKUPriceUpdateRequest(BaseModel):
+    """SKU 價格更新請求（自動記錄價格歷史）"""
+    newPrice: float = Field(..., gt=0, description="新價格")
+    priceType: str = Field("base", description="價格類型: base/selling/cost/promotional")
+    changeReason: Optional[str] = Field(None, description="變動原因")
+    effectiveFrom: Optional[datetime] = Field(None, description="生效開始時間")
+    effectiveTo: Optional[datetime] = Field(None, description="生效結束時間")
+    currency: str = Field("TWD", description="貨幣代碼")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "newPrice": 55.0,
+                "priceType": "base",
+                "changeReason": "原物料成本上漲",
+                "currency": "TWD"
+            }
+        }
+
+
+class SKUPriceUpdateResponse(BaseModel):
+    """SKU 價格更新響應"""
+    success: bool = True
+    message: str
+    data: SKUSimpleResponse
+    priceHistory: Dict[str, Any] = Field(default_factory=dict, description="價格歷史記錄")

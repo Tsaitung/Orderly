@@ -8,6 +8,7 @@ from fastapi import FastAPI
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
 from orderly_fastapi_core.errors import register_exception_handlers
+from orderly_fastapi_core.middleware import AuthMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -73,6 +74,7 @@ app.add_middleware(
     ],
     expose_headers=["X-Correlation-ID"]
 )
+app.add_middleware(AuthMiddleware, settings=settings)
 
 # Consistent error responses
 register_exception_handlers(app)

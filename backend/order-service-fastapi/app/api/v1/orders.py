@@ -1,22 +1,49 @@
-from datetime import datetime
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+Order API Endpoints
+訂單 API 端點
+"""
+from datetime import date
+from typing import Optional, List
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
-from sqlalchemy.orm import selectinload
+import structlog
 
 from app.core.database import get_async_session
-import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'libs')))
-from orderly_fastapi_core.pagination import pagination_params, Pagination
-from app.models.order import Order, OrderItem
+from app.models.enums import OrderStatus
+from app.schemas.order import (
+    OrderCreate, OrderUpdate, OrderResponse, OrderListResponse,
+    OrderStatusUpdate, OrderConfirmRequest, OrderAdjustmentCreate,
+    OrderAdjustmentResponse, OrderStatsResponse, OrderStatusHistoryResponse
+)
+from app.schemas.order_item import OrderItemCreate, OrderItemUpdate, OrderItemResponse
+from app.services.order_service import OrderService
+from app.services.order_state_machine import OrderStateMachine
 
-
+logger = structlog.get_logger()
 router = APIRouter()
 
 
+def _get_tenant_id_from_request(request: Request) -> Optional[str]:
+    """從請求標頭取得租戶 ID"""
+    return request.headers.get("X-Tenant-Id") or request.headers.get("X-Org-Id")
+
+
+def _get_user_id_from_request(request: Request) -> Optional[str]:
+    """從請求標頭取得用戶 ID"""
+    return request.headers.get("X-User-ID") or request.headers.get("X-User-Id")
+
+
+def _get_user_role_from_request(request: Request) -> Optional[str]:
+    """從請求標頭取得用戶角色"""
+    return request.headers.get("X-User-Role")
+
+
+# ==================== 健康檢查 ====================
+
 @router.get("/health")
 async def health(db: AsyncSession = Depends(get_async_session)):
+    """健康檢查"""
+    from sqlalchemy import select
     try:
         await db.execute(select(1))
         return {"status": "healthy", "service": "order-service-fastapi", "database": "connected"}
@@ -24,86 +51,612 @@ async def health(db: AsyncSession = Depends(get_async_session)):
         raise HTTPException(status_code=503, detail=f"DB error: {e}")
 
 
-@router.get("/orders")
-async def list_orders(p: Pagination = Depends(pagination_params), db: AsyncSession = Depends(get_async_session)):
-    result = await db.execute(
-        select(Order)
-        .options(selectinload(Order.items))  # Eager load order items to prevent N+1 queries
-        .order_by(desc(Order.created_at))
-        .offset(p["offset"])  # pagination offset
-        .limit(p["limit"])    # pagination limit
+# ==================== 訂單 CRUD ====================
+
+@router.get("/orders", response_model=OrderListResponse)
+async def list_orders(
+    request: Request,
+    page: int = Query(1, ge=1, description="頁碼"),
+    page_size: int = Query(20, ge=1, le=100, description="每頁數量"),
+    status: Optional[OrderStatus] = Query(None, description="狀態過濾"),
+    supplier_id: Optional[str] = Query(None, description="供應商 ID"),
+    restaurant_id: Optional[str] = Query(None, description="餐廳 ID"),
+    date_from: Optional[date] = Query(None, description="開始日期"),
+    date_to: Optional[date] = Query(None, description="結束日期"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    獲取訂單列表
+
+    支援分頁和多種過濾條件
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+
+    orders, total = await OrderService.list_orders(
+        db=db,
+        tenant_id=tenant_id,
+        page=page,
+        page_size=page_size,
+        status=status,
+        supplier_id=supplier_id,
+        restaurant_id=restaurant_id,
+        date_from=date_from,
+        date_to=date_to,
     )
-    orders = result.scalars().all()
-    return {"success": True, "data": orders, "count": len(orders), "page": p["page"], "page_size": p["page_size"]}
+
+    total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
+
+    return OrderListResponse(
+        success=True,
+        data=[OrderResponse.model_validate(order) for order in orders],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
 
 
-@router.get("/orders/{order_id}")
-async def get_order(order_id: str, db: AsyncSession = Depends(get_async_session)):
-    result = await db.execute(
-        select(Order)
-        .options(selectinload(Order.items))  # Eager load order items
-        .where(Order.id == order_id)
+@router.get("/orders/stats", response_model=OrderStatsResponse)
+async def get_order_stats(
+    request: Request,
+    date_from: Optional[date] = Query(None, description="開始日期"),
+    date_to: Optional[date] = Query(None, description="結束日期"),
+    supplier_id: Optional[str] = Query(None, description="供應商 ID"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """獲取訂單統計"""
+    tenant_id = _get_tenant_id_from_request(request)
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+
+    stats = await OrderService.get_order_stats(
+        db=db,
+        tenant_id=tenant_id,
+        date_from=date_from,
+        date_to=date_to,
+        supplier_id=supplier_id,
     )
-    order = result.scalar_one_or_none()
+
+    return OrderStatsResponse(**stats)
+
+
+@router.get("/orders/{order_id}", response_model=OrderResponse)
+async def get_order(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """獲取單一訂單詳情"""
+    tenant_id = _get_tenant_id_from_request(request)
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+
+    order = await OrderService.get_order_by_id(db, order_id, tenant_id)
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return {"success": True, "data": order}
+        raise HTTPException(status_code=404, detail=f"訂單 ID '{order_id}' 不存在")
+
+    return OrderResponse.model_validate(order)
 
 
-@router.post("/orders", status_code=201)
-async def create_order(payload: dict, db: AsyncSession = Depends(get_async_session)):
-    required = ["restaurantId", "supplierId", "items"]
-    if any(k not in payload for k in required) or not isinstance(payload.get("items"), list) or len(payload.get("items")) == 0:
-        raise HTTPException(status_code=400, detail="Missing required fields: restaurantId, supplierId, items")
+@router.post("/orders", response_model=OrderResponse, status_code=201)
+async def create_order(
+    order_data: OrderCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    創建新訂單
 
-    order_number = f"ORD-{int(datetime.utcnow().timestamp() * 1000)}"
-    items = payload["items"]
-    subtotal = sum(float(i.get("quantity", 0)) * float(i.get("unitPrice", 0)) for i in items)
-    tax_amount = round(subtotal * 0.1, 2)
-    total_amount = subtotal + tax_amount
+    訂單創建後狀態為 draft（草稿）
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
 
-    order = Order(
-        order_number=order_number,
-        restaurant_id=payload["restaurantId"],
-        supplier_id=payload["supplierId"],
-        status="draft",
-        subtotal=subtotal,
-        tax_amount=tax_amount,
-        total_amount=total_amount,
-        delivery_date=datetime.fromisoformat(payload.get("deliveryDate")) if payload.get("deliveryDate") else datetime.utcnow().date(),
-        delivery_address=payload.get("deliveryAddress") or {},
-        notes=payload.get("notes"),
-        created_by=payload.get("createdBy") or "system",
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.create_order(
+        db=db,
+        order_data=order_data,
+        tenant_id=tenant_id,
+        user_id=user_id,
     )
-    db.add(order)
-    await db.flush()
 
-    for i in items:
-        db.add(OrderItem(
-            order_id=str(order.id),
-            product_id=i["productId"],
-            product_code=i.get("productCode", "UNKNOWN"),
-            product_name=i["productName"],
-            quantity=float(i["quantity"]),
-            unit_price=float(i["unitPrice"]),
-            line_total=float(i["quantity"]) * float(i["unitPrice"]),
-            notes=i.get("notes"),
-        ))
-    await db.commit()
-    await db.refresh(order)
-    return {"success": True, "data": order}
+    return OrderResponse.model_validate(order)
 
 
-@router.patch("/orders/{order_id}/status")
-async def update_order_status(order_id: str, payload: dict, db: AsyncSession = Depends(get_async_session)):
-    status_value: Optional[str] = payload.get("status")
-    if not status_value:
-        raise HTTPException(status_code=400, detail="Status is required")
-    result = await db.execute(select(Order).where(Order.id == order_id))
-    order = result.scalar_one_or_none()
+@router.put("/orders/{order_id}", response_model=OrderResponse)
+async def update_order(
+    order_id: str,
+    order_data: OrderUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    更新訂單
+
+    只有草稿狀態的訂單可以修改
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.update_order(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        order_data=order_data,
+        user_id=user_id,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.delete("/orders/{order_id}")
+async def cancel_order(
+    order_id: str,
+    request: Request,
+    reason: str = Query(..., description="取消原因"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    取消訂單
+
+    需要提供取消原因，已完成或已取消的訂單不可取消
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.cancel_order(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        reason=reason,
+        user_id=user_id,
+    )
+
+    return {
+        "success": True,
+        "message": "訂單已取消",
+        "data": OrderResponse.model_validate(order),
+    }
+
+
+# ==================== 狀態流轉 ====================
+
+@router.patch("/orders/{order_id}/status", response_model=OrderResponse)
+async def update_order_status(
+    order_id: str,
+    status_data: OrderStatusUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    更新訂單狀態
+
+    狀態轉換需符合狀態機規則
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+    role = _get_user_role_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role=role,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/submit", response_model=OrderResponse)
+async def submit_order(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    提交訂單
+
+    將訂單從草稿狀態提交給供應商
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.SUBMITTED, reason="餐廳提交訂單")
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="restaurant",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/confirm", response_model=OrderResponse)
+async def confirm_order(
+    order_id: str,
+    confirm_data: OrderConfirmRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """
+    供應商確認訂單
+
+    可以調整確認數量和時價商品價格
+    """
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.confirm_order(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        confirm_data=confirm_data,
+        user_id=user_id,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/prepare", response_model=OrderResponse)
+async def start_preparing(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """開始備貨"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.PREPARING, reason="開始備貨")
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="supplier",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/ship", response_model=OrderResponse)
+async def ship_order(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """標記出貨"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.SHIPPED, reason="已出貨")
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="supplier",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/deliver", response_model=OrderResponse)
+async def deliver_order(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """標記送達"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.DELIVERED, reason="已送達")
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="supplier",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/accept", response_model=OrderResponse)
+async def accept_order(
+    order_id: str,
+    request: Request,
+    notes: Optional[str] = Query(None, description="驗收備註"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """驗收確認"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.ACCEPTED, reason="驗收通過", notes=notes)
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="restaurant",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/complete", response_model=OrderResponse)
+async def complete_order(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """標記完成"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    status_data = OrderStatusUpdate(status=OrderStatus.COMPLETED, reason="訂單完成")
+    order = await OrderService.update_order_status(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        status_data=status_data,
+        user_id=user_id,
+        role="admin",
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+# ==================== 訂單歷史 ====================
+
+@router.get("/orders/{order_id}/history", response_model=List[OrderStatusHistoryResponse])
+async def get_order_history(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """獲取訂單狀態歷史"""
+    tenant_id = _get_tenant_id_from_request(request)
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+
+    history = await OrderService.get_order_history(db, order_id, tenant_id)
+    return [OrderStatusHistoryResponse.model_validate(h) for h in history]
+
+
+# ==================== 訂單項目 ====================
+
+@router.post("/orders/{order_id}/items", response_model=OrderResponse)
+async def add_order_item(
+    order_id: str,
+    item_data: OrderItemCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """添加訂單項目"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.add_order_item(
+        db=db,
+        order_id=order_id,
+        tenant_id=tenant_id,
+        item_data=item_data,
+        user_id=user_id,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.put("/orders/{order_id}/items/{item_id}", response_model=OrderResponse)
+async def update_order_item(
+    order_id: str,
+    item_id: str,
+    item_data: OrderItemUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """更新訂單項目"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.update_order_item(
+        db=db,
+        order_id=order_id,
+        item_id=item_id,
+        tenant_id=tenant_id,
+        item_data=item_data,
+        user_id=user_id,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+@router.delete("/orders/{order_id}/items/{item_id}", response_model=OrderResponse)
+async def delete_order_item(
+    order_id: str,
+    item_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """刪除訂單項目"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    order = await OrderService.delete_order_item(
+        db=db,
+        order_id=order_id,
+        item_id=item_id,
+        tenant_id=tenant_id,
+        user_id=user_id,
+    )
+
+    return OrderResponse.model_validate(order)
+
+
+# ==================== 狀態機資訊 ====================
+
+@router.get("/orders/{order_id}/next-statuses")
+async def get_next_statuses(
+    order_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_async_session)
+):
+    """獲取訂單可轉換的下一個狀態"""
+    tenant_id = _get_tenant_id_from_request(request)
+    role = _get_user_role_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+
+    order = await OrderService.get_order_by_id(db, order_id, tenant_id)
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    order.status = status_value
-    await db.commit()
-    await db.refresh(order)
-    return {"success": True, "data": order}
+        raise HTTPException(status_code=404, detail=f"訂單 ID '{order_id}' 不存在")
+
+    next_statuses = OrderStateMachine.get_next_valid_statuses(order.status, role)
+
+    return {
+        "success": True,
+        "currentStatus": order.status.value,
+        "currentStatusDisplay": OrderStateMachine.get_status_display(order.status),
+        "nextStatuses": [
+            {
+                "status": s.value,
+                "display": OrderStateMachine.get_status_display(s)
+            }
+            for s in next_statuses
+        ],
+        "isTerminal": OrderStateMachine.is_terminal_status(order.status),
+        "isCancellable": OrderStateMachine.is_cancellable(order.status),
+    }
+
+
+# ==================== 批量操作 ====================
+
+@router.post("/orders/bulk-status")
+async def bulk_update_status(
+    request: Request,
+    order_ids: List[str] = Query(..., description="訂單 ID 列表"),
+    status: OrderStatus = Query(..., description="目標狀態"),
+    reason: Optional[str] = Query(None, description="變更原因"),
+    db: AsyncSession = Depends(get_async_session)
+):
+    """批量更新訂單狀態"""
+    tenant_id = _get_tenant_id_from_request(request)
+    user_id = _get_user_id_from_request(request)
+    role = _get_user_role_from_request(request)
+
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    if not user_id:
+        user_id = "system"
+
+    if len(order_ids) > 100:
+        raise HTTPException(status_code=400, detail="批量操作最多支援 100 筆訂單")
+
+    results = {"success": [], "failed": []}
+
+    for order_id in order_ids:
+        try:
+            status_data = OrderStatusUpdate(status=status, reason=reason)
+            await OrderService.update_order_status(
+                db=db,
+                order_id=order_id,
+                tenant_id=tenant_id,
+                status_data=status_data,
+                user_id=user_id,
+                role=role,
+            )
+            results["success"].append(order_id)
+        except HTTPException as e:
+            results["failed"].append({"orderId": order_id, "error": e.detail})
+        except Exception as e:
+            results["failed"].append({"orderId": order_id, "error": str(e)})
+
+    return {
+        "success": True,
+        "message": f"成功 {len(results['success'])} 筆，失敗 {len(results['failed'])} 筆",
+        "results": results,
+    }

@@ -33,46 +33,77 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `infrastructure/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
 - `.github/workflows/` - 8 advanced CI/CD workflows including ML-powered quality gates
 - `scripts/` - Automation scripts for deployment, monitoring, security, and database management
-  - `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
-  - `scripts/database/seed_from_real_data.py` - 基於真實資料的完整測試腳本
+- `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
+- `scripts/database/seed_from_real_data.py` - 基於真實資料的完整測試腳本
+
+## 當前開發優先順序（2025-12-07）
+1. 身分／租戶／權限：先鎖定 `backend/user-service-fastapi` 與 `shared/types` 權限模型，確保 JWT、API Gateway 授權一致。
+2. 商品與價格主檔：穩定 `product-service-fastapi` CRUD/價格/稅則接口，校對 `product_categories_final.md` 與 `Database-Schema-Core.md`。
+3. 訂單全生命週期：鎖定訂單狀態機與事件，先完成下單與查詢 MVP，前端串接 `order-service-fastapi`。
+4. 驗收與對帳：補齊 `acceptance-service-fastapi` 驗收/差異紀錄，前端驗收頁並對接 Smoke Tests。
+5. 結算／開票／對帳：落地 `billing-service-fastapi` 對帳 API 與發票／收款狀態，依 `PRD-Billing-Master.md`。
+6. 通知與審計：完成 `notification-service-fastapi` 事件訂閱/推送，核心事件需審計紀錄與監控。
+7. 前端體驗與權限導向導航：依權限切分 App Router 分區，串接下單、驗收、對帳、通知。
+8. 品質門檻與可觀測性：加強 `npm run test:integration` 覆蓋核心 API，擴充 APM/Tracing，維持 Cloud Run/DB 健康檢查常綠。
+
+### Auth/User 整合風險與緩解
+- Token 相容性：舊 JWT + 新 JWT 並行一期；Gateway 允許兩種 payload，前端升級後再淘汰舊格式。
+- 權限漂移：`shared/types` 統一定義 role/permissions；User Service 回傳相同欄位並以預設值 seed，避免 null。
+- 租戶隔離：所有查詢強制帶 `tenant_id`（現用 organizationId 別名）；缺少條件一律拒絕或回 401/403。
+- Refresh 吊銷：Refresh Token 綁定 `token_version`；異常時 bump 版本，舊 Token 失效。
+- MFA/安全：短效 Access Token（15–30 分），可選 TOTP；登入失敗/權限拒絕需審計日誌。
+- 遷移：新增欄位需 Alembic 遷移並加 server_default（空 JSON/array、空字串、UTC 時間），遷移前備份。
+
+## 使用者資料模型（草案）
+- 使用者種類：餐廳管理者（Restaurant Admin/Manager/Staff）、供應商管理者（Supplier Admin/Manager/Staff）、平台／營運（Platform Admin/Support）、系統超管（Super Admin）。
+- 核心欄位：
+  - `id` (UUID)、`tenant_id`（餐廳或供應商租戶 ID）、`role`（枚舉：restaurant_admin/manager/staff、supplier_admin/manager/staff、platform_admin/support、super_admin）
+  - 基本資料：`email`（唯一）、`phone`、`display_name`、`avatar_url`（選填）
+  - 認證：`password_hash`、`mfa_enabled`、`mfa_secret`（選填）、`last_login_at`
+  - 狀態：`status`（active/suspended/pending）、`locale`、`timezone`
+  - 權限：`permissions`（JSON/array，用於細粒度功能開關）
+  - 審計：`created_at`、`updated_at`、`created_by`、`updated_by`
+- 若需跨服務共用，先於 `shared/types` 定義 DTO；資料庫欄位須在 `backend/user-service-fastapi` Alembic 遷移同步。
 
 ## Repository Guidelines
 
-> 註解：以下協作守則整合自 `AGENTS.md` 與既有內容，協助代理／協作者快速掌握關鍵流程。
+> 註解：`AGENTS.md` 已整併至此文件，`AGENTS.md` 僅保留入口導引；所有協作規範與「快速提醒」請一律更新 `CLAUDE.md`（本段）以避免重複維護，並維持繁體中文回覆（程式碼／指令除外）。
 
-### Project Structure
+### 回覆與語言規範
+- 代理／協作者在此專案的所有文字回覆一律使用繁體中文（程式碼與指令除外）；若引用英文原文，請補充繁體中文說明。
 
-- 前端：`app/`、`components/`、`lib/`、`stores/` 與 `shared/types/`（跨服務型別），靜態資源集中於 `public/`。
-- 後端：`backend/*-service-fastapi/` 內含 FastAPI 微服務，`backend/api-gateway-fastapi/` 提供統一入口，跨服務 Python 工具放在 `backend/libs/`。
-- 文檔與設計：主要說明位於 `docs/`，Storybook 與設計參考放在 `stories/` 與 `components/design-system/`。
-- 自動化與基礎設施：`scripts/` 收錄部署、資料庫、監控工具；`infrastructure/` 與各 `compose.*.yml` 描述 IaC 與執行拓撲。
+### 專案結構與模組
+- `app/` 為 Next.js App Router 前端；通用 UI 放在 `components/`，工具在 `lib/`，狀態／上下文在 `contexts/`。
+- `backend/*-fastapi/` 為微服務（user、order、product、acceptance、billing、notification、api-gateway）；各自管理 Alembic 遷移與環境檔。
+- `shared/types/` 是跨服務型別契約；請引用而非重寫 DTO。
+- 文檔在 `docs/`、`specs/`；基礎設施與 compose 設定在 `configs/`、`compose.*.yml`、`Dockerfile.*`；靜態資源在 `public/`；CI/CD 設定與腳本集中於 `scripts/`、`ci/`。
+- 測試：`app/`、`components/` 的 `*.test.tsx/ts`；整合／API 測試在 `tests/`。
 
-### Build, Test, and Develop
+### 建置、測試與開發指令
+- `npm install` 後執行 `npm run dev`（預設埠 3000）；正式檢查用 `npm run build && npm start`。
+- 品質／型別／格式：`npm run lint`、`npm run type-check`、`npm run type-check:full`、`npm run format`。
+- 測試：`npm test`、`npm run test:coverage`、`npm run test:integration`、`npm run test:watch`；前端專用可用 `npm run test:frontend`。
+- 後端與依賴：`docker compose -f compose.dev.yml up -d` 啟動 FastAPI + Postgres/Redis；服務埠號請以 compose 設定為準。
 
-- 安裝依賴：`npm install`
-- 啟動前端：`npm run dev`（預設埠 3000，預期後端服務由 Docker Compose 提供）
-- 啟動後端與依賴：`docker compose -f compose.dev.yml up`
-- 建置／啟動正式版本：`npm run build`、`npm run start`
-- 測試套件：`npm test`、`npm run test:frontend`、`npm run test:coverage`
-- 品質檢查：`npm run lint`、`npm run type-check`、`npm run format:check`
+### 程式風格與命名
+- TypeScript 優先；偏好函式型／Server Components，僅需瀏覽器狀態時加 `use client`。
+- Prettier（含 Tailwind）與 ESLint `eslint-config-next`，2 空白縮排、單引號；Tailwind 類別順序交由 Prettier 外掛。
+- 元件檔 `PascalCase.tsx`；工具與 Hook `camelCase.ts`；路由目錄採 kebab-case。
+- Tailwind 類別貼近 JSX；契約來源使用 `shared/types`，避免 inline style 與未型別化資料。
 
-### Coding Style
+### 測試規範
+- Jest + `@testing-library/react`；整合測試在 `tests/integration` 直打服務端點。
+- 檔名 `*.test.tsx/ts`；優先使用 fixture/mock，除非需驗證真實 API，測試資料集中在 `tests/fixtures`。
+- 修復缺陷時補回歸測試；變更核心流程或共用契約前跑 `npm run test:coverage`。
 
-- TypeScript + Prettier，採 2 空白縮排、保留分號、字串使用單引號；Tailwind 類別順序交由 Prettier 外掛整理。
-- React 元件／Hook 採 `PascalCase` 與 `camelCase` 命名；FastAPI 路由與 ORM 模型維持 `snake_case`。
-- 檔案命名：React 元件以 `.tsx` 結尾並盡量單一預設匯出；共用函式使用 `kebab-case.ts`；測試檔命名為 `*.test.ts(x)`。
+### Commit 與 PR
+- 採 `<type>: <message>`（例 `fix: ...`、`chore: ...`、`docs: ...`），命令式語氣，聚焦單一變更。
+- PR 應含摘要、影響範圍（前端或特定 `backend/*`）、測試結果；UI 變更附截圖。
+- 連結議題／PRD；調整環境或設定（`compose.*`、`middleware.ts`、`next.config.js`）時同步更新相關文檔。
 
-### Testing
-
-- 主要測試框架為 Jest，前端整合 `@testing-library/react`；整合測試集中在 `tests/integration/`。
-- 單元測試建議與元件／模組同目錄（例：`Button.test.tsx`）。
-- 依 `npm run test:coverage` 監控覆蓋率；新增功能時需撰寫關鍵流程的冒煙測試並適度 mock 後端依賴。
-
-### Commits & PRs
-
-- 採 Conventional Commits 前綴（如 `feat`、`fix`、`chore`、`docs` 等），主旨不超過 72 字元。
-- PR 需描述問題背景、功能影響、關聯議題（`Closes #123`），UI／API 變更時附上截圖或範例 payload。
-- 在描述中標註已執行的測試與靜態檢查指令輸出，並記錄同步更新的文檔或設定。
+### 環境與安全
+- 使用 Node 20+／npm 10+；複製 `.env.example` 至 `.env.local`，並為各 `backend/*-fastapi/` 建立對應 env。
+- 禁止提交祕密或雲端憑證；以 Docker／compose 環境變數與 `configs/` 模板為準；提交前清理暫存資料與導出的資料集；推薦使用 `nvm` 鎖定 Node 版本。
 
 ### Documentation Maintenance
 
@@ -247,6 +278,21 @@ python scripts/database/seed_from_real_data.py --clean
 # 強制重新創建
 python scripts/database/seed_from_real_data.py --force
 ```
+
+### Alembic 遷移開發指南（防止斷鏈）
+- 建立遷移統一用 `alembic revision --autogenerate -m "<message>"`，避免手動改 `revision` / `down_revision`；若重命名檔案，必須同步更新檔內 `revision`/`down_revision`。
+- 產生遷移前先 `git pull` 最新主線，避免平行遷移分叉；若發生衝突，重建最新遷移並移除舊衝突檔。
+- 建立後立刻檢查鏈：`alembic history --verbose | tail`，確認 `down_revision` 指向上一個 `revision`；本機跑 `alembic upgrade head` 驗證可升級。
+- PR 前檢查：每個微服務皆需能 `alembic upgrade head` 通過；錯誤優先修復鏈結而非跳過。
+- CI 建議：新增步驟跑 `alembic upgrade head --sql` 或 `alembic history --verbose`，阻擋斷鏈 PR。
+- 若需手動調整 `down_revision` 修復斷鏈，請比對上一檔案內的 `revision` 值並再跑一次本機升級。
+
+### Audit Log 開發指南（NOT NULL / 枚舉一致性）
+- 新增 NOT NULL 欄位必給 `server_default`，同時更新模型/DTO/驗證，使 API 必填該欄位，避免出現 DB 約束錯誤（例：`entity_type`）。
+- `entity_type`/`action` 等建議用枚舉/常數表集中管理，呼叫端只能選擇合法值；回溯需有 `actor_id`、`entity_id`、`entity_type`、`metadata`。
+- 上線前跑整合測試覆蓋關鍵流程（登入/登出/refresh/敏感操作）並驗證 audit 插入成功。
+- 遷移上線時，若舊資料缺值需先回填，再加 NOT NULL；避免直接收緊約束導致線上寫入失敗。
+- CI 可加一條 smoke：模擬登入流程，確認 audit_logs 成功寫入且欄位非空。
 
 ## Docker Strategy & Architecture
 
@@ -571,3 +617,43 @@ Refer to `docs/INDEX.md` for the up-to-date documentation map. Key entries:
 This codebase represents an enterprise-grade platform with emphasis on automation, reliability, and scalability. The Ultra-Automated CI/CD system ensures high-quality deployments with minimal human intervention while maintaining strict security and compliance standards.
 
 - 所有路由設定都不應該hard code
+
+## Gemini Agent Instructions
+
+Gemini 註明以英文思考，中文溝通產出。
+
+This section contains information and analysis performed by the Gemini agent. The primary and most detailed information is in the sections above. This section serves as a summary of Gemini's understanding based on its independent analysis of the codebase.
+
+### Gemini's Project Analysis Summary (as of 2025-12-07)
+
+The following is a summary of the project based on an automated analysis of the codebase.
+
+#### Project Overview:
+
+"井然 Orderly" is a comprehensive digital supply platform for the catering industry, focusing on automating the reconciliation process. It utilizes a microservices architecture for its backend (FastAPI) and a Next.js frontend.
+
+#### Key Technologies Identified:
+
+*   **Frontend:** Next.js 14 (App Router), React, TypeScript, Tailwind CSS, Radix UI, Zustand.
+*   **Backend:** A monorepo of FastAPI services.
+*   **Database & Caching:** PostgreSQL, Redis.
+*   **Tooling:** Jest, ESLint, Prettier, Docker Compose.
+
+#### Key Architectural Points Identified:
+
+*   **Monorepo:** Manages both frontend and multiple backend services.
+*   **Next.js Features:** App Router, Server Components, PWA capabilities.
+*   **Authentication:** Managed globally via `AuthContext`.
+*   **Configuration:** `next.config.js` and `tsconfig.json` define build settings and path aliases.
+
+#### Build & Development Commands Identified:
+
+*   `npm run dev`: Start development server.
+*   `npm run build`: Build for production.
+*   `npm start`: Start production server.
+*   `npm run test`: Run tests.
+*   `npm run lint`: Run linter.
+*   `npm run format`: Run formatter.
+*   `docker compose up`: Run backend services.
+
+For more detailed information, please refer to the "Repository Guidelines" and "Common Commands" sections of this document.

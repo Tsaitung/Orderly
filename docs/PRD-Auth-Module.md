@@ -1,20 +1,29 @@
-# Product Requirements Document - Authentication & Registration Module
+# 身分驗證、註冊與使用者管理 PRD
 
 ## Document Information
 
 - **Version**: 1.0
 - **Date**: 2025-09-19
 - **Owner**: Product Team
-- **Status**: In Review
+- **Status**: In Review（本文件已切換為中文撰寫，欄位命名維持英文）
 - **Implementation Priority**: P0 - Critical
+- **範圍**：整合原 Auth Module 與 User Management 需求，統一權限模型與管理功能。
 
 ---
 
-## 1. Executive Summary
+## 0. 設計原則與技術選擇（中文版新增）
+- 單一身份源：所有登入、租戶隔離、角色與權限由 `backend/user-service-fastapi` 提供；API Gateway 僅驗證與轉發授權。
+- 多租戶隔離：強制 `tenant_id`；所有查詢需帶租戶條件，禁止跨租戶存取。
+- 角色 + 細粒度權限：`role`（枚舉） + `permissions`（JSON/array）用於例外授權，避免僵硬 RBAC。
+- 無狀態授權：短效 JWT 搭配 Refresh Token；JWT 包含 `sub`、`tenant_id`、`role`、`permissions`、`org_id` 等最小必要聲明。
+- 契約單一來源：`shared/types` 定義 User/Session/Permission DTO，前後端與 Gateway 共用。
+- 審計與安全：強制審計欄位（`created_at/updated_at/created_by/updated_by`）、短效 Access Token（15–30 分鐘）、可選 MFA（TOTP）、Refresh Token 可吊銷。
+
+## 1. Executive Summary（中文重述）
 
 ### 1.1 Product Context
 
-The Orderly platform requires a secure yet simple authentication system that supports B2B registration for restaurants and suppliers while maintaining enterprise-grade security. This module will serve as the gateway for all users accessing the platform and must integrate seamlessly with our existing role-based access control (RBAC) system.
+Orderly 需要一套兼顧易用與企業級安全的身分與使用者管理系統，支援餐廳與供應商的 B2B 註冊，並提供集中化的使用者與權限管理。此模組是所有使用者的入口，需與 API Gateway 驗證/授權流程無縫整合，並支援管理端的清單、詳情、角色/權限、組織與部門維護。
 
 ### 1.2 Business Objectives
 
@@ -43,12 +52,27 @@ The Orderly platform requires a secure yet simple authentication system that sup
 
 Based on current system analysis:
 
-- **restaurant_admin**: Full restaurant organization control
-- **restaurant_manager**: Operational management without settings
-- **restaurant_operator**: Order creation and basic operations
-- **supplier_admin**: Full supplier organization control
-- **supplier_manager**: Product and order management
-- **platform_admin**: Platform-wide administration
+- **restaurant_admin**：餐廳組織完全控制
+- **restaurant_manager**：營運管理但無全域設定
+- **restaurant_operator**：建立訂單、基本操作
+- **supplier_admin**：供應商組織完全控制
+- **supplier_manager**：商品與訂單管理
+- **platform_admin**：平台級管理
+- **super_admin**：系統超管（平台內部使用）
+
+### 2.1.1 角色三類主體設計（餐廳／供應商／平台）
+- 餐廳端（Restaurant）  
+  - 角色：`restaurant_admin`（全域設定/財務/用戶管理）、`restaurant_manager`（營運/庫存/報表）、`restaurant_operator`（下單/收貨/基礎操作）。  
+  - 範圍：僅本租戶；預設資料範圍 `org`，必要時可縮到 `self`。  
+  - 安全：Admin/Manager 建議啟用 MFA；Operator 可選。
+- 供應商端（Supplier）  
+  - 角色：`supplier_admin`（全域設定/商品/價目/用戶管理）、`supplier_manager`（商品/訂單/報表）、`supplier_operator`（收單/出貨/基礎操作）。  
+  - 範圍：僅本租戶；價目/結算等敏感操作需 Manager 以上。  
+  - 安全：Admin 必須 MFA；Manager 建議；Operator 可選。
+- 平台管理者（Platform）  
+  - 角色：`platform_admin`（平台設定/租戶審核/跨租戶稽核）、`platform_support`（客服/營運支援）、`super_admin`（系統超管，可附加 `super_user` 標記做臨時跨租戶）。  
+  - 範圍：可跨租戶，但必須完整審計；`super_admin/super_user` 操作須記錄原因與時長，強制 MFA。  
+  - 安全：平台側一律強制 MFA；super_user 需 TOTP + 事前核可。
 
 ### 2.2 New Super User Permission
 
@@ -85,410 +109,177 @@ Based on current system analysis:
 | Bypass API rate limits | ✗ | ✓ |
 | Emergency system shutdown | ✗ | ✓ |
 
----
+### 2.3 使用者資料模型（中文新增）
+- 使用者種類：餐廳（admin/manager/operator）、供應商（admin/manager/operator）、平台（admin/support）、系統超管（super_admin）。
+- 核心欄位（英文命名，中文說明）：
+  - `id` (UUID)：使用者唯一識別
+  - `tenant_id`：租戶 ID（餐廳或供應商）
+  - `role`：枚舉（restaurant_admin/manager/operator、supplier_admin/manager/operator、platform_admin/support、super_admin）
+  - `permissions`：JSON/array，細粒度功能開關與例外授權
+  - `email`（唯一）、`phone`、`display_name`、`avatar_url`
+  - `password_hash`、`mfa_enabled`、`mfa_secret`（選填）、`last_login_at`
+  - `status`（active/suspended/pending）、`locale`、`timezone`
+  - 審計：`created_at`、`updated_at`、`created_by`、`updated_by`
+- 契約來源：`shared/types` 定義 DTO；資料庫欄位需在 `backend/user-service-fastapi` Alembic 遷移同步。
 
-## 3. User Registration Flow
-
-### 3.1 Registration Types
-
-#### 3.1.1 Restaurant Registration
-
-**Entry Points**:
-
-- Public website registration page
-- Partner referral links
-- Sales team invitation
-
-**Required Information**:
-
-```
-Step 1: Basic Information (30 seconds)
-- Restaurant Name*
-- Business Registration Number*
-- Primary Contact Email*
-- Mobile Phone Number*
-- Password* (with strength indicator)
-
-Step 2: Business Details (60 seconds)
-- Restaurant Type (select from list)
-- Number of Locations (1, 2-5, 6-10, 10+)
-- Average Monthly Purchase Volume (range selector)
-- Current Suppliers Count (approximate)
-- Industry Segment (Fine Dining, Fast Casual, QSR, etc.)
-
-Step 3: Verification (90 seconds)
-- Email OTP verification
-- SMS verification code
-- Business license upload (optional, can complete later)
-- Terms of Service acceptance
-- Privacy Policy consent
-```
-
-#### 3.1.2 Supplier Registration
-
-**Entry Points**:
-
-- Supplier portal registration
-- Platform invitation
-- API-based registration
-
-**Required Information**:
-
-```
-Step 1: Company Information (30 seconds)
-- Company Name*
-- Business Registration Number*
-- Tax ID Number*
-- Primary Contact Email*
-- Mobile Phone Number*
-- Password* (with strength indicator)
-
-Step 2: Business Profile (90 seconds)
-- Product Categories (multi-select)
-- Service Areas (city/region selection)
-- Minimum Order Requirements
-- Delivery Capabilities
-- Payment Terms Offered
-- Current Customer Count (range)
-
-Step 3: Verification (120 seconds)
-- Email OTP verification
-- SMS verification code
-- Business license upload*
-- Food safety certification (if applicable)
-- Bank account verification (for payments)
-- Terms of Service acceptance
-- Supplier Agreement consent
-```
-
-### 3.2 Registration Validation Rules
-
-#### Email Validation
-
-- Format: RFC 5322 compliant
-- Domain: Must not be from disposable email services
-- Uniqueness: Check across all organizations
-- Verification: 6-digit OTP valid for 10 minutes
-
-#### Password Requirements
-
-- Minimum 12 characters
-- At least 1 uppercase letter
-- At least 1 lowercase letter
-- At least 1 number
-- At least 1 special character
-- Not in common password database
-- Not similar to email or organization name
-- Password history check (cannot reuse last 5 passwords)
-
-#### Business Validation
-
-- Business Registration Number: Format validation + government API check
-- Tax ID: Checksum validation
-- Phone Number: E.164 format + SMS deliverability check
-
-### 3.3 Registration User Stories
-
-**Story 1**: As a restaurant owner, I want to register quickly using my business information so that I can start ordering from suppliers immediately.
-
-**Acceptance Criteria**:
-
-- Registration completes in under 5 minutes
-- Business verification happens asynchronously
-- Can browse suppliers before full verification
-- Receive welcome email with next steps
-
-**Story 2**: As a supplier, I want to provide detailed business information during registration so that restaurants can find and trust my services.
-
-**Acceptance Criteria**:
-
-- All product categories are selectable
-- Can upload multiple certifications
-- Bank verification completes within 24 hours
-- Profile preview before submission
+### 2.4 認證／授權流程（中文新增）
+1. 登入：User Service `/auth/login` 驗證密碼（bcrypt），簽發短效 Access JWT + Refresh Token。
+2. Gateway 校驗：API Gateway 中間件驗證 JWT，並在上游請求頭附帶 `x-user-id`、`x-tenant-id`、`x-role`、`x-permissions`。
+3. 租戶隔離：下游服務所有查詢強制帶 `tenant_id` 條件。
+4. Refresh：`/auth/refresh` 以 Refresh Token 交換新 Access Token，可於 Redis/DB 吊銷。
+5. MFA（可選）：支援 TOTP，啟用後登入需額外通過 MFA。
 
 ---
 
-## 4. Login Flow
+## 3. 用戶註冊流程（全中文）
 
-### 4.1 Standard Login Process
+### 3.1 註冊場景
 
-```
-1. User enters email/username
-2. System checks if MFA is required
-3. User enters password
-4. If MFA enabled:
-   - Send OTP to registered device
-   - User enters OTP
-5. System validates credentials
-6. Generate JWT tokens (access + refresh)
-7. Log authentication event
-8. Redirect to dashboard
-```
+- 餐廳註冊：公開註冊頁、夥伴推薦連結、業務邀請。
+- 供應商註冊：供應商入口、平台邀請、API 註冊。
 
-### 4.2 Multi-Factor Authentication (MFA)
+### 3.2 必填欄位（依租戶類型）
 
-#### MFA Requirements by Role
+**餐廳：**
+- 基本：`restaurantName`、`businessRegistrationNumber`、`email`、`phone`、`password`
+- 營運：`restaurantType`、`locationsCount`、`avgMonthlyPurchaseVolume`、`currentSuppliersCount`
+- 驗證：Email OTP、SMS OTP，可選 `businessLicenseUpload`
 
-| Role                | MFA Requirement | Methods Allowed  |
-| ------------------- | --------------- | ---------------- |
-| restaurant_operator | Optional        | SMS, Email       |
-| restaurant_manager  | Recommended     | SMS, Email, TOTP |
-| restaurant_admin    | Recommended     | SMS, TOTP        |
-| supplier_manager    | Recommended     | SMS, Email, TOTP |
-| supplier_admin      | Mandatory       | SMS, TOTP        |
-| platform_admin      | Mandatory       | TOTP only        |
-| super_user          | Mandatory       | TOTP + Biometric |
+**供應商：**
+- 基本：`companyName`、`businessRegistrationNumber`、`taxId`、`email`、`phone`、`password`
+- 營運：`productCategories[]`、`serviceAreas`、`minOrderRequirement`、`deliveryCapabilities`、`paymentTermsOffered`、`currentCustomerCount`
+- 驗證：Email OTP、SMS OTP、`businessLicenseUpload`（必填）、食安證書（選填）、銀行帳戶驗證
 
-#### MFA Methods
+### 3.3 驗證規則
+- Email：RFC 5322 格式、拒絕一次性網域、全租戶唯一、6 碼 OTP（10 分鐘）。
+- 密碼：最少 12 碼，大小寫/數字/特殊字元各 1，不得接近 email 或組織名，不得重複最近 5 組。
+- 營業資訊：統編/稅籍 checksum + 政府 API 查核；電話 E.164 + 簡訊可達性；供應商須提供營業／稅務證照。
 
-1. **SMS OTP**: 6-digit code, 5-minute validity
-2. **Email OTP**: 6-digit code, 10-minute validity
-3. **TOTP (Time-based OTP)**: Google Authenticator, Authy
-4. **Biometric**: FaceID, TouchID (mobile apps)
-
-### 4.3 Login Security Features
-
-#### Rate Limiting
-
-- 5 failed attempts: 5-minute lockout
-- 10 failed attempts: 30-minute lockout
-- 15 failed attempts: Account locked, admin intervention required
-
-#### Session Management
-
-- Access token: 15 minutes (sliding window)
-- Refresh token: 7 days (rotated on use)
-- Maximum 5 concurrent sessions per user
-- Session binding to IP + User Agent
-
-#### Suspicious Activity Detection
-
-- Login from new location: Email alert
-- Login from new device: MFA required
-- Multiple failed attempts: CAPTCHA required
-- Unusual time patterns: Additional verification
-
-### 4.4 Login User Stories
-
-**Story 3**: As a returning user, I want to login quickly with remember me functionality so that I don't have to enter credentials repeatedly.
-
-**Acceptance Criteria**:
-
-- "Remember me" extends refresh token to 30 days
-- Biometric login available on mobile devices
-- Auto-fill supported for password managers
-- Single sign-on for multiple restaurant locations
-
-**Story 4**: As a platform admin, I want enhanced security during login so that administrative access is protected.
-
-**Acceptance Criteria**:
-
-- MFA always required
-- Login notification to all admin emails
-- Session recorded for audit
-- Restricted IP ranges (configurable)
+### 3.4 用戶故事（中文）
+- 餐廳：5 分鐘內完成註冊；未完成營業驗證前可瀏覽／收藏，驗證後可正式下單；收到歡迎信與下一步指引。
+- 供應商：可多選品類、上傳多張證照，提交前可預覽；銀行驗證 24 小時內完成；完成後可被餐廳搜尋。
 
 ---
 
-## 5. Password Recovery Flow
+## 4. 登入與 MFA（中文）
 
-### 5.1 Recovery Process
+### 4.1 標準登入流程
+1. 輸入 email；判斷是否啟用 MFA  
+2. 驗證密碼（bcrypt）  
+3. 若啟用 MFA：要求 OTP（SMS/Email/TOTP）  
+4. 簽發 Access + Refresh JWT；記錄審計事件  
+5. 導向儀表板
 
-```
-1. User clicks "Forgot Password"
-2. Enter email address
-3. CAPTCHA verification
-4. System sends recovery email
-5. User clicks secure link (valid 1 hour)
-6. Identity verification:
-   - Answer security question, OR
-   - Enter SMS OTP, OR
-   - Confirm recent transaction
-7. Set new password
-8. Force logout all sessions
-9. Send confirmation email
-10. Require MFA on next login
-```
+### 4.1.1 第三方登入（Line / Google）
+- 入口：前端提供「使用 Line 登入」、「使用 Google 登入」，皆導向 OAuth 授權頁。  
+- 流程：`/auth/oauth/{provider}/initiate` 取得 state + redirect_uri → Provider 同意 → `/auth/oauth/{provider}/callback` 交換 code/token → 以 email/sub 綁定或建立帳號。  
+- 綁定規則：
+  - 以 Provider email/sub 查找既有使用者；若存在但未綁定，需使用者確認後綁定。
+  - 新用戶：需補齊租戶資訊（餐廳/供應商）與角色，建立後才簽發 JWT。
+  - 安全：state/nonce 檢查、防重放；Line 使用 OpenID 取得 sub/email，Google 使用 OpenID scope。  
+- MFA：若帳號啟用 MFA，第三方登入成功後仍需補 MFA。  
+- 審計：記錄 provider、user_id、tenant_id、IP、UA、狀態（成功/失敗/綁定/拒絕）。
 
-### 5.2 Recovery Security Measures
+### 4.2 MFA 規則（依角色）
+| 角色 | MFA 要求 | 方法 |
+| --- | --- | --- |
+| restaurant_operator | Optional | SMS, Email |
+| restaurant_manager | Recommended | SMS, Email, TOTP |
+| restaurant_admin | Recommended | SMS, TOTP |
+| supplier_manager | Recommended | SMS, Email, TOTP |
+| supplier_admin | Mandatory | SMS, TOTP |
+| platform_admin | Mandatory | TOTP only |
+| super_admin / super_user | Mandatory | TOTP + Biometric |
 
-- **Link Security**: One-time use, cryptographically secure token
-- **Time Limit**: 1-hour validity for recovery links
-- **Rate Limiting**: Maximum 3 recovery attempts per day
-- **Notification**: Email sent for both request and completion
-- **Audit Trail**: All recovery attempts logged
-
-### 5.3 Account Recovery User Stories
-
-**Story 5**: As a user who forgot my password, I want multiple recovery options so that I can regain access even if I lose access to my primary email.
-
-**Acceptance Criteria**:
-
-- Can recover via email or SMS
-- Security questions as backup option
-- Admin-assisted recovery available
-- Clear instructions at each step
-
----
-
-## 6. Account Verification Process
-
-### 6.1 Verification Levels
-
-#### Level 1: Email Verified (Immediate)
-
-- Can browse platform
-- View supplier catalogs
-- Save favorites
-- Limited to 3 test orders
-
-#### Level 2: Phone Verified (5 minutes)
-
-- Create real orders (with limits)
-- Access basic analytics
-- Join supplier networks
-- Payment COD only
-
-#### Level 3: Business Verified (24-48 hours)
-
-- Full platform access
-- Unlimited orders
-- All payment methods
-- API access
-- Contract pricing
-
-### 6.2 Verification Methods
-
-#### Automated Verification
-
-- Email domain validation
-- Phone carrier verification
-- Business registry API check
-- Bank account micro-deposit
-- Social media presence check
-
-#### Manual Verification
-
-- Document review by operations team
-- Video call verification for high-value accounts
-- On-site verification for enterprise accounts
-- Reference checks with existing partners
-
-### 6.3 Verification User Stories
-
-**Story 6**: As a platform operator, I want automated business verification so that legitimate businesses can start using the platform quickly.
-
-**Acceptance Criteria**:
-
-- 80% of verifications complete automatically
-- Clear status indicators for users
-- Automated retry for failed verifications
-- Manual review queue for edge cases
+### 4.3 安全設定
+- Rate limit：5 次失敗鎖 5 分鐘；10 次鎖 30 分鐘；15 次需人工解鎖。
+- Session：Access 15 分；Refresh 7 天（使用時旋轉）；最多 5 個併發 Session；綁定 IP + UA。
+- 風險事件：新地點/新裝置強制 MFA；多次失敗要求 CAPTCHA；異常時段需額外驗證。
+### 4.4 登入用戶故事
+- 一般使用者：支援「記住我」（延長 Refresh 30 天）、行動生物辨識、密碼管理器自動填寫。
+- 平台管理者：強制 MFA、登入通知、Session 審計、可設定允許 IP 範圍。
 
 ---
 
-## 7. Security Requirements
+## 5. 密碼重設流程（中文）
+1. 使用者點擊「忘記密碼」並通過 CAPTCHA  
+2. 送出 email，附 1 小時有效的單次使用連結  
+3. 進入連結後二次驗證（安全問題 / SMS OTP / 近期交易確認）  
+4. 設定新密碼，強制登出所有 Session，發送完成通知  
+5. 下一次登入強制 MFA
 
-### 7.1 Authentication Security
-
-#### Encryption Requirements
-
-- Passwords: Argon2id hashing (memory: 64MB, iterations: 3, parallelism: 1)
-- Data in transit: TLS 1.3 minimum
-- Data at rest: AES-256 encryption
-- JWT signing: RS256 algorithm
-- Session tokens: Cryptographically secure random generation
-
-#### Token Management
-
-- Access tokens: Short-lived (15 minutes)
-- Refresh tokens: Encrypted in database
-- Token rotation on refresh
-- Blacklist for revoked tokens
-- JWT claims include: user_id, org_id, role, permissions, issued_at, expires_at
-
-### 7.2 Security Headers
-
-```
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-X-Frame-Options: DENY
-X-Content-Type-Options: nosniff
-X-XSS-Protection: 1; mode=block
-Content-Security-Policy: default-src 'self'
-Referrer-Policy: strict-origin-when-cross-origin
-```
-
-### 7.3 Audit Requirements
-
-#### Authentication Events to Log
-
-- Successful login: timestamp, IP, user agent, location
-- Failed login: timestamp, IP, reason, attempted username
-- Password change: timestamp, IP, method (user/admin/recovery)
-- MFA events: enablement, disablement, failed attempts
-- Session events: creation, refresh, revocation
-- Super user activation: who, when, why, duration
-
-#### Audit Retention
-
-- Authentication logs: 90 days hot storage, 2 years cold storage
-- Super user logs: 7 years (compliance requirement)
-- Failed attempts: 30 days
-- Session data: 30 days after expiry
-
-### 7.4 Compliance Requirements
-
-#### Data Privacy (GDPR/PDPA)
-
-- Explicit consent for data collection
-- Right to erasure implementation
-- Data portability API
-- Privacy policy acceptance tracking
-- Cookie consent management
-
-#### Industry Standards
-
-- SOC 2 Type II compliance
-- ISO 27001 alignment
-- OWASP Top 10 mitigation
-- PCI DSS for payment data (future)
+安全措施：每日最多 3 次重設嘗試；所有重設事件審計；連結為單次使用；通知含申請與完成兩封。
 
 ---
 
-## 8. Integration Requirements
+## 6. 帳戶驗證等級（中文）
+- Level 1：Email 驗證完成；可瀏覽／收藏；限制 3 筆試用訂單。
+- Level 2：電話驗證（5 分鐘）；可下正式單（限額）、基本分析、加入供應商網絡、付款僅 COD。
+- Level 3：營業驗證（24–48 小時）；完整功能、無訂單限制、所有付款方式、API 存取、合約價。
 
-### 8.1 API Gateway Integration
+驗證方式：Email 網域檢查、電話運營商檢驗、政府工商/稅籍查核、銀行微額驗證、社交信譽檢查；人工覆核含文件審核／視訊／實地驗證。
 
-#### Authentication Endpoints
+---
 
-```typescript
-POST / api / auth / register
-POST / api / auth / login
-POST / api / auth / logout
-POST / api / auth / refresh
-POST / api / auth / verify - email
-POST / api / auth / verify - phone
-POST / api / auth / forgot - password
-POST / api / auth / reset - password
-PUT / api / auth / change - password
-POST / api / auth / mfa / enable
-POST / api / auth / mfa / disable
-POST / api / auth / mfa / verify
-GET / api / auth / session
-DELETE / api / auth / sessions
-```
+## 7. 安全需求（中文）
 
-### 8.2 Service Integration
+### 7.1 加密與 Token
+- 密碼：bcrypt（成本 12）/ 未來可切換 Argon2id；傳輸 TLS 1.3；靜態 AES-256。  
+- JWT：預設 HS256（可升級 RS256）；Access 15 分、Refresh 7 天（旋轉）；包含 `sub/tenant_id/org_id/org_type/role/permissions/token_version`。  
+- Token 吊銷：Refresh 綁 `token_version`；黑名單/版本提升即失效。
 
-#### User Service
+### 7.2 安全標頭
+`Strict-Transport-Security`、`X-Frame-Options: DENY`、`X-Content-Type-Options: nosniff`、`X-XSS-Protection`、`Content-Security-Policy: default-src 'self'`、`Referrer-Policy: strict-origin-when-cross-origin`。
 
-- User profile management
-- Organization management
-- Role assignment
-- Permission checking
+### 7.3 審計
+- 記錄：成功/失敗登入、密碼變更、MFA 事件、Session 建立/刷新/撤銷、super_user 啟用（含原因/時長）。  
+- 保留：登入 90 天熱存 + 2 年冷存；super_user 7 年；失敗嘗試 30 天；Session 到期後保留 30 天。
 
-#### Notification Service
+### 7.4 合規
+- GDPR/PDPA：明確同意、刪除權、資料可攜、隱私政策同意紀錄、Cookie 同意。  
+- 標準：SOC2 Type II、ISO 27001、OWASP Top 10、PCI DSS（支付相關）。  
+
+---
+
+## 8. 整合需求（中文）
+
+### 8.1 API Gateway
+- 驗證/授權在 Gateway 執行，向下游傳遞 `x-user-id`、`x-tenant-id`、`x-role`、`x-permissions`。  
+- 路由（示例）：`POST /auth/register`、`POST /auth/login`、`POST /auth/refresh`、`POST /auth/logout`、`POST /auth/verify-email`、`POST /auth/verify-phone`、`POST /auth/forgot-password`、`POST /auth/reset-password`、`PUT /auth/change-password`、`POST /auth/mfa/enable|disable|verify`、`GET /auth/session`、`DELETE /auth/sessions`、`GET /auth/oauth/{provider}/initiate`、`GET /auth/oauth/{provider}/callback`（provider: `line` / `google`）。
+
+### 8.2 服務整合
+- User Service：用戶/租戶/角色/權限管理，簽發/吊銷 Token，記錄審計。
+- Notification Service：寄送 OTP/通知（Email/SMS）。
+- 其他微服務：依 Gateway header 執行授權；所有查詢強制 `tenant_id` 條件。
+
+---
+
+## 9. 使用者管理（合併原 User Management 需求）
+
+### 9.1 使用者清單
+- 功能：即時搜尋（姓名/Email/電話）、角色/組織/狀態/時間篩選，批量啟用/停用/角色指派/密碼重設/匯出。
+- 效能：清單 < 1 秒，搜尋 < 500ms，支援 10,000+ 使用者。
+- 介面：表格呈現姓名、Email、組織、角色、狀態、最後登入，顯示總數/活躍數/停用數。
+
+### 9.2 使用者詳情與編輯
+- 資料結構：`profile`（email/phone/avatar/timezone/language）、`account`（status、lastLoginAt、passwordLastChanged、mfaEnabled、emailVerified）、`organizations`（orgId/type/name/roles/position/joinedAt）、`permissions`（effective/inherited/custom）。
+- 編輯：基本資料、密碼重設（寄重設連結）、MFA 開關、帳號狀態、登入限制（IP 白名單/時間）、新增/移除組織關聯、部門/職位、主要組織、角色指派/自訂權限/有效期。
+
+### 9.3 組織與部門
+- 組織類型：platform/restaurant/supplier/partner，支援最多 5 層層級（總公司→區域→分店→部門→小組）。
+- 關聯類型：full-time/part-time/consultant/temporary。
+- 批量操作：組織合併/分拆、人員批量調動、權限批量繼承。
+
+### 9.4 權限模型（RBAC+ABAC）
+- 角色：含優先級，對應 permission list。  
+- 權限：resource + action + conditions（時間/IP/資料範圍）。  
+- 資料範圍：all/org/dept/self。  
+- 預設角色：`platform_admin`、`platform_operator`、`platform_support`、`restaurant_admin/manager/operator`、`supplier_admin/manager/operator`、`super_admin`（可附加 `super_user` 標記）。
+
+### 9.5 用戶故事（管理端）
+- 平台管理員：查看全平台使用者、調整權限、管理組織歸屬。  
+- 組織管理員：管理組織內使用者、邀請/停用、設定部門與角色。  
+- 一般使用者：查看自身權限、提交權限申請。
 
 - Welcome emails
 - Verification codes
