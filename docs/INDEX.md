@@ -1,114 +1,18 @@
-# Orderly Documentation Index (v3.0 · 2025-09-27)
+# Orderly Documentation Index
 
-> 單一入口導覽。本索引涵蓋所有 Markdown 文件，並依用途分組，方便開發、營運與產品團隊快速定位資訊。新增或異動文件時，請同步更新此表。
+本索引為 `docs/` 的單一入口，依文件用途分為 5 類（0–4）。新增/異動文件時，請同步更新本索引與對應分類的 `INDEX.md`。
 
----
+## 0. Design
+- `docs/0-Design/INDEX.md`
 
-## 1. 起點與治理（Start Here & Governance）
-- `README.md` — 專案概覽、架構與快速啟動說明。
-- `docs/README.md` — 文件資料夾導覽指南。
-- `docs/PROJECT-OVERVIEW.md` — Orderly 平台願景、目標與里程碑摘要。
-- `plan.md` — Staging 永久化計畫（v3.0），列出近期環境修復與待辦。
-- `CLAUDE.md` — 代理/協作守則與開發輔助流程（唯一權威版本）。
-- `CLAUDE.local.md` — 本機代理設定補充。
+## 1. User Story
+- `docs/1-User-Story/INDEX.md`
 
----
+## 2. PRD
+- `docs/2-PRD/INDEX.md`
 
-## 2. 企劃、進度與決策（Planning & Status）
-- `docs/DEVELOPMENT-PROGRESS-REPORT.md` — 專案進度現況分析。
-- `docs/CRITICAL-GAPS-ANALYSIS.md` — 關鍵風險與缺口彙總。
-- `docs/NEXT-SPRINT-PLAN.md` — 下一階段衝刺計畫與交付目標。
+## 3. Development Plan
+- `docs/3-Development-Plan/INDEX.md`
 
----
-
-## 3. 產品需求與體驗（Product & UX）
-- 核心 PRD：
-  - `docs/PRD-Complete.md` — 產品需求唯一事實來源。
-  - `docs/PRD-Auth-Module.md`
-  - `docs/PRD-Billing-Master.md`
-  - `docs/PRD-Customer-Hierarchy.md`
-  - `docs/PRD-Customer-Hierarchy-Dashboard-Redesign.md`
-  - `docs/PRD-Onboarding-Process.md`
-  - `docs/PRD-Referral-System.md`
-  - `docs/PRD-SKU-Management-Enhanced.md`
-  - `docs/PRD-SKU-Sharing-System.md`
-  - `docs/Orderly_Contracts_Config_PRD_Reconciliation.md`
-  - `backend/supplier-service-fastapi/docs/PRD-Supplier-Frontend-Refactoring.md`
-- 使用者體驗：
-  - `docs/User-Interface-Wireframes.md`
-  - `docs/supplier-onboarding-playbook.md`
-  - `docs/super-admin-guide.md`
-- 設計系統：
-  - `docs/design-system.md`（概覽）
-  - 子文件位於 `docs/design-system/`：`README.md`、`index.md`、`color-system.md`、`component-guidelines.md`、`layout-system.md`、`spacing-system.md`、`new-module-guide.md`
-
----
-
-## 4. 架構與工程設計（Architecture & Engineering）
-- `docs/Technical-Architecture-Summary.md` — 全域技術架構說明。
-- `docs/technical-architecture-auth.md` — 身分驗證模組架構。
-- `docs/Frontend-Backend-Endpoint-Consistency.md` — 前後端端點與埠對齊檢查（初始紀錄）。
-- `docs/PERFORMANCE-OPTIMIZATION-SUMMARY.md` — 系統效能優化與量測。
-- `docs/docker-containerization-summary.md` — 容器化策略與部署考量。
-- `CICD-init-guide.md` — GitHub Actions / CI 初始化指引。
-
----
-
-## 5. 資料庫、資料與 API（Data & API）
-- `docs/Database-Schema-Core.md` — 主要資料庫結構。
-- `docs/database.md` — 資料庫操作、環境與維運。
-- `docs/SQLALCHEMY-MIGRATION.md` — SQLAlchemy/Alembic 遷移指南。
-- `docs/product_categories_final.md` — 產品分類資料定義。
-- `docs/Documentation-Management-API.md` — 文檔管理 API 與端口登記設計（多角色可見性與治理）。
-- `docs/API-Endpoints-Essential.md` — API 端點摘要。
-- `docs/smoke-tests.md` — API Smoke Test 列表。
-- `docs/erp-integration-guide.md` — ERP 整合指引。
-- `scripts/database/README.md` — 資料庫工具與腳本說明。
-
----
-
-## 6. 營運與部署（Operations & Deployment）
-- `docs/DEPLOYMENT-CHECKLIST.md` — 部署前/後檢查表。
-- `docs/DEPLOYMENT-ENVIRONMENTS.md` — 多環境切換策略。
-- `docs/DEPLOYMENT-TROUBLESHOOTING.md` — 故障排除手冊。
-- `docs/staging-permanent-guide.md` — Staging 永久化部署指南。
-- `docs/Infra-Runbook.md` — 雲端基礎架構 Runbook。
-- `docs/ci-secrets.md` — GitHub / Cloud Secrets 配置。
-- `scripts/docker-deployment-guide.md` — Docker 部署流程。
-- `temp_deploy_trigger.md` — 臨時部署紀錄（亦見第 2 節）。
-
----
-
-## 7. 工具與其他資源（Tooling & Misc）
-- `docs/design-system/` 子資料夾所含原型指南（見第 3 節）。
-- `public/images/hero/README.md` — 行銷素材使用說明。
-- `docs/Static-Route-Conflict-Report.md` — 靜態資源路徑衝突掃描與預防紀錄。
-
----
-
-## 8. 規格、需求模板與草稿（Specifications & Templates）
-- ~~已清理過期模板（2025-12-07）~~ — 所有草稿模板已刪除或整合至主要文檔。
-
----
-
-## 9. 歷史紀錄與事後檢討（Historical Archive）
-
-> ⚠️ **2025-12-07 文檔整合通知**：以下歷史分析報告已整合至主文檔並移除，避免資訊分散。
-
-**已整合檔案清單**：
-- `ULTRA-DEEP-ANALYSIS-FINAL-SUMMARY.md` → 內容已整合至 `plan.md` 和 `docs/CRITICAL-GAPS-ANALYSIS.md`
-- `PERMANENT-SOLUTIONS-IMPLEMENTATION.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md` 和 `docs/DEPLOYMENT-CHECKLIST.md`
-- `DEPLOYMENT-FIX-SUMMARY.md` → 內容已整合至 `docs/CI-CD-ARCHITECTURE.md`
-- `API-DATA-INCOMPLETENESS-ROOT-CAUSE-ANALYSIS.md` → 內容已整合至 `docs/API-Endpoints-Essential.md`
-- `blue-green-deployment-guide.md` → 已棄用，流程併入 `docs/Infra-Runbook.md`、`docs/DEPLOYMENT-ENVIRONMENTS.md`、`docs/DEPLOYMENT-CHECKLIST.md`
-- `github-secrets-setup.md` → 已整合至 `docs/ci-secrets.md`
-- `temp_deploy_trigger.md` → 臨時部署觸發記錄（已完成，無需保留）
-
-如需查閱歷史版本，請使用：`git log --all --full-history -- <filename>`
-
----
-
-## 10. 維護準則
-- 所有新增文件需於本索引加入條目與簡介。
-- 若文件被取代或合併，請在此標註「歷史紀錄」並更新指向。
-- 嚴禁建立重複用途文件；若需差異化版本，請明確標示用途與維護者。
+## 4. Test
+- `docs/4-Test/INDEX.md`
