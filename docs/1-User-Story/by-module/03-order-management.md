@@ -7,6 +7,8 @@
 ## 概述
 本模組涵蓋所有與訂單建立、確認、追蹤、協商相關的 User Story。
 
+**前置依賴**：訂單必須引用已存在的商品/SKU（見 [02-product-sku-management.md](./02-product-sku-management.md)）。
+
 ---
 
 ## P0 - MVP 必備
@@ -139,5 +141,5 @@
 
 ## 相關文件
 - [PRD-Complete.md](../../2-PRD/PRD-Complete.md) - 完整產品需求
-- [03-product-sku-management.md](./03-product-sku-management.md) - 商品管理
+- [02-product-sku-management.md](./02-product-sku-management.md) - 商品管理
 - [04-acceptance-receiving.md](./04-acceptance-receiving.md) - 驗收流程

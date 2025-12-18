@@ -18,9 +18,9 @@
 - [US-AUTH-014: 組織層級管理](../by-module/01-auth-user-management.md#us-auth-014-組織層級管理)
 
 ### 商品與 SKU 管理
-- [US-PRD-005: 批量上傳 SKU 變體](../by-module/03-product-sku-management.md#us-prd-005-批量上傳-sku-變體)
-- [US-PRD-006: 設定差異化定價](../by-module/03-product-sku-management.md#us-prd-006-設定差異化定價)
-- [US-PRD-007: 管理產品認證和品質等級](../by-module/03-product-sku-management.md#us-prd-007-管理產品認證和品質等級)
+- [US-PRD-005: 批量上傳 SKU 變體](../by-module/02-product-sku-management.md#us-prd-005-批量上傳-sku-變體)
+- [US-PRD-006: 設定差異化定價](../by-module/02-product-sku-management.md#us-prd-006-設定差異化定價)
+- [US-PRD-007: 管理產品認證和品質等級](../by-module/02-product-sku-management.md#us-prd-007-管理產品認證和品質等級)
 
 ### 對帳與結算
 - [US-BIL-003: 一鍵產生客戶對帳單](../by-module/05-billing-settlement.md#us-bil-003-一鍵產生客戶對帳單)
@@ -53,8 +53,8 @@
 - [US-ACC-004: 追蹤驗收 KPI](../by-module/04-acceptance-receiving.md#us-acc-004-追蹤驗收-kpi)
 
 ### 商品與 SKU 管理
-- [US-PRD-006: 設定差異化定價](../by-module/03-product-sku-management.md#us-prd-006-設定差異化定價)
-- [US-PRD-007: 管理產品認證和品質等級](../by-module/03-product-sku-management.md#us-prd-007-管理產品認證和品質等級)
+- [US-PRD-006: 設定差異化定價](../by-module/02-product-sku-management.md#us-prd-006-設定差異化定價)
+- [US-PRD-007: 管理產品認證和品質等級](../by-module/02-product-sku-management.md#us-prd-007-管理產品認證和品質等級)
 
 ### 對帳與結算
 - [US-BIL-004: 追蹤異議處理進度](../by-module/05-billing-settlement.md#us-bil-004-追蹤異議處理進度)
@@ -82,11 +82,11 @@
 - [US-AUTH-013: 行動裝置生物辨識](../by-module/01-auth-user-management.md#us-auth-013-行動裝置生物辨識)
 
 ### 訂單管理
-- [US-ORD-003: 一鍵確認或修改訂單](../by-module/02-order-management.md#us-ord-003-一鍵確認或修改訂單)
-- [US-ORD-004: 訂單變更線上溝通](../by-module/02-order-management.md#us-ord-004-訂單變更線上溝通)
+- [US-ORD-003: 一鍵確認或修改訂單](../by-module/03-order-management.md#us-ord-003-一鍵確認或修改訂單)
+- [US-ORD-004: 訂單變更線上溝通](../by-module/03-order-management.md#us-ord-004-訂單變更線上溝通)
 
 ### 商品與庫存
-- [US-PRD-008: 即時更新庫存狀態](../by-module/03-product-sku-management.md#us-prd-008-即時更新庫存狀態)
+- [US-PRD-008: 即時更新庫存狀態](../by-module/02-product-sku-management.md#us-prd-008-即時更新庫存狀態)
 
 ### 導入與教學
 - [US-ONB-008: 互動式導覽](../by-module/07-onboarding-process.md#us-onb-008-互動式導覽)

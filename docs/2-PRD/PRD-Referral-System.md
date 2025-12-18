@@ -80,6 +80,8 @@
 
 ## 🔄 雙向邀請機制設計
 
+> 權限：預設餐廳端與供應端的 `*_operator/manager/admin` 皆可發起邀請；如需內控，可由組織管理者在「組織設定 → 邀請權限」收斂為僅 admin/manager（可選）。
+
 ### 現有餐廳→供應商邀請（優化）
 
 #### 當前流程回顧
@@ -158,7 +160,8 @@ interface RestaurantInvitationRequest {
 
 **第3步：邀請發送與追蹤**
 
-- 多渠道發送：Email、Line、手機簡訊
+- 多渠道發送（Phase 1）：**Line 分享（含 QR Code）**、**邀請 Email**（可選；若僅分享 QR/連結可不填受邀 Email）
+- 多渠道發送（Phase 2）：手機簡訊（選用）
 - 邀請狀態：已發送、已查看、已回應、已接受、已拒絕
 - 自動跟進：3天、7天、14天後自動提醒
 
@@ -167,14 +170,15 @@ interface RestaurantInvitationRequest {
 **邀請驗證頁面**：
 
 ```
-/auth/restaurant-invite?code={INVITE_CODE}
+/invite?code={INVITE_CODE}
 ```
 
 **快速註冊流程**：
 
 - 預填餐廳基本資訊（基於邀請內容）
 - 簡化驗證流程（供應商背書）
-- 直接建立供應商關係
+- 接受前確認「既有合作夥伴 / 新合作夥伴」（避免重複客戶/供應商）
+- 接受後直接建立供應商關係，並預設互相標記為 Favorite（可取消）
 
 ## 🎁 獎勵機制設計
 
@@ -336,6 +340,13 @@ interface RelationshipEstablishment {
 
   // 建立關係類型
   relationshipType: 'supplier_customer' | 'preferred_partner' | 'strategic_alliance'
+
+  // 預設收藏（Favorite）標記（雙向）
+  // 說明：Favorite 為 UI/選單常用標記，不等同於交易條件或法務層級。
+  favoriteDefaults: {
+    favoriteBySupplier: boolean // 預設 true
+    favoriteByRestaurant: boolean // 預設 true
+  }
 
   // 預設交易條件
   defaultTerms: {
@@ -768,9 +779,21 @@ POST /api/referrals/invitations
 {
   invitationType: 'supplier_to_restaurant' | 'restaurant_to_supplier';
   targets: InvitationTarget[];
+  channels?: ('line' | 'email' | 'sms')[]; // 預設 ['line','email']；支援僅分享連結/QR（無指定受邀 Email）
   message?: string;
   specialOffers?: SpecialOffer[];
   expiryDays?: number;
+}
+
+// 接受邀請（建立關係 + 預設 Favorite）
+POST /api/referrals/invitations/{code}/accept
+{
+  partnerDeclaration: 'existing' | 'new';
+  externalReference?: {
+    customerCode?: string; // 供應商既有客戶編號（選填）
+    supplierCode?: string; // 餐廳既有供應商代碼（選填）
+    taxId?: string; // 統編（選填）
+  };
 }
 
 // 查看邀請列表
@@ -838,6 +861,13 @@ PUT /api/relationships/{relationshipId}/terms
   discountTier?: string;
   specialConditions?: string[];
 }
+
+// 收藏/取消收藏（Favorite）
+PATCH /api/relationships/{relationshipId}/favorite
+{
+  favorite: boolean;
+}
+// 說明：由 JWT 的租戶/角色推導是「供應商端」或「餐廳端」在更新收藏狀態。
 ```
 
 ### 資料庫 Schema 設計
@@ -852,11 +882,13 @@ CREATE TABLE referral_invitations (
   inviter_id UUID NOT NULL REFERENCES users(id),
   inviter_type VARCHAR(20) NOT NULL, -- 'restaurant' | 'supplier'
   invitee_type VARCHAR(20) NOT NULL, -- 'restaurant' | 'supplier'
-  invitee_email VARCHAR(255) NOT NULL,
+  invitee_email VARCHAR(255),
+  invitee_phone VARCHAR(30),
   invitee_company_name VARCHAR(255),
   invitee_contact_person VARCHAR(255),
   invitation_message TEXT,
   special_offers JSONB DEFAULT '{}',
+  delivery_channels JSONB DEFAULT '[]', -- ['line', 'email', 'sms']
   status VARCHAR(20) DEFAULT 'pending',
   expires_at TIMESTAMP WITH TIME ZONE,
   sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -892,6 +924,10 @@ CREATE TABLE business_relationships (
   source_invitation_id UUID REFERENCES referral_invitations(id),
   terms JSONB DEFAULT '{}',
   status VARCHAR(20) DEFAULT 'active',
+  favorite_by_supplier BOOLEAN DEFAULT false,
+  favorite_by_restaurant BOOLEAN DEFAULT false,
+  partner_declaration VARCHAR(20) DEFAULT 'unknown', -- 'existing' | 'new' | 'unknown'
+  external_reference JSONB DEFAULT '{}', -- 既有客戶編號/供應商代碼等對照資訊
   health_score INTEGER DEFAULT 70,
   last_interaction TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -1064,7 +1100,13 @@ interface ReferralStore {
   // 操作方法
   createInvitation: (data: InvitationFormData) => Promise<void>
   loadInvitations: (filter?: InvitationFilter) => Promise<void>
-  acceptInvitation: (code: string) => Promise<void>
+  acceptInvitation: (
+    code: string,
+    payload: {
+      partnerDeclaration: 'existing' | 'new'
+      externalReference?: Record<string, string>
+    }
+  ) => Promise<void>
   redeemRewards: (amount: number) => Promise<void>
   updateRelationship: (id: string, terms: BusinessTerms) => Promise<void>
   loadAnalytics: (timeframe: string) => Promise<void>

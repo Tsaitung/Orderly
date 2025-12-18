@@ -1,6 +1,6 @@
 # Orderly CI/CD Architecture (Authoritative)
 
-_Last updated: 2025-09-30_
+_Last updated: 2025-12-18_
 
 This document replaces ad-hoc CI/CD notes that were scattered across `plan.md`, `CICD-init-guide.md`, deployment summaries, and various troubleshooting files. Maintain this as the single source of truth for pipeline behavior, configuration, and operational playbooks. Other documents should reference this file instead of duplicating CI/CD content.
 
@@ -146,12 +146,24 @@ This document replaces ad-hoc CI/CD notes that were scattered across `plan.md`, 
 
 ### 7.3 Common Failure Patterns & Fixes
 
-| Failure | Root Cause | Resolution |
+| Error | Root Cause | Resolution |
 | --- | --- | --- |
-| `COPY failed: file not found` during Cloud Build | Missing `SERVICE_PATH` / `LIBS_PATH` ARG definitions | Verified all Dockerfiles include the correct ARG wiring (2025-09-30). |
-| Cloud Build substitution errors (`_TAG` missing) | Workflow passed `_IMAGE_TAG` | Standardized on `_TAG` + `SHORT_SHA=$IMAGE_TAG`. |
-| Cloud Run URL truncation (`customer-hierarchy`) | Name exceeded 30 chars | Introduced abbreviation (`orderly-custhier-staging-v2`) and enforced via validator. |
-| `/db/health` returning 503 | `DATABASE_PORT` omitted from env | Added to shared configs and validated via script. |
+| `COPY failed: file not found` | Missing `SERVICE_PATH` / `LIBS_PATH` ARG | All Dockerfiles include correct ARG wiring |
+| Cloud Build `_TAG` missing | Workflow passed `_IMAGE_TAG` | Standardized `_TAG` + `SHORT_SHA=$IMAGE_TAG` |
+| Cloud Run URL truncation | Name exceeded 30 chars | Use abbreviations (e.g., `orderly-custhier-staging-v2`) |
+| `/db/health` returning 503 | `DATABASE_PORT` missing | Added to configs, validated via script |
+| `alembic: command not found` | GitHub Actions lacks Python | Use Cloud Build for migrations |
+| `key "_XXX" not matched` | Substitution variable mismatch | Check YAML substitutions block |
+| `cannot execute binary file` | Binary architecture mismatch | Don't run local tools in CI/CD |
+| Customer Hierarchy 404 | Environment variable mismatch | Set correct `ENV` value (e.g., `staging-v2`) |
+| Frontend substitution error | cloudbuild.yaml missing build-arg | Add `--build-arg` and Dockerfile `ARG`/`ENV` |
+| Gateway `/api/v2/*` 401 | Auth middleware catches all `/api/v2/` | Add exceptions in `api-gateway-fastapi/app/main.py` |
+
+### 7.4 Database Operations in CI/CD
+
+- **Migrations**: Use Cloud Build or Cloud Run Jobs (not GitHub Actions runner)
+- **Local Testing**: Use Cloud SQL Proxy
+- **Production**: Use Cloud Run Jobs with dedicated service account
 
 ## 8. Remediation Timeline (2025-09-29 → 2025-09-30)
 

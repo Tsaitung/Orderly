@@ -18,8 +18,8 @@
 - [US-AUTH-014: 組織層級管理](../by-module/01-auth-user-management.md#us-auth-014-組織層級管理)
 
 ### 商品與採購
-- [US-PRD-003: 比較多供應商商品](../by-module/03-product-sku-management.md#us-prd-003-比較多供應商商品)
-- [US-PRD-004: 追蹤稅務狀態](../by-module/03-product-sku-management.md#us-prd-004-追蹤稅務狀態)
+- [US-PRD-003: 比較多供應商商品](../by-module/02-product-sku-management.md#us-prd-003-比較多供應商商品)
+- [US-PRD-004: 追蹤稅務狀態](../by-module/02-product-sku-management.md#us-prd-004-追蹤稅務狀態)
 
 ### 對帳與結算
 - [US-BIL-006: 付款記錄追蹤](../by-module/05-billing-settlement.md#us-bil-006-付款記錄追蹤)
@@ -48,12 +48,12 @@
 營運管理、庫存管理、報表檢視。
 
 ### 訂單管理
-- [US-ORD-002: 即時追蹤訂單狀態](../by-module/02-order-management.md#us-ord-002-即時追蹤訂單狀態)
-- [US-ORD-005: 批次訂單操作](../by-module/02-order-management.md#us-ord-005-批次訂單操作)
-- [US-ORD-007: 訂單範本管理](../by-module/02-order-management.md#us-ord-007-訂單範本管理)
+- [US-ORD-002: 即時追蹤訂單狀態](../by-module/03-order-management.md#us-ord-002-即時追蹤訂單狀態)
+- [US-ORD-005: 批次訂單操作](../by-module/03-order-management.md#us-ord-005-批次訂單操作)
+- [US-ORD-007: 訂單範本管理](../by-module/03-order-management.md#us-ord-007-訂單範本管理)
 
 ### 商品與採購
-- [US-PRD-003: 比較多供應商商品](../by-module/03-product-sku-management.md#us-prd-003-比較多供應商商品)
+- [US-PRD-003: 比較多供應商商品](../by-module/02-product-sku-management.md#us-prd-003-比較多供應商商品)
 
 ### 驗收點收
 - [US-ACC-005: 差異協商處理](../by-module/04-acceptance-receiving.md#us-acc-005-差異協商處理)
@@ -79,12 +79,12 @@
 - [US-AUTH-013: 行動裝置生物辨識](../by-module/01-auth-user-management.md#us-auth-013-行動裝置生物辨識)
 
 ### 訂單管理
-- [US-ORD-001: 快速建立訂單草稿](../by-module/02-order-management.md#us-ord-001-快速建立訂單草稿)
-- [US-ORD-006: 智能重複下單](../by-module/02-order-management.md#us-ord-006-智能重複下單)
+- [US-ORD-001: 快速建立訂單草稿](../by-module/03-order-management.md#us-ord-001-快速建立訂單草稿)
+- [US-ORD-006: 智能重複下單](../by-module/03-order-management.md#us-ord-006-智能重複下單)
 
 ### 商品搜尋
-- [US-PRD-001: 多條件商品搜尋](../by-module/03-product-sku-management.md#us-prd-001-多條件商品搜尋)
-- [US-PRD-002: 查看營養成分和過敏原](../by-module/03-product-sku-management.md#us-prd-002-查看營養成分和過敏原)
+- [US-PRD-001: 多條件商品搜尋](../by-module/02-product-sku-management.md#us-prd-001-多條件商品搜尋)
+- [US-PRD-002: 查看營養成分和過敏原](../by-module/02-product-sku-management.md#us-prd-002-查看營養成分和過敏原)
 
 ### 驗收點收
 - [US-ACC-001: 手機掃碼快速點收](../by-module/04-acceptance-receiving.md#us-acc-001-手機掃碼快速點收)

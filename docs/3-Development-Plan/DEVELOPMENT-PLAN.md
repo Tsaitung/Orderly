@@ -6,7 +6,7 @@ _Last Updated: 2025-12-16_
 
 ## 1) 近期交付目標
 
-- **可演示閉環（staging-v2）**：Restaurant 下單 → Supplier 接單/改單 → 驗收 → 對帳（允許先以簡化/手動處理完成閉環）
+- **可演示閉環（staging-v2）**：商品/SKU 就緒（上架或種子資料）→ Restaurant 下單 → Supplier 接單/改單 → 驗收 → 對帳（允許先以簡化/手動處理完成閉環）
 - **可重複部署**：能用既有 CI/CD 流程重建環境、跑健康檢查、必要時可回滾
 
 ## 2) 現況摘要（以 repo 代碼掃描為準）
@@ -49,14 +49,15 @@ _Last Updated: 2025-12-16_
 
 ## 4) P0（優先、阻塞演示閉環）
 
-1. **Auth 真實化（前端）**：移除/隔離所有 `staging-mock-token` 與 mock auth fallback，統一路徑走 `app/api/bff/*` 並以 Cookie 維持登入狀態。
-2. **權限與租戶一致性**：前端 route guard + BFF 請求 header/cookie + 後端 tenant_id 欄位/授權檢查對齊（避免「有數字/無列表」或跨租戶讀取）。
-3. **資料庫可重建**：以既有 Alembic + seed 流程，確保 staging-v2 可從空 DB 重新建立必要資料（demo 帳號、基礎品類/商品、最小訂單資料）。
-4. **Restaurant 下單閉環**：restaurant orders 頁面串 Order Service（建立/查詢/狀態變更最小集合），並能產出可供 supplier 處理的訂單。
-5. **Supplier 接單/改單閉環**：supplier orders 頁面串接（確認/拒絕/調整）並回寫訂單狀態。
-6. **驗收落地（最小）**：acceptance 頁面可從訂單拉取驗收項、提交驗收結果；附件/照片可先以簡化版（先不做完整檔案儲存也可）。
-7. **對帳落地（最小）**：reconciliation 頁面能建立對帳、列出差異、完成人工確認（先確保 API 可用與資料一致）。
-8. **最小 Smoke / 回歸**：補齊「登入→下單→接單→驗收→對帳」關鍵 API 的最小 smoke 驗證（可先以腳本/pytest/integration 形式落地）。
+1. **資料庫可重建**：以既有 Alembic + seed 流程，確保 staging-v2 可從空 DB 重新建立必要資料（demo 帳號、基礎品類/商品/SKU、最小訂單資料）。
+2. **Auth 真實化（前端）**：移除/隔離所有 `staging-mock-token` 與 mock auth fallback，統一路徑走 `app/api/bff/*` 並以 Cookie 維持登入狀態。
+3. **權限與租戶一致性**：前端 route guard + BFF 請求 header/cookie + 後端 tenant_id 欄位/授權檢查對齊（避免「有數字/無列表」或跨租戶讀取）。
+4. **商品/SKU 就緒**：確保餐廳端可搜尋/選擇商品，供應商端可上架/維護 SKU（或以種子資料提供可下單目錄），並與價格/稅務欄位對齊。
+5. **Restaurant 下單閉環**：restaurant orders 頁面串 Order Service（建立/查詢/狀態變更最小集合），並能引用既有 SKU 產出可供 supplier 處理的訂單。
+6. **Supplier 接單/改單閉環**：supplier orders 頁面串接（確認/拒絕/調整）並回寫訂單狀態。
+7. **驗收落地（最小）**：acceptance 頁面可從訂單拉取驗收項、提交驗收結果；附件/照片可先以簡化版（先不做完整檔案儲存也可）。
+8. **對帳落地（最小）**：reconciliation 頁面能建立對帳、列出差異、完成人工確認（先確保 API 可用與資料一致）。
+9. **最小 Smoke / 回歸**：補齊「商品/SKU→下單→接單→驗收→對帳」關鍵 API 的最小 smoke 驗證（可先以腳本/pytest/integration 形式落地）。
 
 ## 5) P1（提升可用性與真實整合）
 
@@ -77,4 +78,3 @@ _Last Updated: 2025-12-16_
 - 部署：`./DEPLOYMENT-CHECKLIST.md`、`./DEPLOYMENT-ENVIRONMENTS.md`、`./DEPLOYMENT-TROUBLESHOOTING.md`
 - 營運：`./Infra-Runbook.md`、`./staging-permanent-guide.md`
 - 測試入口：`docs/4-Test/INDEX.md`
-

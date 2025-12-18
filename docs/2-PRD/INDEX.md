@@ -8,12 +8,11 @@
 
 ## 模組 PRD
 - Auth / User：`./PRD-Auth-Module.md`
+- SKU Management Enhanced：`./PRD-SKU-Management-Enhanced.md`
+- SKU Sharing System：`./PRD-SKU-Sharing-System.md`
 - Billing：`./PRD-Billing-Master.md`
 - Customer Hierarchy：`./PRD-Customer-Hierarchy.md`
 - Customer Hierarchy Dashboard Redesign：`./PRD-Customer-Hierarchy-Dashboard-Redesign.md`
 - Onboarding Process：`./PRD-Onboarding-Process.md`
 - Referral System：`./PRD-Referral-System.md`
-- SKU Management Enhanced：`./PRD-SKU-Management-Enhanced.md`
-- SKU Sharing System：`./PRD-SKU-Sharing-System.md`
 - Contracts/Config PRD Reconciliation：`./Orderly_Contracts_Config_PRD_Reconciliation.md`
-

@@ -17,8 +17,8 @@
 - [US-AUTH-012: 進階安全設定](../by-module/01-auth-user-management.md#us-auth-012-進階安全設定)
 
 ### 商品與 SKU 管理
-- [US-PRD-009: 維護標準化分類樹](../by-module/03-product-sku-management.md#us-prd-009-維護標準化分類樹)
-- [US-PRD-010: 分析品類趨勢](../by-module/03-product-sku-management.md#us-prd-010-分析品類趨勢)
+- [US-PRD-009: 維護標準化分類樹](../by-module/02-product-sku-management.md#us-prd-009-維護標準化分類樹)
+- [US-PRD-010: 分析品類趨勢](../by-module/02-product-sku-management.md#us-prd-010-分析品類趨勢)
 
 ### 驗收點收
 - [US-ACC-007: GPS 定位驗證](../by-module/04-acceptance-receiving.md#us-acc-007-gps-定位驗證)
@@ -47,7 +47,7 @@
 - [US-AUTH-006: MFA 雙因素驗證](../by-module/01-auth-user-management.md#us-auth-006-mfa-雙因素驗證)
 
 ### 訂單與驗收
-- [US-ORD-002: 即時追蹤訂單狀態](../by-module/02-order-management.md#us-ord-002-即時追蹤訂單狀態)
+- [US-ORD-002: 即時追蹤訂單狀態](../by-module/03-order-management.md#us-ord-002-即時追蹤訂單狀態)
 - [US-ACC-003: 查看餐廳驗收紀錄](../by-module/04-acceptance-receiving.md#us-acc-003-查看餐廳驗收紀錄)
 
 ### 對帳與結算
