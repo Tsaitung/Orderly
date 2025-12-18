@@ -21,7 +21,7 @@
 | 編號 | 模組 | PRD 文件 | 對應 User Story |
 |:----:|------|----------|-----------------|
 | 01 | **身份驗證** | [PRD-Auth-Module.md](./PRD-Auth-Module.md) | US-AUTH-001~021 |
-| 02 | **商品/SKU** | [PRD-SKU-Sharing-System.md](./PRD-SKU-Sharing-System.md) | US-PRD-001~020 |
+| 02 | **商品/SKU** | [PRD-SKU-Sharing-System.md](./PRD-SKU-Sharing-System.md) | US-PRD-001~024 |
 | 02 | 商品/SKU | [PRD-SKU-Management-Enhanced.md](./PRD-SKU-Management-Enhanced.md) | (補充文件) |
 | 03 | **訂單管理** | [PRD-Complete.md](./PRD-Complete.md) Section 2 | US-ORD-001~007 |
 | 04 | **驗收點收** | [PRD-Complete.md](./PRD-Complete.md) Section 3 | US-ACC-001~007 |
@@ -49,7 +49,7 @@
 | 模組代碼 | User Story 數 | 說明 |
 |---------|:------------:|------|
 | AUTH | 21 | 註冊、登入、Line OAuth、MFA、行動裝置、平台獨立 |
-| PRD | 20 | 商品目錄、SKU、別名整合、圖片審核、品牌管理 |
+| PRD | 24 | 商品目錄、SKU、別名整合、圖片審核、品牌管理、**價格表管理** |
 | ORD | 7 | 訂單建立、追蹤、協商 |
 | ACC | 7 | 掃碼點收、異常標記 |
 | BIL | 8 | 對帳單、發票、付款 |
@@ -57,4 +57,4 @@
 | ONB | 11 | 註冊引導、教學 |
 | REF | 12 | 雙向推薦、獎勵 |
 | ERP | 5 | API、數據同步 |
-| **總計** | **101** | |
+| **總計** | **105** | |

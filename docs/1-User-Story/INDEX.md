@@ -2,7 +2,7 @@
 
 > 最後更新: 2025-12-18
 > 狀態: Active
-> 總計: 101 User Stories
+> 總計: 105 User Stories
 
 本資料夾整合所有 User Story，按功能模組和角色分類索引。
 
@@ -15,7 +15,7 @@
 ├── INDEX.md                              # 本文件
 ├── by-module/                            # 按功能模組分類
 │   ├── 01-auth-user-management.md       # 身份驗證與用戶管理 (21 stories)
-│   ├── 02-product-sku-management.md     # 商品與 SKU 管理 (20 stories)
+│   ├── 02-product-sku-management.md     # 商品與 SKU 管理 (24 stories)
 │   ├── 03-order-management.md           # 訂單管理 (7 stories)
 │   ├── 04-acceptance-receiving.md       # 驗收點收 (7 stories)
 │   ├── 05-billing-settlement.md         # 對帳與結算 (8 stories)
@@ -39,7 +39,7 @@
 | 模組 | User Story 數 | P0 | P1 | P2 | 說明 |
 |------|:------------:|:--:|:--:|:--:|------|
 | [01-身份驗證](./by-module/01-auth-user-management.md) | 21 | 11 | 6 | 4 | 註冊、登入、**Line OAuth**、合作邀請加入、MFA、行動裝置、平台獨立 |
-| [02-商品管理](./by-module/02-product-sku-management.md) | 20 | 14 | 4 | 2 | 商品目錄、SKU、**SKU別名整合**、**圖片審核**、**品牌管理** |
+| [02-商品管理](./by-module/02-product-sku-management.md) | 24 | 17 | 5 | 2 | 商品目錄、SKU、**SKU別名整合**、**圖片審核**、**品牌管理**、**價格表管理** |
 | [03-訂單管理](./by-module/03-order-management.md) | 7 | 4 | 3 | 0 | 訂單建立、追蹤、協商 |
 | [04-驗收點收](./by-module/04-acceptance-receiving.md) | 7 | 4 | 1 | 2 | 掃碼點收、異常標記 |
 | [05-對帳結算](./by-module/05-billing-settlement.md) | 8 | 4 | 3 | 1 | 對帳單、發票、付款 |
@@ -47,7 +47,7 @@
 | [07-導入流程](./by-module/07-onboarding-process.md) | 11 | 4 | 4 | 3 | 註冊引導、教學 |
 | [08-推薦系統](./by-module/08-referral-system.md) | 12 | 3 | 4 | 5 | 雙向推薦、獎勵 |
 | [09-ERP整合](./by-module/09-erp-integration.md) | 5 | 3 | 2 | 0 | API、數據同步 |
-| **總計** | **101** | **52** | **30** | **19** | |
+| **總計** | **105** | **55** | **31** | **19** | |
 
 ---
 
@@ -72,12 +72,12 @@
 
 ## 按優先級統計
 
-### P0 - MVP 必備 (52 stories)
+### P0 - MVP 必備 (55 stories)
 
 | 模組 | 代表性 User Story |
 |------|-----------------|
 | AUTH | US-AUTH-001 餐廳快速註冊、US-AUTH-003 標準登入、**US-AUTH-019 合作邀請分享**、**US-AUTH-021 受邀加入與收藏**、**US-AUTH-016 平台獨立登入**、**US-AUTH-017 行動瀏覽器** |
-| PRD | US-PRD-001 多條件搜尋、US-PRD-005 批量上傳 SKU、**US-PRD-011 SKU 重複比對**、**US-PRD-014 圖片上傳審核**、**US-PRD-017 品牌選擇** |
+| PRD | US-PRD-001 多條件搜尋、US-PRD-005 批量上傳 SKU、**US-PRD-011 SKU 重複比對**、**US-PRD-014 圖片上傳審核**、**US-PRD-017 品牌選擇**、**US-PRD-021 價格表管理**、**US-PRD-022 客戶分類** |
 | ORD | US-ORD-001 快速建立訂單、US-ORD-002 即時追蹤狀態 |
 | ACC | US-ACC-001 掃碼點收、US-ACC-002 拍照記錄異常 |
 | BIL | US-BIL-001 自動對帳單、US-BIL-003 一鍵產生對帳 |
@@ -86,9 +86,9 @@
 | REF | US-REF-001 邀請供應商、US-REF-002 邀請餐廳 |
 | ERP | US-ERP-001 API 整合、US-ERP-002 無縫數據流 |
 
-### P1 - 重要功能 (30 stories)
+### P1 - 重要功能 (31 stories)
 
-批次操作、智能推薦、MFA、報表分析、**原生 App（iOS/Android）**、**品牌清單維護**等進階功能。
+批次操作、智能推薦、MFA、報表分析、**原生 App（iOS/Android）**、**品牌清單維護**、**價格表有效期管理**等進階功能。
 
 ### P2 - 進階功能 (19 stories)
 

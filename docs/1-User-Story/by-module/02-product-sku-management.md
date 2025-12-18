@@ -3,20 +3,21 @@
 > 來源: [PRD-Complete.md](../../2-PRD/PRD-Complete.md) Section 4, [PRD-SKU-Sharing-System.md](../../2-PRD/PRD-SKU-Sharing-System.md)
 > 最後更新: 2025-12-18
 > 狀態: Active
-> 總計: 20 User Stories (P0: 14, P1: 4, P2: 2)
+> 總計: 24 User Stories (P0: 17, P1: 5, P2: 2)
 
 ## 概述
 本模組涵蓋所有與商品目錄、SKU 管理、分類、過敏原、庫存相關的 User Story。
 
 **說明**：本模組為訂單建立的前置條件（訂單品項必須來自商品/SKU）。
 
-### 三大核心擴充情境
+### 四大核心擴充情境
 
-本模組在基礎功能之外，新增以下三大核心使用情境：
+本模組在基礎功能之外，新增以下四大核心使用情境：
 
 1. **多供應商同一 SKU 名稱整合** (US-PRD-011~013)：解決不同供應商對相同 SKU 命名不一致的問題
 2. **SKU 圖片統一與維護機制** (US-PRD-014~016)：確保商品圖片品質一致性和審核流程
 3. **品牌與子品牌欄位設計** (US-PRD-017~020)：支援有品牌商品與無品牌商品並存的分類管理
+4. **供應商價格表與客戶分類** (US-PRD-021~024)：支援差異化定價、價格有效期、客戶分級價格
 
 ---
 
@@ -264,6 +265,63 @@
 
 ---
 
+### US-PRD-021: 建立與管理供應商價格表
+**角色**: supplier_manager（供應商業務）
+**優先級**: P0
+**狀態**: Active
+
+**故事**: 作為供應商業務，我希望能建立多份價格表並設定各自的有效期限，以便針對不同時期、不同促銷活動或不同客戶群組提供差異化定價
+
+**驗收標準**:
+- [ ] **價格表建立**：可建立多份價格表，每份設定名稱、描述、狀態（啟用/停用）
+- [ ] **有效期設定**：每份價格表可設定生效日期和失效日期
+- [ ] **SKU 價格設定**：可在價格表中設定各 SKU 的單價、最小訂購量、階梯價格
+- [ ] **價格表複製**：可從現有價格表複製建立新價格表，方便快速調整
+- [ ] **批量匯入**：支援 Excel 批量匯入價格表內容
+- [ ] **版本歷史**：保留價格表修改歷史，可追溯變更紀錄
+
+**來源**: PRD-SKU-Management-Enhanced (供應商價格表情境)
+
+---
+
+### US-PRD-022: 客戶分類管理
+**角色**: supplier_manager（供應商業務）
+**優先級**: P0
+**狀態**: Active
+
+**故事**: 作為供應商業務，我希望能將我的客戶（餐廳）進行分類（如：VIP、一般、新客戶），以便連動到不同的價格表，實現差異化定價策略
+
+**驗收標準**:
+- [ ] **客戶分類建立**：可建立自定義客戶分類（如 VIP、白金、黃金、一般、試用）
+- [ ] **客戶指派**：可將餐廳客戶指派到特定分類
+- [ ] **批量指派**：支援批量將多個客戶指派到同一分類
+- [ ] **分類規則**：可設定自動分類規則（如：月訂購額超過 X 元自動升級 VIP）
+- [ ] **分類歷史**：記錄客戶分類變更歷史
+- [ ] **分類統計**：顯示各分類下的客戶數量和訂購統計
+
+**來源**: PRD-SKU-Management-Enhanced (供應商價格表情境)
+
+---
+
+### US-PRD-023: 價格表與客戶分類連動
+**角色**: supplier_manager（供應商業務）
+**優先級**: P0
+**狀態**: Active
+
+**故事**: 作為供應商業務，我希望能將價格表指派給特定客戶分類，當該分類的客戶下單時自動套用對應價格表的價格
+
+**驗收標準**:
+- [ ] **價格表指派**：可將一份價格表指派給一個或多個客戶分類
+- [ ] **優先級設定**：當客戶符合多個分類時，可設定價格表套用優先級
+- [ ] **自動套用**：客戶下單時，系統自動根據其分類套用對應價格
+- [ ] **價格顯示**：客戶在商品頁面看到的是其專屬價格（非公開牌價）
+- [ ] **訂單確認**：訂單確認時顯示套用的價格表名稱
+- [ ] **預設價格表**：可設定預設價格表供未分類客戶使用
+
+**來源**: PRD-SKU-Management-Enhanced (供應商價格表情境)
+
+---
+
 ## P1 - 重要功能
 
 ### US-PRD-007: 管理產品認證和品質等級
@@ -282,17 +340,23 @@
 
 ---
 
-### US-PRD-008: 即時更新庫存狀態
+### US-PRD-008: 彈性庫存管理與狀態更新
 **角色**: supplier_operator（供應商倉管）
 **優先級**: P1
 **狀態**: Active
 
-**故事**: 作為供應商倉管，我希望能即時更新庫存狀態，以便避免缺貨糾紛
+**故事**: 作為供應商倉管，我希望能選擇性地管理庫存狀態，系統預設允許庫存為零時仍可接單（適合無庫存管理能力的供應商），但也能手動啟用庫存控制功能
 
 **驗收標準**:
-- [ ] 庫存變動同步延遲 <1 秒
-- [ ] 支援庫存預警設定
-- [ ] 自動替代品推薦
+- [ ] **預設行為**：庫存為零時仍可下單，系統不阻擋訂單建立
+- [ ] **可選庫存控制**：供應商可啟用「庫存管控模式」，啟用後庫存不足時禁止下單
+- [ ] **庫存更新同步**：啟用庫存管控時，庫存變動同步延遲 <1 秒
+- [ ] **預警設定**：可選擇性設定庫存預警門檻，低於門檻時通知倉管
+- [ ] **自動替代品推薦**：缺貨時可顯示替代品建議（可選功能）
+- [ ] **SKU 層級設定**：每個 SKU 可獨立設定是否啟用庫存管控
+
+**設計理念**：
+> 許多中小型供應商沒有完整的庫存管理系統，強制庫存管控會造成使用障礙。預設允許零庫存下單，讓供應商自行決定是否啟用進階庫存功能。
 
 **來源**: [PRD-Complete.md](../../2-PRD/PRD-Complete.md) Section 4.2
 
@@ -329,6 +393,25 @@
 - [ ] 刪除或更名子品牌時，已使用該子品牌的 SKU 資料保持一致
 
 **來源**: PRD-SKU-Management-Enhanced (品牌欄位設計情境)
+
+---
+
+### US-PRD-024: 價格表有效期管理與自動切換
+**角色**: supplier_admin（供應商管理者）
+**優先級**: P1
+**狀態**: Active
+
+**故事**: 作為供應商管理者，我希望系統能自動管理價格表的生效和失效，並在價格表即將到期前提醒我，以便確保定價的連續性
+
+**驗收標準**:
+- [ ] **自動生效**：價格表在設定的生效日期自動啟用
+- [ ] **自動失效**：價格表在設定的失效日期自動停用
+- [ ] **到期提醒**：價格表失效前 7/3/1 天發送提醒通知
+- [ ] **無縫切換**：新舊價格表切換時不影響進行中的訂單
+- [ ] **回溯查詢**：可查詢歷史訂單當時適用的價格表和價格
+- [ ] **價格凍結**：訂單建立時鎖定當時價格，後續價格變動不影響已建立訂單
+
+**來源**: PRD-SKU-Management-Enhanced (供應商價格表情境)
 
 ---
 
@@ -381,7 +464,7 @@
 | SKU 批量上傳 | ❌ | ✅ | ✅ | US-PRD-005 |
 | 差異化定價 | ❌ | ✅ | 👁️ | US-PRD-006 |
 | 認證管理 | ❌ | ✅ | ✅ | US-PRD-007 |
-| 庫存同步 | ✅ | ✅ | ✅ | US-PRD-008 |
+| 彈性庫存管理 | ✅ | ✅ | ✅ | US-PRD-008 |
 | 分類樹管理 | 👁️ | 👁️ | ✅ | US-PRD-009 |
 
 ### SKU 別名整合功能
@@ -408,6 +491,15 @@
 | 無品牌標註 | 👁️ | ✅ | ✅ | US-PRD-018 |
 | 品牌清單維護 | ❌ | ❌ | ✅ | US-PRD-019 |
 | 品牌篩選規則 | ✅ | ❌ | ✅ | US-PRD-020 |
+
+### 價格表與客戶分類功能
+
+| 功能 | 餐廳端 | 供應端 | 平台端 | User Story |
+|------|:------:|:------:|:------:|------------|
+| 價格表管理 | ❌ | ✅ | 👁️ | US-PRD-021 |
+| 客戶分類管理 | ❌ | ✅ | 👁️ | US-PRD-022 |
+| 價格表客戶連動 | 👁️ | ✅ | 👁️ | US-PRD-023 |
+| 價格表有效期管理 | ❌ | ✅ | 👁️ | US-PRD-024 |
 
 **圖例說明**：✅ 完整功能 | 👁️ 僅檢視 | ❌ 無權限
 
@@ -517,7 +609,109 @@ CREATE TABLE sub_brands (
 -- SKU 表擴展欄位
 ALTER TABLE skus ADD COLUMN IF NOT EXISTS (
   brand_id UUID REFERENCES brands(id),
-  sub_brand_id UUID REFERENCES sub_brands(id)
+  sub_brand_id UUID REFERENCES sub_brands(id),
+  inventory_control_enabled BOOLEAN DEFAULT false  -- 是否啟用庫存管控（預設關閉）
+);
+```
+
+### 供應商價格表資料模型
+
+```sql
+-- 客戶分類表（供應商自定義）
+CREATE TABLE supplier_customer_tiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE,
+  name VARCHAR(50) NOT NULL,             -- 分類名稱（如 VIP、白金、一般）
+  description TEXT,
+  sort_order INTEGER DEFAULT 0,          -- 排序順序
+  auto_upgrade_threshold DECIMAL(12,2),  -- 自動升級門檻（月訂購額）
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(supplier_id, name),
+  INDEX idx_supplier_tiers (supplier_id)
+);
+
+-- 客戶分類指派表
+CREATE TABLE supplier_customer_tier_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE,
+  customer_id UUID REFERENCES organizations(id) ON DELETE CASCADE,  -- 餐廳
+  tier_id UUID REFERENCES supplier_customer_tiers(id) ON DELETE SET NULL,
+  assigned_at TIMESTAMPTZ DEFAULT NOW(),
+  assigned_by UUID REFERENCES users(id),
+
+  UNIQUE(supplier_id, customer_id),
+  INDEX idx_tier_assignments (supplier_id, tier_id)
+);
+
+-- 價格表主表
+CREATE TABLE supplier_price_lists (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,            -- 價格表名稱
+  description TEXT,
+  status ENUM('draft', 'active', 'expired', 'archived') DEFAULT 'draft',
+  effective_from DATE NOT NULL,          -- 生效日期
+  effective_to DATE,                     -- 失效日期（NULL = 無限期）
+  is_default BOOLEAN DEFAULT false,      -- 是否為預設價格表
+  version INTEGER DEFAULT 1,             -- 版本號
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+
+  INDEX idx_price_list_supplier (supplier_id, status),
+  INDEX idx_price_list_effective (supplier_id, effective_from, effective_to)
+);
+
+-- 價格表明細表
+CREATE TABLE supplier_price_list_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  price_list_id UUID REFERENCES supplier_price_lists(id) ON DELETE CASCADE,
+  sku_id UUID REFERENCES skus(id) ON DELETE CASCADE,
+  unit_price DECIMAL(12,2) NOT NULL,     -- 單價
+  min_order_qty INTEGER DEFAULT 1,       -- 最小訂購量
+  currency VARCHAR(3) DEFAULT 'TWD',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  UNIQUE(price_list_id, sku_id),
+  INDEX idx_price_list_items (price_list_id)
+);
+
+-- 階梯價格表（可選）
+CREATE TABLE supplier_price_tiers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  price_list_item_id UUID REFERENCES supplier_price_list_items(id) ON DELETE CASCADE,
+  min_qty INTEGER NOT NULL,              -- 最小數量
+  max_qty INTEGER,                       -- 最大數量（NULL = 無上限）
+  unit_price DECIMAL(12,2) NOT NULL,     -- 該階梯單價
+
+  INDEX idx_price_tiers (price_list_item_id, min_qty)
+);
+
+-- 價格表與客戶分類連動表
+CREATE TABLE supplier_price_list_tier_mappings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  price_list_id UUID REFERENCES supplier_price_lists(id) ON DELETE CASCADE,
+  tier_id UUID REFERENCES supplier_customer_tiers(id) ON DELETE CASCADE,
+  priority INTEGER DEFAULT 0,            -- 優先級（數字越小優先）
+
+  UNIQUE(price_list_id, tier_id),
+  INDEX idx_price_tier_mapping (tier_id)
+);
+
+-- 價格表版本歷史
+CREATE TABLE supplier_price_list_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  price_list_id UUID REFERENCES supplier_price_lists(id) ON DELETE CASCADE,
+  version INTEGER NOT NULL,
+  snapshot JSONB NOT NULL,               -- 完整價格表快照
+  changed_by UUID REFERENCES users(id),
+  changed_at TIMESTAMPTZ DEFAULT NOW(),
+  change_reason TEXT,
+
+  INDEX idx_price_history (price_list_id, version)
 );
 ```
 
@@ -546,6 +740,34 @@ POST   /api/v1/brands/{id}/approve             # 審核品牌
 GET    /api/v1/brands/{id}/sub-brands          # 取得子品牌列表
 POST   /api/v1/brands/{id}/sub-brands          # 新增子品牌
 PUT    /api/v1/brands/merge                    # 合併品牌
+
+# 客戶分類管理（供應商）
+GET    /api/v1/suppliers/{supplierId}/customer-tiers        # 取得客戶分類列表
+POST   /api/v1/suppliers/{supplierId}/customer-tiers        # 新增客戶分類
+PUT    /api/v1/suppliers/{supplierId}/customer-tiers/{id}   # 更新客戶分類
+DELETE /api/v1/suppliers/{supplierId}/customer-tiers/{id}   # 刪除客戶分類
+POST   /api/v1/suppliers/{supplierId}/customer-tiers/assign # 指派客戶到分類（批量）
+GET    /api/v1/suppliers/{supplierId}/customers/{customerId}/tier  # 查詢客戶分類
+
+# 價格表管理（供應商）
+GET    /api/v1/suppliers/{supplierId}/price-lists           # 取得價格表列表
+POST   /api/v1/suppliers/{supplierId}/price-lists           # 新增價格表
+GET    /api/v1/suppliers/{supplierId}/price-lists/{id}      # 取得價格表詳情
+PUT    /api/v1/suppliers/{supplierId}/price-lists/{id}      # 更新價格表
+DELETE /api/v1/suppliers/{supplierId}/price-lists/{id}      # 刪除價格表
+POST   /api/v1/suppliers/{supplierId}/price-lists/{id}/copy # 複製價格表
+POST   /api/v1/suppliers/{supplierId}/price-lists/{id}/activate   # 啟用價格表
+POST   /api/v1/suppliers/{supplierId}/price-lists/{id}/deactivate # 停用價格表
+POST   /api/v1/suppliers/{supplierId}/price-lists/import    # 批量匯入價格
+GET    /api/v1/suppliers/{supplierId}/price-lists/{id}/history    # 取得版本歷史
+
+# 價格表與客戶分類連動
+POST   /api/v1/suppliers/{supplierId}/price-lists/{id}/tiers      # 指派分類到價格表
+DELETE /api/v1/suppliers/{supplierId}/price-lists/{id}/tiers/{tierId}  # 移除分類連動
+
+# 客戶專屬價格查詢（餐廳端）
+GET    /api/v1/products/{skuId}/price                       # 取得當前用戶專屬價格
+GET    /api/v1/suppliers/{supplierId}/products/prices       # 取得供應商所有商品專屬價格
 ```
 
 ---
