@@ -1,8 +1,8 @@
 # User Story 索引
 
-> 最後更新: 2025-12-16
+> 最後更新: 2025-12-18
 > 狀態: Active
-> 總計: 88 User Stories
+> 總計: 101 User Stories
 
 本資料夾整合所有 User Story，按功能模組和角色分類索引。
 
@@ -14,9 +14,9 @@
 1-User-Story/
 ├── INDEX.md                              # 本文件
 ├── by-module/                            # 按功能模組分類
-│   ├── 01-auth-user-management.md       # 身份驗證與用戶管理 (18 stories)
-│   ├── 02-order-management.md           # 訂單管理 (7 stories)
-│   ├── 03-product-sku-management.md     # 商品與 SKU 管理 (10 stories)
+│   ├── 01-auth-user-management.md       # 身份驗證與用戶管理 (21 stories)
+│   ├── 02-product-sku-management.md     # 商品與 SKU 管理 (20 stories)
+│   ├── 03-order-management.md           # 訂單管理 (7 stories)
 │   ├── 04-acceptance-receiving.md       # 驗收點收 (7 stories)
 │   ├── 05-billing-settlement.md         # 對帳與結算 (8 stories)
 │   ├── 06-customer-hierarchy.md         # 客戶層級管理 (10 stories)
@@ -38,16 +38,16 @@
 
 | 模組 | User Story 數 | P0 | P1 | P2 | 說明 |
 |------|:------------:|:--:|:--:|:--:|------|
-| [01-身份驗證](./by-module/01-auth-user-management.md) | 18 | 8 | 6 | 4 | 註冊、登入、**Line OAuth**、MFA、行動裝置、平台獨立 |
-| [02-訂單管理](./by-module/02-order-management.md) | 7 | 4 | 3 | 0 | 訂單建立、追蹤、協商 |
-| [03-商品管理](./by-module/03-product-sku-management.md) | 10 | 6 | 3 | 1 | 商品目錄、SKU、過敏原 |
+| [01-身份驗證](./by-module/01-auth-user-management.md) | 21 | 11 | 6 | 4 | 註冊、登入、**Line OAuth**、合作邀請加入、MFA、行動裝置、平台獨立 |
+| [02-商品管理](./by-module/02-product-sku-management.md) | 20 | 14 | 4 | 2 | 商品目錄、SKU、**SKU別名整合**、**圖片審核**、**品牌管理** |
+| [03-訂單管理](./by-module/03-order-management.md) | 7 | 4 | 3 | 0 | 訂單建立、追蹤、協商 |
 | [04-驗收點收](./by-module/04-acceptance-receiving.md) | 7 | 4 | 1 | 2 | 掃碼點收、異常標記 |
 | [05-對帳結算](./by-module/05-billing-settlement.md) | 8 | 4 | 3 | 1 | 對帳單、發票、付款 |
 | [06-客戶層級](./by-module/06-customer-hierarchy.md) | 10 | 5 | 3 | 2 | 4層組織架構管理 |
 | [07-導入流程](./by-module/07-onboarding-process.md) | 11 | 4 | 4 | 3 | 註冊引導、教學 |
 | [08-推薦系統](./by-module/08-referral-system.md) | 12 | 3 | 4 | 5 | 雙向推薦、獎勵 |
 | [09-ERP整合](./by-module/09-erp-integration.md) | 5 | 3 | 2 | 0 | API、數據同步 |
-| **總計** | **88** | **41** | **29** | **18** | |
+| **總計** | **101** | **52** | **30** | **19** | |
 
 ---
 
@@ -72,13 +72,13 @@
 
 ## 按優先級統計
 
-### P0 - MVP 必備 (41 stories)
+### P0 - MVP 必備 (52 stories)
 
 | 模組 | 代表性 User Story |
 |------|-----------------|
-| AUTH | US-AUTH-001 餐廳快速註冊、US-AUTH-003 標準登入、**US-AUTH-016 平台獨立登入**、**US-AUTH-017 行動瀏覽器** |
+| AUTH | US-AUTH-001 餐廳快速註冊、US-AUTH-003 標準登入、**US-AUTH-019 合作邀請分享**、**US-AUTH-021 受邀加入與收藏**、**US-AUTH-016 平台獨立登入**、**US-AUTH-017 行動瀏覽器** |
+| PRD | US-PRD-001 多條件搜尋、US-PRD-005 批量上傳 SKU、**US-PRD-011 SKU 重複比對**、**US-PRD-014 圖片上傳審核**、**US-PRD-017 品牌選擇** |
 | ORD | US-ORD-001 快速建立訂單、US-ORD-002 即時追蹤狀態 |
-| PRD | US-PRD-001 多條件搜尋、US-PRD-005 批量上傳 SKU |
 | ACC | US-ACC-001 掃碼點收、US-ACC-002 拍照記錄異常 |
 | BIL | US-BIL-001 自動對帳單、US-BIL-003 一鍵產生對帳 |
 | HIER | US-HIER-001 層級設定、US-HIER-004 客戶架構查看 |
@@ -86,13 +86,13 @@
 | REF | US-REF-001 邀請供應商、US-REF-002 邀請餐廳 |
 | ERP | US-ERP-001 API 整合、US-ERP-002 無縫數據流 |
 
-### P1 - 重要功能 (29 stories)
+### P1 - 重要功能 (30 stories)
 
-批次操作、智能推薦、MFA、報表分析、**原生 App（iOS/Android）**等進階功能。
+批次操作、智能推薦、MFA、報表分析、**原生 App（iOS/Android）**、**品牌清單維護**等進階功能。
 
-### P2 - 進階功能 (18 stories)
+### P2 - 進階功能 (19 stories)
 
-AI 品質評估、多幣別、Super User、漏斗分析等增值功能。
+AI 品質評估、多幣別、Super User、漏斗分析、**品牌篩選規則**等增值功能。
 
 ---
 
@@ -100,8 +100,9 @@ AI 品質評估、多幣別、Super User、漏斗分析等增值功能。
 
 | PRD 文件 | User Story 數 | 對應模組 |
 |---------|:------------:|---------|
-| [PRD-Complete.md](../2-PRD/PRD-Complete.md) | 37 | ORD, PRD, ACC, BIL, ERP |
-| [PRD-Auth-Module.md](../2-PRD/PRD-Auth-Module.md) | 18 | AUTH（含平台獨立登入、行動裝置支援）|
+| [PRD-Complete.md](../2-PRD/PRD-Complete.md) | 47 | ORD, PRD, ACC, BIL, ERP |
+| [PRD-SKU-Sharing-System.md](../2-PRD/PRD-SKU-Sharing-System.md) | - | PRD（SKU 別名、圖片、品牌管理）|
+| [PRD-Auth-Module.md](../2-PRD/PRD-Auth-Module.md) | 21 | AUTH（含合作邀請加入、平台獨立登入、行動裝置支援）|
 | [PRD-Customer-Hierarchy.md](../2-PRD/PRD-Customer-Hierarchy.md) | 10 | HIER |
 | [PRD-Onboarding-Process.md](../2-PRD/PRD-Onboarding-Process.md) | 11 | ONB |
 | [PRD-Referral-System.md](../2-PRD/PRD-Referral-System.md) | 12 | REF |
@@ -131,7 +132,7 @@ NNN: 001-999 流水號
 - [ ] 標準 1
 - [ ] 標準 2
 
-**來源**: [PRD-xxx.md](path) Section x.x
+**來源**: `../2-PRD/PRD-xxx.md`（Section x.x）
 ```
 
 ---
@@ -148,6 +149,7 @@ NNN: 001-999 流水號
 | supplier_operator | 供應商操作員 | 可選 | 收單、出貨 |
 | platform_admin | 平台管理員 | 強制 | 平台設定、審核 |
 | platform_support | 平台支援 | 強制 | 客服、營運 |
+| **data_steward** | **平台資料管理員** | **強制** | **SKU 別名、圖片審核、品牌維護** |
 | super_admin | 系統超管 | 強制(TOTP) | 全系統控制 |
 
 ---
@@ -163,5 +165,5 @@ NNN: 001-999 流水號
 
 - [PRD 索引](../2-PRD/) - 產品需求文檔
 - [設計系統](../0-Design/) - UI/UX 規範
-- [API 文檔](../API-Endpoints-Essential.md) - 端點規格
-- [資料庫架構](../Database-Schema-Core.md) - 資料模型
+- [API 文檔](../0-Design/API-Endpoints-Essential.md) - 端點規格
+- [資料庫架構](../0-Design/Database-Schema-Core.md) - 資料模型
