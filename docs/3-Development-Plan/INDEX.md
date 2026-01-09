@@ -6,6 +6,7 @@ _Last updated: 2025-12-18_
 
 ## 規劃與進度
 - 開發計畫主檔（唯一來源）：`./DEVELOPMENT-PLAN.md`
+- PRD/US 實作落差盤點（Gap Report）：`./PRD-US-GAP-REPORT.md`
 
 ## CI/CD
 - CI/CD 架構與故障排除：`./CI-CD-ARCHITECTURE.md`

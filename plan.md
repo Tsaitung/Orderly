@@ -105,8 +105,8 @@ $ python3 -c "from app.services import *; print([s.__name__ for s in [Reconcilia
 - `/fee-configs` - CRUD + /applicable + /calculate + /default-rate
 
 **依據文檔**:
-- `docs/Database-Schema-Core.md:264-388` - 對帳引擎設計
-- `docs/PRD-Billing-Master.md` - 計費策略與費率結構
+- `docs/0-Design/Database-Schema-Core.md:264-388` - 對帳引擎設計
+- `docs/2-PRD/PRD-Billing-Master.md` - 計費策略與費率結構
 
 ---
 
@@ -741,7 +741,7 @@ backend/order-service-fastapi/
 ## 🚨 最新更新（2025-09-30 18:00）
 - **監控頻率優化**：`monitoring.yml` 從每 5 分鐘改為每天 01:00 UTC（台北時間 09:00）執行一次，解決過度頻繁監控問題。
 - **新增每日報告**：整合所有監控結果為 HTML 郵件，自動發送至 `tech@tsaitung.com`（透過 SendGrid API）。
-- **文檔完善**：`docs/CI-CD-ARCHITECTURE.md` 新增第 10 章「監控策略」，詳述六大監控模組、報告機制與專業工具整合建議。
+- **文檔完善**：`docs/3-Development-Plan/CI-CD-ARCHITECTURE.md` 新增第 10 章「監控策略」，詳述六大監控模組、報告機制與專業工具整合建議。
 
 ## 🧭 開發優先順序（更新於 2025-12-07）
 1. **身分／租戶／權限（User/Auth）** — 所有模組依賴統一登入、租戶隔離與角色權限；需先鎖定 `backend/user-service-fastapi` 契約與 `shared/types` 權限模型，確保 JWT / API Gateway 對齊。
@@ -765,7 +765,7 @@ backend/order-service-fastapi/
 
 ## 📋 Auth Module 詳細開發規劃（2025-12-07）
 
-> **基於完整代碼審查的事實性評估**（參考：`docs/PRD-Auth-Module.md`）
+> **基於完整代碼審查的事實性評估**（參考：`docs/2-PRD/PRD-Auth-Module.md`）
 
 ### 📊 Auth Module 當前狀態（經驗證 2025-12-11）
 
@@ -1119,7 +1119,7 @@ curl -X POST /auth/login
 ---
 
 ## 🚨 稍早更新（2025-09-30 16:30）
-- CI/CD 設計已整合至 `docs/CI-CD-ARCHITECTURE.md`，此檔為唯一權威來源。
+- CI/CD 設計已整合至 `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md`，此檔為唯一權威來源。
 - `deploy.yml` 與 `scripts/ci/validate-deployment.sh` 新增 staging 空白 suffix 自動回落至 `-v2` 的邏輯，終止誤判。
 - `scripts/tests/test-validate-deployment-suffix.sh` 回歸測試可覆蓋空字串與空白字串情境。
 - 手動 `workflow_dispatch`（Run ID 18090027823）已驗證八個服務完整部署無誤。
@@ -1169,7 +1169,7 @@ curl -X POST /auth/login
   - 調整 `monitoring.yml` 執行頻率從每 5 分鐘降至每天一次
   - 新增 `email-report` job，整合六大監控模組結果為 HTML 報告
   - 配置 SendGrid API 自動發送至 tech@tsaitung.com
-  - 更新 `docs/CI-CD-ARCHITECTURE.md` 第 10 章，完整記錄監控策略
+  - 更新 `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md` 第 10 章，完整記錄監控策略
 - 清理所有 Cloud Build 變數與 Docker ARG，統一 `_TAG` / `SHORT_SHA` 與 build context 設定
 - `staging-v2` 服務名稱全面改用縮寫，並由 `validate-deployment.sh` 監控長度
 - Customer Hierarchy 服務重新命名為 `orderly-custhier-staging-v2`，API Gateway 變數已同步更新
@@ -1296,12 +1296,12 @@ curl -X POST /auth/login
 - **5% 開發力量** → CI/CD 優化與文檔
 
 ## 📚 必讀文檔
-- `docs/CI-CD-ARCHITECTURE.md` — CI/CD 架構與操作手冊（唯一來源）
-- `docs/DEPLOYMENT-CHECKLIST.md` — 發布前人工核對要點
-- `docs/CI-CD-TROUBLESHOOTING-GUIDE.md` — 常見錯誤與排查流程
+- `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md` — CI/CD 架構與操作手冊（唯一來源）
+- `docs/3-Development-Plan/DEPLOYMENT-CHECKLIST.md` — 發布前人工核對要點
+- `docs/3-Development-Plan/CI-CD-TROUBLESHOOTING-GUIDE.md` — 常見錯誤與排查流程
 - `docs/INDEX.md` — 文檔導覽與索引
-- `docs/PRD-Complete.md` — 完整產品需求文檔
-- `docs/Technical-Architecture-Summary.md` — 技術架構總覽
+- `docs/2-PRD/PRD-Complete.md` — 完整產品需求文檔
+- `docs/0-Design/Technical-Architecture-Summary.md` — 技術架構總覽
 
 ## ⏭ 下一輪檢視（2週後預計）
 - **Auth Module Phase 1 驗證** — 檢查 4 個 P0 安全修復是否完成（Gateway JWT、服務驗證中間件、密碼強度、Rate Limiting）
@@ -1312,4 +1312,4 @@ curl -X POST /auth/login
 - 更新 Service Account 權限驗證結果
 - 評估是否需要調整資源分配策略
 
-> **註**：本 Plan 記錄整體進度與決策摘要。CI/CD 技術細節請查閱 `docs/CI-CD-ARCHITECTURE.md`，業務需求請查閱 `docs/PRD-Complete.md`，Auth Module 詳細規劃請查閱本檔「📋 Auth Module 詳細開發規劃」章節。
+> **註**：本 Plan 記錄整體進度與決策摘要。CI/CD 技術細節請查閱 `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md`，業務需求請查閱 `docs/2-PRD/PRD-Complete.md`，Auth Module 詳細規劃請查閱本檔「📋 Auth Module 詳細開發規劃」章節。

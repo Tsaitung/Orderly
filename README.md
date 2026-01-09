@@ -1,7 +1,7 @@
 # 井然 Orderly Platform - 數位供應鏈平台
 
 > **企業級餐飲供應鏈數位化解決方案**  
-> **狀態**: 開發中 (25% 完成)  
+> **狀態**: 開發中（以 `docs/3-Development-Plan/DEVELOPMENT-PLAN.md` 為準）  
 > **目標**: 將對帳時間從 8 小時縮短到 30 分鐘  
 > **架構**: 微服務 + 雲原生 + 自動化 CI/CD
 
@@ -9,21 +9,11 @@
 
 ## 🚨 當前專案狀態
 
-### 📊 整體進度: 25% 完成
+以 repo 現況為準：
 
-**技術基礎設施**: ✅ **超標完成 (85%)**
-
-- 8個微服務架構完整部署
-- 企業級監控和性能測試框架
-- CI/CD 管道和 Docker 容器化
-
-**核心業務功能**: ❌ **嚴重滯後 (20%)**
-
-- 訂單管理、對帳引擎、ERP 整合等核心功能缺失
-- 前端用戶介面尚未開發
-- 資料庫連接使用 mock 數據
-
-⚠️ **需要立即關注**: 技術優秀但商業價值交付不足
+- 後端：多個 FastAPI 微服務已具備主要 API 與資料模型骨架，並逐步補齊業務邏輯
+- 前端：已具備多角色 Dashboard 與 BFF proxy，但仍有 mock/fallback 待替換與收斂
+- 近期交付重點：串起「登入→下單→接單→驗收→對帳」演示閉環 + 最小 smoke/回歸 + 可重複部署
 
 ---
 
@@ -38,23 +28,21 @@
 
 ### 📋 最新狀態報告 (必讀)
 
-- **[開發進度綜合報告](docs/DEVELOPMENT-PROGRESS-REPORT.md)** - 專案整體狀況分析
-- **[關鍵差距分析](docs/CRITICAL-GAPS-ANALYSIS.md)** - 5個關鍵阻礙及解決方案
-- **[緊急衝刺計劃](docs/NEXT-SPRINT-PLAN.md)** - 4週 MVP 交付計劃
-- **[部署檢查清單](docs/DEPLOYMENT-CHECKLIST.md)** - 生產部署完整指南
+- **[開發計畫（唯一來源）](docs/3-Development-Plan/DEVELOPMENT-PLAN.md)** - 以 repo 現況更新的 P0/P1 里程碑與待辦
+- **[部署檢查清單](docs/3-Development-Plan/DEPLOYMENT-CHECKLIST.md)** - 生產部署完整指南
 
 ### 📖 技術文檔
 
-- **[Staging 永久化計畫](plan.md)** - 最新環境修復與部署待辦
-- **[技術架構文檔](docs/Technical-Architecture-Summary.md)** - 系統架構設計
-- **[API 規格文檔](docs/api-specification.yaml)** - RESTful API 定義
-- **[資料庫架構](docs/Database-Schema-Core.md)** - 完整資料庫設計
+- **[開發狀態與修復紀錄](plan.md)** - 較長篇的歷史修復與整合筆記（以 `docs/3-Development-Plan/DEVELOPMENT-PLAN.md` 為主）
+- **[技術架構文檔](docs/0-Design/Technical-Architecture-Summary.md)** - 系統架構設計
+- **[API 規格文檔](docs/0-Design/api-specification.yaml)** - RESTful API 定義
+- **[資料庫架構](docs/0-Design/Database-Schema-Core.md)** - 完整資料庫設計
 
 ### 🎨 產品設計
 
-- **[產品需求文檔](docs/PRD-Complete.md)** - 完整產品規格
-- **[設計系統](docs/design-system.md)** - UI/UX 設計規範
-- **[用戶介面線框](docs/User-Interface-Wireframes.md)** - 頁面設計規劃
+- **[產品需求文檔](docs/2-PRD/PRD-Complete.md)** - 完整產品規格
+- **[設計系統](docs/0-Design/design-system/INDEX.md)** - UI/UX 設計規範
+- **[用戶介面線框](docs/0-Design/User-Interface-Wireframes.md)** - 頁面設計規劃
 
 ---
 
@@ -76,13 +64,16 @@ Port: 3000 | Health: /api/health
 
 ```
 backend/
-├── api-gateway/                 # API 閘道 (Port 8000)
-├── user-service-fastapi/            # 用戶管理（FastAPI + SQLAlchemy, Port 3001）
-├── order-service-fastapi/           # 訂單管理（FastAPI + SQLAlchemy, Port 3002）
-├── product-service-fastapi/         # 商品目錄（FastAPI + SQLAlchemy, Port 3003）
-├── acceptance-service-fastapi/      # 驗收管理（FastAPI, Port 3004）
-├── billing-service-fastapi/         # 帳務結算（FastAPI, Port 3005）
-└── notification-service-fastapi/    # 通知服務（FastAPI, Port 3006）
+├── api-gateway-fastapi/                 # API 閘道 (Port 8000)
+├── user-service-fastapi/                # 用戶/組織/認證 (Port 3001)
+├── order-service-fastapi/               # 訂單管理 (Port 3002)
+├── product-service-fastapi/             # 商品/品類/SKU (Port 3003)
+├── acceptance-service-fastapi/          # 驗收管理 (Port 3004)
+├── billing-service-fastapi/             # 帳務/對帳 (Port 3005)
+├── notification-service-fastapi/        # 通知/OTP (Port 3006)
+├── customer-hierarchy-service-fastapi/  # 客戶層級/關係 (Port 3007)
+├── supplier-service-fastapi/            # 供應商/邀請 (Port 3008)
+└── libs/                                # 共用套件
 
 所有服務健康檢查: /{service}/health
 ```
@@ -106,7 +97,7 @@ backend/
 
 ### 📋 系統需求
 
-- Node.js 18+
+- Node.js 20+
 - Docker & Docker Compose
 - PostgreSQL 15+
 - Redis 7+
@@ -223,7 +214,7 @@ terraform plan -var-file="production.tfvars"
 terraform apply
 ```
 
-詳細部署流程請參考 **[部署檢查清單](docs/DEPLOYMENT-CHECKLIST.md)**
+詳細部署流程請參考 **[部署檢查清單](docs/3-Development-Plan/DEPLOYMENT-CHECKLIST.md)**
 
 ---
 
@@ -498,7 +489,7 @@ docker run --rm test-build
 ### 📞 支援資源
 
 - **技術文檔**: docs/ 目錄
-- **API 文檔**: docs/api-specification.yaml
+- **API 文檔**: docs/0-Design/api-specification.yaml
 - **錯誤追蹤**: GitHub Issues
 - **性能分析**: scripts/performance-analysis.js
 
@@ -533,7 +524,7 @@ docker run --rm test-build
 
 ### 📜 授權
 
-本專案採用 MIT 授權條款，詳見 [LICENSE](LICENSE) 檔案。
+本專案採用 MIT 授權條款。
 
 ### 🤝 貢獻指南
 

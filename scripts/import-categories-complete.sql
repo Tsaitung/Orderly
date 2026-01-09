@@ -1,5 +1,5 @@
 -- 完整品類資料匯入腳本
--- 基於 docs/product_categories_final.md
+-- 基於 docs/0-Design/product_categories_final.md
 -- 注意：此腳本會保留現有品類，並新增缺失的品類
 
 BEGIN;
