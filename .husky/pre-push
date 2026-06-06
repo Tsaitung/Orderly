@@ -1,0 +1,58 @@
+#!/bin/sh
+
+# Self-bootstrap direnv env. Hook is fork by git, not by interactive shell, so
+# .envrc-exported vars (POSTGRES_PORT, REDIS_PORT, etc.) are missing unless
+# the caller explicitly wraps in `direnv exec .`. Without this, downstream
+# `make verify-pr-local -> ensure-db` fails with "POSTGRES_PORT: run direnv allow".
+# `direnv export bash` reads the repo .envrc directly (no hook needed).
+if command -v direnv >/dev/null 2>&1 && [ -f .envrc ]; then
+  eval "$(direnv export bash 2>/dev/null)" || true
+fi
+
+# Skip verification for delete-only pushes. git pre-push stdin format is:
+#   <local-ref> <local-oid> <remote-ref> <remote-oid>
+# Deletions carry an all-zero local-oid. Delete-only pushes change no tree state.
+REFS_INPUT=$(cat)
+if [ -n "$REFS_INPUT" ]; then
+  if ! printf '%s\n' "$REFS_INPUT" | awk '$2 ~ /[^0]/ {has_nondelete=1} END {exit !has_nondelete}'; then
+    echo "pre-push: delete-only push, skipping verification"
+    exit 0
+  fi
+fi
+
+# Detect SKIP_VERIFY_PUSH escape hatch
+if [ -n "$SKIP_VERIFY_PUSH" ]; then
+  echo "pre-push: SKIP_VERIFY_PUSH set, skipping verification"
+  exit 0
+fi
+
+# Resolve TARGET (default: verify-pr-local)
+TARGET="${TARGET:-verify-pr-local}"
+
+# Content-addressed verification cache (optional; requires ~/.claude/skills/git-workflow/scripts/verify_cache.sh)
+VCACHE_LIB="$HOME/.claude/skills/git-workflow/scripts/verify_cache.sh"
+
+if [ -f "$VCACHE_LIB" ]; then
+  # shellcheck disable=SC1090
+  . "$VCACHE_LIB"
+  if verify_cache_lookup "$TARGET" 2>/dev/null; then
+    AGE_HUMAN=$(verify_cache_status 2>/dev/null | head -1)
+    echo "pre-push: cache hit for [$TARGET] — skipping verify (run \`verify_cache_clear\` to force re-verify)"
+    echo "pre-push: $AGE_HUMAN"
+    exit 0
+  fi
+fi
+
+# Run verification
+echo "pre-push: running $TARGET..."
+# shellcheck disable=SC2086
+if make $TARGET; then
+  if [ -f "$VCACHE_LIB" ]; then
+    # shellcheck disable=SC1090
+    . "$VCACHE_LIB"
+    verify_cache_record "$TARGET" 2>/dev/null && \
+      echo "pre-push: cached [$TARGET] under key $(verify_cache_key "$TARGET" 2>/dev/null | head -c 12)…"
+  fi
+else
+  exit 1
+fi
