@@ -10,11 +10,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator, ConfigD
 from app.models.enums import OrderStatus, PaymentStatus
 from .order_item import OrderItemCreate, OrderItemResponse
 
-
-def to_camel(string: str) -> str:
-    """Convert snake_case to camelCase"""
-    components = string.split('_')
-    return components[0] + ''.join(x.title() for x in components[1:])
+# Import shared schema utilities from core library
+from libs.orderly_fastapi_core import to_camel
 
 
 class DeliveryAddress(BaseModel):

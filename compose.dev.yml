@@ -3,18 +3,18 @@ version: '3.8'
 services:
   postgres:
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:?run direnv allow at repo root}:5432"
 
   redis:
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:?run direnv allow at repo root}:6379"
 
   api-gateway:
     build:
       context: ./backend/api-gateway-fastapi
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:?run direnv allow at repo root}:8000"
     environment:
       ENVIRONMENT: development
       PORT: 8000
@@ -83,7 +83,9 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5050:80"
+      # SSOT 沒有 admin tool 槽位 — 用 BACKEND_PORT+57 derive 避免跨 project 撞
+      # (orderly: 8543 → 8600, helloglow: 8432 → 8489)
+      - "${PGADMIN_PORT:-8600}:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -99,7 +101,8 @@ services:
     environment:
       REDIS_HOSTS: local:redis:6379
     ports:
-      - "8081:8081"
+      # SSOT 沒有 admin tool 槽位 — derive from BACKEND_PORT+58
+      - "${REDIS_COMMANDER_PORT:-8601}:8081"
     depends_on:
       redis:
         condition: service_healthy

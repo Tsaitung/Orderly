@@ -6,23 +6,11 @@ Pydantic schemas for reconciliation API with camelCase conversion
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import Field, field_validator
 from app.models.enums import ReconciliationStatus, DiscrepancyType
 
-
-def to_camel(string: str) -> str:
-    """Convert snake_case to camelCase."""
-    components = string.split('_')
-    return components[0] + ''.join(x.title() for x in components[1:])
-
-
-class CamelCaseModel(BaseModel):
-    """Base model with camelCase serialization."""
-    model_config = ConfigDict(
-        alias_generator=to_camel,
-        populate_by_name=True,
-        from_attributes=True,
-    )
+# Import shared schema utilities from core library
+from libs.orderly_fastapi_core import CamelCaseModel
 
 
 # ============ Reconciliation Item Schemas ============

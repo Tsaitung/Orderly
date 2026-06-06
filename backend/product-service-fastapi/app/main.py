@@ -1,24 +1,19 @@
 """
 FastAPI Product Service Application
-Replaces legacy Node.js product service
+使用統一的應用程式工廠簡化初始化
 """
-import logging
-import structlog
-from contextlib import asynccontextmanager
+import os
+import sys
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "libs")))
+
 from fastapi.staticfiles import StaticFiles
-import uvicorn
-import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
-from orderly_fastapi_core.middleware import AuthMiddleware
+
+from orderly_fastapi_core import create_service_app
 
 from app.core.config import settings
 from app.core.database import async_engine
-from sqlalchemy import text
 from app.api.v1.categories import router as categories_router
 from app.api.v1.products import router as products_router
 from app.api.v1.skus_simple import router as skus_router
@@ -34,255 +29,41 @@ from app.api.v1.bulk_operations import router as bulk_operations_router
 from app.api.bff import router as bff_router
 from app.middleware.error_handler import ErrorHandlerMiddleware, RequestValidationMiddleware
 
-
-# Configure structured logging
-structlog.configure(
-    processors=[
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-        structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
-    ],
-    context_class=dict,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    cache_logger_on_first_use=True,
-)
-
-logger = structlog.get_logger()
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan management"""
-    # Startup
-    logger.info("🚀 FastAPI Product Service starting up", version=settings.app_version)
-    # Log database connection source (mask secrets)
-    try:
-        db_url = settings.get_database_url_async()
-        masked = db_url
-        if "://" in db_url and "@" in db_url:
-            scheme, rest = db_url.split("://", 1)
-            creds, hostpart = rest.split("@", 1)
-            if ":" in creds:
-                user, _ = creds.split(":", 1)
-                creds_masked = f"{user}:***"
-            else:
-                creds_masked = creds
-            masked = f"{scheme}://{creds_masked}@{hostpart}"
-        logger.info("db.config", url=masked)
-    except Exception as e:
-        logger.warning("db.config_log_failed", error=str(e))
-    yield
-    # Shutdown
-    logger.info("🛑 FastAPI Product Service shutting down")
-    await async_engine.dispose()
-
-
-# Create FastAPI application
-app = FastAPI(
-    title=settings.app_name,
+# 使用統一的應用程式工廠建立 FastAPI 應用
+app = create_service_app(
+    service_name="product-service-fastapi",
     version=settings.app_version,
+    async_engine=async_engine,
+    get_db_url=settings.get_database_url_async,
+    settings=settings,
+    cors_origins=settings.cors_origins if hasattr(settings, 'cors_origins') else None,
+    debug=settings.debug,
+    title="Orderly Product Service",
     description="井然 Orderly Product Service - FastAPI Version",
-    docs_url="/api/docs" if settings.debug else None,
-    redoc_url="/api/redoc" if settings.debug else None,
-    openapi_url="/api/openapi.json" if settings.debug else None,
-    lifespan=lifespan
 )
 
-# Add middleware
+# 添加 Product Service 特定的 Middleware
 app.add_middleware(ErrorHandlerMiddleware)
 app.add_middleware(RequestValidationMiddleware)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=[
-        "Content-Type",
-        "Authorization",
-        "X-API-Key",
-        "X-Correlation-ID",
-        "X-User-ID",
-        "X-User-Role",
-        "X-User-Permissions"
-    ],
-)
-app.add_middleware(AuthMiddleware, settings=settings)
-
-if not settings.debug:
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"]  # Configure as needed for production
-    )
-
-# Static files for product images (local storage)
+# 靜態文件：產品圖片上傳目錄
 UPLOAD_DIR = Path(getattr(settings, 'local_upload_dir', '/tmp/uploads/products'))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static/uploads/products", StaticFiles(directory=str(UPLOAD_DIR)), name="product_uploads")
 
-
-# Global exception handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler for consistent error responses"""
-    logger.error(
-        "Unhandled exception",
-        exc_info=exc,
-        path=request.url.path,
-        method=request.method
-    )
-    
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Internal server error",
-            "details": str(exc) if settings.debug else "An unexpected error occurred"
-        }
-    )
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """HTTP exception handler for consistent error responses"""
-    logger.warning(
-        "HTTP exception",
-        status_code=exc.status_code,
-        detail=exc.detail,
-        path=request.url.path,
-        method=request.method
-    )
-    
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "error": exc.detail,
-            "status_code": exc.status_code
-        }
-    )
-
-
-# Health check endpoints
-@app.get("/health")
-async def health_check():
-    """Health check endpoint compatible with existing Node.js service"""
-    return {
-        "status": "healthy",
-        "service": "product-service",
-        "version": settings.app_version,
-        "framework": "FastAPI",
-        "timestamp": "2025-09-19T08:00:00Z",  # Will be dynamic in production
-        "environment": "development",  # From config
-        "uptime": 0,  # Will be calculated in production
-        "memory": {},  # Will include memory stats
-        "database": "connected"  # Will check actual DB connection
-    }
-
-
+# 額外的健康檢查端點
 @app.get("/ready")
 async def readiness_check():
     """Readiness check endpoint"""
-    return {
-        "status": "ready",
-        "timestamp": "2025-09-19T08:00:00Z",
-        "service": "product-service-fastapi"
-    }
+    return {"status": "ready", "service": "product-service-fastapi"}
 
 
 @app.get("/live")
 async def liveness_check():
     """Liveness check endpoint"""
-    return {
-        "status": "alive",
-        "timestamp": "2025-09-19T08:00:00Z",
-        "service": "product-service-fastapi"
-    }
+    return {"status": "alive", "service": "product-service-fastapi"}
 
 
-# Include API routers
-app.include_router(
-    categories_router,
-    prefix="/api/products",
-    tags=["Product Categories"]
-)
-
-app.include_router(
-    products_router,
-    prefix="/api/products",
-    tags=["Products"]
-)
-
-app.include_router(
-    skus_router,
-    prefix="/api/products",
-    tags=["SKU Management"]
-)
-
-app.include_router(
-    sku_upload_router,
-    prefix="/api/products",
-    tags=["SKU Batch Upload"]
-)
-
-app.include_router(
-    sku_analytics_router,
-    prefix="/api/products",
-    tags=["SKU Analytics"]
-)
-
-app.include_router(
-    sku_sharing_router,
-    prefix="/api/products",
-    tags=["SKU Sharing System"]
-)
-
-app.include_router(
-    price_history_router,
-    prefix="/api/products",
-    tags=["Price History"]
-)
-
-app.include_router(
-    product_images_router,
-    prefix="/api/products",
-    tags=["Product Images"]
-)
-
-app.include_router(
-    promotions_router,
-    prefix="/api/products/promotions",
-    tags=["Promotions"]
-)
-
-app.include_router(
-    supplier_skus_router,
-    prefix="/api/products",
-    tags=["Supplier SKU Management"]
-)
-
-app.include_router(
-    customer_prices_router,
-    prefix="/api/products/customer-prices",
-    tags=["Customer Prices"]
-)
-
-app.include_router(
-    bulk_operations_router,
-    prefix="/api/products",
-    tags=["Bulk Operations"]
-)
-
-# BFF routes consumed by the frontend platform (exposed under /api/bff)
-app.include_router(bff_router)
-
-
-# Simple products endpoints for compatibility
 @app.get("/api/products/health")
 async def products_health():
     """Products health endpoint - matches existing Node.js structure"""
@@ -290,66 +71,94 @@ async def products_health():
         "status": "healthy",
         "service": "product-service",
         "framework": "FastAPI",
-        "timestamp": "2025-09-19T08:00:00Z"
     }
 
 
-# Root endpoint
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "井然 Orderly Product Service (FastAPI)",
-        "version": settings.app_version,
-        "docs": "/api/docs",
-        "health": "/health"
-    }
+# ==================== API Routers ====================
 
+# Product Categories
+app.include_router(
+    categories_router,
+    prefix="/api/products",
+    tags=["Product Categories"]
+)
 
-if __name__ == "__main__":
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=settings.port,
-        reload=settings.debug,
-        log_level=settings.log_level.lower()
-    )
+# Products
+app.include_router(
+    products_router,
+    prefix="/api/products",
+    tags=["Products"]
+)
 
+# SKU Management
+app.include_router(
+    skus_router,
+    prefix="/api/products",
+    tags=["SKU Management"]
+)
 
-@app.get("/db/health")
-async def db_health():
-    """Active DB probe: attempts a lightweight SELECT 1."""
-    try:
-        async with async_engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-        return {"status": "healthy"}
-    except Exception as e:
-        logger.error("db.health.failed", error=str(e))
-        return JSONResponse(status_code=503, content={"status": "unhealthy", "error": str(e)})
+# SKU Batch Upload
+app.include_router(
+    sku_upload_router,
+    prefix="/api/products",
+    tags=["SKU Batch Upload"]
+)
 
+# SKU Analytics
+app.include_router(
+    sku_analytics_router,
+    prefix="/api/products",
+    tags=["SKU Analytics"]
+)
 
-@app.get("/db/info")
-async def db_info():
-    """Non-sensitive DB info for diagnostics (masked)."""
-    try:
-        db_url = settings.get_database_url_async()
-        masked = db_url
-        if "://" in db_url and "@" in db_url:
-            scheme, rest = db_url.split("://", 1)
-            creds, hostpart = rest.split("@", 1)
-            if ":" in creds:
-                user, _ = creds.split(":", 1)
-                creds_masked = f"{user}:***"
-            else:
-                creds_masked = creds
-            masked = f"{scheme}://{creds_masked}@{hostpart}"
-        # simple ping
-        import time
-        start = time.time()
-        async with async_engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-        dur = (time.time() - start) * 1000
-        return {"url_masked": masked, "ping_ms": dur}
-    except Exception as e:
-        logger.error("db.info.failed", error=str(e))
-        return JSONResponse(status_code=503, content={"error": str(e)})
+# SKU Sharing System
+app.include_router(
+    sku_sharing_router,
+    prefix="/api/products",
+    tags=["SKU Sharing System"]
+)
+
+# Price History
+app.include_router(
+    price_history_router,
+    prefix="/api/products",
+    tags=["Price History"]
+)
+
+# Product Images
+app.include_router(
+    product_images_router,
+    prefix="/api/products",
+    tags=["Product Images"]
+)
+
+# Promotions
+app.include_router(
+    promotions_router,
+    prefix="/api/products/promotions",
+    tags=["Promotions"]
+)
+
+# Supplier SKU Management
+app.include_router(
+    supplier_skus_router,
+    prefix="/api/products",
+    tags=["Supplier SKU Management"]
+)
+
+# Customer Prices
+app.include_router(
+    customer_prices_router,
+    prefix="/api/products/customer-prices",
+    tags=["Customer Prices"]
+)
+
+# Bulk Operations
+app.include_router(
+    bulk_operations_router,
+    prefix="/api/products",
+    tags=["Bulk Operations"]
+)
+
+# BFF routes consumed by the frontend platform
+app.include_router(bff_router)

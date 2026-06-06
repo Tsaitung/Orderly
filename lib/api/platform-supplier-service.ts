@@ -3,6 +3,8 @@
  * For platform admin supplier management functionality
  */
 
+import { http, buildQueryString } from './http'
+
 export interface SupplierActivityMetrics {
   total_orders: number
   monthly_orders: number
@@ -117,91 +119,27 @@ export interface SupplierUpdateRequest {
 }
 
 class PlatformSupplierService {
-  private baseUrl: string
-
-  constructor() {
-    // Use BFF proxy for consistent routing and automatic auth injection
-    // All requests go through Next.js BFF → API Gateway
-    this.baseUrl = '/api/bff'
-  }
-
-  private async apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`
-
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    }
-
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers: defaultHeaders,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      return await response.json()
-    } catch (error) {
-      console.error(`Platform Supplier API call failed for ${endpoint}:`, error)
-      throw error
-    }
-  }
-
-  /**
-   * Get supplier statistics for platform overview
-   */
   async getSupplierStats(): Promise<SupplierStats> {
-    return this.apiCall<SupplierStats>('/suppliers/stats')
+    return http.get<SupplierStats>('/suppliers/stats')
   }
 
-  /**
-   * Get paginated list of suppliers with filtering
-   */
   async getSuppliers(params: SupplierFilterParams = {}): Promise<SupplierListResponse> {
-    const searchParams = new URLSearchParams()
-
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        // Use param names directly - backend expects the same param names
-        searchParams.append(key, String(value))
-      }
-    })
-
-    const queryString = searchParams.toString()
-    const endpoint = `/suppliers${queryString ? `?${queryString}` : ''}`
-
-    return this.apiCall<SupplierListResponse>(endpoint)
+    return http.get<SupplierListResponse>(`/suppliers${buildQueryString(params)}`)
   }
 
-  /**
-   * Get detailed supplier information
-   */
   async getSupplierDetail(supplierId: string): Promise<SupplierDetail> {
-    return this.apiCall<SupplierDetail>(`/suppliers/${supplierId}`)
+    return http.get<SupplierDetail>(`/suppliers/${supplierId}`)
   }
 
-  /**
-   * Update supplier status (platform admin function)
-   */
   async updateSupplierStatus(
     supplierId: string,
     updateData: SupplierUpdateRequest
   ): Promise<SupplierDetail> {
-    return this.apiCall<SupplierDetail>(`/suppliers/${supplierId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updateData),
-    })
+    return http.patch<SupplierDetail>(`/suppliers/${supplierId}`, updateData)
   }
 
-  /**
-   * Get supplier activity data
-   */
   async getSupplierActivity(supplierId: string, days: number = 30): Promise<any> {
-    return this.apiCall<any>(`/suppliers/${supplierId}/activity?days=${days}`)
+    return http.get<any>(`/suppliers/${supplierId}/activity?days=${days}`)
   }
 
   /**

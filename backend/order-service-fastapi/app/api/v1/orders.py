@@ -4,7 +4,8 @@ Order API Endpoints
 """
 from datetime import date
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from dataclasses import dataclass
+from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
@@ -23,19 +24,49 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
-def _get_tenant_id_from_request(request: Request) -> Optional[str]:
-    """從請求標頭取得租戶 ID"""
-    return request.headers.get("X-Tenant-Id") or request.headers.get("X-Org-Id")
+# ==================== 依賴注入 ====================
+
+@dataclass
+class RequestContext:
+    """請求上下文，包含租戶、用戶資訊"""
+    tenant_id: str
+    user_id: str
+    role: Optional[str] = None
 
 
-def _get_user_id_from_request(request: Request) -> Optional[str]:
-    """從請求標頭取得用戶 ID"""
-    return request.headers.get("X-User-ID") or request.headers.get("X-User-Id")
+def get_tenant_id(
+    x_tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
+    x_org_id: Optional[str] = Header(None, alias="X-Org-Id"),
+) -> str:
+    """從請求標頭取得租戶 ID（必填）"""
+    tenant_id = x_tenant_id or x_org_id
+    if not tenant_id:
+        raise HTTPException(status_code=401, detail="缺少租戶 ID")
+    return tenant_id
 
 
-def _get_user_role_from_request(request: Request) -> Optional[str]:
+def get_user_id(
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
+    x_user_id_upper: Optional[str] = Header(None, alias="X-User-ID"),
+) -> str:
+    """從請求標頭取得用戶 ID（預設為 system）"""
+    return x_user_id or x_user_id_upper or "system"
+
+
+def get_user_role(
+    x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
+) -> Optional[str]:
     """從請求標頭取得用戶角色"""
-    return request.headers.get("X-User-Role")
+    return x_user_role
+
+
+def get_request_context(
+    tenant_id: str = Depends(get_tenant_id),
+    user_id: str = Depends(get_user_id),
+    role: Optional[str] = Depends(get_user_role),
+) -> RequestContext:
+    """取得完整請求上下文"""
+    return RequestContext(tenant_id=tenant_id, user_id=user_id, role=role)
 
 
 # ==================== 健康檢查 ====================
@@ -55,7 +86,6 @@ async def health(db: AsyncSession = Depends(get_async_session)):
 
 @router.get("/orders", response_model=OrderListResponse)
 async def list_orders(
-    request: Request,
     page: int = Query(1, ge=1, description="頁碼"),
     page_size: int = Query(20, ge=1, le=100, description="每頁數量"),
     status: Optional[OrderStatus] = Query(None, description="狀態過濾"),
@@ -63,17 +93,14 @@ async def list_orders(
     restaurant_id: Optional[str] = Query(None, description="餐廳 ID"),
     date_from: Optional[date] = Query(None, description="開始日期"),
     date_to: Optional[date] = Query(None, description="結束日期"),
-    db: AsyncSession = Depends(get_async_session)
+    tenant_id: str = Depends(get_tenant_id),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     獲取訂單列表
 
     支援分頁和多種過濾條件
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-
     orders, total = await OrderService.list_orders(
         db=db,
         tenant_id=tenant_id,
@@ -100,17 +127,13 @@ async def list_orders(
 
 @router.get("/orders/stats", response_model=OrderStatsResponse)
 async def get_order_stats(
-    request: Request,
     date_from: Optional[date] = Query(None, description="開始日期"),
     date_to: Optional[date] = Query(None, description="結束日期"),
     supplier_id: Optional[str] = Query(None, description="供應商 ID"),
-    db: AsyncSession = Depends(get_async_session)
+    tenant_id: str = Depends(get_tenant_id),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """獲取訂單統計"""
-    tenant_id = _get_tenant_id_from_request(request)
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-
     stats = await OrderService.get_order_stats(
         db=db,
         tenant_id=tenant_id,
@@ -125,14 +148,10 @@ async def get_order_stats(
 @router.get("/orders/{order_id}", response_model=OrderResponse)
 async def get_order(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    tenant_id: str = Depends(get_tenant_id),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """獲取單一訂單詳情"""
-    tenant_id = _get_tenant_id_from_request(request)
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-
     order = await OrderService.get_order_by_id(db, order_id, tenant_id)
     if not order:
         raise HTTPException(status_code=404, detail=f"訂單 ID '{order_id}' 不存在")
@@ -143,27 +162,19 @@ async def get_order(
 @router.post("/orders", response_model=OrderResponse, status_code=201)
 async def create_order(
     order_data: OrderCreate,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     創建新訂單
 
     訂單創建後狀態為 draft（草稿）
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.create_order(
         db=db,
         order_data=order_data,
-        tenant_id=tenant_id,
-        user_id=user_id,
+        tenant_id=ctx.tenant_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -173,28 +184,20 @@ async def create_order(
 async def update_order(
     order_id: str,
     order_data: OrderUpdate,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     更新訂單
 
     只有草稿狀態的訂單可以修改
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.update_order(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         order_data=order_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -203,29 +206,22 @@ async def update_order(
 @router.delete("/orders/{order_id}")
 async def cancel_order(
     order_id: str,
-    request: Request,
     reason: str = Query(..., description="取消原因"),
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     取消訂單
 
     需要提供取消原因，已完成或已取消的訂單不可取消
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
 
     order = await OrderService.cancel_order(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         reason=reason,
-        user_id=user_id,
+        user_id=ctx.user_id,
     )
 
     return {
@@ -241,30 +237,21 @@ async def cancel_order(
 async def update_order_status(
     order_id: str,
     status_data: OrderStatusUpdate,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     更新訂單狀態
 
     狀態轉換需符合狀態機規則
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-    role = _get_user_role_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
-        role=role,
+        user_id=ctx.user_id,
+        role=ctx.role,
     )
 
     return OrderResponse.model_validate(order)
@@ -273,29 +260,21 @@ async def update_order_status(
 @router.put("/orders/{order_id}/submit", response_model=OrderResponse)
 async def submit_order(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     提交訂單
 
     將訂單從草稿狀態提交給供應商
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.SUBMITTED, reason="餐廳提交訂單")
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="restaurant",
     )
 
@@ -306,28 +285,20 @@ async def submit_order(
 async def confirm_order(
     order_id: str,
     confirm_data: OrderConfirmRequest,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """
     供應商確認訂單
 
     可以調整確認數量和時價商品價格
     """
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.confirm_order(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         confirm_data=confirm_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -336,25 +307,17 @@ async def confirm_order(
 @router.put("/orders/{order_id}/prepare", response_model=OrderResponse)
 async def start_preparing(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """開始備貨"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.PREPARING, reason="開始備貨")
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="supplier",
     )
 
@@ -364,25 +327,17 @@ async def start_preparing(
 @router.put("/orders/{order_id}/ship", response_model=OrderResponse)
 async def ship_order(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """標記出貨"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.SHIPPED, reason="已出貨")
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="supplier",
     )
 
@@ -392,25 +347,17 @@ async def ship_order(
 @router.put("/orders/{order_id}/deliver", response_model=OrderResponse)
 async def deliver_order(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """標記送達"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.DELIVERED, reason="已送達")
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="supplier",
     )
 
@@ -420,26 +367,18 @@ async def deliver_order(
 @router.put("/orders/{order_id}/accept", response_model=OrderResponse)
 async def accept_order(
     order_id: str,
-    request: Request,
     notes: Optional[str] = Query(None, description="驗收備註"),
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """驗收確認"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.ACCEPTED, reason="驗收通過", notes=notes)
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="restaurant",
     )
 
@@ -449,25 +388,17 @@ async def accept_order(
 @router.put("/orders/{order_id}/complete", response_model=OrderResponse)
 async def complete_order(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """標記完成"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     status_data = OrderStatusUpdate(status=OrderStatus.COMPLETED, reason="訂單完成")
     order = await OrderService.update_order_status(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         status_data=status_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
         role="admin",
     )
 
@@ -479,14 +410,10 @@ async def complete_order(
 @router.get("/orders/{order_id}/history", response_model=List[OrderStatusHistoryResponse])
 async def get_order_history(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    tenant_id: str = Depends(get_tenant_id),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """獲取訂單狀態歷史"""
-    tenant_id = _get_tenant_id_from_request(request)
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-
     history = await OrderService.get_order_history(db, order_id, tenant_id)
     return [OrderStatusHistoryResponse.model_validate(h) for h in history]
 
@@ -497,24 +424,16 @@ async def get_order_history(
 async def add_order_item(
     order_id: str,
     item_data: OrderItemCreate,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """添加訂單項目"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.add_order_item(
         db=db,
         order_id=order_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         item_data=item_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -525,25 +444,17 @@ async def update_order_item(
     order_id: str,
     item_id: str,
     item_data: OrderItemUpdate,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """更新訂單項目"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.update_order_item(
         db=db,
         order_id=order_id,
         item_id=item_id,
-        tenant_id=tenant_id,
+        tenant_id=ctx.tenant_id,
         item_data=item_data,
-        user_id=user_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -553,24 +464,16 @@ async def update_order_item(
 async def delete_order_item(
     order_id: str,
     item_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """刪除訂單項目"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     order = await OrderService.delete_order_item(
         db=db,
         order_id=order_id,
         item_id=item_id,
-        tenant_id=tenant_id,
-        user_id=user_id,
+        tenant_id=ctx.tenant_id,
+        user_id=ctx.user_id,
     )
 
     return OrderResponse.model_validate(order)
@@ -581,16 +484,11 @@ async def delete_order_item(
 @router.get("/orders/{order_id}/next-statuses")
 async def get_next_statuses(
     order_id: str,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
+    tenant_id: str = Depends(get_tenant_id),
+    role: Optional[str] = Depends(get_user_role),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """獲取訂單可轉換的下一個狀態"""
-    tenant_id = _get_tenant_id_from_request(request)
-    role = _get_user_role_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-
     order = await OrderService.get_order_by_id(db, order_id, tenant_id)
     if not order:
         raise HTTPException(status_code=404, detail=f"訂單 ID '{order_id}' 不存在")
@@ -617,22 +515,13 @@ async def get_next_statuses(
 
 @router.post("/orders/bulk-status")
 async def bulk_update_status(
-    request: Request,
     order_ids: List[str] = Query(..., description="訂單 ID 列表"),
     status: OrderStatus = Query(..., description="目標狀態"),
     reason: Optional[str] = Query(None, description="變更原因"),
-    db: AsyncSession = Depends(get_async_session)
+    ctx: RequestContext = Depends(get_request_context),
+    db: AsyncSession = Depends(get_async_session),
 ):
     """批量更新訂單狀態"""
-    tenant_id = _get_tenant_id_from_request(request)
-    user_id = _get_user_id_from_request(request)
-    role = _get_user_role_from_request(request)
-
-    if not tenant_id:
-        raise HTTPException(status_code=401, detail="缺少租戶 ID")
-    if not user_id:
-        user_id = "system"
-
     if len(order_ids) > 100:
         raise HTTPException(status_code=400, detail="批量操作最多支援 100 筆訂單")
 
@@ -644,10 +533,10 @@ async def bulk_update_status(
             await OrderService.update_order_status(
                 db=db,
                 order_id=order_id,
-                tenant_id=tenant_id,
+                tenant_id=ctx.tenant_id,
                 status_data=status_data,
-                user_id=user_id,
-                role=role,
+                user_id=ctx.user_id,
+                role=ctx.role,
             )
             results["success"].append(order_id)
         except HTTPException as e:

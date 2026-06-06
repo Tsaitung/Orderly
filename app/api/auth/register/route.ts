@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AuthService, RegisterData } from '@/lib/auth'
+import { AuthService, type RegisterData } from '@/lib/auth/server'
 import { z } from 'zod'
 
 const registerSchema = z.object({

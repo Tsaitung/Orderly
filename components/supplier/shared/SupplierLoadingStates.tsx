@@ -1,6 +1,8 @@
 /**
  * Loading states and skeleton loaders for Supplier components
  * Provides consistent loading UX across supplier pages
+ *
+ * Uses the shared Skeleton component from @/components/ui/skeleton
  */
 
 'use client'
@@ -8,6 +10,7 @@
 import React from 'react'
 import { Loader2, Clock, TrendingUp, Users, Package } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 
 // ============================================================================
 // Basic Loading Components
@@ -39,25 +42,6 @@ export function SupplierSpinner({ size = 'md', message, className = '' }: Suppli
         <p className={`${textSizeClasses[size]} animate-pulse text-gray-600`}>{message}</p>
       )}
     </div>
-  )
-}
-
-// ============================================================================
-// Skeleton Components
-// ============================================================================
-
-interface SkeletonProps {
-  className?: string
-  animate?: boolean
-}
-
-function Skeleton({ className = '', animate = true }: SkeletonProps) {
-  return (
-    <div
-      className={`rounded bg-gray-200 ${animate ? 'animate-pulse' : ''} ${className}`}
-      role="presentation"
-      aria-hidden="true"
-    />
   )
 }
 

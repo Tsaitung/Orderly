@@ -562,102 +562,67 @@ async def _proxy(request: Request, full_path: str) -> Response:
     return Response(content=r.content, status_code=r.status_code, headers=dict(proxy_headers), media_type=r.headers.get("content-type"))
 
 
+async def _rate_limit_response(limit_result: Dict[str, Any], error_prefix: str) -> JSONResponse:
+    """Build rate limit exceeded response"""
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "error": f"{error_prefix} Please try again in {limit_result['retry_after']} seconds.",
+            "retry_after": limit_result["retry_after"],
+        },
+        headers={
+            "X-RateLimit-Limit": str(limit_result["limit"]),
+            "X-RateLimit-Remaining": str(limit_result["remaining"]),
+            "X-RateLimit-Reset": str(limit_result["retry_after"]),
+            "Retry-After": str(limit_result["retry_after"]),
+        }
+    )
+
+
+async def _rate_limited_proxy(
+    request: Request,
+    rate_limit_key: str,
+    proxy_path: str,
+    error_prefix: str
+) -> Response:
+    """Apply rate limiting and proxy request"""
+    client_ip = request.client.host if request.client else "unknown"
+    limit_result = await redis_rate_limiter.check(client_ip, rate_limit_key)
+
+    if not limit_result["allowed"]:
+        return await _rate_limit_response(limit_result, error_prefix)
+
+    return await _proxy(request, proxy_path)
+
+
 # Dedicated auth endpoints with stricter rate limits
 @app.api_route("/api/auth/login", methods=["POST"])
 async def api_auth_login(request: Request):
-    # Check rate limit (5 requests per 15 minutes)
-    client_ip = request.client.host if request.client else "unknown"
-    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/login")
-
-    if not limit_result["allowed"]:
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False,
-                "error": f"Too many login attempts. Please try again in {limit_result['retry_after']} seconds.",
-                "retry_after": limit_result["retry_after"],
-            },
-            headers={
-                "X-RateLimit-Limit": str(limit_result["limit"]),
-                "X-RateLimit-Remaining": str(limit_result["remaining"]),
-                "X-RateLimit-Reset": str(limit_result["retry_after"]),
-                "Retry-After": str(limit_result["retry_after"]),
-            }
-        )
-
-    return await _proxy(request, "/api/auth/login")
+    return await _rate_limited_proxy(
+        request, "/api/auth/login", "/api/auth/login", "Too many login attempts."
+    )
 
 
 @app.api_route("/auth/login", methods=["POST"])
 async def auth_login_alias(request: Request):
-    # Check rate limit (same as /api/auth/login)
-    client_ip = request.client.host if request.client else "unknown"
-    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/login")
-
-    if not limit_result["allowed"]:
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False,
-                "error": f"Too many login attempts. Please try again in {limit_result['retry_after']} seconds.",
-                "retry_after": limit_result["retry_after"],
-            },
-            headers={
-                "X-RateLimit-Limit": str(limit_result["limit"]),
-                "X-RateLimit-Remaining": str(limit_result["remaining"]),
-                "Retry-After": str(limit_result["retry_after"]),
-            }
-        )
-
-    return await _proxy(request, "/auth/login")
+    return await _rate_limited_proxy(
+        request, "/api/auth/login", "/auth/login", "Too many login attempts."
+    )
 
 
 @app.api_route("/api/auth/register", methods=["POST"])
 async def api_auth_register(request: Request):
-    # Check rate limit (3 requests per hour)
-    client_ip = request.client.host if request.client else "unknown"
-    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/register")
-
-    if not limit_result["allowed"]:
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False,
-                "error": f"Too many registration attempts. Please try again in {limit_result['retry_after']} seconds.",
-                "retry_after": limit_result["retry_after"],
-            },
-            headers={
-                "X-RateLimit-Limit": str(limit_result["limit"]),
-                "X-RateLimit-Remaining": str(limit_result["remaining"]),
-                "Retry-After": str(limit_result["retry_after"]),
-            }
-        )
-
-    return await _proxy(request, "/api/auth/register")
+    return await _rate_limited_proxy(
+        request, "/api/auth/register", "/api/auth/register", "Too many registration attempts."
+    )
 
 
 @app.api_route("/auth/register", methods=["POST"])
 async def auth_register_alias(request: Request):
-    # Check rate limit (same as /api/auth/register)
-    client_ip = request.client.host if request.client else "unknown"
-    limit_result = await redis_rate_limiter.check(client_ip, "/api/auth/register")
-
-    if not limit_result["allowed"]:
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False,
-                "error": f"Too many registration attempts. Please try again in {limit_result['retry_after']} seconds.",
-                "retry_after": limit_result["retry_after"],
-            },
-            headers={
-                "X-RateLimit-Limit": str(limit_result["limit"]),
-                "X-RateLimit-Remaining": str(limit_result["remaining"]),
-                "Retry-After": str(limit_result["retry_after"]),
-            }
-        )
-
-    return await _proxy(request, "/auth/register")
+    return await _rate_limited_proxy(
+        request, "/api/auth/register", "/auth/register", "Too many registration attempts."
+    )
 
 
 # Catch-all route for /api/* to proxy

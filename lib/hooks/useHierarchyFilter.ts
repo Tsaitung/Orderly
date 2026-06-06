@@ -286,11 +286,37 @@ export function useHierarchyFilter(
     return count
   }, [])
 
-  // Update applied count when state changes
-  useEffect(() => {
-    const appliedCount = calculateAppliedCount(state)
-    setState(prev => ({ ...prev, appliedCount }))
-  }, [state, calculateAppliedCount])
+  // 計算 appliedCount 作為衍生值，而非存儲在 state 中避免無限循環
+  const appliedCount = useMemo(
+    () => calculateAppliedCount(state),
+    [
+      state.searchQuery,
+      state.isActive,
+      state.nodeTypes,
+      state.createdAfter,
+      state.createdBefore,
+      state.updatedAfter,
+      state.updatedBefore,
+      state.countries,
+      state.cities,
+      state.regions,
+      state.taxIdTypes,
+      state.hasMultipleLocations,
+      state.creditLimitRange,
+      state.businessUnitTypes,
+      state.hasBudget,
+      state.budgetRange,
+      state.hasParent,
+      state.hasChildren,
+      state.hierarchyDepth,
+      state.parentId,
+      state.customMetadataFilters,
+      state.monthlyRevenueRange,
+      state.orderCountRange,
+      state.loyaltyScoreRange,
+      calculateAppliedCount,
+    ]
+  )
 
   // Basic filter actions
   const setSearchQuery = useCallback((query: string) => {
@@ -706,12 +732,13 @@ export function useHierarchyFilter(
   }, [])
 
   // Computed values
-  const hasActiveFilters = useMemo(() => state.appliedCount > 0, [state.appliedCount])
+  const hasActiveFilters = useMemo(() => appliedCount > 0, [appliedCount])
   const isValidState = useMemo(() => validateCurrentFilters().isValid, [validateCurrentFilters])
 
   return {
-    // State
+    // State（不含 appliedCount，因為它是衍生計算值）
     ...state,
+    appliedCount, // 覆蓋 state 中的 appliedCount
 
     // Computed properties
     hasActiveFilters,

@@ -5,6 +5,17 @@
 
 import { z } from 'zod'
 
+// Disposable email domains to block
+const DISPOSABLE_EMAIL_DOMAINS = ['tempmail.com', '10minutemail.com', 'guerrillamail.com']
+
+// Password validation rules - single source of truth
+const PASSWORD_RULES = [
+  { pattern: /[A-Z]/, message: '密碼必須包含至少一個大寫字母', feedbackMsg: '需要大寫字母' },
+  { pattern: /[a-z]/, message: '密碼必須包含至少一個小寫字母', feedbackMsg: '需要小寫字母' },
+  { pattern: /\d/, message: '密碼必須包含至少一個數字', feedbackMsg: '需要數字' },
+  { pattern: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, message: '密碼必須包含至少一個特殊字元', feedbackMsg: '需要特殊字元' },
+] as const
+
 // Email validation with Taiwan business email patterns
 const emailSchema = z
   .string()
@@ -12,36 +23,17 @@ const emailSchema = z
   .email('請輸入有效的電子信箱格式')
   .max(254, '電子信箱過長')
   .refine(email => {
-    // Additional validation for business emails
     const domain = email.split('@')[1]
-    if (!domain) return false
-
-    // Block obvious disposable email domains
-    const disposableDomains = ['tempmail.com', '10minutemail.com', 'guerrillamail.com']
-    return !disposableDomains.includes(domain.toLowerCase())
+    return domain && !DISPOSABLE_EMAIL_DOMAINS.includes(domain.toLowerCase())
   }, '請使用商業電子信箱')
 
 // Password validation with strong security requirements
-const passwordSchema = z
-  .string()
-  .min(8, '密碼至少需要 8 個字元')
-  .max(128, '密碼過長')
-  .refine(password => {
-    // Must contain at least one uppercase letter
-    return /[A-Z]/.test(password)
-  }, '密碼必須包含至少一個大寫字母')
-  .refine(password => {
-    // Must contain at least one lowercase letter
-    return /[a-z]/.test(password)
-  }, '密碼必須包含至少一個小寫字母')
-  .refine(password => {
-    // Must contain at least one number
-    return /\d/.test(password)
-  }, '密碼必須包含至少一個數字')
-  .refine(password => {
-    // Must contain at least one special character
-    return /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-  }, '密碼必須包含至少一個特殊字元')
+const basePasswordSchema = z.string().min(8, '密碼至少需要 8 個字元').max(128, '密碼過長')
+
+const passwordSchema = PASSWORD_RULES.reduce(
+  (schema, rule) => schema.refine(pwd => rule.pattern.test(pwd), rule.message),
+  basePasswordSchema
+)
 
 // MFA code validation
 const mfaCodeSchema = z.string().regex(/^\d{6}$/, '驗證碼必須為 6 位數字')
@@ -137,79 +129,49 @@ export type MFAVerificationData = z.infer<typeof mfaVerificationSchema>
 export type PasswordResetRequestData = z.infer<typeof passwordResetRequestSchema>
 export type PasswordResetData = z.infer<typeof passwordResetSchema>
 
+// Generic validation helper
+function validateWithSchema<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown
+): { success: true; data: T } | { success: false; errors: Record<string, string> } {
+  try {
+    const result = schema.parse(data)
+    return { success: true, data: result }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const errors: Record<string, string> = {}
+      error.errors.forEach(err => {
+        if (err.path.length > 0) {
+          errors[err.path[0] as string] = err.message
+        }
+      })
+      return { success: false, errors }
+    }
+    return { success: false, errors: { general: '驗證失敗' } }
+  }
+}
+
 // Validation helpers
 export class AuthValidation {
   /**
    * Validate and sanitize login form data
    */
-  static validateLogin(
-    data: unknown
-  ): { success: true; data: LoginFormData } | { success: false; errors: Record<string, string> } {
-    try {
-      const result = loginFormSchema.parse(data)
-      return { success: true, data: result }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Record<string, string> = {}
-        error.errors.forEach(err => {
-          if (err.path.length > 0) {
-            errors[err.path[0] as string] = err.message
-          }
-        })
-        return { success: false, errors }
-      }
-      return { success: false, errors: { general: '驗證失敗' } }
-    }
+  static validateLogin(data: unknown) {
+    return validateWithSchema(loginFormSchema, data)
   }
 
   /**
    * Validate and sanitize registration form data
    */
-  static validateRegistration(
-    data: unknown
-  ):
-    | { success: true; data: RegisterFormData }
-    | { success: false; errors: Record<string, string> } {
-    try {
-      const result = registerFormSchema.parse(data)
-      return { success: true, data: result }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Record<string, string> = {}
-        error.errors.forEach(err => {
-          if (err.path.length > 0) {
-            errors[err.path[0] as string] = err.message
-          }
-        })
-        return { success: false, errors }
-      }
-      return { success: false, errors: { general: '驗證失敗' } }
-    }
+  static validateRegistration(data: unknown) {
+    return validateWithSchema(registerFormSchema, data)
   }
 
   /**
    * Validate MFA verification data
    */
-  static validateMFA(
-    data: unknown
-  ):
-    | { success: true; data: MFAVerificationData }
-    | { success: false; errors: Record<string, string> } {
-    try {
-      const result = mfaVerificationSchema.parse(data)
-      return { success: true, data: result }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Record<string, string> = {}
-        error.errors.forEach(err => {
-          if (err.path.length > 0) {
-            errors[err.path[0] as string] = err.message
-          }
-        })
-        return { success: false, errors }
-      }
-      return { success: false, errors: { general: '驗證失敗' } }
-    }
+  static validateMFA(data: unknown) {
+    return validateWithSchema(mfaVerificationSchema, data)
   }
 
   /**
@@ -226,30 +188,20 @@ export class AuthValidation {
   }
 
   /**
-   * Check password strength
+   * Check password strength (returns score 0-5 and feedback array)
    */
-  static checkPasswordStrength(password: string): {
-    score: number // 0-4
-    feedback: string[]
-  } {
+  static checkPasswordStrength(password: string): { score: number; feedback: string[] } {
+    const lengthCheck = password.length >= 8
+    const ruleResults = PASSWORD_RULES.map(rule => ({
+      passed: rule.pattern.test(password),
+      msg: rule.feedbackMsg,
+    }))
+
     const feedback: string[] = []
-    let score = 0
+    if (!lengthCheck) feedback.push('密碼至少需要 8 個字元')
+    ruleResults.filter(r => !r.passed).forEach(r => feedback.push(r.msg))
 
-    if (password.length >= 8) score++
-    else feedback.push('密碼至少需要 8 個字元')
-
-    if (/[A-Z]/.test(password)) score++
-    else feedback.push('需要大寫字母')
-
-    if (/[a-z]/.test(password)) score++
-    else feedback.push('需要小寫字母')
-
-    if (/\d/.test(password)) score++
-    else feedback.push('需要數字')
-
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score++
-    else feedback.push('需要特殊字元')
-
+    const score = (lengthCheck ? 1 : 0) + ruleResults.filter(r => r.passed).length
     return { score, feedback }
   }
 }

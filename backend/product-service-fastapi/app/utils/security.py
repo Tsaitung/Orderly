@@ -165,7 +165,10 @@ class TokenManager:
             combined = f"{salt}{data}"
             computed_hash = hashlib.sha256(combined.encode()).hexdigest()
             return computed_hash == hash_part
-        except:
+        except (ValueError, TypeError, AttributeError) as e:
+            # ValueError: split doesn't return exactly 2 parts
+            # TypeError: hashed_value is not a string
+            # AttributeError: hashed_value has no split method
             return False
 
 def validate_and_sanitize_sku_input(data: Dict[str, Any]) -> Dict[str, Any]:

@@ -35,8 +35,8 @@ x-env-common: &env_common
   # 應用密鑰
   SECRET_KEY: ${SECRET_KEY:-dev-app-secret-key-change-in-production}
   
-  # CORS 配置
-  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8000,http://localhost:8080}
+  # CORS 配置 — 預設 fallback 使用 Orderly SSOT ports (frontend 3543, backend 8543)
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3543,http://localhost:8543}
   
   # 檔案上傳配置
   MAX_FILE_SIZE: ${MAX_FILE_SIZE:-10485760}

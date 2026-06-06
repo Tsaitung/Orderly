@@ -7,11 +7,8 @@ from decimal import Decimal
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-
-def to_camel(string: str) -> str:
-    """Convert snake_case to camelCase"""
-    components = string.split('_')
-    return components[0] + ''.join(x.title() for x in components[1:])
+# Import shared schema utilities from core library
+from libs.orderly_fastapi_core import to_camel
 
 
 class OrderItemBase(BaseModel):

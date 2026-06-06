@@ -1,12 +1,10 @@
-// ============================================================================
-// Customer Hierarchy API Client
-// ============================================================================
-// Type-safe API client for 4-level customer hierarchy management system
-// 集團 → 公司 → 地點 → 業務單位
-
+/**
+ * Customer Hierarchy API Client
+ * Type-safe API client for 4-level customer hierarchy management system
+ * 集團 → 公司 → 地點 → 業務單位
+ */
 import { http } from './http'
 import type {
-  // Core entities
   CustomerGroup,
   CustomerGroupCreate,
   CustomerGroupUpdate,
@@ -19,52 +17,70 @@ import type {
   BusinessUnit,
   BusinessUnitCreate,
   BusinessUnitUpdate,
-
-  // Hierarchy management
   HierarchyNode,
   HierarchyTreeRequest,
   HierarchyTreeResponse,
   HierarchySearchRequest,
   HierarchySearchResponse,
   HierarchyPath,
-
-  // Operations
   BulkOperationRequest,
   BulkOperationResponse,
   MigrationRequest,
   MigrationResponse,
   MigrationStatus,
-
-  // Responses
   ApiResponse,
   ListResponse,
   PaginationParams,
   FilterParams,
   HierarchyStatistics,
   CustomerInsights,
-
-  // Enums
   HierarchyNodeType,
   TaxIdType,
   BusinessUnitType,
   UUID,
 } from '@orderly/types'
 
-// ============================================================================
-// Configuration
-// ============================================================================
+const BASE_URL = process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL || '/api/bff/v2'
 
-const CUSTOMER_HIERARCHY_BASE_URL =
-  process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL || '/api/bff/v2'
+const api = {
+  get: <T>(path: string) => http.get<T>(path, { baseUrl: BASE_URL }),
+  post: <T>(path: string, body?: unknown) => http.post<T>(path, body, { baseUrl: BASE_URL }),
+  patch: <T>(path: string, body?: unknown) => http.patch<T>(path, body, { baseUrl: BASE_URL }),
+  delete: <T>(path: string) => http.delete<T>(path, { baseUrl: BASE_URL }),
+}
 
-const customerHierarchyHttp = {
-  get: <T>(path: string) => http.get<T>(path, { baseUrl: CUSTOMER_HIERARCHY_BASE_URL }),
-  post: <T>(path: string, body?: any) =>
-    http.post<T>(path, body, { baseUrl: CUSTOMER_HIERARCHY_BASE_URL }),
-  patch: <T>(path: string, body?: any) =>
-    http.patch<T>(path, body, { baseUrl: CUSTOMER_HIERARCHY_BASE_URL }),
-  delete: <T>(path: string) =>
-    http.request<T>(path, { method: 'DELETE' }, { baseUrl: CUSTOMER_HIERARCHY_BASE_URL }),
+// Field mapping for camelCase to snake_case conversion
+const FIELD_MAPPING: Record<string, string> = {
+  page: 'page',
+  limit: 'limit',
+  sortBy: 'sort_by',
+  sortOrder: 'sort_order',
+  searchQuery: 'search',
+  groupId: 'group_id',
+  companyId: 'company_id',
+  locationId: 'location_id',
+  type: 'type',
+}
+
+/** Build query string from params object with field mapping */
+function buildQuery(params?: PaginationParams & FilterParams & Record<string, unknown>): string {
+  if (!params) return ''
+
+  const searchParams = new URLSearchParams()
+
+  for (const [key, apiKey] of Object.entries(FIELD_MAPPING)) {
+    const value = params[key as keyof typeof params]
+    if (value !== undefined && value !== null) {
+      searchParams.set(apiKey, String(value))
+    }
+  }
+
+  if (params.isActive !== undefined) searchParams.set('is_active', String(params.isActive))
+  if (params.createdAfter instanceof Date) searchParams.set('created_after', params.createdAfter.toISOString())
+  if (params.createdBefore instanceof Date) searchParams.set('created_before', params.createdBefore.toISOString())
+
+  const query = searchParams.toString()
+  return query ? `?${query}` : ''
 }
 
 // ============================================================================
@@ -76,49 +92,35 @@ export const groupsApi = {
    * List all customer groups with optional filtering and pagination
    */
   list: async (params?: PaginationParams & FilterParams): Promise<ListResponse<CustomerGroup>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-    if (params?.sortBy) searchParams.set('sort_by', params.sortBy)
-    if (params?.sortOrder) searchParams.set('sort_order', params.sortOrder)
-    if (params?.isActive !== undefined) searchParams.set('is_active', params.isActive.toString())
-    if (params?.searchQuery) searchParams.set('search', params.searchQuery)
-    if (params?.createdAfter) searchParams.set('created_after', params.createdAfter.toISOString())
-    if (params?.createdBefore)
-      searchParams.set('created_before', params.createdBefore.toISOString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<CustomerGroup>>(
-      `/groups${query ? `?${query}` : ''}`
-    )
+    return api.get<ListResponse<CustomerGroup>>(`/groups${buildQuery(params)}`)
   },
 
   /**
    * Get a single customer group by ID
    */
   get: async (id: UUID): Promise<ApiResponse<CustomerGroup>> => {
-    return customerHierarchyHttp.get<ApiResponse<CustomerGroup>>(`/groups/${id}`)
+    return api.get<ApiResponse<CustomerGroup>>(`/groups/${id}`)
   },
 
   /**
    * Create a new customer group
    */
   create: async (data: CustomerGroupCreate): Promise<ApiResponse<CustomerGroup>> => {
-    return customerHierarchyHttp.post<ApiResponse<CustomerGroup>>('/groups', data)
+    return api.post<ApiResponse<CustomerGroup>>('/groups', data)
   },
 
   /**
    * Update an existing customer group
    */
   update: async (id: UUID, data: CustomerGroupUpdate): Promise<ApiResponse<CustomerGroup>> => {
-    return customerHierarchyHttp.patch<ApiResponse<CustomerGroup>>(`/groups/${id}`, data)
+    return api.patch<ApiResponse<CustomerGroup>>(`/groups/${id}`, data)
   },
 
   /**
    * Delete a customer group (soft delete)
    */
   delete: async (id: UUID): Promise<ApiResponse<{ id: UUID }>> => {
-    return customerHierarchyHttp.delete<ApiResponse<{ id: UUID }>>(`/groups/${id}`)
+    return api.delete<ApiResponse<{ id: UUID }>>(`/groups/${id}`)
   },
 
   /**
@@ -128,13 +130,8 @@ export const groupsApi = {
     groupId: UUID,
     params?: PaginationParams
   ): Promise<ListResponse<CustomerCompany>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<CustomerCompany>>(
-      `/groups/${groupId}/companies${query ? `?${query}` : ''}`
+    return api.get<ListResponse<CustomerCompany>>(
+      `/groups/${groupId}/companies${buildQuery(params)}`
     )
   },
 }
@@ -150,50 +147,35 @@ export const companiesApi = {
   list: async (
     params?: PaginationParams & FilterParams & { groupId?: UUID }
   ): Promise<ListResponse<CustomerCompany>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-    if (params?.sortBy) searchParams.set('sort_by', params.sortBy)
-    if (params?.sortOrder) searchParams.set('sort_order', params.sortOrder)
-    if (params?.isActive !== undefined) searchParams.set('is_active', params.isActive.toString())
-    if (params?.searchQuery) searchParams.set('search', params.searchQuery)
-    if (params?.groupId) searchParams.set('group_id', params.groupId)
-    if (params?.createdAfter) searchParams.set('created_after', params.createdAfter.toISOString())
-    if (params?.createdBefore)
-      searchParams.set('created_before', params.createdBefore.toISOString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<CustomerCompany>>(
-      `/companies${query ? `?${query}` : ''}`
-    )
+    return api.get<ListResponse<CustomerCompany>>(`/companies${buildQuery(params)}`)
   },
 
   /**
    * Get a single customer company by ID
    */
   get: async (id: UUID): Promise<ApiResponse<CustomerCompany>> => {
-    return customerHierarchyHttp.get<ApiResponse<CustomerCompany>>(`/companies/${id}`)
+    return api.get<ApiResponse<CustomerCompany>>(`/companies/${id}`)
   },
 
   /**
    * Create a new customer company
    */
   create: async (data: CustomerCompanyCreate): Promise<ApiResponse<CustomerCompany>> => {
-    return customerHierarchyHttp.post<ApiResponse<CustomerCompany>>('/companies', data)
+    return api.post<ApiResponse<CustomerCompany>>('/companies', data)
   },
 
   /**
    * Update an existing customer company
    */
   update: async (id: UUID, data: CustomerCompanyUpdate): Promise<ApiResponse<CustomerCompany>> => {
-    return customerHierarchyHttp.patch<ApiResponse<CustomerCompany>>(`/companies/${id}`, data)
+    return api.patch<ApiResponse<CustomerCompany>>(`/companies/${id}`, data)
   },
 
   /**
    * Delete a customer company (soft delete)
    */
   delete: async (id: UUID): Promise<ApiResponse<{ id: UUID }>> => {
-    return customerHierarchyHttp.delete<ApiResponse<{ id: UUID }>>(`/companies/${id}`)
+    return api.delete<ApiResponse<{ id: UUID }>>(`/companies/${id}`)
   },
 
   /**
@@ -203,13 +185,8 @@ export const companiesApi = {
     companyId: UUID,
     params?: PaginationParams
   ): Promise<ListResponse<CustomerLocation>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<CustomerLocation>>(
-      `/companies/${companyId}/locations${query ? `?${query}` : ''}`
+    return api.get<ListResponse<CustomerLocation>>(
+      `/companies/${companyId}/locations${buildQuery(params)}`
     )
   },
 
@@ -220,7 +197,7 @@ export const companiesApi = {
     taxId: string,
     taxIdType: TaxIdType
   ): Promise<ApiResponse<{ isValid: boolean; message?: string }>> => {
-    return customerHierarchyHttp.post<ApiResponse<{ isValid: boolean; message?: string }>>(
+    return api.post<ApiResponse<{ isValid: boolean; message?: string }>>(
       '/companies/validate-tax-id',
       {
         tax_id: taxId,
@@ -241,36 +218,21 @@ export const locationsApi = {
   list: async (
     params?: PaginationParams & FilterParams & { companyId?: UUID }
   ): Promise<ListResponse<CustomerLocation>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-    if (params?.sortBy) searchParams.set('sort_by', params.sortBy)
-    if (params?.sortOrder) searchParams.set('sort_order', params.sortOrder)
-    if (params?.isActive !== undefined) searchParams.set('is_active', params.isActive.toString())
-    if (params?.searchQuery) searchParams.set('search', params.searchQuery)
-    if (params?.companyId) searchParams.set('company_id', params.companyId)
-    if (params?.createdAfter) searchParams.set('created_after', params.createdAfter.toISOString())
-    if (params?.createdBefore)
-      searchParams.set('created_before', params.createdBefore.toISOString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<CustomerLocation>>(
-      `/locations${query ? `?${query}` : ''}`
-    )
+    return api.get<ListResponse<CustomerLocation>>(`/locations${buildQuery(params)}`)
   },
 
   /**
    * Get a single customer location by ID
    */
   get: async (id: UUID): Promise<ApiResponse<CustomerLocation>> => {
-    return customerHierarchyHttp.get<ApiResponse<CustomerLocation>>(`/locations/${id}`)
+    return api.get<ApiResponse<CustomerLocation>>(`/locations/${id}`)
   },
 
   /**
    * Create a new customer location
    */
   create: async (data: CustomerLocationCreate): Promise<ApiResponse<CustomerLocation>> => {
-    return customerHierarchyHttp.post<ApiResponse<CustomerLocation>>('/locations', data)
+    return api.post<ApiResponse<CustomerLocation>>('/locations', data)
   },
 
   /**
@@ -280,14 +242,14 @@ export const locationsApi = {
     id: UUID,
     data: CustomerLocationUpdate
   ): Promise<ApiResponse<CustomerLocation>> => {
-    return customerHierarchyHttp.patch<ApiResponse<CustomerLocation>>(`/locations/${id}`, data)
+    return api.patch<ApiResponse<CustomerLocation>>(`/locations/${id}`, data)
   },
 
   /**
    * Delete a customer location (soft delete)
    */
   delete: async (id: UUID): Promise<ApiResponse<{ id: UUID }>> => {
-    return customerHierarchyHttp.delete<ApiResponse<{ id: UUID }>>(`/locations/${id}`)
+    return api.delete<ApiResponse<{ id: UUID }>>(`/locations/${id}`)
   },
 
   /**
@@ -297,13 +259,8 @@ export const locationsApi = {
     locationId: UUID,
     params?: PaginationParams
   ): Promise<ListResponse<BusinessUnit>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<BusinessUnit>>(
-      `/locations/${locationId}/business-units${query ? `?${query}` : ''}`
+    return api.get<ListResponse<BusinessUnit>>(
+      `/locations/${locationId}/business-units${buildQuery(params)}`
     )
   },
 
@@ -323,7 +280,7 @@ export const locationsApi = {
       suggestions?: any[]
     }>
   > => {
-    return customerHierarchyHttp.post<ApiResponse<any>>('/locations/validate-address', address)
+    return api.post<ApiResponse<any>>('/locations/validate-address', address)
   },
 }
 
@@ -342,22 +299,8 @@ export const businessUnitsApi = {
         type?: BusinessUnitType
       }
   ): Promise<ListResponse<BusinessUnit>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-    if (params?.sortBy) searchParams.set('sort_by', params.sortBy)
-    if (params?.sortOrder) searchParams.set('sort_order', params.sortOrder)
-    if (params?.isActive !== undefined) searchParams.set('is_active', params.isActive.toString())
-    if (params?.searchQuery) searchParams.set('search', params.searchQuery)
-    if (params?.locationId) searchParams.set('location_id', params.locationId)
-    if (params?.type) searchParams.set('type', params.type)
-    if (params?.createdAfter) searchParams.set('created_after', params.createdAfter.toISOString())
-    if (params?.createdBefore)
-      searchParams.set('created_before', params.createdBefore.toISOString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<BusinessUnit>>(
-      `/business-units${query ? `?${query}` : ''}`
+    return api.get<ListResponse<BusinessUnit>>(
+      `/business-units${buildQuery(params)}`
     )
   },
 
@@ -365,28 +308,28 @@ export const businessUnitsApi = {
    * Get a single business unit by ID
    */
   get: async (id: UUID): Promise<ApiResponse<BusinessUnit>> => {
-    return customerHierarchyHttp.get<ApiResponse<BusinessUnit>>(`/business-units/${id}`)
+    return api.get<ApiResponse<BusinessUnit>>(`/business-units/${id}`)
   },
 
   /**
    * Create a new business unit
    */
   create: async (data: BusinessUnitCreate): Promise<ApiResponse<BusinessUnit>> => {
-    return customerHierarchyHttp.post<ApiResponse<BusinessUnit>>('/business-units', data)
+    return api.post<ApiResponse<BusinessUnit>>('/business-units', data)
   },
 
   /**
    * Update an existing business unit
    */
   update: async (id: UUID, data: BusinessUnitUpdate): Promise<ApiResponse<BusinessUnit>> => {
-    return customerHierarchyHttp.patch<ApiResponse<BusinessUnit>>(`/business-units/${id}`, data)
+    return api.patch<ApiResponse<BusinessUnit>>(`/business-units/${id}`, data)
   },
 
   /**
    * Delete a business unit (soft delete)
    */
   delete: async (id: UUID): Promise<ApiResponse<{ id: UUID }>> => {
-    return customerHierarchyHttp.delete<ApiResponse<{ id: UUID }>>(`/business-units/${id}`)
+    return api.delete<ApiResponse<{ id: UUID }>>(`/business-units/${id}`)
   },
 
   /**
@@ -400,7 +343,7 @@ export const businessUnitsApi = {
     const params = new URLSearchParams({ location_id: locationId, code })
     if (excludeId) params.set('exclude_id', excludeId)
 
-    return customerHierarchyHttp.get<ApiResponse<{ isUnique: boolean }>>(
+    return api.get<ApiResponse<{ isUnique: boolean }>>(
       `/business-units/validate-code?${params}`
     )
   },
@@ -415,14 +358,14 @@ export const hierarchyApi = {
    * Get hierarchy tree structure
    */
   getTree: async (request?: HierarchyTreeRequest): Promise<HierarchyTreeResponse> => {
-    return customerHierarchyHttp.post<HierarchyTreeResponse>('/hierarchy/tree', request || {})
+    return api.post<HierarchyTreeResponse>('/hierarchy/tree', request || {})
   },
 
   /**
    * Search across hierarchy levels
    */
   search: async (request: HierarchySearchRequest): Promise<HierarchySearchResponse> => {
-    return customerHierarchyHttp.post<HierarchySearchResponse>('/hierarchy/search', request)
+    return api.post<HierarchySearchResponse>('/hierarchy/search', request)
   },
 
   /**
@@ -432,7 +375,7 @@ export const hierarchyApi = {
     entityId: UUID,
     entityType: HierarchyNodeType
   ): Promise<ApiResponse<HierarchyPath>> => {
-    return customerHierarchyHttp.get<ApiResponse<HierarchyPath>>(
+    return api.get<ApiResponse<HierarchyPath>>(
       `/hierarchy/path/${entityType}/${entityId}`
     )
   },
@@ -445,7 +388,7 @@ export const hierarchyApi = {
     entityType: HierarchyNodeType,
     newParentId: UUID
   ): Promise<ApiResponse<HierarchyNode>> => {
-    return customerHierarchyHttp.post<ApiResponse<HierarchyNode>>('/hierarchy/move', {
+    return api.post<ApiResponse<HierarchyNode>>('/hierarchy/move', {
       entity_id: entityId,
       entity_type: entityType,
       new_parent_id: newParentId,
@@ -465,14 +408,14 @@ export const hierarchyApi = {
     }>
   > => {
     const path = entityId ? `/hierarchy/validate/${entityId}` : '/hierarchy/validate'
-    return customerHierarchyHttp.get<ApiResponse<any>>(path)
+    return api.get<ApiResponse<any>>(path)
   },
 
   /**
    * Get hierarchy statistics
    */
   getStatistics: async (): Promise<ApiResponse<HierarchyStatistics>> => {
-    return customerHierarchyHttp.get<ApiResponse<HierarchyStatistics>>('/hierarchy/stats')
+    return api.get<ApiResponse<HierarchyStatistics>>('/hierarchy/stats')
   },
 
   /**
@@ -483,7 +426,7 @@ export const hierarchyApi = {
     includeInactive?: boolean
     levels?: HierarchyNodeType[]
   }): Promise<Blob> => {
-    const response = await fetch(`${CUSTOMER_HIERARCHY_BASE_URL}/hierarchy/export`, {
+    const response = await fetch(`${BASE_URL}/hierarchy/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(options),
@@ -508,7 +451,7 @@ export const bulkApi = {
   createGroups: async (
     request: BulkOperationRequest<CustomerGroupCreate>
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>('/bulk/groups', request)
+    return api.post<BulkOperationResponse>('/bulk/groups', request)
   },
 
   /**
@@ -517,7 +460,7 @@ export const bulkApi = {
   createCompanies: async (
     request: BulkOperationRequest<CustomerCompanyCreate>
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>('/bulk/companies', request)
+    return api.post<BulkOperationResponse>('/bulk/companies', request)
   },
 
   /**
@@ -526,7 +469,7 @@ export const bulkApi = {
   createLocations: async (
     request: BulkOperationRequest<CustomerLocationCreate>
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>('/bulk/locations', request)
+    return api.post<BulkOperationResponse>('/bulk/locations', request)
   },
 
   /**
@@ -535,7 +478,7 @@ export const bulkApi = {
   createBusinessUnits: async (
     request: BulkOperationRequest<BusinessUnitCreate>
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>('/bulk/business-units', request)
+    return api.post<BulkOperationResponse>('/bulk/business-units', request)
   },
 
   /**
@@ -545,7 +488,7 @@ export const bulkApi = {
     entityType: HierarchyNodeType,
     updates: Array<{ id: UUID; data: any }>
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>(`/bulk/${entityType}/update`, {
+    return api.post<BulkOperationResponse>(`/bulk/${entityType}/update`, {
       operations: updates.map(u => ({ action: 'update', id: u.id, data: u.data })),
     })
   },
@@ -557,7 +500,7 @@ export const bulkApi = {
     entityType: HierarchyNodeType,
     ids: UUID[]
   ): Promise<BulkOperationResponse> => {
-    return customerHierarchyHttp.post<BulkOperationResponse>(`/bulk/${entityType}/delete`, {
+    return api.post<BulkOperationResponse>(`/bulk/${entityType}/delete`, {
       operations: ids.map(id => ({ action: 'delete', id })),
     })
   },
@@ -572,14 +515,14 @@ export const migrationApi = {
    * Start migration from old customer system
    */
   startMigration: async (request: MigrationRequest): Promise<ApiResponse<MigrationResponse>> => {
-    return customerHierarchyHttp.post<ApiResponse<MigrationResponse>>('/migration/start', request)
+    return api.post<ApiResponse<MigrationResponse>>('/migration/start', request)
   },
 
   /**
    * Get migration status
    */
   getStatus: async (migrationId: UUID): Promise<ApiResponse<MigrationStatus>> => {
-    return customerHierarchyHttp.get<ApiResponse<MigrationStatus>>(
+    return api.get<ApiResponse<MigrationStatus>>(
       `/migration/status/${migrationId}`
     )
   },
@@ -590,7 +533,7 @@ export const migrationApi = {
   rollback: async (
     migrationId: UUID
   ): Promise<ApiResponse<{ success: boolean; message: string }>> => {
-    return customerHierarchyHttp.post<ApiResponse<any>>(`/migration/rollback/${migrationId}`)
+    return api.post<ApiResponse<any>>(`/migration/rollback/${migrationId}`)
   },
 
   /**
@@ -606,20 +549,15 @@ export const migrationApi = {
       preview: any
     }>
   > => {
-    return customerHierarchyHttp.post<ApiResponse<any>>('/migration/validate', request)
+    return api.post<ApiResponse<any>>('/migration/validate', request)
   },
 
   /**
    * Get migration history
    */
   getHistory: async (params?: PaginationParams): Promise<ListResponse<MigrationResponse>> => {
-    const searchParams = new URLSearchParams()
-    if (params?.page) searchParams.set('page', params.page.toString())
-    if (params?.limit) searchParams.set('limit', params.limit.toString())
-
-    const query = searchParams.toString()
-    return customerHierarchyHttp.get<ListResponse<MigrationResponse>>(
-      `/migration/history${query ? `?${query}` : ''}`
+    return api.get<ListResponse<MigrationResponse>>(
+      `/migration/history${buildQuery(params)}`
     )
   },
 }
@@ -640,7 +578,7 @@ export const analyticsApi = {
     groupBy?: 'month' | 'week' | 'day'
     includeInactive?: boolean
   }): Promise<ApiResponse<CustomerInsights>> => {
-    return customerHierarchyHttp.post<ApiResponse<CustomerInsights>>(
+    return api.post<ApiResponse<CustomerInsights>>(
       '/analytics/insights',
       params || {}
     )
@@ -661,7 +599,7 @@ export const analyticsApi = {
       trends: any[]
     }>
   > => {
-    return customerHierarchyHttp.get<ApiResponse<any>>(
+    return api.get<ApiResponse<any>>(
       `/analytics/performance/${entityType}/${entityId}?period=${period}`
     )
   },
@@ -679,7 +617,7 @@ export const analyticsApi = {
       recommendations: string[]
     }>
   > => {
-    return customerHierarchyHttp.get<ApiResponse<any>>('/analytics/health')
+    return api.get<ApiResponse<any>>('/analytics/health')
   },
 }
 

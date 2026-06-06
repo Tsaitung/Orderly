@@ -6,35 +6,12 @@ import {
   ProductFilters,
   ProductCreateRequest,
   ProductUpdateRequest,
-  ProductListResponse,
   ProductStatsResponse,
   BulkProductOperation,
   ProductPriceUpdate,
-  ProductPerformance,
-  CategoryPerformance,
   ImageUploadRequest,
   ImageUploadResponse,
 } from './product-types'
-
-interface ProductHookResult {
-  products: Product[]
-  pagination?: ProductListResponse['pagination']
-  summary?: ProductListResponse['summary']
-  loading: boolean
-  error: string | null
-  refetch: () => Promise<void>
-  createProduct: (data: ProductCreateRequest) => Promise<Product>
-  updateProduct: (id: string, data: ProductUpdateRequest) => Promise<Product>
-  deleteProduct: (id: string) => Promise<void>
-  bulkOperation: (operation: BulkProductOperation) => Promise<void>
-  updatePrice: (update: ProductPriceUpdate) => Promise<void>
-  uploadImage: (productId: string, image: ImageUploadRequest) => Promise<ImageUploadResponse>
-  deleteImage: (productId: string, imageId: string) => Promise<void>
-  updateFilters: (filters: ProductFilters) => void
-  isCreating: boolean
-  isUpdating: boolean
-  isBulkOperating: boolean
-}
 
 // Mock API functions - replace with real API calls
 const mockApiDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms))
@@ -488,7 +465,7 @@ export function useProducts(organizationId?: string, filters: ProductFilters = {
 
   // Update filters
   const updateFilters = useCallback(
-    (newFilters: ProductFilters) => {
+    (_newFilters: ProductFilters) => {
       // This will trigger useEffect to reload products
       loadProducts()
     },

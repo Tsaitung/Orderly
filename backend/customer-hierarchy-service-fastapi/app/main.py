@@ -2,19 +2,25 @@
 Customer Hierarchy Service - FastAPI Application
 Main entry point for the 4-level customer hierarchy management system
 """
+import os
+import sys
+import time
+from contextlib import asynccontextmanager
+from typing import Any, Dict
 
-from fastapi import FastAPI, Request, HTTPException, Depends, Query
+import structlog
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-import time
-import structlog
-from typing import Dict, Any, Optional, List
+from sqlalchemy import text
+
+# Add libs path for orderly_fastapi_core
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "libs")))
+from orderly_fastapi_core import mask_database_url, get_db_info
 
 from app.core.config import settings
-from sqlalchemy import text
-from app.core.database import async_engine as engine, get_async_db as get_database, init_db, check_db_health
+from app.core.database import async_engine as engine, check_db_health
 from app.api.v2 import router as api_v2_router
 from app.middleware.auth import AuthMiddleware
 from app.middleware.error_handler import ErrorHandlerMiddleware
@@ -25,36 +31,15 @@ logger = structlog.get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Application lifespan events
-    """
-    # Startup
-    logger.info("Customer Hierarchy Service starting up", version=settings.api_version)
-    # Log database connection source (mask secrets)
+    """Application lifespan events"""
+    logger.info("customer-hierarchy-service.start", version=settings.api_version)
     try:
-        db_url = settings.database_url_async
-        masked = db_url
-        if "://" in db_url and "@" in db_url:
-            scheme, rest = db_url.split("://", 1)
-            creds, hostpart = rest.split("@", 1)
-            if ":" in creds:
-                user, _ = creds.split(":", 1)
-                creds_masked = f"{user}:***"
-            else:
-                creds_masked = creds
-            masked = f"{scheme}://{creds_masked}@{hostpart}"
-        logger.info("db.config", url=masked)
+        logger.info("db.config", url=mask_database_url(settings.database_url_async))
     except Exception as e:
         logger.warning("db.config_log_failed", error=str(e))
-    
-    # Skip immediate database connection to avoid startup failures
-    # Database will be checked on first health check instead
     logger.info("Database connection will be verified on first health check")
-    
     yield
-    
-    # Shutdown
-    logger.info("Customer Hierarchy Service shutting down")
+    logger.info("customer-hierarchy-service.stop")
     await engine.dispose()
 
 
@@ -194,29 +179,12 @@ async def db_health_probe() -> Dict[str, Any]:
 
 
 @app.get("/db/info", tags=["Health"])
-async def db_info() -> Dict[str, Any]:
+async def db_info_endpoint() -> Dict[str, Any]:
     """Return masked DB URL and ping time."""
-    try:
-        db_url = settings.database_url_async
-        masked = db_url
-        if "://" in db_url and "@" in db_url:
-            scheme, rest = db_url.split("://", 1)
-            creds, hostpart = rest.split("@", 1)
-            if ":" in creds:
-                user, _ = creds.split(":", 1)
-                creds_masked = f"{user}:***"
-            else:
-                creds_masked = creds
-            masked = f"{scheme}://{creds_masked}@{hostpart}"
-        import time
-        start = time.time()
-        async with engine.begin() as conn:
-            await conn.execute(text("SELECT 1"))
-        dur = (time.time() - start) * 1000
-        return {"url_masked": masked, "ping_ms": dur}
-    except Exception as e:
-        logger.error("db.info.failed", error=str(e))
-        raise HTTPException(status_code=503, detail=str(e))
+    result = await get_db_info(engine, settings.database_url_async)
+    if "error" in result:
+        raise HTTPException(status_code=503, detail=result["error"])
+    return result
 
 
 # Metrics endpoint for Prometheus

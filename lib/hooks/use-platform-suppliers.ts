@@ -248,8 +248,8 @@ export function useSupplierSearch() {
     }
   }, [search])
 
+  // 當 query 變更時觸發防抖搜尋
   useEffect(() => {
-    setQuery(query)
     debouncedSearch(query)
   }, [query, debouncedSearch])
 
