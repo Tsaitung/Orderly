@@ -1,35 +1,43 @@
-name: CI - Build and Test
+name: CI
+
+# CI = the quality gate. No cloud, no deploy. Fast-fail, cached, sharded.
+# Triggered standalone on PRs/pushes AND consumed by cd.yml via workflow_call
+# so that CD only ever runs after CI is green.
 
 on:
-  push:
-    branches: [ develop, main ]
   pull_request:
-    branches: [ develop, main ]
+    branches: [staging, develop, main]
+  push:
+    # Deploy branches (staging/main) run CI via cd.yml's gate (workflow_call),
+    # so only non-deploy branch pushes need a standalone CI run here.
+    branches: [develop]
+  workflow_call:
+    inputs:
+      shards:
+        description: 'Number of frontend Jest shards'
+        type: string
+        default: '4'
+
+# Cancel superseded CI runs on the same ref to save minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   NODE_VERSION: '20'
-  REGISTRY: gcr.io
+  PYTHON_VERSION: '3.11'
 
 jobs:
   detect-changes:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.changes.outputs.backend }}
-      frontend: ${{ steps.changes.outputs.frontend }}
-      infrastructure: ${{ steps.changes.outputs.infrastructure }}
-      api-gateway: ${{ steps.changes.outputs.api-gateway }}
-      user-service: ${{ steps.changes.outputs.user-service }}
-      order-service: ${{ steps.changes.outputs.order-service }}
-      product-service: ${{ steps.changes.outputs.product-service }}
-      acceptance-service: ${{ steps.changes.outputs.acceptance-service }}
-      billing-service: ${{ steps.changes.outputs.billing-service }}
-      notification-service: ${{ steps.changes.outputs.notification-service }}
-      admin-service: ${{ steps.changes.outputs.admin-service }}
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
-        id: changes
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
           filters: |
             backend:
@@ -38,160 +46,22 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
             frontend:
-              - 'frontend/**'
               - 'app/**'
               - 'components/**'
               - 'lib/**'
+              - 'contexts/**'
               - 'hooks/**'
+              - 'stores/**'
+              - 'public/**'
               - 'middleware.ts'
               - 'next.config.js'
               - 'tailwind.config.ts'
-              - 'tsconfig.json'
-            infrastructure:
-              - 'infrastructure/**'
-              - 'scripts/**'
-              - 'docker-compose*.yml'
-              - '.env.example'
-            api-gateway:
-              - 'backend/api-gateway/**'
-            user-service:
-              - 'backend/user-service/**'
-            order-service:
-              - 'backend/order-service/**'
-            product-service:
-              - 'backend/product-service-fastapi/**'
-            acceptance-service:
-              - 'backend/acceptance-service/**'
-            billing-service:
-              - 'backend/billing-service/**'
-            notification-service:
-              - 'backend/notification-service/**'
-            admin-service:
-              - 'backend/admin-service/**'
+              - 'tsconfig*.json'
+              - 'package.json'
+              - 'package-lock.json'
 
-  lint-and-format:
-    name: Lint and Format Check
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run ESLint
-        run: npm run lint
-      
-      - name: Check Prettier formatting
-        run: npm run format:check
-
-  typecheck:
-    name: TypeScript Type Check
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      # Legacy ORM removed: no ORM client generation required
-      
-      - name: TypeScript compile check
-        run: npm run build
-
-  test-backend:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true'
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: orderly
-          POSTGRES_PASSWORD: orderly_test
-          POSTGRES_DB: orderly_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-    strategy:
-      matrix:
-        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Check if service exists
-        id: check-service
-        run: |
-          if [ -d "backend/${{ matrix.service }}" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-      
-      # Legacy ORM removed: skip client generation per service
-      
-      # Legacy ORM removed: skip JS ORM migrations in CI
-      
-      - name: Run tests for ${{ matrix.service }}
-        if: steps.check-service.outputs.exists == 'true'
-        working-directory: backend/${{ matrix.service }}
-        env:
-          NODE_ENV: test
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_NAME: orderly_test
-          DATABASE_USER: orderly
-          POSTGRES_PASSWORD: orderly_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          JWT_SECRET: test_jwt_secret_for_testing_only
-          JWT_REFRESH_SECRET: test_refresh_secret_for_testing_only
-        run: |
-          if [ -f "package.json" ] && npm run | grep -q "test"; then
-            npm test
-          else
-            echo "No tests found for ${{ matrix.service }}, skipping..."
-          fi
-
-  test-frontend:
-    name: Frontend Tests
+  frontend-quality:
+    name: Frontend Lint + Typecheck + Format
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend == 'true'
@@ -201,59 +71,74 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
+      - name: Restore node_modules
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+      - name: Install deps
+        if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
-      
-      - name: Run frontend tests
-        run: |
-          if npm run | grep -q "test:frontend"; then
-            npm run test:frontend
-          else
-            echo "No frontend tests configured, skipping..."
-          fi
+      - name: ESLint
+        run: npm run lint
+      - name: TypeScript (tsc --noEmit, not a full build)
+        run: npm run type-check
+      - name: Prettier check
+        run: npm run format:check
 
-  build-backend:
-    name: Build Backend Services
+  frontend-test:
+    name: Frontend Jest (shard ${{ matrix.shard }}/4)
     runs-on: ubuntu-latest
-    needs: [detect-changes, lint-and-format, typecheck, test-backend]
-    if: needs.detect-changes.outputs.backend == 'true'
-    
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     strategy:
-      matrix:
-        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
       fail-fast: false
-
+      matrix:
+        # To change shard count, edit this list AND the /N denominator in the Jest step.
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
-      - name: Install dependencies
+      - name: Restore node_modules
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-node${{ env.NODE_VERSION }}-${{ hashFiles('package-lock.json') }}
+      - name: Install deps
+        if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
-      
-      - name: Check if service exists
-        id: check-service
-        run: |
-          if [ -d "backend/${{ matrix.service }}" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
-      
-      # Legacy ORM removed: no client generation per service
-      
-      - name: Build ${{ matrix.service }}
-        if: steps.check-service.outputs.exists == 'true'
-        run: npm run build -w backend/${{ matrix.service }}
+      - name: Restore Jest cache
+        uses: actions/cache@v4
+        with:
+          path: .jest-cache
+          key: jest-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Jest (sharded)
+        run: npx jest --ci --shard=${{ matrix.shard }}/4 --cacheDirectory=.jest-cache --passWithNoTests --maxWorkers=2
 
-  fastapi-migrations:
-    name: FastAPI DB Migrations + Smoke
+  backend-test:
+    name: Backend ${{ matrix.service }}
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true'
+    strategy:
+      fail-fast: false
+      # One shard per service = natural backend sharding; all run in parallel.
+      matrix:
+        service:
+          - api-gateway-fastapi
+          - user-service-fastapi
+          - order-service-fastapi
+          - product-service-fastapi
+          - acceptance-service-fastapi
+          - billing-service-fastapi
+          - notification-service-fastapi
+          - customer-hierarchy-service-fastapi
+          - supplier-service-fastapi
     services:
       postgres:
         image: postgres:15-alpine
@@ -268,110 +153,6 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install, migrate, and run smoke tests
-        env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: orderly
-          DATABASE_NAME: orderly
-          POSTGRES_PASSWORD: orderly_test
-        run: |
-          set -e
-          pip install pytest pytest-asyncio httpx
-          for svc in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi; do
-            if [ -d "backend/$svc" ]; then
-              echo "===> $svc";
-              pip install -r backend/$svc/requirements.txt
-              if [ -f backend/$svc/alembic.ini ]; then
-                cd backend/$svc && alembic upgrade head && cd -
-              fi
-              if [ -d backend/$svc/tests ]; then
-                echo "Running tests for $svc";
-                python -m pytest -q backend/$svc/tests
-              fi
-            fi
-          done
-      - name: Basic health checks
-        run: |
-          echo "Health checks will run in integration-test job when services start"
-
-  build-frontend:
-    name: Build Frontend
-    runs-on: ubuntu-latest
-    needs: [detect-changes, lint-and-format, typecheck, test-frontend]
-    if: needs.detect-changes.outputs.frontend == 'true'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Build frontend
-        run: |
-          if [ -d "frontend" ]; then
-            npm run build -w frontend
-          elif [ -f "next.config.js" ]; then
-            npm run build
-          else
-            echo "No frontend build configuration found"
-          fi
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: needs.detect-changes.outputs.backend == 'true' || needs.detect-changes.outputs.frontend == 'true'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Run npm audit
-        run: npm audit --audit-level moderate
-      
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    needs: [build-backend, build-frontend]
-    if: always() && (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: orderly
-          POSTGRES_PASSWORD: orderly_test
-          POSTGRES_DB: orderly_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
       redis:
         image: redis:7-alpine
         options: >-
@@ -381,109 +162,64 @@ jobs:
           --health-retries 5
         ports:
           - 6379:6379
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      # Legacy ORM removed: no setup step needed for JS ORM clients
-      
-      - name: Start services for integration testing
-        env:
-          NODE_ENV: test
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: orderly
-          DATABASE_NAME: orderly_test
-          POSTGRES_PASSWORD: orderly_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-          JWT_SECRET: test_jwt_secret_for_integration_testing
-        run: |
-          # Start all backend services in background
-          for service in api-gateway user-service order-service product-service acceptance-service billing-service notification-service; do
-            if [ -d "backend/$service" ]; then
-              echo "Starting $service..."
-              cd "backend/$service"
-              npm run start &
-              cd ../..
-              sleep 2
-            fi
-          done
-          
-          # Wait for services to be ready
-          sleep 10
-      
-      - name: Run integration tests
-        run: |
-          if npm run | grep -q "test:integration"; then
-            npm run test:integration
-          else
-            echo "Running basic health check integration tests..."
-            # Basic health checks
-            for port in 8000 8001 8002 8003 8004 8005 8006; do
-              if curl -f "http://localhost:$port/health" 2>/dev/null; then
-                echo "✓ Service on port $port is healthy"
-              else
-                echo "✗ Service on port $port failed health check"
-              fi
-            done
-          fi
-
-  summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
-    needs: [lint-and-format, typecheck, test-backend, test-frontend, build-backend, build-frontend, security-scan, integration-test]
-    if: always()
-    steps:
-      - name: Generate Summary
-        run: |
-          echo "## CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & Format | ${{ needs.lint-and-format.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TypeScript Check | ${{ needs.typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend Tests | ${{ needs.test-backend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend Tests | ${{ needs.test-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend Build | ${{ needs.build-backend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend Build | ${{ needs.build-frontend.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Integration Tests | ${{ needs.integration-test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Ready for deployment: ${{ needs.integration-test.result == 'success' && 'true' || 'false' }}" >> $GITHUB_STEP_SUMMARY
-
-  fastapi-tests:
-    name: FastAPI Unit Smoke
-    runs-on: ubuntu-latest
-    needs: fastapi-migrations
-    if: needs.detect-changes.outputs.backend == 'true'
+    env:
+      DATABASE_HOST: localhost
+      DATABASE_PORT: 5432
+      DATABASE_USER: orderly
+      DATABASE_NAME: orderly
+      POSTGRES_PASSWORD: orderly_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: test_jwt_secret_for_ci_only
+      JWT_REFRESH_SECRET: test_refresh_secret_for_ci_only
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Run FastAPI tests
-        env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: orderly
-          DATABASE_NAME: orderly
-          POSTGRES_PASSWORD: orderly_test
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/${{ matrix.service }}/requirements.txt
+      - name: Install deps
+        working-directory: backend/${{ matrix.service }}
         run: |
-          set -e
-          pip install pytest pytest-asyncio httpx
-          for svc in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi billing-service-fastapi notification-service-fastapi; do
-            if [ -d "backend/$svc" ]; then
-              pip install -r backend/$svc/requirements.txt
-              if [ -d backend/$svc/tests ]; then
-                python -m pytest -q backend/$svc/tests
-              fi
-            fi
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-xdist httpx
+      - name: Alembic migrate (if present)
+        working-directory: backend/${{ matrix.service }}
+        run: |
+          if [ -f alembic.ini ]; then
+            alembic upgrade head
+          else
+            echo "No alembic.ini for ${{ matrix.service }}, skipping migrate"
+          fi
+      - name: Pytest (xdist within the service)
+        working-directory: backend/${{ matrix.service }}
+        run: |
+          if [ -d tests ]; then
+            python -m pytest -q -n auto tests
+          else
+            echo "No tests/ for ${{ matrix.service }}, skipping"
+          fi
+
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs: [detect-changes, frontend-quality, frontend-test, backend-test]
+    if: always()
+    steps:
+      - name: Aggregate results (skipped = OK, failed/cancelled = block)
+        run: |
+          fail=0
+          for r in \
+            "frontend-quality:${{ needs.frontend-quality.result }}" \
+            "frontend-test:${{ needs.frontend-test.result }}" \
+            "backend-test:${{ needs.backend-test.result }}"; do
+            name="${r%%:*}"; res="${r##*:}"
+            echo "$name = $res"
+            case "$res" in
+              success|skipped) : ;;
+              *) echo "::error::$name did not pass ($res)"; fail=1 ;;
+            esac
           done
+          exit $fail

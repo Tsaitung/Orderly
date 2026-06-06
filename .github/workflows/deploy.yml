@@ -1,4 +1,8 @@
-name: Deploy to Cloud Run
+name: Deploy to Cloud Run (DEPRECATED — superseded by cd.yml)
+
+# DEPRECATED: auto-deploy now lives in cd.yml (CI-gated, cached, merged build+deploy).
+# This workflow is kept as a manual rollback fallback only (workflow_dispatch).
+# Remove once cd.yml has proven stable over a few staging deploys.
 
 permissions:
   contents: read
@@ -6,8 +10,6 @@ permissions:
   actions: read
 
 on:
-  push:
-    branches: [ staging, develop, main ]
   workflow_dispatch:
     inputs:
       environment:
