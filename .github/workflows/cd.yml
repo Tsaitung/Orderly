@@ -1,0 +1,370 @@
+name: CD
+
+# CD = build + deploy, gated on CI. Triggered on pushes to deploy branches.
+# Key optimizations vs the old deploy.yml:
+#   - Single CI gate (reusable ci.yml) instead of CI/CD racing unguarded.
+#   - build + deploy MERGED per service (no cross-job image-poll loop).
+#   - Images built in-runner with BuildKit registry layer cache (deps cached
+#     => ~100s cold / ~15s warm instead of full Cloud Build every time).
+#   - Consolidated validate/routing jobs (less repeated checkout+auth tax).
+#   - Smoke tolerates 401 on auth-gated routes (401 == service healthy).
+
+on:
+  push:
+    branches: [staging, main]
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated services to deploy (empty = changed only)'
+        required: false
+        type: string
+      force_all:
+        description: 'Deploy all backend services + frontend'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  # Serialize deploys per branch; do NOT cancel an in-flight deploy.
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GOOGLE_CLOUD_PROJECT: ${{ secrets.GCP_PROJECT_ID || 'orderly-472413' }}
+  GOOGLE_CLOUD_REGION: asia-east1
+  REGISTRY: asia-east1-docker.pkg.dev
+  AR_REPO: orderly
+
+jobs:
+  # ---- Gate: CD never runs unless CI is green -------------------------------
+  gate:
+    name: CI Gate
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # ---- Resolve env + changed services (pure shell, no auth) -----------------
+  resolve:
+    name: Resolve Deploy Context
+    runs-on: ubuntu-latest
+    needs: gate
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      suffix: ${{ steps.env.outputs.suffix }}
+      db_instance: ${{ steps.env.outputs.db_instance }}
+      services: ${{ steps.changes.outputs.services }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Resolve environment / suffix / db
+        id: env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            {
+              echo "environment=production"
+              echo "suffix="
+              echo "db_instance=orderly-db"
+            } >> "$GITHUB_OUTPUT"
+          else
+            {
+              echo "environment=staging"
+              echo "suffix=-v2"
+              echo "db_instance=orderly-db-v2"
+            } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Detect changed services
+        id: changes
+        env:
+          ALL: '["api-gateway-fastapi","user-service-fastapi","order-service-fastapi","product-service-fastapi","acceptance-service-fastapi","notification-service-fastapi","customer-hierarchy-service-fastapi","supplier-service-fastapi"]'
+        run: |
+          force="${{ github.event.inputs.force_all }}"
+          manual="${{ github.event.inputs.services }}"
+
+          # Manual explicit list wins.
+          if [ -n "$manual" ]; then
+            json=$(printf '%s' "$manual" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' \
+              | python3 -c 'import sys,json;print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+            echo "services=$json" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$force" = "true" ]; then
+            echo "services=$ALL" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          changed=$(git diff --name-only HEAD~1 HEAD || true)
+          echo "Changed files:"; echo "$changed"
+
+          # Shared libs / workflow / shared types => rebuild everything.
+          if echo "$changed" | grep -qE '(backend/libs/|shared/types/|\.github/workflows/cd\.yml|Dockerfile\.base)'; then
+            echo "services=$ALL" >> "$GITHUB_OUTPUT"
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          svcs=()
+          for s in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+            if echo "$changed" | grep -q "backend/$s/"; then svcs+=("\"$s\""); fi
+          done
+          if [ ${#svcs[@]} -eq 0 ]; then
+            echo "services=[]" >> "$GITHUB_OUTPUT"
+          else
+            echo "services=[$(IFS=,; echo "${svcs[*]}")]" >> "$GITHUB_OUTPUT"
+          fi
+
+          if echo "$changed" | grep -qE '(app/|components/|lib/|contexts/|hooks/|stores/|public/|next\.config\.js|middleware\.ts|tailwind\.config\.ts|package(-lock)?\.json)'; then
+            echo "frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ---- Build (cached) + deploy, merged per service --------------------------
+  build-deploy:
+    name: Build+Deploy ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    needs: resolve
+    if: needs.resolve.outputs.services != '[]'
+    environment: ${{ needs.resolve.outputs.environment }}
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        service: ${{ fromJson(needs.resolve.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build + push (BuildKit registry cache)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/${{ matrix.service }}/Dockerfile
+          build-args: |
+            SERVICE_PATH=backend/${{ matrix.service }}
+            LIBS_PATH=backend/libs
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:buildcache,mode=max
+
+      - name: Deploy to Cloud Run
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+          DB_INSTANCE: ${{ needs.resolve.outputs.db_instance }}
+          SERVICE: ${{ matrix.service }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          source scripts/ci/cloud-run-names.sh
+          SERVICE_NAME=$(cr_service_name "$SERVICE" "$ENVIRONMENT" "$SUFFIX")
+
+          DB_CONN=$(gcloud sql instances describe "$DB_INSTANCE" \
+            --format="value(connectionName)" --project="$GOOGLE_CLOUD_PROJECT")
+          REDIS_HOST=$(gcloud redis instances describe orderly-cache \
+            --region="$GOOGLE_CLOUD_REGION" --format="value(host)" \
+            --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+
+          if [ "$ENVIRONMENT" = "production" ]; then
+            MEM=1Gi; CPU=2; MINI=1; MAXI=20; CONC=80
+          else
+            MEM=512Mi; CPU=1; MINI=0; MAXI=10; CONC=100
+          fi
+
+          ENV_VARS="NODE_ENV=$ENVIRONMENT,DATABASE_HOST=/cloudsql/$DB_CONN,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+          [ -n "$REDIS_HOST" ] && ENV_VARS="$ENV_VARS,REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379"
+
+          gcloud run deploy "$SERVICE_NAME" \
+            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/$AR_REPO/orderly-$SERVICE:$IMAGE_TAG" \
+            --platform=managed --region="$GOOGLE_CLOUD_REGION" \
+            --allow-unauthenticated \
+            --memory="$MEM" --cpu="$CPU" \
+            --min-instances="$MINI" --max-instances="$MAXI" --concurrency="$CONC" \
+            --timeout=300 \
+            --set-env-vars="$ENV_VARS" \
+            --set-secrets="POSTGRES_PASSWORD=postgres-password:latest,JWT_SECRET=jwt-secret:latest,JWT_REFRESH_SECRET=jwt-refresh-secret:latest" \
+            --add-cloudsql-instances="$DB_CONN" \
+            --project="$GOOGLE_CLOUD_PROJECT" \
+            --labels="environment=$ENVIRONMENT,service=$SERVICE,git_sha=$IMAGE_TAG"
+
+      - name: Wait for health (poll, no fixed sleep)
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+          SERVICE: ${{ matrix.service }}
+        run: |
+          set -euo pipefail
+          source scripts/ci/cloud-run-names.sh
+          SERVICE_NAME=$(cr_service_name "$SERVICE" "$ENVIRONMENT" "$SUFFIX")
+          URL=$(gcloud run services describe "$SERVICE_NAME" \
+            --region="$GOOGLE_CLOUD_REGION" --format="value(status.url)" \
+            --project="$GOOGLE_CLOUD_PROJECT")
+          for i in $(seq 1 20); do
+            if curl -sf "$URL/health" --max-time 5 >/dev/null; then
+              echo "✅ $SERVICE healthy"; exit 0
+            fi
+            echo "⏳ waiting for $SERVICE health ($i/20)"; sleep 3
+          done
+          echo "::error::$SERVICE did not become healthy"; exit 1
+
+  # ---- Configure gateway routing + frontend env (one job, one auth) ---------
+  wire-up:
+    name: Wire Up Routing
+    runs-on: ubuntu-latest
+    needs: [resolve, build-deploy]
+    if: always() && needs.build-deploy.result == 'success'
+    environment: ${{ needs.resolve.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Configure API Gateway routes
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+        run: |
+          set -euo pipefail
+          source scripts/ci/cloud-run-names.sh
+          declare -A urls
+          for s in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
+            n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
+            u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
+              --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+            [ -n "$u" ] && urls[$s]="$u"
+          done
+          ev="NODE_ENV=$ENVIRONMENT"
+          [ -n "${urls[user-service-fastapi]:-}" ] && ev="$ev,USER_SERVICE_URL=${urls[user-service-fastapi]}"
+          [ -n "${urls[order-service-fastapi]:-}" ] && ev="$ev,ORDER_SERVICE_URL=${urls[order-service-fastapi]}"
+          [ -n "${urls[product-service-fastapi]:-}" ] && ev="$ev,PRODUCT_SERVICE_URL=${urls[product-service-fastapi]}"
+          [ -n "${urls[acceptance-service-fastapi]:-}" ] && ev="$ev,ACCEPTANCE_SERVICE_URL=${urls[acceptance-service-fastapi]}/acceptance"
+          [ -n "${urls[notification-service-fastapi]:-}" ] && ev="$ev,NOTIFICATION_SERVICE_URL=${urls[notification-service-fastapi]}"
+          [ -n "${urls[customer-hierarchy-service-fastapi]:-}" ] && ev="$ev,CUSTOMER_HIERARCHY_SERVICE_URL=${urls[customer-hierarchy-service-fastapi]}"
+          [ -n "${urls[supplier-service-fastapi]:-}" ] && ev="$ev,SUPPLIER_SERVICE_URL=${urls[supplier-service-fastapi]}"
+          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
+          gcloud run services update "$gw" --region="$GOOGLE_CLOUD_REGION" \
+            --update-env-vars="$ev" --project="$GOOGLE_CLOUD_PROJECT"
+
+  # ---- Frontend (cached build) ----------------------------------------------
+  deploy-frontend:
+    name: Build+Deploy Frontend
+    runs-on: ubuntu-latest
+    # Parallel with build-deploy: the gateway URL is stable across redeploys,
+    # so the frontend can build while the backend is (re)deploying.
+    needs: [resolve]
+    if: needs.resolve.outputs.frontend == 'true'
+    environment: ${{ needs.resolve.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
+      - uses: google-github-actions/setup-gcloud@v2
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Resolve backend URL
+        id: be
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+        run: |
+          set -euo pipefail
+          source scripts/ci/cloud-run-names.sh
+          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
+          url=$(gcloud run services describe "$gw" --region="$GOOGLE_CLOUD_REGION" \
+            --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Build + push frontend (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.frontend
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ steps.be.outputs.url }}/api
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-frontend:${{ needs.resolve.outputs.environment }}-${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-frontend:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-frontend:buildcache,mode=max
+      - name: Deploy frontend
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+          BACKEND_URL: ${{ steps.be.outputs.url }}
+        run: |
+          set -euo pipefail
+          gcloud run deploy "orderly-frontend-$ENVIRONMENT$SUFFIX" \
+            --image="$REGISTRY/$GOOGLE_CLOUD_PROJECT/$AR_REPO/orderly-frontend:$ENVIRONMENT-${{ github.sha }}" \
+            --platform=managed --region="$GOOGLE_CLOUD_REGION" --allow-unauthenticated \
+            --memory=1Gi --cpu=1 --min-instances=0 --max-instances=10 --concurrency=100 --port=8080 \
+            --set-env-vars="NODE_ENV=$ENVIRONMENT,ORDERLY_BACKEND_URL=$BACKEND_URL,BACKEND_URL=$BACKEND_URL,NEXT_PUBLIC_API_BASE_URL=$BACKEND_URL/api" \
+            --project="$GOOGLE_CLOUD_PROJECT" \
+            --labels="environment=$ENVIRONMENT,git_sha=${{ github.sha }}"
+
+  # ---- Smoke: 5xx/connection only; 401 on auth routes == healthy ------------
+  smoke:
+    name: Smoke
+    runs-on: ubuntu-latest
+    needs: [resolve, build-deploy, wire-up, deploy-frontend]
+    # Run at the end unless an upstream deploy job actually failed.
+    if: >-
+      always()
+      && needs.build-deploy.result != 'failure'
+      && needs.wire-up.result != 'failure'
+      && needs.deploy-frontend.result != 'failure'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Smoke check (gateway + product /health only)
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          SUFFIX: ${{ needs.resolve.outputs.suffix }}
+        run: |
+          set -euo pipefail
+          source scripts/ci/cloud-run-names.sh
+          fail=0
+          for s in api-gateway-fastapi product-service-fastapi customer-hierarchy-service-fastapi; do
+            n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
+            u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
+              --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
+            if [ -z "$u" ]; then echo "::error::$s has no URL"; fail=1; continue; fi
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$u/health" --max-time 15 || echo 000)
+            echo "$s /health -> $code"
+            # Healthy = 2xx. 401/403 are NOT probed here (those are auth-gated app routes,
+            # not liveness): a 401 means the service is up and correctly enforcing auth.
+            if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
+              echo "::error::$s /health unhealthy ($code)"; fail=1
+            fi
+          done
+          exit $fail
