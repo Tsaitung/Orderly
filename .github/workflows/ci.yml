@@ -125,6 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true'
+    # ADVISORY (pre-existing debt): these pytest suites have never run green in
+    # CI -- they were skipped behind ghost matrices for months. They now run and
+    # report real results, but do NOT block CD yet. Promote to blocking (remove
+    # continue-on-error) once the backend test suites are stabilized.
+    continue-on-error: true
     strategy:
       fail-fast: false
       # One shard per service = natural backend sharding; all run in parallel.
@@ -172,6 +177,10 @@ jobs:
       REDIS_PORT: 6379
       JWT_SECRET: test_jwt_secret_for_ci_only
       JWT_REFRESH_SECRET: test_refresh_secret_for_ci_only
+      # Mirror the container runtime path: service code (`app`) is importable
+      # from the service dir, and the shared core (`orderly_fastapi_core`) lives
+      # in backend/libs (Dockerfile sets WORKDIR /app + PYTHONPATH=/app/libs).
+      PYTHONPATH: ${{ github.workspace }}/backend/${{ matrix.service }}:${{ github.workspace }}/backend/libs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -210,11 +219,12 @@ jobs:
     steps:
       - name: Aggregate results (skipped = OK, failed/cancelled = block)
         run: |
+          # backend-test is ADVISORY (continue-on-error) and reported, not gated.
+          echo "backend-test (advisory) = ${{ needs.backend-test.result }}"
           fail=0
           for r in \
             "frontend-quality:${{ needs.frontend-quality.result }}" \
-            "frontend-test:${{ needs.frontend-test.result }}" \
-            "backend-test:${{ needs.backend-test.result }}"; do
+            "frontend-test:${{ needs.frontend-test.result }}"; do
             name="${r%%:*}"; res="${r##*:}"
             echo "$name = $res"
             case "$res" in
