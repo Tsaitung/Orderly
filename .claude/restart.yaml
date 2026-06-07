@@ -1,0 +1,50 @@
+# /restart profile — Orderly modular-monolith local stack.
+#
+# backend-monolith = single FastAPI app (backend/app/main.py) serving all 9
+# former services in one uvicorn process. Runs on the repo's py3.11 venv
+# (backend/.venv) so it does not fall back to the system python.
+#
+# Ports mirror the direnv/SSOT values (BACKEND_PORT=8888, FRONTEND_PORT=5566,
+# POSTGRES_PORT=54888, REDIS_PORT=64888). The dispatcher needs concrete integers
+# for lsof ownership; the start_commands use ${VAR} which direnv expands at launch.
+services:
+  - name: backend-monolith
+    cwd: backend
+    runtime: custom
+    start_command: ".venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT}"
+    ports: [8888]
+    healthcheck:
+      url: "http://localhost:8888/health"
+
+  - name: frontend
+    cwd: .
+    runtime: node
+    start_command: "npm run dev -- -p ${FRONTEND_PORT}"
+    ports: [5566]
+    healthcheck:
+      url: "http://localhost:5566"
+
+dependency_checks:
+  - kind: container_runtime
+    required: true
+    bringup_command: "colima start"
+    bringup_timeout_s: 30
+
+  - kind: container_service
+    compose_file: compose.monolith.yml
+    compose_command: "docker-compose"
+    services: [postgres, redis]
+    required: true
+    bringup_timeout_s: 20
+
+  - kind: tcp
+    host: localhost
+    port: 54888
+    name: PostgreSQL
+    required: true
+
+  - kind: tcp
+    host: localhost
+    port: 64888
+    name: Redis
+    required: true

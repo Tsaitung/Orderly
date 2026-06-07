@@ -344,6 +344,31 @@ dependency_checks:
 
 **STEP 1 收斂判定**：T1a+T1b（真正擋 monolith boot 的兩個 crasher）完成且驗證；T1c 為 LIVE-feature 缺 schema 的既有 bug，不擋 boot/goal，合法延後。STEP 0+1 batch 於此 checkpoint 停，待 user 決定 T1c 處理時機與是否續 STEP 2。
 
+### STEP 2 — re-root（user 核准續做，T1c 延後）
+
+| 步驟 | 狀態 | commit | 證據 |
+|---|---|---|---|
+| notifications（pilot）| ✓ | `4356887` | git mv + import rename；`import app.modules.notifications.main` OK；pre-commit 過 |
+| 其餘 8 服務 | ✓ | `64a81cd` | 285 檔 rename；每服務 0 殘留 bare `app.` import |
+| **T2.final 跨服務驗證** | ✓ | — | **同一 interpreter 一次 import 全 9 module 無 shadowing**（硬阻斷 A 解除）|
+
+順手發現：billing 的 alembic 有 `script.py.mako`（customer-hierarchy T1c autogenerate 缺的那個）→ 處理 T1c 時可複製。舊服務 dir 留下 loose scripts/tests（非 app 套件，STEP 9/測試重整再處理）。
+
+### STEP 3 — composition root（命中 /goal）
+
+| 步驟 | 狀態 | commit | 證據 |
+|---|---|---|---|
+| T3.1 merged requirements | ✓ | `448badd` | `backend/app/requirements.txt`（30 套件，8 衝突取最高）|
+| T3.3 composition root | ✓ | `448badd` | `backend/app/main.py`：`include_router(module.router)` × 8 + CORS/Auth middleware 套一次 + union public_paths；gateway_compat proxy 排除 |
+| T3.4 boot smoke | ✓ | — | TestClient：**346 routes 合併**、`/health` 200、13 個關鍵契約 prefix 全在（含無前綴 alias /auth/login、/suppliers、/api/v2、/api/bff）|
+| T3.4 real uvicorn HTTP | ✓ | — | **`uvicorn app.main:app` on :8888 startup complete、8 模組全 start、redis connected、`curl /health`→`{orderly-monolith}`、`GET /`→200** |
+| T3.6 restart.yaml + compose | ✓ | (本 commit) | `.claude/restart.yaml`（monolith `.venv/bin/python -m uvicorn` + frontend `next dev -p ${FRONTEND_PORT}` + colima/postgres/redis deps）；`compose.monolith.yml`（自足 pg/redis 解 compose overlay 問題，同 volume 重用資料）|
+| T3.7 /restart e2e | ⏳ | — | 待跑（restart.yaml 已就緒）|
+
+**AC 狀態**：AC0 ✓（STEP 0）、AC1 ✓（T1a/T1b；T1c 延後）、AC2 ✓（T2.final）、AC3 ✓（composition root boot + contract prefix + uvicorn HTTP）、AC4 ⏳（/restart e2e 待跑）。
+
+**/goal 核心已達成**：單一 `uvicorn app.main:app` 在 localhost 服務整個 monolith（9 服務路由合一、/health 200、所有契約 prefix 在）。剩 `/restart` 端到端封裝驗證（AC4）。
+
 ---
 
 ## 命名目標進度表（拆除/搬移類）
