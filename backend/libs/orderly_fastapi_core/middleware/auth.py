@@ -7,6 +7,7 @@ from typing import Optional, Dict, Any, Iterable, Set
 from fastapi import Request, HTTPException, status
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 from jose import jwt, JWTError, ExpiredSignatureError
 
 from orderly_fastapi_core import UnifiedSettings, get_settings
@@ -77,9 +78,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         credentials = await bearer_scheme(request)
         if credentials is None or credentials.scheme.lower() != "bearer":
-            raise HTTPException(
+            # MUST return, not raise: an HTTPException raised inside a
+            # BaseHTTPMiddleware.dispatch is not handled by FastAPI's exception
+            # handlers and surfaces as a 500. Returning yields a proper 401.
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Missing bearer token",
+                content={"success": False, "error": {"code": 401, "message": "Missing bearer token"}},
             )
 
         token = credentials.credentials
@@ -91,9 +95,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 options={"verify_exp": True},
             )
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"success": False, "error": {"code": 401, "message": "Token has expired"}},
+            )
         except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"success": False, "error": {"code": 401, "message": "Invalid token"}},
+            )
 
         # Attach user context to request.state
         request.state.user = payload
