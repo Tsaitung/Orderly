@@ -6,6 +6,7 @@
 
 from datetime import datetime, timedelta
 import os
+import uuid
 from typing import Any, Dict
 
 import structlog
@@ -66,7 +67,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     """Create JWT access token"""
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire, "type": "access"})
+    # jti: unique per token so two tokens minted in the same second (same exp) are
+    # not byte-identical (sessions.token has a unique index — same-second logins
+    # of one user would otherwise collide).
+    to_encode.update({"exp": expire, "type": "access", "jti": uuid.uuid4().hex})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
@@ -75,7 +79,7 @@ def create_refresh_token(data: dict) -> str:
     """Create JWT refresh token"""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS)
-    to_encode.update({"exp": expire, "type": "refresh"})
+    to_encode.update({"exp": expire, "type": "refresh", "jti": uuid.uuid4().hex})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
     return encoded_jwt
 
