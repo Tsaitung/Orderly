@@ -377,7 +377,7 @@ dependency_checks:
 
 - **(a) T1c customer-hierarchy 4 表（activity_metrics/dashboard_summary/performance_rankings/activity_trends）— 部分解，記錄已過時。** plan 後 commit `7dd5e51`（unified-metadata `create_all` rebuild）已在**本機 orderly DB** 建出這 4 表，且 customer-hierarchy alembic 的 `script.py.mako` 現已存在（不再需從 billing 複製）。**residual（仍 open）**：這 4 表**仍無 per-module alembic migration** → 全新環境跑 customer-hierarchy 自己的 `alembic upgrade head` 仍不會建出 → schema-vs-model drift 未閉。歸 STEP 6（真正 alembic 收斂）。
 - **(b) orderly DB 部分遷移（products 缺）— 已解，記錄已過時。** plan 後 `fa22f55`（3→34 表）+ `7dd5e51`（rebuild 至 42 表 unified schema）已補齊；products 表現存。
-- **(c) `/api/v2/health` 等 auth-protected health 401/500 — root-cause 已修，public_paths gap 仍掛 STEP 4。** `fd9d852` 修掉 AuthMiddleware raise-500（改回正規 401）；但 `/api/v2/health` 因 customer-hierarchy 自帶 AuthMiddleware 無 `public_paths` kwarg、composition root union loop 採不到 → 仍 auth-protected，歸 STEP 4。
+- **(c) `/api/v2/health` 等 auth-protected health 401/500 — root-cause 已修，public_paths gap 仍掛 STEP 4。** `fd9d852` 修掉 AuthMiddleware raise-500（改回正規 401）。`/api/v2/health` 仍被擋的精確根因：customer-hierarchy **內層** middleware 其實有 hardcode 放行 `/api/v2/health`（`backend/app/modules/customer_hierarchy/middleware/auth.py:45`），但它**沒透過 `public_paths` kwarg 對外曝光**該豁免；composition root 的 `_public_paths` union loop（`backend/app/main.py:82-87`）只讀各 module 的 `public_paths` kwarg → 採不到 → **頂層** `AuthMiddleware` 在 request 抵達內層前就先擋下。修法歸 STEP 4（把該豁免併入頂層 union 或統一 public_paths 來源）。
 - **(d) gateway SecurityHeaders / rate-limit / verification_level 移植 — 仍 open。** 無 commit 處理；composition root 目前只套 CORS + core AuthMiddleware（`backend/app/main.py:14-16,63,88`），SecurityHeaders/rate-limit 明確延 STEP 4。
 
 > **Scope-clarity（防 audit trail 失真）**：plan 後 commit `7dd5e51` 的 subject 寫「STEP 5/6 schema consolidation」，但其實質是 **pragmatic 的 unified `create_all` rebuild**（自描述「STEP 6-pragmatic」），用來把本機 dev DB 重建到能跑通完整 auth flow。它**不是**本 plan §Out of Scope 列的結構性 **STEP 5（收斂成單一 SQLAlchemy Base）/ STEP 6（單一 `alembic_version` + 接鏈）**——repo 現況仍是 **8 個 per-module `Base`（`declarative_base()`）+ 8 條 per-module alembic 鏈**，consolidated migration（`consolidated_schema_0001`）是 `down_revision=None` 的 dangling standalone root，未接入任何鏈。結構性 STEP 5/6 **仍 Out-of-Scope、未做**。
@@ -394,11 +394,13 @@ dependency_checks:
 | `from libs.orderly_fastapi_core`（5 檔）| rename→remove | 真的動了 (T0.4) | T0.4 | — | AC0 grep 結果為 0 驗收 |
 | `op.create_table('supplier_invitations')` @ 003:85 | remove | 真的動了 (T1a.2) | T1a.2 | — | throwaway DB `alembic upgrade head` 驗收 |
 | `backend/product-service-fastapi/app/models/sku.py` | delete | 真的動了 (T1b.2) | T1b.2 | — | `git rm` + import smoke 無 mapper error |
-| customer-hierarchy `activity_metrics.py` 4 models | delete **或** 合法延後 | 真的動了 (T1c.2，dead 分支) **或** 補表 migration (T1c.3，live 分支) | T1c.2/T1c.3 | — | 由 T1c.1 grep 決定分支；兩分支都讓「無 migration 的孤兒 model」狀態消失 |
+| customer-hierarchy `activity_metrics.py` 4 models | delete **或** 補 migration | **延後（合法，到 STEP 6）** ⚠ 執行後更新 | — | T1c.3（未執行）| T1c.1 grep 判 **LIVE**（非 dead）→ 應走 T1c.3 補 migration，但本階段**延後**：不擋 /goal（frozen contract 無 activity endpoint；live 的 `/activity`/`/performance` endpoint 由既有 hierarchy 表 in-memory 算，不 query 這 4 表）。**解鎖條件**：customer-hierarchy alembic `script.py.mako` 現已存在 → `autogenerate` 4 表 migration + throwaway DB `upgrade head` 驗 → 歸 STEP 6 alembic 收斂。4 models 仍存在於 `backend/app/modules/customer_hierarchy/models/activity_metrics.py`、仍無 per-module migration（與 §執行後驗證稽核 (a)、執行紀錄 T1c 一致）|
 | `backend/<svc>-fastapi/app`（9 個原套件位置）| move (`git mv`) | 真的動了 (P2.2) | P2.2（×9）| — | AC2：原目錄無 python 套件殘留 |
 | `app.` import 前綴（re-root 後應變 `app.modules.<svc>.`）| rename | 真的動了 (P2.3) | P2.3（×9）| — | T2.final 同 interpreter 全量 import 無 shadow 驗收 |
 
-**目標達成比例**：7 / 7 命名目標皆「真的動了」（其中 customer-hierarchy 一項為 grep 決定的 dead-刪 / live-補 雙分支，兩者都讓孤兒狀態消失）。無「沒碰到」或「只有間接動作」。
+**目標達成比例（執行後修正）**：**6 / 7「真的動了」+ 1「合法延後」** = 7/7 皆有著落。6 個（sys.path / libs import / 003 斷鏈 / sku.py / 9 套件 move / app. import rename）真的動了；customer-hierarchy 4 models migration 為**合法延後到 STEP 6**（grep 判 LIVE，但不擋 /goal，解鎖條件已寫明）。無「沒碰到」或「只有間接動作」。
+
+> 註（修正前版本失真）：本表初稿（plan 階段）預測 customer-hierarchy 走「dead-刪 或 live-補」雙分支、列為「真的動了」、比例寫 7/7。**執行結果是延後**（T1c.1 grep 判 LIVE → 應補 migration 但本階段未做），故 2026-06-07 執行後稽核將該格改為「合法延後」、比例改為 6/7+1，使進度表與執行紀錄／§執行後驗證稽核 一致。
 
 > 註：STEP 4-9 的拆除目標（api-gateway proxy 層、9 條獨立 alembic 鏈、per-service Dockerfile 等）屬 §Out of Scope，為後續 gated 階段的命名目標，不在本 plan 計分。
 
