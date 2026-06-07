@@ -1,3 +1,6 @@
+# superpowers brainstorm visual companion (local only)
+.superpowers/
+
 # Dependencies
 node_modules/
 npm-debug.log*
