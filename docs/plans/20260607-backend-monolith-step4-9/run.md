@@ -82,8 +82,9 @@
 | 路徑 | 動作 | 職責 |
 |------|------|------|
 | `backend/app/modules/gateway_compat/` | Delete (C1) | 死碼：proxy 模組已不掛載、零外部引用 |
-| `backend/*-fastapi/Dockerfile`（×9）| Delete (C2，依 D3) | legacy per-service image build，active CD 已不用 |
-| `backend/*-fastapi/cloudbuild.yaml`（×9）| Delete (C2，依 D3) | legacy per-service Cloud Build，active CD 已不用 |
+| `backend/*-fastapi/Dockerfile`（×9）| Delete (C2.2，依 D3) | legacy per-service image build，active CD 已不用 |
+| `backend/*-fastapi/cloudbuild.yaml`（×9）| Delete (C2.2，依 D3) | legacy per-service Cloud Build，active CD 已不用 |
+| `.github/workflows/deploy.yml` | Delete (C2.2，依 D3=A) | deprecated manual-only deploy（已被 `cd.yml` 取代）；研究確認非 push 路徑 |
 | `backend/app/modules/*/alembic/`（8 條鏈、20 version 檔）| Delete (C3，gated on V1) | legacy per-module 遷移，monolith 鏈成 canonical 後死 |
 | `backend/app/modules/customer_hierarchy/services/integration_service.py` | Modify or Decision (D1) | stub→真 in-process，或正式接受 stub |
 | `backend/app/modules/_consolidated_schema.py` | Modify (小) | 修 `:14-17` 過時 docstring（已接入鏈，非「follow-up not done」）|
@@ -106,13 +107,14 @@
 
 ```bash
 direnv exec . bash -c '
-createdb -h localhost -p $POSTGRES_PORT -U orderly _tmp_monolith_fresh 2>/dev/null || true
+dropdb -h localhost -p $POSTGRES_PORT -U orderly --if-exists _tmp_monolith_fresh   # 防呆：避免重用上一輪殘留 DB 造成假通過
+createdb -h localhost -p $POSTGRES_PORT -U orderly _tmp_monolith_fresh
 cd backend
 DATABASE_URL="postgresql+asyncpg://orderly:orderly_dev_password@localhost:$POSTGRES_PORT/_tmp_monolith_fresh" \
   .venv/bin/python -m alembic -c app/alembic.ini upgrade head
 '
 ```
-Expected：升到 `0002_cross_module_fks (head)` 無 error；`0001 create_all` 建出全表、`0002` orphan-audit 在空表 trivially pass + 6 FK 加上並 validate。
+Expected：升到 `0002_cross_module_fks (head)` 無 error；`0001 create_all` 建出全表、`0002` orphan-audit 在空表 trivially pass + 6 FK 加上並 validate。**注意**：`dropdb --if-exists` 確保是真 fresh upgrade（Codex R1 指出 `createdb || true` 會靜默重用舊 DB → 假通過）。
 
 - [ ] **V1.2 驗 42 表 + 6 FK validated**：
 
@@ -134,16 +136,29 @@ Expected：表數 = 42；6 條 `fk_*` 全 `convalidated = t`。
 
 **Files:** 無改動（純驗證 + 可能的資料清理回報）。
 
-- [ ] **V2.1 對含資料 DB 跑 audit**：在本機重建後的 `orderly` DB（含 42 表資料）跑：
+- [ ] **V2.1 對含資料 DB 跑 audit**：在本機重建後的 `orderly` DB（含 42 表資料、由 `7dd5e51` create_all rebuild、尚未經 monolith 鏈 `0002`）跑：
 
 ```bash
 direnv exec . psql -h localhost -p $POSTGRES_PORT -U orderly -d orderly -f scripts/database/monolith_fk_audit.sql
 ```
 Expected：6 row，每個 `orphan_count = 0`。**任一非 0 → `0002` 會 `RAISE EXCEPTION` abort 整個遷移** → 停下回報哪張表哪欄有 orphan、各幾筆，**不**自行刪資料（資料清理需 owner 決定，屬 destructive）。
 
-- [ ] **V2.2 audit candidate FK（為 D2 提供數據）**：對 `acceptances.orderId`/`restaurantId`/`supplierId`、`notifications.userId` 跑 orphan count（研究提供的 SQL），把結果填進 D2 決策。
+- [ ] **V2.2 實際套用 `0002` 到含資料 DB 並驗 FK（真「套真資料安全」證據）**：orphan=0 後，對同一個 `orderly` dev DB 實跑遷移（非只 audit）：
 
-**Verify V2**：6 條既有 FK 在含資料 DB orphan 全 0（證明 `0002` 套真資料安全）；candidate FK 的 orphan 數據已記錄供 D2。
+```bash
+direnv exec . bash -c '
+cd backend
+DATABASE_URL="postgresql+asyncpg://orderly:orderly_dev_password@localhost:$POSTGRES_PORT/orderly" \
+  .venv/bin/python -m alembic -c app/alembic.ini upgrade head
+'
+direnv exec . psql -h localhost -p $POSTGRES_PORT -U orderly -d orderly -c \
+  "SELECT conname, convalidated FROM pg_constraint WHERE conname LIKE 'fk_%' ORDER BY 1;"
+```
+Expected：`alembic upgrade head` 在含資料 DB 乾淨完成（`0001` create_all skip 既有表、`0002` orphan-audit 對真資料 pass → `NOT EXISTS` 守門跳過已由 create_all 建好的 FK 或新增之 → re-VALIDATE no-op）；6 條 `fk_*` 全 `convalidated = t`。**這一步才是「`0002` 套真資料安全」的實打證據**（Codex R1：只跑 audit SQL 不等於證明套用安全）。
+
+- [ ] **V2.3 audit candidate FK（為 D2 提供數據）**：對 `acceptances.orderId`/`restaurantId`/`supplierId`、`notifications.userId` 跑 orphan count（研究提供的 SQL），把結果填進 D2 決策。**若 D2 拍板補 FK（新增 migration）→ V1 與 V2 須重跑，且 AC-V1/AC-V2 的 FK 數量（6→N）同步更新。**
+
+**Verify V2**：V2.1 orphan 全 0 + **V2.2 在含資料 dev DB 實跑 `upgrade head` 成功且 6 FK `convalidated=t`**（真「套真資料安全」證據，非僅 audit）；V2.3 candidate FK 數據已記錄供 D2。
 
 ### V3 — 真 uvicorn boot + frozen contract curl（STEP 4 runtime + 契約 gate）
 
@@ -202,9 +217,17 @@ Expected：6 row，每個 `orphan_count = 0`。**任一非 0 → `0002` 會 `RAI
 
 ### C2 — 結清 legacy 部署死碼（依 D3）
 
-- [ ] **D3 決策**：9 個 per-service `Dockerfile` + `cloudbuild.yaml` —— active CD（`cd.yml`）已不引用，僅 deprecated `deploy.yml`（manual-only）+ `security.yml`/`security-audit.yml` 掃描引用。拍板：(A) 連同 deprecated `deploy.yml` 一起刪 + 修 security workflow 的 `backend/*/Dockerfile*` glob；(B) 留待專屬 cleanup。**預設 (A)**（本 plan 是「收尾」）。
-- [ ] **C2.1（若 A）刪 per-service Dockerfile + cloudbuild**：`git rm backend/*-fastapi/Dockerfile backend/*-fastapi/cloudbuild.yaml`；確認 `cd.yml` 不引用（已驗）；修 `security.yml`/`security-audit.yml` 掃描 glob 指向 `backend/Dockerfile.monolith`。
-- [ ] **C2.2 Commit**：`git commit -m "chore(deploy): remove legacy per-service Dockerfiles + cloudbuild; point security scans at monolith image"`。
+- [ ] **D3 決策**：刪除目標＝9 個 per-service `backend/*-fastapi/Dockerfile` + per-service `cloudbuild.yaml` + deprecated `.github/workflows/deploy.yml`（active CD `cd.yml` 已不引用，僅 deprecated `deploy.yml`〔manual-only〕+ `security.yml`/`security-audit.yml` 掃描引用）。拍板：(A) 三者一起刪 + 修 security workflow glob；(B) 留待專屬 cleanup。**預設 (A)**（本 plan 是「收尾」）。
+- [ ] **C2.1 殘留引用稽核（bounded）**：刪前先列出所有對 per-service Dockerfile/cloudbuild + `deploy.yml` 的 executable reference：
+
+```bash
+rg -n "fastapi/Dockerfile|fastapi/cloudbuild|workflows/deploy\.yml|deploy\.yml" \
+  .github ci scripts compose*.yml 2>/dev/null | grep -v "Dockerfile.monolith"
+```
+把每個 hit 分類為 (i) active 路徑引用（必須更新到 monolith 或改走 `cd.yml`）vs (ii) 純文件/註解（可隨刪）。**任一 active 引用未處理 → 不刪**（避免刪掉仍被引用的檔斷 CI）。
+
+- [ ] **C2.2（若 D3=A）刪除 + 修引用**：`git rm backend/*-fastapi/Dockerfile backend/*-fastapi/cloudbuild.yaml .github/workflows/deploy.yml`；對 C2.1 列出的每個 active 引用：(i) `security.yml`/`security-audit.yml` 的 `backend/*/Dockerfile*` 掃描 glob 改指 `backend/Dockerfile.monolith`；(ii) `ci/service-manifest.yaml` / `compose.dev.yml` / scripts 若仍指 per-service 構件 → 更新到 monolith，或在 D3=B 路徑明列合法延後。刪後 `rg` 重跑為 0 active 引用。
+- [ ] **C2.3 Commit**：`git commit -m "chore(deploy): remove legacy per-service Dockerfiles + cloudbuild + deprecated deploy.yml; repoint security scans at monolith image"`。
 
 ### C3 — legacy per-module alembic 鏈處置（gated on V1）
 
@@ -249,7 +272,7 @@ Expected：6 row，每個 `orphan_count = 0`。**任一非 0 → `0002` 會 `RAI
 ## Acceptance Criteria
 
 - **AC-V1**：真 PG 空 DB `alembic -c backend/app/alembic.ini upgrade head` 乾淨升到 `0002 (head)`；42 表 + 6 `fk_*` `convalidated=t`；重跑 idempotent。
-- **AC-V2**：本機 dev orderly DB `monolith_fk_audit.sql` 6 條 orphan_count 全 0（套真資料安全）；candidate FK orphan 數據已記錄。staging/prod orphan audit 明列 release-time gate（不在本 plan AC）。
+- **AC-V2**：本機 dev orderly DB `monolith_fk_audit.sql` 6 條 orphan_count 全 0 **且**對同一 DB 實跑 `alembic upgrade head` 成功、6 條 `fk_*` `convalidated=t`（實打證明套真資料安全，非僅 audit）；candidate FK orphan 數據已記錄。staging/prod orphan audit + apply 明列 release-time gate（不在本 plan AC）。
 - **AC-V3（runtime_validated）**：真 uvicorn 單體起，frozen contract 7 條逐條 curl 200 + 預期形狀全綠；SecurityHeaders header 出現、login 429、verification_level 403 三條 middleware 行為符預期；`/service-map` `routing=in-process` 無 `localhost:300x`。
 - **AC-V4**：`bf4abc2` 改動的 11 個前端檔 type-check 0 error（環境/既有問題分開記錄）。
 - **AC-D**：D1/D2/D3/D4 皆有 owner 結論（補實作 or 合法延後 with 解鎖條件）。
@@ -266,13 +289,14 @@ Expected：6 row，每個 `orphan_count = 0`。**任一非 0 → `0002` 會 `RAI
 |---|---|---|---|---|---|
 | `backend/app/modules/gateway_compat/` | delete | 真的動了 (C1.2) | C1.2 | — | `git rm -r`；C1.3 `import app.main` 綠驗收 |
 | `gateway_compat/middleware/{security_headers,redis_rate_limit}.py`（重複 middleware）| delete | 真的動了 (C1.2) | C1.2 | — | 隨 gateway_compat 一併刪 |
-| `backend/*-fastapi/Dockerfile`（×9）| delete | 真的動了 (C2.1) 或 合法延後（D3=B）| C2.1 | — | 預設 D3=A 刪；active CD 已不引用 |
-| `backend/*-fastapi/cloudbuild.yaml`（×9）| delete | 真的動了 (C2.1) 或 合法延後（D3=B）| C2.1 | — | 同上 |
+| `backend/*-fastapi/Dockerfile`（×9）| delete | 真的動了 (C2.2) 或 合法延後（D3=B）| C2.2 | — | 預設 D3=A 刪；C2.1 殘留稽核守門 |
+| `backend/*-fastapi/cloudbuild.yaml`（×9）| delete | 真的動了 (C2.2) 或 合法延後（D3=B）| C2.2 | — | 同上 |
+| `.github/workflows/deploy.yml`（deprecated）| delete | 真的動了 (C2.2) 或 合法延後（D3=B）| C2.2 | — | D3=A 連同 per-service 構件一起刪；非 active CD 路徑 |
 | `backend/app/modules/*/alembic/`（8 鏈 20 version 檔）| delete | **延後（gated on V1；D4 依 deployment 現況）** | C3.2（若 D4=A）| — | **合法延後條件**：staging/prod 尚未切 `alembic_version_monolith` → 刪會斷現有 DB 遷移軌；解鎖＝「資料庫已 stamp 到 monolith 鏈」後執行 C3.2。若已切 → 本 plan 內 C3.2 直接刪 |
 | `_consolidated_schema.py:14-17` 過時 docstring | remove | 真的動了 (C3.3) | C3.3 | — | 移除「follow-up not done」誤述 |
 | `suppliers/core/config.py:114-115` 死 config | remove（可選）| 真的動了（C2 順手）或 skip | — | — | 純死 config，低優先；不單列 must |
 
-**目標達成比例（規劃階段預測）**：6 個命名目標「真的動了」（gateway_compat + 重複 middleware + 9 Dockerfile + 9 cloudbuild + docstring，其中部署死碼受 D3 預設=A）+ 1 個（legacy alembic 鏈）**合法延後**（gated on V1，解鎖條件＝資料庫已切 monolith 鏈）= 全部有著落，無「沒碰到」「只有間接動作」。
+**目標達成比例（規劃階段預測）**：7 個命名目標「真的動了」（gateway_compat + 重複 middleware + 9 Dockerfile + 9 cloudbuild + deprecated `deploy.yml` + `_consolidated_schema` docstring，部署死碼受 D3 預設=A + C2.1 殘留稽核守門）+ 1 個（legacy alembic 鏈）**合法延後**（gated on V1，解鎖條件＝資料庫已切 monolith 鏈）= 全部有著落，無「沒碰到」「只有間接動作」。
 
 > 註：integration_service stub（D1）若選 (B) 正式接受，命名目標進度表不重複列（它是「行為缺口決策」非「拆除目標」）；但若選 (B)，D1 的「接受 stub」屬合法延後真實作，解鎖條件＝bulk/migration 流程被啟用時補真 in-process。
 
