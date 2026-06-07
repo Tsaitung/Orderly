@@ -111,7 +111,7 @@
 
 **Files:**
 - Modify: `package.json`（加 next-themes, framer-motion）
-- Modify: `tailwind.config.js`
+- Modify: `tailwind.config.ts`
 - Create: `components/ThemeProvider.tsx`
 - Modify: `app/layout.tsx`
 
@@ -323,3 +323,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - C-W1（type-check 漏 app/components）→ §Task 0 Step 5 / §Task 22 Step 2 / §AC6 改 `npm run type-check:full`（`type-check` 跑 staging config 排除 app/components）。
 - C-W2（/api/contact PII）→ §Task 20 Step 1：僅 log `{requestId,role,timestamp}`，禁 log email/聯絡人/需求 PII。
 - C-W3（footer /about OOS）→ §File Structure LandingFooter：「公司」欄連現有目標或純文字，不新增 /about。
+
+## Changes Made — Round 3 (codex)
+
+- C-MF3 殘留修正 → §Task 0 `**Files:**` 行還寫 `tailwind.config.js`（Round 2 漏改），改為 `tailwind.config.ts`。Codex Round 2 抓出。
