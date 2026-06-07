@@ -9,12 +9,10 @@ suppliers stubs).
 
 Scope / status
 --------------
-* ``revision = "consolidated_schema_0001"``; ``down_revision = None`` — this is a
-  standalone root revision intended for building an empty database to the full
-  current model state without replaying the historical per-module chains.
-* Wiring this into the existing per-module Alembic chains (so the per-module
-  ``alembic upgrade head`` and this consolidated build share one history) is a
-  deliberate FOLLOW-UP, not done here.
+* ``revision = "0001_consolidated_schema"``; ``down_revision = None`` — this is
+  the root revision of the canonical monolith Alembic chain. Follow-up
+  cross-module FK migrations chain from this root instead of replaying the
+  historical per-module chains.
 
 Enum types
 ----------

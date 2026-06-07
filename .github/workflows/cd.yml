@@ -1,7 +1,7 @@
 name: CD
 
 # CD = build + deploy, gated on CI. Triggered on pushes to deploy branches.
-# Key optimizations vs the old deploy.yml:
+# Key optimizations vs the retired deploy workflow:
 #   - Single CI gate (reusable ci.yml) instead of CI/CD racing unguarded.
 #   - build + deploy MERGED per service (no cross-job image-poll loop).
 #   - Images built in-runner with BuildKit registry layer cache (deps cached

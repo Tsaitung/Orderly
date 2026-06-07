@@ -10,7 +10,7 @@
 
 **2026-06-07 更新**：原文下方保留 STEP 0-3 第一階段的歷史計畫與稽核；本 branch `codex-backend-step4-9` 已依使用者指示把 STEP 4-9 從後續 gated 階段拉進本次實作。以下「STEP 4-9 Execution Update」為目前 canonical 狀態。
 
-**2026-06-08 更新**：補跑 throwaway PostgreSQL migration、FK audit、Docker build/runtime health、frontend type-check。結果已納入下方驗證清單。
+**2026-06-08 更正**：下方「STEP 4-9 Execution Update」是早先收尾紀錄，已被新的 canonical artifact 取代：`docs/plans/20260607-backend-monolith-step4-9/run.md`。先前狀態仍停在 `0002`、`gateway_compat`/legacy Dockerfile 尚在的描述已過期；最新收尾為 `0003_acceptance_order_fk`、C1/C2 已清理、C3 依 D4 合法延後。
 
 ---
 

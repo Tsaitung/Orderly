@@ -30,3 +30,8 @@ SELECT 'supplier_skus.supplier_id -> organizations.id' AS check_name, count(*) A
 FROM supplier_skus c
 LEFT JOIN organizations p ON c.supplier_id = p.id
 WHERE p.id IS NULL;
+
+SELECT 'acceptances.orderId -> orders.id' AS check_name, count(*) AS orphan_count
+FROM acceptances c
+LEFT JOIN orders p ON c."orderId" = p.id
+WHERE p.id IS NULL;

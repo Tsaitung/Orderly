@@ -8,9 +8,6 @@ orderly_fastapi_core.create_service_app and registers its routers at the surveye
 prefixes (including dual /api + no-prefix mounts). We re-include each module's
 `.router` here so those exact paths are preserved, and apply CORS + Auth
 middleware ONCE at this top level.
-
-gateway_compat (api-gateway) is intentionally NOT mounted: its routes are
-reverse-proxies to per-service ports that do not exist inside the monolith.
 """
 import os
 from typing import Dict

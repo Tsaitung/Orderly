@@ -14,6 +14,12 @@ import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 import structlog
+from sqlalchemy import select
+
+from app.modules.notifications.core.database import AsyncSessionLocal as NotificationSessionLocal
+from app.modules.notifications.models.notification import Notification
+from app.modules.users.core.database import AsyncSessionLocal as UserSessionLocal
+from app.modules.users.models.user import User
 
 logger = structlog.get_logger(__name__)
 
@@ -99,14 +105,20 @@ class IntegrationService:
             True if user has permission, False otherwise
         """
         try:
+            allowed = await self._check_user_permissions_in_process(
+                user_id=user_id,
+                resource_type=resource_type,
+                action=action,
+            )
             logger.info(
-                "Using in-process permission fallback",
+                "In-process permission check completed",
                 user_id=user_id,
                 resource_type=resource_type,
                 resource_id=resource_id,
                 action=action,
+                allowed=allowed,
             )
-            return await self._fallback_permission_check(user_id, resource_type, action)
+            return allowed
             
         except Exception as e:
             logger.error(
@@ -200,7 +212,7 @@ class IntegrationService:
         """
         try:
             logger.info(
-                "Using in-process order permission fallback",
+                "ACCEPTED STUB: no in-process order permission owner exists yet; deny ordering writes conservatively",
                 company_id=company_id,
                 location_id=location_id,
                 unit_id=unit_id,
@@ -451,6 +463,35 @@ class IntegrationService:
         )
         self._record_service_success(service_name)
         return None
+
+    async def _check_user_permissions_in_process(self, user_id: str, resource_type: str, action: str) -> bool:
+        """Check hierarchy permissions from the monolith users table."""
+        async with UserSessionLocal() as session:
+            result = await session.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if not user or not user.is_active:
+                return False
+
+            if getattr(user, "is_super_user", False) or user.role == "platform_admin":
+                return True
+
+            normalized_action = action.lower()
+            if normalized_action in {"read", "list", "view"}:
+                return True
+
+            permission_names = set()
+            for item in user.permissions or []:
+                if isinstance(item, str):
+                    permission_names.add(item)
+                elif isinstance(item, dict):
+                    permission_names.add(str(item.get("name", "")))
+            accepted = {
+                "*",
+                f"{resource_type}:*",
+                f"{resource_type}:{normalized_action}",
+                f"hierarchy:{normalized_action}",
+            }
+            return bool(permission_names & accepted)
     
     def _is_service_available(self, service_name: str) -> bool:
         """Check if service is available based on circuit breaker state"""
@@ -509,9 +550,8 @@ class IntegrationService:
     
     async def _fallback_permission_check(self, user_id: str, resource_type: str, action: str) -> bool:
         """Fallback permission check when User Service is unavailable"""
-        # Simple fallback logic - in production this might check local cache or default permissions
         logger.warning(
-            "Using fallback permission check",
+            "ACCEPTED STUB: user permission lookup failed; allowing read-only fallback",
             user_id=user_id,
             resource_type=resource_type,
             action=action
@@ -524,29 +564,50 @@ class IntegrationService:
         return {
             "can_order": False,  # Conservative fallback
             "order_limits": {},
-            "restrictions": ["Service unavailable - orders temporarily restricted"],
-            "source": "fallback"
+            "restrictions": [
+                "ACCEPTED STUB: no in-process order permission owner exists yet; orders temporarily restricted"
+            ],
+            "source": "accepted_stub"
         }
     
     async def _notify_order_service(self, payload: Dict[str, Any]) -> bool:
         """Record an in-process order hierarchy event."""
-        logger.info("In-process order hierarchy notification", event_type=payload.get("event_type"))
+        logger.info(
+            "ACCEPTED STUB: order hierarchy event has no in-process domain handler yet",
+            event_type=payload.get("event_type"),
+        )
         return True
-    
+
     async def _notify_billing_service(self, payload: Dict[str, Any]) -> bool:
         """Record an in-process billing hierarchy event."""
-        logger.info("In-process billing hierarchy notification", event_type=payload.get("event_type"))
-        return True
-    
-    async def _send_notification_alert(self, payload: Dict[str, Any]) -> bool:
-        """Send notification alert (could be to notification service, Slack, etc.)"""
-        # For now, just log the notification
-        # In production, this would integrate with notification service or alerting system
         logger.info(
-            "Notification alert",
+            "ACCEPTED STUB: billing hierarchy event has no in-process domain handler yet",
+            event_type=payload.get("event_type"),
+        )
+        return True
+
+    async def _send_notification_alert(self, payload: Dict[str, Any]) -> bool:
+        """Persist a system notification in-process."""
+        severity = payload.get("severity", "normal")
+        title = f"Hierarchy event: {payload.get('event_type', 'unknown')}"
+        message = payload.get("error") or payload.get("entity_id") or payload.get("operation_id") or "Hierarchy integration event"
+        async with NotificationSessionLocal() as session:
+            session.add(
+                Notification(
+                    user_id=str(payload.get("user_id") or "system"),
+                    type="hierarchy_integration",
+                    title=title,
+                    message=str(message),
+                    data=payload,
+                    priority="high" if severity == "high" else "medium",
+                )
+            )
+            await session.commit()
+        logger.info(
+            "In-process notification alert persisted",
             event_type=payload.get("event_type"),
             entity_id=payload.get("entity_id"),
-            severity=payload.get("severity", "normal")
+            severity=severity
         )
         return True
     

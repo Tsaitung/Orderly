@@ -25,17 +25,11 @@ NC='\033[0m' # No Color
 # Configuration
 MAX_SERVICE_NAME_LENGTH=30
 REQUIRED_DATABASE_PORT="5432"
+source scripts/ci/cloud-run-names.sh
 
-# Service list (matching deploy.yml)
+# Service list (matching cd.yml)
 declare -a SERVICES=(
-  "api-gateway-fastapi"
-  "user-service-fastapi"
-  "order-service-fastapi"
-  "product-service-fastapi"
-  "acceptance-service-fastapi"
-  "notification-service-fastapi"
-  "customer-hierarchy-service-fastapi"
-  "supplier-service-fastapi"
+  "backend-monolith"
 )
 
 # Validation results
@@ -81,37 +75,6 @@ print_info() {
   echo -e "ℹ️  $1"
 }
 
-# Get Cloud Run service name based on service and environment
-get_cloud_run_name() {
-  local service="$1"
-  local environment="$2"
-  local suffix="${3:-}"
-  local env_suffix="${environment}${suffix}"
-  
-  # For staging-v2, use abbreviated service names to stay within 30 char limit
-  if [[ "$env_suffix" == "staging-v2" ]]; then
-    case "$service" in
-      api-gateway-fastapi) echo "orderly-apigw-staging-v2" ;;
-      user-service-fastapi) echo "orderly-user-staging-v2" ;;
-      order-service-fastapi) echo "orderly-order-staging-v2" ;;
-      product-service-fastapi) echo "orderly-product-staging-v2" ;;
-      acceptance-service-fastapi) echo "orderly-accept-staging-v2" ;;
-      notification-service-fastapi) echo "orderly-notify-staging-v2" ;;
-      customer-hierarchy-service-fastapi) echo "orderly-custhier-staging-v2" ;;
-      supplier-service-fastapi) echo "orderly-supplier-staging-v2" ;;
-      *) echo "orderly-${service}-${env_suffix}" ;;
-    esac
-  else
-    # For other environments, use existing logic
-    case "$service" in
-      customer-hierarchy-service-fastapi)
-        echo "orderly-customer-hierarchy-${env_suffix}"
-        ;;
-      *) echo "orderly-${service}-${env_suffix}" ;;
-    esac
-  fi
-}
-
 # Check service name lengths
 check_service_names() {
   local environment="${1:-staging}"
@@ -133,25 +96,16 @@ check_service_names() {
   echo "   Maximum allowed length: ${MAX_SERVICE_NAME_LENGTH} characters"
   echo ""
   
-  for service in "${SERVICES[@]}"; do
-    local cloud_run_name
-    cloud_run_name=$(get_cloud_run_name "$service" "$environment" "$suffix")
+	  for service in "${SERVICES[@]}"; do
+	    local cloud_run_name
+	    cloud_run_name=$(cr_service_name "$service" "$environment" "$suffix")
     local name_length=${#cloud_run_name}
     
     if [[ $name_length -gt $MAX_SERVICE_NAME_LENGTH ]]; then
       print_error "Service name too long: $cloud_run_name ($name_length chars > $MAX_SERVICE_NAME_LENGTH)"
       echo "   Suggestion: Use abbreviated name or shorter suffix"
       
-      # Provide specific suggestions
-      if [[ "$service" == "customer-hierarchy-service-fastapi" ]]; then
-        echo "   Example: orderly-custhier-${environment}${suffix} (use 'custhier' abbreviation)"
-      elif [[ "$service" == "notification-service-fastapi" ]]; then
-        echo "   Example: orderly-notify-${environment}${suffix} (use 'notify' abbreviation)"
-      elif [[ "$service" == "acceptance-service-fastapi" ]]; then
-        echo "   Example: orderly-accept-${environment}${suffix} (use 'accept' abbreviation)"
-      fi
-      
-      failed=$((failed + 1))
+	      failed=$((failed + 1))
     else
       print_success "$cloud_run_name ($name_length chars)"
     fi
@@ -255,22 +209,22 @@ check_cloudsql() {
   local expected_annotation="orderly-472413:asia-east1:${expected_instance}"
   print_info "Expected Cloud SQL annotation: $expected_annotation"
   
-  # Check deploy.yml for Cloud SQL configuration
-  if [[ -f ".github/workflows/deploy.yml" ]]; then
+  # Check cd.yml for Cloud SQL configuration
+  if [[ -f ".github/workflows/cd.yml" ]]; then
     echo ""
-    echo "Checking deploy.yml workflow..."
+    echo "Checking cd.yml workflow..."
     
-    if grep -q "add-cloudsql-instances" ".github/workflows/deploy.yml"; then
-      print_success "Cloud SQL annotation found in deploy.yml"
+    if grep -q "add-cloudsql-instances" ".github/workflows/cd.yml"; then
+      print_success "Cloud SQL annotation found in cd.yml"
       
       # Check if using correct instance variable
-      if grep -q 'add-cloudsql-instances.*DB_CONNECTION_NAME' ".github/workflows/deploy.yml"; then
-        print_success "Using dynamic DB_CONNECTION_NAME variable"
+      if grep -q 'add-cloudsql-instances.*DB_CONN' ".github/workflows/cd.yml"; then
+        print_success "Using dynamic DB_CONN variable"
       else
-        print_warning "Consider using DB_CONNECTION_NAME variable for flexibility"
+        print_warning "Consider using DB_CONN variable for flexibility"
       fi
     else
-      print_error "Cloud SQL annotation not found in deploy.yml"
+      print_error "Cloud SQL annotation not found in cd.yml"
     fi
   fi
   

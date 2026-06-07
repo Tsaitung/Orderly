@@ -244,12 +244,12 @@ verify_separated_config() {
     fi
   fi
   
-  # Check CI workflow
-  if [[ -f ".github/workflows/deploy.yml" ]]; then
-    if grep -q "POSTGRES_PASSWORD.*secrets" ".github/workflows/deploy.yml"; then
-      print_success "  deploy.yml: POSTGRES_PASSWORD uses secrets"
+  # Check CD workflow
+  if [[ -f ".github/workflows/cd.yml" ]]; then
+    if grep -q "POSTGRES_PASSWORD.*secrets" ".github/workflows/cd.yml"; then
+      print_success "  cd.yml: POSTGRES_PASSWORD uses secrets"
     else
-      print_warning "  deploy.yml: POSTGRES_PASSWORD secret reference not found"
+      print_warning "  cd.yml: POSTGRES_PASSWORD secret reference not found"
     fi
   fi
 }
