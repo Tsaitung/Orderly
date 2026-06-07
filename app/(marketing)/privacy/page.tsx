@@ -28,15 +28,15 @@ export default function PrivacyPage() {
   const reduceMotion = useReducedMotion()
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+    <div className="flex min-h-screen flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
       <LandingNav />
 
-      <main>
+      <main className="flex-1">
         <section className="py-16 md:py-20">
           <div className="container mx-auto px-4">
             <motion.div
               className="mx-auto max-w-2xl"
-              initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+              initial={reduceMotion ? false : { opacity: 1, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: reduceMotion ? 0 : 0.5 }}

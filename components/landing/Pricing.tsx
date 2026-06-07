@@ -97,7 +97,7 @@ export default function Pricing() {
   const reveal = prefersReducedMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 24 },
+        initial: { opacity: 1, y: 24 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true },
         transition: { duration: 0.5 },

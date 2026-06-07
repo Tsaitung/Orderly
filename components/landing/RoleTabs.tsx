@@ -97,7 +97,7 @@ export default function RoleTabs() {
       <div className="container mx-auto px-4">
         <motion.div
           className="text-center"
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          initial={reduceMotion ? false : { opacity: 1, y: 24 }}
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
@@ -114,7 +114,7 @@ export default function RoleTabs() {
         </motion.div>
 
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          initial={reduceMotion ? false : { opacity: 1, y: 24 }}
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}

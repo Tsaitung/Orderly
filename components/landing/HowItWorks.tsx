@@ -47,7 +47,7 @@ export default function HowItWorks() {
   }
 
   const stepVariants = {
-    hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 },
+    hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: 24 },
     show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
   }
 
@@ -60,7 +60,7 @@ export default function HowItWorks() {
       <div className="container mx-auto px-4">
         {/* Section 標題：小寫 label → h2 */}
         <motion.div
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          initial={reduceMotion ? false : { opacity: 1, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}

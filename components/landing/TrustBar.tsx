@@ -86,7 +86,9 @@ function CountUpStat({ value }: { value: string }) {
     let raf = 0
     let start: number | null = null
     const animate = (now: number) => {
-      if (start === null) start = now
+      if (start === null) {
+        start = now
+      }
       const elapsed = now - start
       const t = Math.min(elapsed / COUNT_UP_DURATION_MS, 1)
       // easeOutCubic，收尾平滑。
@@ -121,7 +123,7 @@ export default function TrustBar() {
     >
       <div className="container mx-auto px-4">
         <motion.ul
-          initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+          initial={reduceMotion ? false : { opacity: 1, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}

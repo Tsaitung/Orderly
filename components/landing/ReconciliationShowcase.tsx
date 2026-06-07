@@ -33,10 +33,10 @@ const SECTION_LEAD =
 export function ReconciliationShowcase() {
   const reduceMotion = useReducedMotion()
 
-  // 進場動畫：尊重 reduced-motion → 直接顯示最終狀態（位移/淡入歸零）。
+  // 進場動畫：保持內容可見，只用位移營造進場；reduced-motion 直接顯示終態。
   const reveal = reduceMotion
     ? { initial: { opacity: 1, y: 0 }, whileInView: { opacity: 1, y: 0 } }
-    : { initial: { opacity: 0, y: 24 }, whileInView: { opacity: 1, y: 0 } }
+    : { initial: { opacity: 1, y: 24 }, whileInView: { opacity: 1, y: 0 } }
 
   return (
     <section

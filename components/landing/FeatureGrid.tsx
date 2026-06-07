@@ -49,7 +49,7 @@ export default function FeatureGrid() {
   const headerMotion = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 24 },
+        initial: { opacity: 1, y: 24 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true },
         transition: { duration: 0.5 },
@@ -75,7 +75,7 @@ export default function FeatureGrid() {
             const cardMotion = reduceMotion
               ? {}
               : {
-                  initial: { opacity: 0, y: 24 },
+                  initial: { opacity: 1, y: 24 },
                   whileInView: { opacity: 1, y: 0 },
                   viewport: { once: true },
                   transition: { duration: 0.5, delay: index * 0.07 },

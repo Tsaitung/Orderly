@@ -157,7 +157,7 @@ export default function LandingNav() {
       {menuOpen && (
         <motion.div
           id="landing-mobile-menu"
-          initial={reduceMotion ? false : { opacity: 0, y: -8 }}
+          initial={reduceMotion ? false : { opacity: 1, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.2 }}
           className="border-t border-gray-200 bg-white md:hidden dark:border-gray-800 dark:bg-gray-900"

@@ -96,7 +96,7 @@
 **驗收範圍 PUBLIC_SCOPE**（grep 只限這些路徑，避免誤打 Out of Scope dashboard）：
 `app/page.tsx components/HeroSection.tsx components/RoleSelector.tsx components/HeroBackground.tsx components/landing/ "app/(marketing)/"`
 
-驗收：每個命名目標 commit 後 `grep -rn '<字串>' $PUBLIC_SCOPE` → 0 hit（SystemStatus 元件檔本身保留，只驗 app/page.tsx 不再 import）。**`images.unsplash.com` 例外見 §Task 22 Step 4 carve-out 與 §執行後驗證稽核 D**——允許「來源出處註解」存在（圖已在地化），live-usage（排除註解）須 0。
+驗收：每個命名目標 commit 後 `grep -rn '<字串>' $PUBLIC_SCOPE` → 0 hit（SystemStatus 元件檔本身保留，只驗 app/page.tsx 不再 import）。2026-06-08 已把 `images.unsplash.com` provenance 註解改成 photo id，因此不再需要 carve-out。
 
 > ⚠ 已知 OOS：杜撰名（大樂司/樂多多/烤食組合/稻舍）亦存在於 dashboard mock 資料——`components/admin/UserManagement.tsx`、`components/supplier/logistics/delivery-list.tsx`、`delivery-map.tsx`、`components/supplier/finance/invoice-manager.tsx`。**這些屬 Out of Scope（登入後 dashboard 假資料，非公開行銷背書），本 plan 不動**，列為未來獨立 mock-data 清理。grep 驗收絕不可擴及這些檔，否則違反 Out of Scope。
 
@@ -240,9 +240,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Task 18: dark mode 全頁複驗
 
-- [ ] Step 1: dev server 切 dark，逐區檢查對比（無白字白底）、品牌色陰影、focus ring
-- [ ] Step 2: Playwright 截圖 light + dark 全頁存證
-- [ ] Step 3: Commit（若有修）`fix(landing): dark mode polish`
+- [x] Step 1: dev server 切 dark，逐區檢查對比（無白字白底）、品牌色陰影、focus ring
+- [x] Step 2: Playwright 截圖 light + dark 全頁存證（2026-06-08，`/tmp/orderly-public-{light,dark}-{home,contact,privacy,terms}.png`；重點檢查 dark home/contact/privacy/terms；另新增 `e2e/dark-mode-visual.spec.ts` 可重跑 dark screenshot + h1 contrast checks）
+- [x] Step 3: Commit（若有修）`fix(landing): dark reveal robustness`
+
+> 收尾註（2026-06-08）：dark visual pass 首輪發現 home full-page screenshot 因 `whileInView` initial opacity 造成首屏外區塊大面積空白，且 `/privacy` footer 在高 viewport 下後方留空。已修成 reveal 內容初始 `opacity:1`（只保留位移/縮放動效），並把 `/privacy` 改為 flex column + `main.flex-1`。重新截圖後 dark home/contact/privacy/terms 無白字白底、無主要內容重疊、footer 位置正常。`PLAYWRIGHT_BASE_URL=http://localhost:5613 npx playwright test e2e/dark-mode-visual.spec.ts --reporter=line` → 4/4 passed。
 
 ### Phase 3 — 新頁
 
@@ -278,7 +280,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - [ ] Step 1: Run `npx playwright test e2e/public-pages.spec.ts` 全綠
 - [ ] Step 2: `npm run type-check:full` + `npm run lint` 通過（**須 `:full`**——`type-check` 跑 staging config 排除 app/components，驗不到 landing；輸出存 /tmp 完整讀，不截斷）
 - [ ] Step 3: dev server 真實點擊全部按鈕一遍，確認零死連結（每個按鈕導真路由或捲到錨點）
-- [ ] Step 4: 命名目標總驗：`grep -rn '大樂司\|樂多多\|烤食組合\|稻舍\|demo1234\|demo.orderly.tw\|images.unsplash.com' $PUBLIC_SCOPE` → **live-usage 0 hit**。**carve-out（執行後稽核 2026-06-08 修正）**：`images.unsplash.com` 允許出現在「來源出處註解」（`Hero.tsx`、`landingData.ts` 各 1 處 JS block-comment，記錄 hero 圖原始免費授權來源），因 hero 圖已在地化為 `public/hero/restaurant-hero.jpg`、`HERO_IMAGE_SRC` 指本機路徑、無任何 runtime 熱連。判定 live-usage 用排除註解版：`grep -rn 'images.unsplash.com' $PUBLIC_SCOPE | grep -vE ':\s*\*'` → 0 hit。其餘 5 個命名目標仍須純 0 hit（無 carve-out）。
+- [ ] Step 4: 命名目標總驗：`grep -rn '大樂司\|樂多多\|烤食組合\|稻舍\|demo1234\|demo.orderly.tw\|images.unsplash.com' $PUBLIC_SCOPE` → 0 hit。2026-06-08 已把 provenance 註解改成不含完整 remote domain，因此不再需要 `images.unsplash.com` carve-out。
 - [ ] Step 5: Playwright 全頁截圖（light/dark/手機）存證
 - [ ] Step 6: Commit `test(landing): full acceptance green + runtime evidence`
 
@@ -349,10 +351,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **Task 15-17 ✅ DONE**（commit `9129969`）：刪 HeroSection/RoleSelector/HeroBackground（grep 確認無 dangling import）。
 - **Task 19 ✅ DONE（post-execution GREEN）**：`e2e/public-pages.spec.ts` 已補 `/contact` submit 成功、`/privacy`、`/terms` route-200 + 標題/整理中說明 + nav/footer 斷言；2026-06-08 focused run `PLAYWRIGHT_BASE_URL=http://localhost:5612 npx playwright test e2e/public-pages.spec.ts --reporter=line` → **11/11 passed**。AC4 automation gap 已關閉。
 - **Task 20-21 ✅ DONE**（commit `d2ced75`）：/contact（form + /api/contact PII-safe stub）、/privacy、/terms 誠實 stub。三頁存在，且 /api/contact 只記不含 PII 的 requestId/role/timestamp 或 validation metadata。
-- **Task 22 ✅ controller 親自驗證（public-pages green）**：tsc 1072（< 1074 baseline，無 regression，新檔 0 error）；PUBLIC_SCOPE 命名目標 grep 0 命中；**Playwright public-pages 11/11 passed**（2026-06-08 自跑 :5612，涵蓋 landing/auth + /contact /privacy /terms）；截圖 oracle 確認 hero+12 區塊 render、對齊 mockup、真實定價、lucide icon。
-- **whileInView 觀察（非 bug）**：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖」下 IntersectionObserver 不觸發 → 全頁截圖空白；捲動截圖證明真使用者每段都看得到。若要對「無 JS / 預覽爬蟲 / 不捲動截圖」更穩，可把 reveal 改成 viewport margin 觸發或降低 initial opacity 依賴（建議，非阻擋）。
-- **Task 18 dark**：toggle 經 E2E 驗證可加 `class="dark"`；元件皆有 dark: variants。**深色逐區視覺尚未人工逐段確認**（建議補一次 dark 全頁目視）。
-- **狀態：Phase 1-3 核心頁面交付完成；Task 19 E2E gap 已補齊**。誠實剩餘項：Task 18 dark 逐區人工目視、whileInView robustness / provenance 註解（nice-to-have）。PR/merge 時機 user 決定。
+- **Task 22 ✅ controller 親自驗證（public-pages green）**：tsc 1072（< 1074 baseline，無 regression，新檔 0 error）；PUBLIC_SCOPE 命名目標 grep 0 命中；**Playwright public-pages 11/11 passed**（2026-06-08 自跑 :5612 與 :5613，涵蓋 landing/auth + /contact /privacy /terms）；**dark-mode visual 4/4 passed**；截圖 oracle 確認 hero+12 區塊 render、對齊 mockup、真實定價、lucide icon。
+- **whileInView robustness ✅ DONE（2026-06-08）**：reveal 初始狀態不再使用 `opacity:0`，改為內容可見、只做位移/縮放；full-page dark screenshot 不再出現首屏外大面積空白。
+- **Task 18 dark ✅ DONE（2026-06-08）**：toggle 經 E2E 驗證可加 `class="dark"`；dark screenshots 已檢查 `/`、`/contact`、`/privacy`、`/terms`，無白字白底或主要內容重疊。`/privacy` footer layout 已補 flex 修正。
+- **狀態：Phase 1-3 核心頁面交付完成；Task 18/19 gaps、whileInView robustness、provenance rewrite 均已補齊**。目前無已知阻擋 merge 的剩餘項。PR/merge 時機 user 決定。
 
 ---
 
@@ -375,31 +377,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **示意標記**：6 個 landing 元件含「示意」字樣；定價真實級距（`landingData.ts` 含 3,999 / 9,999 / Free）。
 - **dark variants**：11 個 landing 元件含 `dark:` class。
 
-### C. 命名目標移除 — ✓真除（grep 文件需 carve-out）
+### C. 命名目標移除 — ✓真除（純 0 hit）
 
-| 命名目標 | live-usage grep | 判定 |
+| 命名目標 | PUBLIC_SCOPE grep | 判定 |
 |---|---|---|
 | `大樂司`/`樂多多`/`烤食組合`/`稻舍` | 0 hit（PUBLIC_SCOPE） | ✓ 真除 |
 | `demo1234`/`demo.orderly.tw` | 0 hit | ✓ 真除 |
 | `查看功能比較表` 死按鈕 | 0 hit（RoleSelector 已刪） | ✓ 真除 |
 | `SystemStatus`（app/page.tsx import） | 0 hit | ✓ 真除（元件檔依設計保留供他處）|
-| `images.unsplash.com` | **2 hit（皆 JS block-comment 來源出處）** | ✓ live-usage 0；圖已在地化，comment 為 provenance |
+| `images.unsplash.com` | 0 hit | ✓ 真除；圖已在地化，provenance 改用 photo id |
 
-### D. 唯一 audit-accuracy 修正（已套用）
+### D. audit-accuracy 修正（已套用）
 
-§Task 22 Step 4 與 §AC1 原寫 `images.unsplash.com` grep「0 hit」，但 `Hero.tsx:11`、`landingData.ts:9` 各有 1 行**來源出處註解**含該字串 → 原 grep 會 false-fail。**已修**：grep 判定改 live-usage 版（排除註解 `| grep -vE ':\s*\*'`），並明寫 carve-out（圖已在地化，provenance 註解可留）。其餘 5 目標仍純 0 hit 無例外。**非阻擋、非 scope 變動，純文件準確性。**
+§Task 22 Step 4 與 §AC1 原寫 `images.unsplash.com` grep「0 hit」，但 `Hero.tsx`、`landingData.ts` 一度各有 1 行**來源出處註解**含該字串。2026-06-08 已把來源註解改寫為 Unsplash photo id，不含完整 remote domain；PUBLIC_SCOPE grep 現在可直接要求純 0 hit，無 carve-out。
 
-### E. Honest 剩餘清單（非阻擋；user 決定要不要收）
+### E. Honest 收尾狀態
 
 1. **Task 19 行銷頁 E2E gap 已關閉（2026-06-08）**：`e2e/public-pages.spec.ts` 已補 `/contact` submit→成功、`/privacy`/`/terms` 200 + 標題 +「整理中」+ nav/footer 斷言；focused run `PLAYWRIGHT_BASE_URL=http://localhost:5612 npx playwright test e2e/public-pages.spec.ts --reporter=line` → **11/11 passed**。§AC4 的 Playwright automation 已達。
-2. **Task 18 深色逐區人工目視**：E2E 已驗 toggle 能加 `<html class="dark">`、11 元件有 `dark:` variants，但「逐區對比 / 無白字白底」尚未人工逐段確認（Execution Progress 自承）。**建議**：merge 前跑一次 dark 全頁目視 + 截圖，或明確接受為 follow-up。
-3. **whileInView reveal robustness**（非 bug）：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖 / 無 JS / 預覽爬蟲」下 IntersectionObserver 不觸發 → 該情境下首屏外內容初始 opacity 低。真使用者捲動正常。**建議（非阻擋）**：reveal 改 viewport-margin 觸發或降低對 initial opacity 的依賴，提升無 JS/預覽穩健度。
-4. **provenance 註解可選改寫**（非阻擋）：若想讓 tripwire grep 永遠純 0、免 carve-out，可把 `Hero.tsx`/`landingData.ts` 兩處註解的 `images.unsplash.com` 改寫成不含完整 domain 的描述（例「Unsplash photo 1414235077428」）。屬 1-line code follow-up，不在本 plan-review 文件範圍內執行。
+2. **Task 18 深色逐區人工目視已完成（2026-06-08）**：dark screenshots 已檢查 `/`、`/contact`、`/privacy`、`/terms`；首輪發現的 reveal 空白與 `/privacy` footer layout 已修正。Focused ESLint 通過；`public-pages.spec.ts` 11/11 passed；`dark-mode-visual.spec.ts` 4/4 passed。
+3. **whileInView reveal robustness 已完成（2026-06-08）**：landing/marketing reveal 初始狀態改為 `opacity:1`，避免 full-page screenshot、無 JS/預覽情境下內容不可見；保留位移/縮放動效與 reduced-motion 終態。
+4. **provenance 註解可選改寫已完成（2026-06-08）**：`Hero.tsx`/`landingData.ts` 來源註解已改成 Unsplash photo id，不含完整 `images.unsplash.com` domain；PUBLIC_SCOPE grep 可純 0 hit。
 
 ### F. Positive（認可，保留）
 
 - 過渡元件「先中性化（T1）→ 後整檔刪（T15-17）」雙段策略確實根除杜撰名，非只改 wording。
-- hero 圖在地化 + provenance 註解保留＝可信度與授權追溯兼顧。
+- hero 圖在地化 + provenance photo id 註解保留＝可信度與授權追溯兼顧，且不需 remote-domain grep carve-out。
 - /api/contact 主動標註「唯一允許落地」欄位、明擋 PII，超出 stub 最低要求。
 - E2E 走真 dev server click chain（非靜態 gate），符 runtime-validation 原則。
 
@@ -413,11 +415,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - 過渡元件 `HeroSection.tsx` / `RoleSelector.tsx` / `HeroBackground.tsx` 三檔 `ls` 皆 absent。
 - `components/landing/` = 13 `.tsx` + `landingData.ts`；`components/SystemStatus.tsx` 依設計保留。
 - 新頁 `app/(marketing)/{contact,privacy,terms}/page.tsx` + `app/api/contact/route.ts` 皆存在；`public/hero/restaurant-hero.jpg`（602 KB）在。
-- 命名目標 PUBLIC_SCOPE grep：杜撰名 / `demo1234` / `demo.orderly.tw` / `查看功能比較表` / `app/page.tsx` 內 `SystemStatus` 全 0 hit。`images.unsplash.com` 僅 2 hit（`landingData.ts:9`、`Hero.tsx:11`，皆 block-comment provenance），live-usage（排除 `:\s*\*`）0 hit。**5/5 命名目標真除（100%），無跨輪停滯。**
+- 命名目標 PUBLIC_SCOPE grep：杜撰名 / `demo1234` / `demo.orderly.tw` / `查看功能比較表` / `app/page.tsx` 內 `SystemStatus` / `images.unsplash.com` 全 0 hit。**6/6 命名目標真除（100%），無跨輪停滯。**
 - `app/api/contact/route.ts` 共 3 個 console（`:48` warn / `:68` warn / `:76` info），payload 僅 `requestId` / `role` / `timestamp` / `missing`，無 PII，與 §B 一致。
 - `e2e/public-pages.spec.ts` = 11 tests，含 `/contact` submit success、`/privacy`、`/terms` 的 200/標題/整理中/nav/footer 斷言；檔頭已更新為 GREEN 現況。
 
 **本輪新增 nice-to-have 已關閉（2026-06-08）：**
 - `e2e/public-pages.spec.ts:3-10` 檔頭註解已更新為目前 GREEN / public-pages 現況，不再描述 RED 或排除 `/contact /privacy /terms`。
 
-**結論：** 無 scope 變動、無 feature 新增。Task 19 E2E gap 已關閉；剩餘項為 Task 18 dark 目視、whileInView robustness、provenance rewrite（後兩者 nice-to-have），收尾路徑與時機由 user 決定。
+**結論：** 無 scope 變動、無 feature 新增。Task 18 dark visual pass、Task 19 E2E gap、whileInView robustness、provenance rewrite 均已關閉；目前無已知阻擋 merge 的剩餘項。

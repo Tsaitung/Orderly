@@ -5,10 +5,9 @@
  * 元件本身不得 hardcode 任何文案或數字。文案逐字對應已核准的視覺 mockup：
  *   .superpowers/brainstorm/65035-1780824512/content/full-mockup.html
  *
- * Hero 背景圖：mockup 使用 Unsplash 線上圖
- *   https://images.unsplash.com/photo-1414235077428-338989a2e8c0
- * 後續任務會把一張免費授權的餐廳照片在地化到 public/hero/restaurant-hero.jpg，
- * 屆時 Hero 元件改讀本機路徑 `/hero/restaurant-hero.jpg`（見 HERO_IMAGE_SRC）。
+ * Hero 背景圖：已把免費授權餐廳照片在地化到 public/hero/restaurant-hero.jpg。
+ * mockup 原參考 Unsplash photo 1414235077428-338989a2e8c0；Hero 元件讀本機
+ * 路徑 `/hero/restaurant-hero.jpg`（見 HERO_IMAGE_SRC）。
  *
  * 示意（sample）資料一律標 `sample: true`，元件會在旁標示「（示意）」。
  * 嚴禁出現任何捏造的真實客戶名稱；定價為真實級距（免費 / NT$3,999 / NT$9,999）。
@@ -16,7 +15,7 @@
  * 此檔為純資料 + 型別，無 JSX。
  */
 
-/** Hero 背景圖在地化目標路徑（後續任務會放置實體檔案）。 */
+/** Hero 背景圖本機路徑。 */
 export const HERO_IMAGE_SRC = '/hero/restaurant-hero.jpg' as const
 
 // ---------------------------------------------------------------------------

@@ -7,8 +7,7 @@
  * 視覺重點：讓對帳產品卡成為首屏主角，餐廳照片退為右側輔助情境。
  *
  * 背景圖為本機在地化檔案 public/hero/restaurant-hero.jpg（NOT 遠端 URL），
- * 來源：Unsplash 免費授權
- *   https://images.unsplash.com/photo-1517248135467-4c7edcad34c4
+ * 來源：Unsplash photo 1517248135467-4c7edcad34c4
  *   （Unsplash License — 可免費商用，無需署名）。
  */
 
@@ -22,7 +21,7 @@ import ReconciliationCard from '@/components/landing/ReconciliationCard'
 export default function Hero() {
   const reduceMotion = useReducedMotion()
 
-  // 父容器負責 stagger；子元素淡入上移。減動模式直接顯示最終狀態。
+  // 父容器負責 stagger；子元素只做位移，避免未觸發 viewport 時內容不可見。
   const container: Variants = {
     hidden: {},
     show: {
@@ -30,7 +29,7 @@ export default function Hero() {
     },
   }
   const item: Variants = {
-    hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 },
+    hidden: reduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: 24 },
     show: {
       opacity: 1,
       y: 0,

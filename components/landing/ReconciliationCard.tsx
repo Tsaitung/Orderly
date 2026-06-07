@@ -48,8 +48,8 @@ export default function ReconciliationCard() {
 
   return (
     <motion.div
-      // 卡片入場：由下淡入，尊重 reduced-motion。
-      initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.98 }}
+      // 卡片入場：保持可見，只做位移/縮放，尊重 reduced-motion。
+      initial={reduceMotion ? false : { opacity: 1, y: 18, scale: 0.98 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: 0.1 }}

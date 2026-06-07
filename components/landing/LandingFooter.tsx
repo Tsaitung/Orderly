@@ -33,7 +33,7 @@ export default function LandingFooter() {
     <footer className="bg-gray-900 text-gray-400">
       <motion.div
         className="container mx-auto px-4 py-14"
-        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
+        initial={reduceMotion ? false : { opacity: 1, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: reduceMotion ? 0 : 0.5 }}

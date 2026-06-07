@@ -59,7 +59,7 @@ export default function ContactPage() {
   const reveal = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 24 },
+        initial: { opacity: 1, y: 24 },
         whileInView: { opacity: 1, y: 0 },
         viewport: { once: true },
         transition: { duration: 0.5 },
@@ -67,7 +67,9 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (status === 'submitting') return
+    if (status === 'submitting') {
+      return
+    }
 
     setStatus('submitting')
     setErrorMsg(null)
@@ -150,7 +152,7 @@ export default function ContactPage() {
               {...(reduceMotion
                 ? {}
                 : {
-                    initial: { opacity: 0, y: 24 },
+                    initial: { opacity: 1, y: 24 },
                     whileInView: { opacity: 1, y: 0 },
                     viewport: { once: true },
                     transition: { duration: 0.5, delay: 0.1 },
