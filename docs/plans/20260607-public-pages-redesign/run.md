@@ -401,3 +401,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - hero 圖在地化 + provenance 註解保留＝可信度與授權追溯兼顧。
 - /api/contact 主動標註「唯一允許落地」欄位、明擋 PII，超出 stub 最低要求。
 - E2E 走真 dev server click chain（非靜態 gate），符 runtime-validation 原則。
+
+### G. Plan-Review Round 7（self，2026-06-08）— 獨立複驗 + 收斂
+
+> 本輪只做文件準確度複驗，不重開 implementation scope、不擴 feature。對 §A–§F 每條宣稱重跑 grep / 檔案檢查實證。
+
+**Verdict：APPROVED（0 fatal / 0 must-fix）。** Plan 已誠實且與 codebase 一致。
+
+**獨立複驗證據（2026-06-08 重跑）：**
+- 過渡元件 `HeroSection.tsx` / `RoleSelector.tsx` / `HeroBackground.tsx` 三檔 `ls` 皆 absent。
+- `components/landing/` = 13 `.tsx` + `landingData.ts`；`components/SystemStatus.tsx` 依設計保留。
+- 新頁 `app/(marketing)/{contact,privacy,terms}/page.tsx` + `app/api/contact/route.ts` 皆存在；`public/hero/restaurant-hero.jpg`（602 KB）在。
+- 命名目標 PUBLIC_SCOPE grep：杜撰名 / `demo1234` / `demo.orderly.tw` / `查看功能比較表` / `app/page.tsx` 內 `SystemStatus` 全 0 hit。`images.unsplash.com` 僅 2 hit（`landingData.ts:9`、`Hero.tsx:11`，皆 block-comment provenance），live-usage（排除 `:\s*\*`）0 hit。**5/5 命名目標真除（100%），無跨輪停滯。**
+- `app/api/contact/route.ts` 共 3 個 console（`:48` warn / `:68` warn / `:76` info），payload 僅 `requestId` / `role` / `timestamp` / `missing`，無 PII，與 §B 一致。
+- `e2e/public-pages.spec.ts` = 8 tests，檔頭明排除 `/contact /privacy /terms`，`/contact` 只驗 href（`:52`）— 與 §E item 1 的 AC4 automation gap 一致。
+
+**本輪唯一新增 nice-to-have（非阻擋，code follow-up，不在本 plan-review 改 code 範圍）：**
+- `e2e/public-pages.spec.ts:3-10` 檔頭註解仍寫「此 spec 為 RED…元件尚未建立…待 Phase 2 元件完成後轉綠」，但 Task 14 已完成、spec 已 GREEN。屬已交付檔內的過期描述（truth-drift）。建議下次觸及 spec 時順手把註解更新為 GREEN / landing-scope 現況；不影響執行結果。
+
+**結論：** 無 scope 變動、無 feature 新增。§E 既有剩餘項（Task 19 E2E gap / Task 18 dark 目視 / whileInView / provenance rewrite）維持原狀；收尾路徑與時機由 user 決定。
