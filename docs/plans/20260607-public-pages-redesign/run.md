@@ -96,7 +96,7 @@
 **驗收範圍 PUBLIC_SCOPE**（grep 只限這些路徑，避免誤打 Out of Scope dashboard）：
 `app/page.tsx components/HeroSection.tsx components/RoleSelector.tsx components/HeroBackground.tsx components/landing/ "app/(marketing)/"`
 
-驗收：每個命名目標 commit 後 `grep -rn '<字串>' $PUBLIC_SCOPE` → 0 hit（SystemStatus 元件檔本身保留，只驗 app/page.tsx 不再 import）。
+驗收：每個命名目標 commit 後 `grep -rn '<字串>' $PUBLIC_SCOPE` → 0 hit（SystemStatus 元件檔本身保留，只驗 app/page.tsx 不再 import）。**`images.unsplash.com` 例外見 §Task 22 Step 4 carve-out 與 §執行後驗證稽核 D**——允許「來源出處註解」存在（圖已在地化），live-usage（排除註解）須 0。
 
 > ⚠ 已知 OOS：杜撰名（大樂司/樂多多/烤食組合/稻舍）亦存在於 dashboard mock 資料——`components/admin/UserManagement.tsx`、`components/supplier/logistics/delivery-list.tsx`、`delivery-map.tsx`、`components/supplier/finance/invoice-manager.tsx`。**這些屬 Out of Scope（登入後 dashboard 假資料，非公開行銷背書），本 plan 不動**，列為未來獨立 mock-data 清理。grep 驗收絕不可擴及這些檔，否則違反 Out of Scope。
 
@@ -275,7 +275,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - [ ] Step 1: Run `npx playwright test e2e/public-pages.spec.ts` 全綠
 - [ ] Step 2: `npm run type-check:full` + `npm run lint` 通過（**須 `:full`**——`type-check` 跑 staging config 排除 app/components，驗不到 landing；輸出存 /tmp 完整讀，不截斷）
 - [ ] Step 3: dev server 真實點擊全部按鈕一遍，確認零死連結（每個按鈕導真路由或捲到錨點）
-- [ ] Step 4: 命名目標總驗：`grep -rn '大樂司\|樂多多\|烤食組合\|稻舍\|demo1234\|demo.orderly.tw\|images.unsplash.com' $PUBLIC_SCOPE` → 0 hit（**只限 PUBLIC_SCOPE**；dashboard mock 同名 OOS 不計）
+- [ ] Step 4: 命名目標總驗：`grep -rn '大樂司\|樂多多\|烤食組合\|稻舍\|demo1234\|demo.orderly.tw\|images.unsplash.com' $PUBLIC_SCOPE` → **live-usage 0 hit**。**carve-out（執行後稽核 2026-06-08 修正）**：`images.unsplash.com` 允許出現在「來源出處註解」（`Hero.tsx`、`landingData.ts` 各 1 處 JS block-comment，記錄 hero 圖原始免費授權來源），因 hero 圖已在地化為 `public/hero/restaurant-hero.jpg`、`HERO_IMAGE_SRC` 指本機路徑、無任何 runtime 熱連。判定 live-usage 用排除註解版：`grep -rn 'images.unsplash.com' $PUBLIC_SCOPE | grep -vE ':\s*\*'` → 0 hit。其餘 5 個命名目標仍須純 0 hit（無 carve-out）。
 - [ ] Step 5: Playwright 全頁截圖（light/dark/手機）存證
 - [ ] Step 6: Commit `test(landing): full acceptance green + runtime evidence`
 
@@ -349,3 +349,51 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **whileInView 觀察（非 bug）**：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖」下 IntersectionObserver 不觸發 → 全頁截圖空白；捲動截圖證明真使用者每段都看得到。若要對「無 JS / 預覽爬蟲 / 不捲動截圖」更穩，可把 reveal 改成 viewport margin 觸發或降低 initial opacity 依賴（建議，非阻擋）。
 - **Task 18 dark**：toggle 經 E2E 驗證可加 `class="dark"`；元件皆有 dark: variants。**深色逐區視覺尚未人工逐段確認**（建議補一次 dark 全頁目視）。
 - **狀態：Phase 1-3 核心交付完成並 committed**（11 commits）。剩 finishing-a-development-branch 收尾（PR/merge 時機 user 決定）。
+
+---
+
+## 執行後驗證稽核 (Post-Execution Verification Audit) — 2026-06-08（plan-review ultra-research）
+
+> 對「已執行」的本 plan，把 Execution Progress 的宣稱逐條對照 codebase 真實狀態（靜態驗證 + 手動 spot-check）。目的：修正 audit trail 失真、釐清剩餘項，**非**擴張 scope、**非**新增 feature。下列皆為「文件準確性 / 證據誠實度」修正與 honest 收尾清單。
+
+### A. 結構性宣稱 — 全部 ✓（無漂移）
+
+- **過渡元件真刪**：`components/HeroSection.tsx`、`components/RoleSelector.tsx`、`components/HeroBackground.tsx` 三檔皆**不存在**（`git rm` 確實生效，非只改 import）。
+- **13 landing 元件齊全**：`components/landing/` 有 13 個 `.tsx`（LandingNav/Hero/ReconciliationCard/TrustBar/PainSolution/HowItWorks/ReconciliationShowcase/RoleTabs/FeatureGrid/Pricing/FAQ/FinalCTA/LandingFooter）+ `landingData.ts`，與 §Complexity Budget「13」一致。
+- **app/page.tsx 純組合**：import 並依序 render 12 區塊（LandingNav→Hero→TrustBar→PainSolution→HowItWorks→ReconciliationShowcase→RoleTabs→FeatureGrid→Pricing→FAQ→FinalCTA→LandingFooter）；無 `SystemStatus`/`HeroSection`/`RoleSelector` 殘留引用。
+- **新頁齊全**：`app/(marketing)/{contact,privacy,terms}/page.tsx` + `app/api/contact/route.ts` 皆存在。
+- **E2E spec 存在**：`e2e/public-pages.spec.ts`（8 tests）+ `playwright.config.ts`。
+
+### B. 紀律硬約束 — ✓真守
+
+- **hero 圖在地化**：`public/hero/restaurant-hero.jpg` 實體存在（602 KB）；`Hero.tsx:107` `src={HERO_IMAGE_SRC}`，`landingData.ts:20` `HERO_IMAGE_SRC = '/hero/restaurant-hero.jpg'`。**無 runtime Unsplash 熱連**。
+- **/api/contact PII-safe**：`route.ts:75-80` 唯一落地 `console.info` 只記 `{requestId, role, timestamp}`（明確註解「無任何 PII」）；email/聯絡人/需求只用於驗證、不入 log。守 C-W2。
+- **示意標記**：6 個 landing 元件含「示意」字樣；定價真實級距（`landingData.ts` 含 3,999 / 9,999 / Free）。
+- **dark variants**：11 個 landing 元件含 `dark:` class。
+
+### C. 命名目標移除 — ✓真除（grep 文件需 carve-out）
+
+| 命名目標 | live-usage grep | 判定 |
+|---|---|---|
+| `大樂司`/`樂多多`/`烤食組合`/`稻舍` | 0 hit（PUBLIC_SCOPE） | ✓ 真除 |
+| `demo1234`/`demo.orderly.tw` | 0 hit | ✓ 真除 |
+| `查看功能比較表` 死按鈕 | 0 hit（RoleSelector 已刪） | ✓ 真除 |
+| `SystemStatus`（app/page.tsx import） | 0 hit | ✓ 真除（元件檔依設計保留供他處）|
+| `images.unsplash.com` | **2 hit（皆 JS block-comment 來源出處）** | ✓ live-usage 0；圖已在地化，comment 為 provenance |
+
+### D. 唯一 audit-accuracy 修正（已套用）
+
+§Task 22 Step 4 與 §AC1 原寫 `images.unsplash.com` grep「0 hit」，但 `Hero.tsx:11`、`landingData.ts:9` 各有 1 行**來源出處註解**含該字串 → 原 grep 會 false-fail。**已修**：grep 判定改 live-usage 版（排除註解 `| grep -vE ':\s*\*'`），並明寫 carve-out（圖已在地化，provenance 註解可留）。其餘 5 目標仍純 0 hit 無例外。**非阻擋、非 scope 變動，純文件準確性。**
+
+### E. Honest 剩餘清單（非阻擋；user 決定要不要收）
+
+1. **Task 18 深色逐區人工目視**：E2E 已驗 toggle 能加 `<html class="dark">`、11 元件有 `dark:` variants，但「逐區對比 / 無白字白底」尚未人工逐段確認（Execution Progress 自承）。**建議**：merge 前跑一次 dark 全頁目視 + 截圖，或明確接受為 follow-up。
+2. **whileInView reveal robustness**（非 bug）：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖 / 無 JS / 預覽爬蟲」下 IntersectionObserver 不觸發 → 該情境下首屏外內容初始 opacity 低。真使用者捲動正常。**建議（非阻擋）**：reveal 改 viewport-margin 觸發或降低對 initial opacity 的依賴，提升無 JS/預覽穩健度。
+3. **provenance 註解可選改寫**（非阻擋）：若想讓 tripwire grep 永遠純 0、免 carve-out，可把 `Hero.tsx`/`landingData.ts` 兩處註解的 `images.unsplash.com` 改寫成不含完整 domain 的描述（例「Unsplash photo 1414235077428」）。屬 1-line code follow-up，不在本 plan-review 文件範圍內執行。
+
+### F. Positive（認可，保留）
+
+- 過渡元件「先中性化（T1）→ 後整檔刪（T15-17）」雙段策略確實根除杜撰名，非只改 wording。
+- hero 圖在地化 + provenance 註解保留＝可信度與授權追溯兼顧。
+- /api/contact 主動標註「唯一允許落地」欄位、明擋 PII，超出 stub 最低要求。
+- E2E 走真 dev server click chain（非靜態 gate），符 runtime-validation 原則。
