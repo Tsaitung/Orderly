@@ -10,6 +10,8 @@
 
 **2026-06-07 更新**：原文下方保留 STEP 0-3 第一階段的歷史計畫與稽核；本 branch `codex-backend-step4-9` 已依使用者指示把 STEP 4-9 從後續 gated 階段拉進本次實作。以下「STEP 4-9 Execution Update」為目前 canonical 狀態。
 
+**2026-06-08 更新**：補跑 throwaway PostgreSQL migration、FK audit、Docker build/runtime health、frontend type-check。結果已納入下方驗證清單。
+
 ---
 
 ## STEP 4-9 Execution Update — 2026-06-07
@@ -28,29 +30,32 @@
 | STEP 2 | Done (pre-existing) | Monolith imports modules from `backend/app/modules/*`. |
 | STEP 3 | Done (pre-existing), extended | `backend/app/main.py` remains the composition root. |
 | STEP 4 | Done | Added shared `SecurityHeadersMiddleware`, `RedisRateLimitMiddleware`, and auth-level `verification_requirements`; monolith exposes `/health`, `/db/health`, `/ready`, `/live`, `/acceptance/health`, `/acceptance/db/health`, `/api/v2/health`, `/api/v2/health/live`, `/api/v2/health/ready`, `/service-map`. `gateway_compat` proxy remains unmounted. |
-| STEP 5 | Done | Added `backend/app/db/base.py`; all module `models/base.py` now re-export the shared Base. Suppliers duplicate `organizations` / `supplier_profiles` mapped classes were replaced with users canonical exports. |
+| STEP 5 | Done | Added `backend/app/db/base.py`; all module `models/base.py` now re-export the shared Base. `orderly_fastapi_core.models.base` also uses the monolith Base, so there is only one active SQLAlchemy mapper registry. Suppliers duplicate `organizations` / `supplier_profiles` mapped classes were replaced with users canonical exports. |
 | STEP 6 | Done | Added `backend/app/alembic.ini`, `backend/app/alembic/env.py`, `0001_consolidated_schema`, and `0002_cross_module_fks`; version table is `alembic_version_monolith`. |
 | STEP 7 | Done | Removed internal loopback HTTP from users→notifications OTP, orders→notifications, billing→orders, products BFF→customer_hierarchy, and customer_hierarchy integration notifications. OAuth third-party `httpx` remains external. Legacy `gateway_compat` still contains proxy code but is not mounted. |
 | STEP 8 | Done | Added model-level cross-module FKs and `0002_cross_module_fks` with orphan audit + `NOT VALID`/validate constraints; manual audit SQL at `scripts/database/monolith_fk_audit.sql`. |
-| STEP 9 | Done (static/deploy config) | Added `backend/Dockerfile.monolith`, `backend/cloudbuild.monolith.yaml`, `backend` service in `compose.monolith.yml`, monolith entry in `ci/service-manifest.yaml`, CD matrix switched to `backend-monolith`, frontend/backend fallbacks moved to `localhost:8888`. Real Cloud Run deploy not run. |
+| STEP 9 | Done (local deploy path verified) | Added `backend/Dockerfile.monolith`, `backend/cloudbuild.monolith.yaml`, `backend` service in `compose.monolith.yml`, monolith entry in `ci/service-manifest.yaml`, CD matrix switched to `backend-monolith`, frontend/backend fallbacks moved to `localhost:8888`. Docker image build and local compose runtime health pass. Real Cloud Run deploy not run. |
 
 **Focused verification performed**
 
 - `PYTHONPATH=backend:backend/libs backend/.venv/bin/python -m compileall -q backend/app backend/libs/orderly_fastapi_core` ✅
 - `import app.main` ✅; module list = notifications, acceptance, suppliers, orders, billing, users, customer_hierarchy, products.
 - Unified metadata load ✅; `42` tables / `42` owners; sampled FK counts: `orders=2`, `order_items=3`, `products=2`, `supplier_skus=2`.
+- Single Base check ✅: `rg "declarative_base\\(" backend/app backend/libs -g '*.py'` returns only `backend/app/db/base.py`; `CoreBase is AppBase` prints `True`.
 - `backend/.venv/bin/python -m alembic -c backend/app/alembic.ini heads` ✅ → `0002_cross_module_fks (head)`.
+- Throwaway PostgreSQL Alembic upgrade ✅: with `DATABASE_HOST=localhost`, `DATABASE_PORT=55432`, `DATABASE_NAME=orderly_step49_verify`, `DATABASE_USER=orderly`, `POSTGRES_PASSWORD=orderly_dev_password`, `REDIS_PORT=56379`, `backend/.venv/bin/python -m alembic -c backend/app/alembic.ini upgrade head` ran `0001_consolidated_schema` then `0002_cross_module_fks`; `alembic_version_monolith.version_num = 0002_cross_module_fks`; public table count = `43` including the monolith version table.
+- Cross-module FK audit ✅: `psql -f scripts/database/monolith_fk_audit.sql` returned orphan counts `0` for `orders.restaurant_id`, `orders.supplier_id`, `order_items.product_id`, `order_items.sku_id`, `products.supplier_id`, and `supplier_skus.supplier_id`; public FK count = `44`; named STEP 8 constraints are present.
 - YAML parse ✅: `.github/workflows/cd.yml`, `ci/service-manifest.yaml`, `compose.monolith.yml`, `backend/cloudbuild.monolith.yaml`.
 - `POSTGRES_PORT=54888 REDIS_PORT=64888 BACKEND_PORT=8888 docker-compose -f compose.monolith.yml config` ✅.
+- Local Docker/compose runtime ✅: `POSTGRES_PORT=55432 REDIS_PORT=56379 BACKEND_PORT=58888 docker-compose -p orderly_step49 -f compose.monolith.yml up -d --build backend`; built image `orderly_step49-backend:latest` (`ec2b8bb292f6` on the final run), ran migrations on startup, and `http://localhost:58888/health` returned `{"status":"ok","service":"orderly-monolith"}`. The temporary compose project was removed with `docker-compose -p orderly_step49 -f compose.monolith.yml down -v`.
 - FastAPI `TestClient` smoke ✅: `/health` returned 200; `/service-map` returned `mode=monolith`, `routing=in-process`, and no `localhost:300x` in response.
-- `npm run type-check` ❌: failed before reaching changed BFF files because the local worktree has no resolvable `react` / `@types/node` types and `tsconfig.staging.json` lib target does not expose `Object.entries` / `String.padStart` for existing accessibility files.
+- Frontend type-check ✅: after `npm ci`, `npm run type-check` passed (`tsc -p tsconfig.staging.json --noEmit`).
 
 **Not verified / intentionally not run**
 
-- No real PostgreSQL Alembic upgrade was run; `0002_cross_module_fks` orphan audits were not executed against local/staging/prod data.
-- No Docker image build was run.
-- No Cloud Run deploy, Cloud Build, or external CI run was performed.
-- No full frontend test suite was run. `npm run type-check` was attempted and failed for the environment/existing TypeScript issues recorded above.
+- No staging/prod PostgreSQL Alembic upgrade was run; the real migration proof above used a local throwaway PostgreSQL database.
+- No Cloud Run deploy, Cloud Build, or external CI run was performed. Local Docker build/runtime was verified.
+- No full frontend test suite was run. TypeScript type-check passed after installing dependencies with `npm ci`.
 - TestClient startup logged Redis connection failures because Redis was not running; OTP/rate-limit code path is designed to fail open or return visible OTP delivery errors when Redis/SMS is unavailable.
 
 **Notes for future audit**

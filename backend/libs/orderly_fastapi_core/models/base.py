@@ -20,13 +20,11 @@ from typing import Any, Dict, List, Optional
 import structlog
 from sqlalchemy import Boolean, Column, DateTime, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 
-logger = structlog.get_logger(__name__)
+from app.db.base import Base
 
-# 統一的 declarative base
-Base = declarative_base()
+logger = structlog.get_logger(__name__)
 
 
 class AuditMixin:
