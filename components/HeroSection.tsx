@@ -144,25 +144,6 @@ export function HeroSection() {
             </Link>
           </div>
 
-          {/* 信任標誌 - 玻璃擬態 */}
-          <div className="mt-16 border-t border-white/20 pt-8">
-            <p className="mb-4 text-sm text-white/70">已獲得以下企業信任</p>
-            <div className="flex items-center justify-center space-x-8">
-              {/* 客戶 logo */}
-              <div className="font-medium text-white/60 transition-colors hover:text-white">
-                大樂司
-              </div>
-              <div className="font-medium text-white/60 transition-colors hover:text-white">
-                樂多多
-              </div>
-              <div className="font-medium text-white/60 transition-colors hover:text-white">
-                烤食組合
-              </div>
-              <div className="font-medium text-white/60 transition-colors hover:text-white">
-                稻舍
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
