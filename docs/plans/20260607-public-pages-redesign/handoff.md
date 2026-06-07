@@ -10,8 +10,9 @@
 未定 — 由 H-1 詢問 user（預設 subagent-driven）。
 
 ## Next Exact Step
-**Task 0 Step 1**：`npm install next-themes framer-motion`，然後 `grep -E 'next-themes|framer-motion' package.json` 確認兩者出現。
-（接著 Task 0 Step 2：`tailwind.config.ts` 頂層加 `darkMode: 'class'`。）
+**Task 1 Step 1**：移除 `components/HeroSection.tsx` L147-165 整段「信任標誌」區塊（含「已獲得以下企業信任」+ 4 個杜撰客戶名 大樂司/樂多多/烤食組合/稻舍）。然後 `grep -rn '大樂司\|樂多多\|烤食組合\|稻舍' $PUBLIC_SCOPE` → 0 hit（PUBLIC_SCOPE 不含 OOS dashboard mock）。
+
+> Task 0 ✅ 完成（commit 114f0a8）。**驗證標準已改**：repo 有 1074 pre-existing type error，task 判定＝相對 baseline 零新增（非 exit-0）——見 run.md AC6。
 
 ## 階段順序
 1. Task 0：deps + tailwind dark + ThemeProvider

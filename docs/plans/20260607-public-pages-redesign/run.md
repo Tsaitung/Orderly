@@ -296,7 +296,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - AC3（質感，user-facing）：dark 切換鈕作用（`<html class="dark">`）；reduced-motion 下動效顯終值；手機寬度 hero/nav/pricing 不破。
 - AC4（新頁，user-facing）：/contact 送出顯示成功；/privacy /terms 回 200 有誠實說明；三頁不撞 login 牆。
 - AC5（紀律）：所有示意數據畫面標「（示意）」；無捏造客戶名/假精度；定價 Free/3,999/9,999 真實級距 + 抽成註腳。
-- AC6（型別/lint）：`npm run type-check:full` + `npm run lint` 綠（**須 `:full`**——`type-check` 跑 `tsconfig.staging.json` 排除 app/components；完整輸出，不截斷）。
+- AC6（型別/lint）：**驗證標準＝相對 baseline 零新增 type error**（非 exit-0）。Repo 既有 **1074 個 pre-existing type error**（Task 0 實測，`git stash` baseline 對照確認），`type-check:full` 無法回 exit-0。每個 task 的判定：`npx tsc --noEmit` 後 `comm -13 <baseline> <current>` = 空集合（本 task 新增 0 error），且本 task 觸及的檔不在錯誤清單。`npm run lint` 對新增/修改檔綠。完整輸出不截斷。（pre-existing 1074 錯屬 Out of Scope，另案處理。）
 
 ## 紀律硬約束（implementation 全程）
 
@@ -327,3 +327,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 ## Changes Made — Round 3 (codex)
 
 - C-MF3 殘留修正 → §Task 0 `**Files:**` 行還寫 `tailwind.config.js`（Round 2 漏改），改為 `tailwind.config.ts`。Codex Round 2 抓出。
+
+---
+
+## Execution Progress
+
+- **Task 0 ✅ DONE**（commit `114f0a8`）：next-themes ^0.4.6 + framer-motion ^12.40.0 安裝；`tailwind.config.ts` 加 `darkMode:'class'`；`components/ThemeProvider.tsx` 建立；`app/layout.tsx` 包 ThemeProvider（在 AuthProvider 外）。controller 驗證：ThemeProvider/next-themes/framer-motion 新增 0 type error。
+  - **發現**：`type-check:full` = 1074 pre-existing error（baseline）。已據此改 AC6 驗證標準為「相對 baseline 零新增」。
+- Task 1 → 進行中（下一個）。
