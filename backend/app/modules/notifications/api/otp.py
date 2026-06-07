@@ -7,7 +7,7 @@ OTP API 端點
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from app.schemas.otp import (
+from app.modules.notifications.schemas.otp import (
     SendEmailOTPRequest,
     SendEmailOTPResponse,
     SendSMSOTPRequest,
@@ -15,9 +15,9 @@ from app.schemas.otp import (
     VerifyOTPRequest,
     VerifyOTPResponse
 )
-from app.services.otp_service import OTPService
-from app.services.email_service import EmailService
-from app.services.sms_service import SMSService
+from app.modules.notifications.services.otp_service import OTPService
+from app.modules.notifications.services.email_service import EmailService
+from app.modules.notifications.services.sms_service import SMSService
 import structlog
 
 logger = structlog.get_logger()

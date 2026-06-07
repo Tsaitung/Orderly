@@ -10,13 +10,13 @@ import structlog
 
 from orderly_fastapi_core import create_service_app, DEFAULT_PUBLIC_PATHS
 
-from app.core.config import settings
-from app.core.database import async_engine
-from app.api.v1.notifications import router as notifications_router
-from app.api import otp as otp_router
-from app.services.otp_service import OTPService
-from app.services.email_service import create_email_service
-from app.services.sms_service import SMSService
+from app.modules.notifications.core.config import settings
+from app.modules.notifications.core.database import async_engine
+from app.modules.notifications.api.v1.notifications import router as notifications_router
+from app.modules.notifications.api import otp as otp_router
+from app.modules.notifications.services.otp_service import OTPService
+from app.modules.notifications.services.email_service import create_email_service
+from app.modules.notifications.services.sms_service import SMSService
 
 logger = structlog.get_logger()
 

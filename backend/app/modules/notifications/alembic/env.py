@@ -7,8 +7,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-from app.models.base import Base  # noqa
-from app.models.notification import Notification  # noqa
+from app.modules.notifications.models.base import Base  # noqa
+from app.modules.notifications.models.notification import Notification  # noqa
 
 target_metadata = Base.metadata
 
@@ -37,7 +37,7 @@ def run_migrations_online() -> None:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     
     try:
-        from app.core.config import settings
+        from app.modules.notifications.core.config import settings
         database_url = settings.get_database_url_sync()
     except ImportError:
         # Fallback to environment variable if unified config not available

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.config import settings
+from app.modules.notifications.core.config import settings
 import os, sys
 from orderly_fastapi_core import (
     create_db_engines,

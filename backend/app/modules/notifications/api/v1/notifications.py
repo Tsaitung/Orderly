@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 
-from app.core.database import get_async_session
+from app.modules.notifications.core.database import get_async_session
 import os, sys
 from orderly_fastapi_core.pagination import pagination_params, Pagination
-from app.models.notification import Notification
+from app.modules.notifications.models.notification import Notification
 
 
 router = APIRouter()
