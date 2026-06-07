@@ -1,6 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase
+from app.db.base import Base
 
 
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy models in Billing Service."""
-    pass
+__all__ = ["Base"]

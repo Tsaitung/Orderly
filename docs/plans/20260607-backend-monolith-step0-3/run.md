@@ -1,4 +1,4 @@
-# Backend 9→1 模組化單體遷移 — STEP 0-3 Implementation Plan
+# Backend 9→1 模組化單體遷移 — STEP 0-9 Implementation Plan / Run Log
 
 **Goal:** 把 9 個 FastAPI 微服務收斂成單一 modular-monolith app，能用 `uvicorn app.main:app` 在 localhost 單一程序起來、且 `/restart` 一鍵拉起（含 postgres/redis），**frontend API 契約完全不變**。
 
@@ -8,7 +8,56 @@
 
 **Risk:** high（cross-module、schema migration、~58k LOC 搬移、潛在 breaking）→ 走完整 plan-review + Codex 對抗審。
 
-**這是 STEP 0-9 完整遷移的第 1 階段**（user 已選完整遷移、分階段 gated 執行）。STEP 4-9 見 §Out of Scope。
+**2026-06-07 更新**：原文下方保留 STEP 0-3 第一階段的歷史計畫與稽核；本 branch `codex-backend-step4-9` 已依使用者指示把 STEP 4-9 從後續 gated 階段拉進本次實作。以下「STEP 4-9 Execution Update」為目前 canonical 狀態。
+
+---
+
+## STEP 4-9 Execution Update — 2026-06-07
+
+**Branch / worktree**
+- Worktree: `/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-backend-step4-9`
+- Branch: `codex-backend-step4-9`
+- Base: `refactor` @ `b62526f`
+
+**Status matrix**
+
+| Step | Status | Evidence |
+|---|---:|---|
+| STEP 0 | Done (pre-existing) | `orderly_fastapi_core` remains installable via `backend/libs/pyproject.toml`; no rework in this branch. |
+| STEP 1 | Done for monolith path | Existing run log records customer-hierarchy 1c as deferred for the old per-module chain. This branch resolves the single-backend path through STEP 6: monolith `0001_consolidated_schema` builds the unified 42-table metadata, including the customer-hierarchy activity models. The old per-module chain is legacy and not the active fresh-DB path. |
+| STEP 2 | Done (pre-existing) | Monolith imports modules from `backend/app/modules/*`. |
+| STEP 3 | Done (pre-existing), extended | `backend/app/main.py` remains the composition root. |
+| STEP 4 | Done | Added shared `SecurityHeadersMiddleware`, `RedisRateLimitMiddleware`, and auth-level `verification_requirements`; monolith exposes `/health`, `/db/health`, `/ready`, `/live`, `/acceptance/health`, `/acceptance/db/health`, `/api/v2/health`, `/api/v2/health/live`, `/api/v2/health/ready`, `/service-map`. `gateway_compat` proxy remains unmounted. |
+| STEP 5 | Done | Added `backend/app/db/base.py`; all module `models/base.py` now re-export the shared Base. Suppliers duplicate `organizations` / `supplier_profiles` mapped classes were replaced with users canonical exports. |
+| STEP 6 | Done | Added `backend/app/alembic.ini`, `backend/app/alembic/env.py`, `0001_consolidated_schema`, and `0002_cross_module_fks`; version table is `alembic_version_monolith`. |
+| STEP 7 | Done | Removed internal loopback HTTP from users→notifications OTP, orders→notifications, billing→orders, products BFF→customer_hierarchy, and customer_hierarchy integration notifications. OAuth third-party `httpx` remains external. Legacy `gateway_compat` still contains proxy code but is not mounted. |
+| STEP 8 | Done | Added model-level cross-module FKs and `0002_cross_module_fks` with orphan audit + `NOT VALID`/validate constraints; manual audit SQL at `scripts/database/monolith_fk_audit.sql`. |
+| STEP 9 | Done (static/deploy config) | Added `backend/Dockerfile.monolith`, `backend/cloudbuild.monolith.yaml`, `backend` service in `compose.monolith.yml`, monolith entry in `ci/service-manifest.yaml`, CD matrix switched to `backend-monolith`, frontend/backend fallbacks moved to `localhost:8888`. Real Cloud Run deploy not run. |
+
+**Focused verification performed**
+
+- `PYTHONPATH=backend:backend/libs backend/.venv/bin/python -m compileall -q backend/app backend/libs/orderly_fastapi_core` ✅
+- `import app.main` ✅; module list = notifications, acceptance, suppliers, orders, billing, users, customer_hierarchy, products.
+- Unified metadata load ✅; `42` tables / `42` owners; sampled FK counts: `orders=2`, `order_items=3`, `products=2`, `supplier_skus=2`.
+- `backend/.venv/bin/python -m alembic -c backend/app/alembic.ini heads` ✅ → `0002_cross_module_fks (head)`.
+- YAML parse ✅: `.github/workflows/cd.yml`, `ci/service-manifest.yaml`, `compose.monolith.yml`, `backend/cloudbuild.monolith.yaml`.
+- `POSTGRES_PORT=54888 REDIS_PORT=64888 BACKEND_PORT=8888 docker-compose -f compose.monolith.yml config` ✅.
+- FastAPI `TestClient` smoke ✅: `/health` returned 200; `/service-map` returned `mode=monolith`, `routing=in-process`, and no `localhost:300x` in response.
+- `npm run type-check` ❌: failed before reaching changed BFF files because the local worktree has no resolvable `react` / `@types/node` types and `tsconfig.staging.json` lib target does not expose `Object.entries` / `String.padStart` for existing accessibility files.
+
+**Not verified / intentionally not run**
+
+- No real PostgreSQL Alembic upgrade was run; `0002_cross_module_fks` orphan audits were not executed against local/staging/prod data.
+- No Docker image build was run.
+- No Cloud Run deploy, Cloud Build, or external CI run was performed.
+- No full frontend test suite was run. `npm run type-check` was attempted and failed for the environment/existing TypeScript issues recorded above.
+- TestClient startup logged Redis connection failures because Redis was not running; OTP/rate-limit code path is designed to fail open or return visible OTP delivery errors when Redis/SMS is unavailable.
+
+**Notes for future audit**
+
+- `backend/app/modules/gateway_compat/**` remains as legacy compatibility source but is not mounted by `backend/app/main.py`.
+- `backend/*-fastapi/Dockerfile` and per-service `cloudbuild.yaml` files remain as legacy artifacts. The active CD path in this branch is `backend-monolith`.
+- `backend/libs/orderly_fastapi_core/unified_config.py` service URL defaults now point at `http://localhost:8888`; explicit env vars can still override them.
 
 ---
 

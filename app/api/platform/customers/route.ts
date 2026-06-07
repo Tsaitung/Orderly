@@ -13,7 +13,7 @@ const deriveBackendBase = (reqUrl?: URL): string => {
       // 僅保留協定與 host，避免重複 /api
       return `${u.protocol}//${u.host}`
     } catch (err) {
-      console.warn('Failed to parse backend base, fallback to localhost:8000', err)
+      console.warn('Failed to parse backend base, fallback to localhost:8888', err)
     }
   }
 
@@ -21,7 +21,7 @@ const deriveBackendBase = (reqUrl?: URL): string => {
     return `${reqUrl.protocol}//${reqUrl.host}`
   }
 
-  return 'http://localhost:8000'
+  return 'http://localhost:8888'
 }
 
 const resolveCustomerServiceBase = (reqUrl?: URL): string => {

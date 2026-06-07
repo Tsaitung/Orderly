@@ -17,7 +17,12 @@ class SupplierSKU(BaseModel):
 
     # Foreign keys
     sku_id = Column(String, ForeignKey("product_skus.id"), nullable=False)
-    supplier_id = Column(String, nullable=False, index=True)
+    supplier_id = Column(
+        String,
+        ForeignKey("organizations.id", name="fk_supplier_skus_supplier_id_organizations"),
+        nullable=False,
+        index=True,
+    )
 
     # Supplier-specific information
     supplier_sku_code = Column(String, nullable=False)  # 供應商內部SKU代碼

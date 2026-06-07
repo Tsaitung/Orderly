@@ -1,55 +1,53 @@
 """BFF endpoints bridging frontend requests to the customer hierarchy service."""
 
+from datetime import datetime
 from typing import Optional
 
-import httpx
 from fastapi import APIRouter, HTTPException, Request
 
-from app.modules.products.core.config import settings
+from app.modules.customer_hierarchy.core.database import get_async_session
+from app.modules.customer_hierarchy.services.hierarchy_service import HierarchyService
 
 router = APIRouter(tags=["BFF Hierarchy"], include_in_schema=False)
 
+
+def _bool_param(value: Optional[str], default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.lower() in {"1", "true", "yes", "on"}
+
+
+def _int_param(value: Optional[str]) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="max_depth must be an integer") from exc
+
+
 async def _fetch_hierarchy_tree(request: Request) -> dict:
-    base_url = (settings.customer_hierarchy_service_url or "").rstrip("/")
-    if not base_url:
-        raise HTTPException(status_code=503, detail="Hierarchy service URL not configured")
-
-    target_url = f"{base_url}/api/v2/hierarchy/tree"
-
-    headers = {}
-    auth_header: Optional[str] = request.headers.get("Authorization")
-    if auth_header:
-        headers["Authorization"] = auth_header
-
-    # Propagate contextual headers if present
-    for header in ("X-Correlation-ID", "X-User-Id", "X-Org-Id", "X-User-Role"):
-        value = request.headers.get(header)
-        if value:
-            headers[header] = value
-
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(15.0, connect=5.0)) as client:
-            response = await client.get(
-                target_url,
-                params=request.query_params,
-                headers=headers,
+        async with get_async_session() as db:
+            hierarchy_service = HierarchyService(db)
+            tree_data = await hierarchy_service.get_tree(
+                root_id=request.query_params.get("root_id"),
+                max_depth=_int_param(request.query_params.get("max_depth")),
+                include_inactive=_bool_param(request.query_params.get("include_inactive")),
+                include_stats=_bool_param(request.query_params.get("include_stats")),
+                node_types=request.query_params.getlist("node_types") or None,
+                user_context=getattr(request.state, "hierarchy_context", None),
             )
-    except httpx.RequestError as exc:
+            nodes = tree_data.get("tree", [])
+            return {
+                "data": nodes,
+                "totalCount": len(nodes),
+                "lastModified": datetime.utcnow().isoformat(),
+            }
+    except HTTPException:
+        raise
+    except Exception as exc:
         raise HTTPException(status_code=503, detail="Hierarchy service unavailable") from exc
-
-    if response.status_code >= 400:
-        # Relay downstream error details while preserving status code
-        detail = None
-        try:
-            detail = response.json()
-        except ValueError:
-            detail = response.text
-        raise HTTPException(status_code=response.status_code, detail=detail)
-
-    try:
-        return response.json()
-    except ValueError as exc:  # pragma: no cover - defensive guard
-        raise HTTPException(status_code=502, detail="Invalid hierarchy response") from exc
 
 
 @router.get("/hierarchy/tree")

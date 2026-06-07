@@ -4,19 +4,20 @@ Reconciliation Engine
 """
 
 import structlog
-import httpx
 from datetime import datetime, date
 from decimal import Decimal
 from typing import Optional, List, Dict, Any, Tuple
 from uuid import uuid4
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.modules.billing.models.reconciliation import Reconciliation, ReconciliationItem
 from app.modules.billing.models.enums import ReconciliationStatus, DiscrepancyType
 from app.modules.billing.schemas.reconciliation import ReconciliationCreate, ReconciliationItemCreate
 from app.modules.billing.services.reconciliation_service import ReconciliationService
-from app.modules.billing.core.config import settings
+from app.modules.orders.models.enums import OrderStatus
+from app.modules.orders.models.order import Order
 
 logger = structlog.get_logger()
 
@@ -30,8 +31,6 @@ class ReconciliationEngine:
     def __init__(self, session: AsyncSession):
         self.session = session
         self.recon_service = ReconciliationService(session)
-        # Order Service URL for fetching order data
-        self.order_service_url = getattr(settings, 'order_service_url', 'http://localhost:3002')
 
     async def run_auto_reconciliation(
         self,
@@ -110,30 +109,50 @@ class ReconciliationEngine:
         period_start: date,
         period_end: date,
     ) -> List[Dict[str, Any]]:
-        """從 Order Service 取得訂單數據"""
+        """Fetch order data directly from the in-process orders module."""
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(
-                    f"{self.order_service_url}/api/orders",
-                    params={
-                        "restaurantId": restaurant_id,
-                        "supplierId": supplier_id,
-                        "deliveryDateFrom": period_start.isoformat(),
-                        "deliveryDateTo": period_end.isoformat(),
-                        "status": "delivered,accepted,completed",
-                    },
-                    headers={"X-Tenant-Id": tenant_id},
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    return data.get("items", [])
-                else:
-                    logger.warning(
-                        "reconciliation.fetch_orders.failed",
-                        status=response.status_code,
+            result = await self.session.execute(
+                select(Order)
+                .options(selectinload(Order.items))
+                .where(
+                    and_(
+                        Order.tenant_id == tenant_id,
+                        Order.restaurant_id == restaurant_id,
+                        Order.supplier_id == supplier_id,
+                        Order.delivery_date >= period_start,
+                        Order.delivery_date <= period_end,
+                        Order.status.in_(
+                            [OrderStatus.DELIVERED, OrderStatus.ACCEPTED, OrderStatus.COMPLETED]
+                        ),
+                        Order.is_deleted == False,
                     )
-                    return []
+                )
+            )
+            orders = result.scalars().all()
+            return [
+                {
+                    "id": order.id,
+                    "orderNumber": order.order_number,
+                    "restaurantId": order.restaurant_id,
+                    "supplierId": order.supplier_id,
+                    "deliveryDate": order.delivery_date.isoformat() if order.delivery_date else None,
+                    "status": order.status.value if order.status else None,
+                    "totalAmount": float(order.total_amount or 0),
+                    "items": [
+                        {
+                            "id": item.id,
+                            "skuCode": item.sku_id,
+                            "productCode": item.product_code,
+                            "productName": item.product_name,
+                            "quantity": float(item.quantity or 0),
+                            "unitPrice": float(item.unit_price or 0),
+                            "lineTotal": float(item.line_total or 0),
+                        }
+                        for item in order.items
+                    ],
+                }
+                for order in orders
+            ]
         except Exception as e:
             logger.error("reconciliation.fetch_orders.error", error=str(e))
             return []

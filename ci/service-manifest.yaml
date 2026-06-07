@@ -4,11 +4,25 @@
 
 version: "1.0"
 metadata:
-  description: "Orderly microservices dependency and build configuration"
-  last_updated: "2025-09-29"
+  description: "Orderly monolith dependency and build configuration"
+  last_updated: "2026-06-07"
 
 # Service definitions with dependencies
 services:
+  backend-monolith:
+    path: backend/app
+    depends_on: []
+    cloud_build: backend/cloudbuild.monolith.yaml
+    dockerfile: backend/Dockerfile.monolith
+    health_check: /health
+    db_health_check: /db/health
+    port: 8080
+    deploy_order: 1
+    triggers:
+      - backend/app/**
+      - backend/libs/orderly_fastapi_core/**
+      - shared/types/**
+
   # Core authentication and user management
   user-service-fastapi:
     path: backend/user-service-fastapi

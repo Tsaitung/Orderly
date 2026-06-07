@@ -13,6 +13,7 @@ cr_service_name() {
 
   if [ "$env_suffix" = "staging-v2" ]; then
     case "$service" in
+      backend-monolith)                    echo "orderly-backend-staging-v2" ;;
       api-gateway-fastapi)                echo "orderly-apigw-staging-v2" ;;
       user-service-fastapi)               echo "orderly-user-staging-v2" ;;
       order-service-fastapi)              echo "orderly-order-staging-v2" ;;
@@ -25,6 +26,7 @@ cr_service_name() {
     esac
   else
     case "$service" in
+      backend-monolith)                   echo "orderly-backend-${env_suffix}" ;;
       customer-hierarchy-service-fastapi) echo "orderly-customer-hierarchy-${env_suffix}" ;;
       *)                                  echo "orderly-${service}-${env_suffix}" ;;
     esac

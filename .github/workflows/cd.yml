@@ -76,7 +76,7 @@ jobs:
       - name: Detect changed services
         id: changes
         env:
-          ALL: '["api-gateway-fastapi","user-service-fastapi","order-service-fastapi","product-service-fastapi","acceptance-service-fastapi","notification-service-fastapi","customer-hierarchy-service-fastapi","supplier-service-fastapi"]'
+          ALL: '["backend-monolith"]'
         run: |
           force="${{ github.event.inputs.force_all }}"
           manual="${{ github.event.inputs.services }}"
@@ -98,17 +98,17 @@ jobs:
           changed=$(git diff --name-only HEAD~1 HEAD || true)
           echo "Changed files:"; echo "$changed"
 
-          # Shared libs / workflow / shared types => rebuild everything.
-          if echo "$changed" | grep -qE '(backend/libs/|shared/types/|\.github/workflows/cd\.yml|Dockerfile\.base)'; then
+          # Shared libs / workflow / shared types => rebuild the monolith.
+          if echo "$changed" | grep -qE '(backend/app/|backend/libs/|shared/types/|\.github/workflows/cd\.yml|backend/Dockerfile\.monolith|backend/cloudbuild\.monolith\.yaml)'; then
             echo "services=$ALL" >> "$GITHUB_OUTPUT"
             echo "frontend=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           svcs=()
-          for s in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            if echo "$changed" | grep -q "backend/$s/"; then svcs+=("\"$s\""); fi
-          done
+          if echo "$changed" | grep -qE 'backend/(api-gateway-fastapi|user-service-fastapi|order-service-fastapi|product-service-fastapi|acceptance-service-fastapi|notification-service-fastapi|customer-hierarchy-service-fastapi|supplier-service-fastapi)/'; then
+            svcs+=("\"backend-monolith\"")
+          fi
           if [ ${#svcs[@]} -eq 0 ]; then
             echo "services=[]" >> "$GITHUB_OUTPUT"
           else
@@ -157,10 +157,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: backend/${{ matrix.service }}/Dockerfile
-          build-args: |
-            SERVICE_PATH=backend/${{ matrix.service }}
-            LIBS_PATH=backend/libs
+          file: backend/Dockerfile.monolith
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:${{ github.sha }}
@@ -228,9 +225,9 @@ jobs:
           done
           echo "::error::$SERVICE did not become healthy"; exit 1
 
-  # ---- Configure gateway routing + frontend env (one job, one auth) ---------
+  # ---- Resolve monolith URL (one job, one auth) -----------------------------
   wire-up:
-    name: Wire Up Routing
+    name: Resolve Backend Routing
     runs-on: ubuntu-latest
     needs: [resolve, build-deploy]
     if: always() && needs.build-deploy.result == 'success'
@@ -241,31 +238,16 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Configure API Gateway routes
+      - name: Resolve backend monolith URL
         env:
           ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
           SUFFIX: ${{ needs.resolve.outputs.suffix }}
         run: |
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
-          declare -A urls
-          for s in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
-            u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
-              --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
-            [ -n "$u" ] && urls[$s]="$u"
-          done
-          ev="NODE_ENV=$ENVIRONMENT"
-          [ -n "${urls[user-service-fastapi]:-}" ] && ev="$ev,USER_SERVICE_URL=${urls[user-service-fastapi]}"
-          [ -n "${urls[order-service-fastapi]:-}" ] && ev="$ev,ORDER_SERVICE_URL=${urls[order-service-fastapi]}"
-          [ -n "${urls[product-service-fastapi]:-}" ] && ev="$ev,PRODUCT_SERVICE_URL=${urls[product-service-fastapi]}"
-          [ -n "${urls[acceptance-service-fastapi]:-}" ] && ev="$ev,ACCEPTANCE_SERVICE_URL=${urls[acceptance-service-fastapi]}/acceptance"
-          [ -n "${urls[notification-service-fastapi]:-}" ] && ev="$ev,NOTIFICATION_SERVICE_URL=${urls[notification-service-fastapi]}"
-          [ -n "${urls[customer-hierarchy-service-fastapi]:-}" ] && ev="$ev,CUSTOMER_HIERARCHY_SERVICE_URL=${urls[customer-hierarchy-service-fastapi]}"
-          [ -n "${urls[supplier-service-fastapi]:-}" ] && ev="$ev,SUPPLIER_SERVICE_URL=${urls[supplier-service-fastapi]}"
-          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
-          gcloud run services update "$gw" --region="$GOOGLE_CLOUD_REGION" \
-            --update-env-vars="$ev" --project="$GOOGLE_CLOUD_PROJECT"
+          be=$(cr_service_name "backend-monolith" "$ENVIRONMENT" "$SUFFIX")
+          gcloud run services describe "$be" --region="$GOOGLE_CLOUD_REGION" \
+            --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT"
 
   # ---- Frontend (cached build) ----------------------------------------------
   deploy-frontend:
@@ -297,8 +279,8 @@ jobs:
         run: |
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
-          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
-          url=$(gcloud run services describe "$gw" --region="$GOOGLE_CLOUD_REGION" \
+          be=$(cr_service_name "backend-monolith" "$ENVIRONMENT" "$SUFFIX")
+          url=$(gcloud run services describe "$be" --region="$GOOGLE_CLOUD_REGION" \
             --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Build + push frontend (cached)
@@ -344,7 +326,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Smoke check (gateway + product /health only)
+      - name: Smoke check (backend monolith /health)
         env:
           ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
           SUFFIX: ${{ needs.resolve.outputs.suffix }}
@@ -352,7 +334,7 @@ jobs:
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
           fail=0
-          for s in api-gateway-fastapi product-service-fastapi customer-hierarchy-service-fastapi; do
+          for s in backend-monolith; do
             n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
             u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
               --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")

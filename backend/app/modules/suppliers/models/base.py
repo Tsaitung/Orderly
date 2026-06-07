@@ -3,9 +3,8 @@ Declarative base and common fields for Supplier Service
 """
 import uuid
 from sqlalchemy import Column, DateTime, func, String
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from app.db.base import Base
 
 
 class BaseModel(Base):

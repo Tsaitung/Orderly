@@ -9,7 +9,7 @@ const backendBase =
   (process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8000').replace(/\/+$/, '')
+    'http://localhost:8888').replace(/\/+$/, '')
 const postgresUrl = (process.env.NEXT_PUBLIC_POSTGRES_URL || 'postgresql://localhost:5432').replace(/\/+$/, '')
 const redisUrl = (process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379').replace(/\/+$/, '')
 
@@ -24,7 +24,7 @@ const mockServicesTemplate = [
     url: frontendUrl,
   },
   {
-    name: 'API Gateway',
+    name: 'Backend Monolith',
     status: 'healthy' as const,
     responseTime: 120,
     url: withBackendPath('/health'),

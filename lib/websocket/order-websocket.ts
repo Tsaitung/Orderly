@@ -41,7 +41,7 @@ const resolveWsBase = (): string => {
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8000'
+    'http://localhost:8888'
 
   try {
     const baseUrl = httpBase.startsWith('http') ? httpBase : `http://${httpBase.replace(/^\/+/, '')}`
@@ -52,8 +52,8 @@ const resolveWsBase = (): string => {
     u.hash = ''
     return u.toString().replace(/\/+$/, '')
   } catch (err) {
-    console.warn('Failed to resolve WebSocket base URL, falling back to localhost:8000', err)
-    return 'ws://localhost:8000'
+    console.warn('Failed to resolve WebSocket base URL, falling back to localhost:8888', err)
+    return 'ws://localhost:8888'
   }
 }
 

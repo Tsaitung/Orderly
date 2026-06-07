@@ -37,7 +37,7 @@ const resolveBackendBase = (req?: NextRequest): string => {
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8000'
+    'http://localhost:8888'
 
   // 去除 /api 或 /api/bff 避免 /api/api/ 重複
   const cleaned = candidate.replace(/\/api(?:\/bff)?\/?$/i, '')
@@ -53,7 +53,7 @@ const resolveBackendBase = (req?: NextRequest): string => {
       /* ignore */
     }
   }
-  return 'http://localhost:8000'
+  return 'http://localhost:8888'
 }
 
 export async function POST(req: NextRequest) {

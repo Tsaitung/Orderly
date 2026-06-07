@@ -9,12 +9,13 @@
 """
 
 import os
-import httpx
 import structlog
 from typing import Optional, Dict, Any
 from datetime import datetime
 
 from app.modules.orders.models.enums import OrderStatus
+from app.modules.notifications.core.database import AsyncSessionLocal as NotificationSessionLocal
+from app.modules.notifications.models.notification import Notification
 
 logger = structlog.get_logger()
 
@@ -61,12 +62,34 @@ class NotificationClient:
 
     def __init__(self):
         """初始化通知客戶端"""
-        self.notification_service_url = os.getenv(
-            "NOTIFICATION_SERVICE_URL",
-            "http://localhost:3006"
-        )
-        self.timeout = float(os.getenv("NOTIFICATION_TIMEOUT", "5.0"))
         self.enabled = os.getenv("ENABLE_NOTIFICATIONS", "true").lower() == "true"
+
+    async def _create_notification(
+        self,
+        user_id: str,
+        title: str,
+        message: str,
+        notification_type: str,
+        data: Dict[str, Any],
+        priority: str = "medium",
+    ) -> bool:
+        try:
+            async with NotificationSessionLocal() as db:
+                db.add(
+                    Notification(
+                        user_id=user_id,
+                        type=notification_type,
+                        title=title,
+                        message=message,
+                        data=data,
+                        priority=priority,
+                    )
+                )
+                await db.commit()
+            return True
+        except Exception as exc:
+            logger.error("notification.persist_failed", user_id=user_id, type=notification_type, error=str(exc))
+            return False
 
     async def notify_order_status_change(
         self,
@@ -107,7 +130,6 @@ class NotificationClient:
             # 獲取狀態對應的消息模板
             messages = self.STATUS_MESSAGES.get(to_status, {})
 
-            # 組建通知事件
             event = {
                 "event_type": "order.status_changed",
                 "order_id": order_id,
@@ -127,38 +149,22 @@ class NotificationClient:
                 "extra_data": extra_data or {}
             }
 
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.notification_service_url}/api/events",
-                    json=event
+            results = []
+            for role, message in event["messages"].items():
+                recipient_id = supplier_id if role == "supplier" else restaurant_id
+                results.append(
+                    await self._create_notification(
+                        user_id=recipient_id,
+                        title="訂單狀態更新",
+                        message=message,
+                        notification_type="order.status_changed",
+                        data=event,
+                    )
                 )
 
-                if response.status_code in (200, 201, 202):
-                    logger.info(
-                        "notification.sent",
-                        order_id=order_id,
-                        to_status=to_status.value
-                    )
-                    return True
-                else:
-                    logger.warning(
-                        "notification.failed",
-                        order_id=order_id,
-                        status_code=response.status_code,
-                        response=response.text[:200]
-                    )
-                    return False
-
-        except httpx.TimeoutException:
-            logger.warning("notification.timeout", order_id=order_id)
-            return False
-        except httpx.ConnectError:
-            logger.warning(
-                "notification.connection_error",
-                order_id=order_id,
-                service_url=self.notification_service_url
-            )
-            return False
+            sent = bool(results) and all(results)
+            logger.info("notification.sent" if sent else "notification.failed", order_id=order_id, to_status=to_status.value)
+            return sent
         except Exception as e:
             logger.error(
                 "notification.error",
@@ -213,12 +219,14 @@ class NotificationClient:
                            f"預計 {delivery_date} 交貨"
             }
 
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.notification_service_url}/api/events",
-                    json=event
-                )
-                return response.status_code in (200, 201, 202)
+            return await self._create_notification(
+                user_id=supplier_id,
+                title="新訂單",
+                message=event["message"],
+                notification_type="order.created",
+                data=event,
+                priority="high",
+            )
 
         except Exception as e:
             logger.error("notification.new_order_error", order_id=order_id, error=str(e))
@@ -260,12 +268,13 @@ class NotificationClient:
                 "message": f"提醒：訂單 #{order_number} 將於 {hours_until_delivery} 小時後交貨"
             }
 
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.notification_service_url}/api/events",
-                    json=event
-                )
-                return response.status_code in (200, 201, 202)
+            return await self._create_notification(
+                user_id=supplier_id,
+                title="配送提醒",
+                message=event["message"],
+                notification_type="order.delivery_reminder",
+                data=event,
+            )
 
         except Exception as e:
             logger.error("notification.reminder_error", order_id=order_id, error=str(e))

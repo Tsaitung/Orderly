@@ -43,8 +43,20 @@ class Order(BaseModel):
     tenant_id = Column("tenant_id", String(36), nullable=False, index=True)
 
     # 關聯方
-    restaurant_id = Column("restaurant_id", String(36), nullable=False, index=True)
-    supplier_id = Column("supplier_id", String(36), nullable=False, index=True)
+    restaurant_id = Column(
+        "restaurant_id",
+        String(36),
+        ForeignKey("organizations.id", name="fk_orders_restaurant_id_organizations"),
+        nullable=False,
+        index=True,
+    )
+    supplier_id = Column(
+        "supplier_id",
+        String(36),
+        ForeignKey("organizations.id", name="fk_orders_supplier_id_organizations"),
+        nullable=False,
+        index=True,
+    )
 
     # 狀態
     status = Column(
@@ -118,8 +130,20 @@ class OrderItem(BaseModel):
     __tablename__ = "order_items"
 
     order_id = Column("order_id", String(36), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
-    sku_id = Column("sku_id", String(36), nullable=True, index=True)
-    product_id = Column("product_id", String(36), nullable=False, index=True)
+    sku_id = Column(
+        "sku_id",
+        String(36),
+        ForeignKey("product_skus.id", name="fk_order_items_sku_id_product_skus"),
+        nullable=True,
+        index=True,
+    )
+    product_id = Column(
+        "product_id",
+        String(36),
+        ForeignKey("products.id", name="fk_order_items_product_id_products"),
+        nullable=False,
+        index=True,
+    )
     product_code = Column("product_code", String(50), nullable=False)
     product_name = Column("product_name", String(200), nullable=False)
 

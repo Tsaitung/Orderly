@@ -13,7 +13,7 @@ import type {
 } from '../types'
 
 class CustomerHierarchyService {
-  // Prefer dedicated hierarchy base (can be '/api/bff/v2' or direct 'http://localhost:3007/api/v2')
+  // Prefer dedicated hierarchy base (can be '/api/bff/v2' or direct monolith '/api/v2')
   private baseUrl = process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL || '/api/bff'
   private requestMap = new Map<string, Promise<any>>()
 

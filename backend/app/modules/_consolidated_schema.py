@@ -64,7 +64,7 @@ from sqlalchemy.dialects.postgresql import ENUM as PgEnum
 from app.modules._unified_metadata import unified_metadata
 
 # Alembic identifiers.
-revision = "consolidated_schema_0001"
+revision = "0001_consolidated_schema"
 down_revision = None
 branch_labels = None
 depends_on = None

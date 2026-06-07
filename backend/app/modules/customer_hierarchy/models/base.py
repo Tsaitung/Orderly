@@ -6,13 +6,12 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from sqlalchemy import Column, DateTime, String, Boolean, func, Text
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 import structlog
 
-logger = structlog.get_logger(__name__)
+from app.db.base import Base
 
-Base = declarative_base()
+logger = structlog.get_logger(__name__)
 
 
 class BaseModel(Base):
