@@ -330,6 +330,22 @@ dependency_checks:
 
 ---
 
+## 執行紀錄 (Execution Log) — 2026-06-07 STEP 0+1 batch
+
+| 步驟 | 狀態 | commit | 證據 / 偏差 |
+|---|---|---|---|
+| **STEP 0.0**（新增前置） | ✓ | (env, 不入 git) | plan 假設 host env 存在，實際**無 venv**（系統 py3.9、backend 平常跑 Docker）。建 `backend/.venv`（py3.11）+ 裝 merged deps（**8 個版本衝突取最高**：fastapi 0.115.0 / sqlalchemy 2.0.35 / alembic 1.14.0 / asyncpg 0.30.0 / uvicorn 0.32.0 / redis 5.2.0 / structlog 24.4.0 / email-validator 2.1.0）+ editable core |
+| STEP 0 | ✓ | `db1d2c5` | pyproject@backend/libs + 5 imports 正規化 + 移除全部 libs sys.path hack（alembic service-root 保留）；**9 服務 `import app.main` 全 PASS** |
+| T1a 斷鏈 | ✓ | `de26b84` | **比 survey 更 broken**：002 重複了 003 的**每一個** organizations 欄位+索引+FK（非僅 supplier_invitations）→ 003 改 no-op。Verify：fresh DB `alembic upgrade head` → 001..005 head 乾淨 |
+| T1b dead mapper | ✓ | `c34f6c7` + `9dfbe63` | 刪 dead `models/sku.py`；repoint test ProductSKU→sku_simple、SupplierSKU→supplier_sku；skip `test_get_sku_allergens`（ProductAllergen 僅存於已刪檔）。Verify：app.models/app.main import 無 mapper error、grep=0 |
+| **T1c 4 models** | **⏸ DEFERRED（finding）** | — | **非 dead，是 LIVE**：`main_api.py` 有 `/api/v2/hierarchy/activity`+`/performance` endpoint、`activity_service.py`/`cache_enhanced_service.py` 實例化查詢。但**4 張表（activity_metrics/dashboard_summary/performance_rankings/activity_trends）無 migration** = 既有 runtime bug（該功能今天就 500）。autogenerate 又被 **缺 `alembic/script.py.mako`** 擋。**不擋 monolith boot、不擋 /goal**（frozen contract 無 activity endpoint）。**合法延後**：需 (a) 修復 customer-hierarchy alembic 模板、(b) 產+驗 4 表 migration；歸 STEP 6 alembic 收斂或專屬 migration task |
+
+**STEP 3 待修發現**：`compose.dev.yml` 是 overlay（單獨無效，image 在 `compose.base.yml`）→ T3.6 `.claude/restart.yaml` 的 container_service 不能用單一 `compose_file: compose.dev.yml`，需 base+dev 疊加（restart-authoring 的 container_service 僅吃單一 compose_file → 需用 wrapper 或調整）。
+
+**STEP 1 收斂判定**：T1a+T1b（真正擋 monolith boot 的兩個 crasher）完成且驗證；T1c 為 LIVE-feature 缺 schema 的既有 bug，不擋 boot/goal，合法延後。STEP 0+1 batch 於此 checkpoint 停，待 user 決定 T1c 處理時機與是否續 STEP 2。
+
+---
+
 ## 命名目標進度表（拆除/搬移類）
 
 本 plan 含拆除與搬移動詞，逐一列出可 grep 的命名目標與其真正消失/移位的 task：
