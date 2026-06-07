@@ -341,4 +341,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **Task 6 ✅ DONE（RED）**（commit `0943f29`）：`e2e/public-pages.spec.ts`（landing-scope，8 tests）+ `playwright.config.ts`（baseURL 5566）。
 - **@playwright/test ✅ 安裝**（commit `ffd95bf`，^1.60.0 + chromium）；spec 可列 8 tests。
 - ⚠ 給元件實作者：dark-toggle 需 accessible name 含 `深色/dark/主題/切換`（E2E locator 用 `getByRole('button',{name:/(dark|深色|theme|主題|切換)/i})`）→ LandingNav 切換鈕加 `aria-label="切換深色模式"`。
-- **下一步：Task 8-13 元件 build**（讀 landingData，dark: classes + framer-motion + reduced-motion fallback + 響應式 + focus ring）→ T14 compose app/page.tsx（E2E GREEN）→ T15-17 刪過渡元件（HeroSection/RoleSelector/HeroBackground）→ T18 dark 複驗 → Phase 3（T19-22 /contact /privacy /terms + 全量驗收）。
+- **Task 8-13 ✅ DONE**（commit `5ec5089`）：13 landing 元件（workflow 並行 build）。
+- **Task 14 ✅ DONE**（commit `9129969`）：app/page.tsx compose 12 區塊；E2E GREEN。
+- **Task 15-17 ✅ DONE**（commit `9129969`）：刪 HeroSection/RoleSelector/HeroBackground（grep 確認無 dangling import）。
+- **Task 19-21 ✅ DONE**（commit `d2ced75`）：/contact（form + /api/contact PII-safe stub）、/privacy、/terms 誠實 stub。
+- **Task 22 ✅ controller 親自驗證**：tsc 1072（< 1074 baseline，無 regression，新檔 0 error）；PUBLIC_SCOPE 命名目標 grep 0 命中；**Playwright 8/8 passed**（自跑 :5611）；截圖 oracle 確認 hero+12 區塊 render、對齊 mockup、真實定價、lucide icon。
+- **whileInView 觀察（非 bug）**：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖」下 IntersectionObserver 不觸發 → 全頁截圖空白；捲動截圖證明真使用者每段都看得到。若要對「無 JS / 預覽爬蟲 / 不捲動截圖」更穩，可把 reveal 改成 viewport margin 觸發或降低 initial opacity 依賴（建議，非阻擋）。
+- **Task 18 dark**：toggle 經 E2E 驗證可加 `class="dark"`；元件皆有 dark: variants。**深色逐區視覺尚未人工逐段確認**（建議補一次 dark 全頁目視）。
+- **狀態：Phase 1-3 核心交付完成並 committed**（11 commits）。剩 finishing-a-development-branch 收尾（PR/merge 時機 user 決定）。
