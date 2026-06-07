@@ -17,6 +17,12 @@ build/
 # direnv local dev env — machine-specific (per-dev DB creds, personal ADC path, ~/.config/claude scripts)
 .envrc
 
+# Python venvs (host monolith venv + any stray service venvs)
+.venv/
+backend/.venv/
+**/venv/
+*.pyc
+
 # IDE
 .vscode/
 .idea/

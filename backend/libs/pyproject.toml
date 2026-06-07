@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orderly-fastapi-core"
+version = "0.1.0"
+description = "Shared FastAPI core (app factory, DB session, settings, middleware, health) for Orderly services / monolith"
+requires-python = ">=3.11"
+dependencies = []   # core uses fastapi/sqlalchemy/pydantic provided by each service's requirements; not re-pinned here
+
+[tool.setuptools.packages.find]
+where = ["."]                        # = backend/libs/
+include = ["orderly_fastapi_core*"]  # discovers backend/libs/orderly_fastapi_core/

@@ -9,7 +9,7 @@ from typing import Optional
 from pydantic import Field, field_validator
 
 # Import shared schema utilities from core library
-from libs.orderly_fastapi_core import CamelCaseModel
+from orderly_fastapi_core import CamelCaseModel
 
 
 class BillingPeriodBase(CamelCaseModel):

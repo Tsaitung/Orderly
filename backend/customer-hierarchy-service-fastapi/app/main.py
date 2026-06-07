@@ -16,7 +16,6 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 # Add libs path for orderly_fastapi_core
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..", "libs")))
 from orderly_fastapi_core import mask_database_url, get_db_info
 
 from app.core.config import settings

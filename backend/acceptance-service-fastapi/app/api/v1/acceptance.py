@@ -6,7 +6,6 @@ from sqlalchemy import select, desc
 
 from app.core.database import get_async_session
 import os, sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'libs')))
 from orderly_fastapi_core.pagination import pagination_params, Pagination
 from app.models.acceptance import Acceptance, AcceptanceItem
 

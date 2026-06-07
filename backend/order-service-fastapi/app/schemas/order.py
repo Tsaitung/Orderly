@@ -11,7 +11,7 @@ from app.models.enums import OrderStatus, PaymentStatus
 from .order_item import OrderItemCreate, OrderItemResponse
 
 # Import shared schema utilities from core library
-from libs.orderly_fastapi_core import to_camel
+from orderly_fastapi_core import to_camel
 
 
 class DeliveryAddress(BaseModel):

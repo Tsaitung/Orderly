@@ -10,7 +10,7 @@ from pydantic import Field, field_validator
 from app.models.enums import ReconciliationStatus, DiscrepancyType
 
 # Import shared schema utilities from core library
-from libs.orderly_fastapi_core import CamelCaseModel
+from orderly_fastapi_core import CamelCaseModel
 
 
 # ============ Reconciliation Item Schemas ============

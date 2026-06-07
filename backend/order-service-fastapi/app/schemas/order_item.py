@@ -8,7 +8,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 # Import shared schema utilities from core library
-from libs.orderly_fastapi_core import to_camel
+from orderly_fastapi_core import to_camel
 
 
 class OrderItemBase(BaseModel):

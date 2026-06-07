@@ -4,7 +4,6 @@ Database configuration and connection management for Product Service
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
 from orderly_fastapi_core import create_db_engines, get_async_session_dependency
 
 from .config import settings

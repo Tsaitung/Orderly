@@ -6,7 +6,6 @@ import sys
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..', 'libs')))
 from orderly_fastapi_core import create_db_engines, get_async_session_dependency
 
 from .config import settings

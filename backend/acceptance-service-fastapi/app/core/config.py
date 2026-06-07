@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 # 添加共享庫路徑
-sys.path.append(str(Path(__file__).parent.parent.parent.parent / "libs"))
 
 from orderly_fastapi_core import UnifiedSettings, get_settings
 from pydantic import Field
