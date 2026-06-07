@@ -1,8 +1,24 @@
+import os
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
+# Ensure /Users/leeyude/Projects/Orderly/backend is on sys.path so that
+# "import app.modules.billing..." resolves when running from that cwd.
+_backend_root = str(Path(__file__).parents[4])
+if _backend_root not in sys.path:
+    sys.path.insert(0, _backend_root)
+
 config = context.config
+
+# Allow DATABASE_URL env var to override the ini placeholder.
+_db_url = os.environ.get("DATABASE_URL")
+if _db_url:
+    # Alembic engine_from_config expects a sync URL; swap asyncpg driver.
+    _sync_url = _db_url.replace("postgresql+asyncpg://", "postgresql://")
+    config.set_main_option("sqlalchemy.url", _sync_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

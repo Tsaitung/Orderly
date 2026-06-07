@@ -7,6 +7,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+from app.modules.orders.core.config import settings  # noqa
+config.set_main_option("sqlalchemy.url", settings.get_database_url_sync())
+
 from app.modules.orders.models.base import Base  # noqa
 from app.modules.orders.models.enums import OrderStatus, PaymentStatus  # noqa
 from app.modules.orders.models.order import Order, OrderItem, OrderStatusHistory, OrderAdjustment  # noqa

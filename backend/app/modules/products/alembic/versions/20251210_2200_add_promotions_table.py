@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
 
         # 多租戶隔離
-        sa.Column('tenant_id', sa.String(36), nullable=True, index=True),
+        sa.Column('tenant_id', sa.String(36), nullable=True),
 
         # 基本資訊
         sa.Column('name', sa.String(200), nullable=False),
@@ -44,11 +44,11 @@ def upgrade() -> None:
         sa.Column('code', sa.String(50), nullable=True, index=True),
 
         # 關聯
-        sa.Column('sku_id', sa.String(36), sa.ForeignKey('product_skus.id', ondelete='CASCADE'), nullable=False, index=True),
+        sa.Column('sku_id', sa.String(36), sa.ForeignKey('product_skus.id', ondelete='CASCADE'), nullable=False),
         sa.Column('product_id', sa.String(36), sa.ForeignKey('products.id', ondelete='CASCADE'), nullable=True, index=True),
 
         # 折扣設定
-        sa.Column('discount_type', sa.Enum('percentage', 'fixed_amount', 'fixed_price', name='discounttype'), nullable=False, server_default='percentage'),
+        sa.Column('discount_type', discount_type, nullable=False, server_default='percentage'),
         sa.Column('discount_value', sa.Float(), nullable=False),
         sa.Column('promotional_price', sa.Float(), nullable=True),
         sa.Column('original_price', sa.Float(), nullable=True),
@@ -63,7 +63,7 @@ def upgrade() -> None:
         sa.Column('min_purchase_quantity', sa.Integer(), nullable=True),
 
         # 狀態
-        sa.Column('status', sa.Enum('draft', 'scheduled', 'active', 'paused', 'ended', 'cancelled', name='promotionstatus'), nullable=False, server_default='draft'),
+        sa.Column('status', promotion_status, nullable=False, server_default='draft'),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
 
         # 優先級

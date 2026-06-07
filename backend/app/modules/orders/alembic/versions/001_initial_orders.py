@@ -24,14 +24,14 @@ def upgrade() -> None:
         'draft', 'submitted', 'confirmed', 'preparing', 'shipped',
         'delivered', 'accepted', 'completed', 'cancelled', 'disputed',
         name='order_status',
-        create_type=True
+        create_type=False
     )
     order_status_enum.create(op.get_bind(), checkfirst=True)
 
     payment_status_enum = postgresql.ENUM(
         'pending', 'partial', 'paid', 'overdue', 'refunded',
         name='payment_status',
-        create_type=True
+        create_type=False
     )
     payment_status_enum.create(op.get_bind(), checkfirst=True)
 

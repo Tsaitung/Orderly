@@ -4,13 +4,14 @@ Alembic environment configuration
 import asyncio
 import os
 import sys
+from pathlib import Path
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
-# Add app directory to path
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Add backend/ directory to path so "app.modules.products.*" resolves
+sys.path.insert(0, str(Path(__file__).parents[4]))
 
 # Import your models
 from app.modules.products.models.base import Base

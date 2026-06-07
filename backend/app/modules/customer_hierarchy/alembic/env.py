@@ -5,12 +5,17 @@ import asyncio
 import os
 import sys
 from logging.config import fileConfig
+from pathlib import Path
 from sqlalchemy import engine_from_config, pool
 from sqlalchemy.ext.asyncio import AsyncEngine
 from alembic import context
 
-# Add app directory to path
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+# Add backend/ to sys.path so "app.modules.customer_hierarchy..." resolves.
+# env.py lives at backend/app/modules/customer_hierarchy/alembic/env.py
+# -> parents[4] == backend/
+_backend_dir = str(Path(__file__).resolve().parents[4])
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
 
 # Import your models for autogenerate
 from app.modules.customer_hierarchy.models.base import Base

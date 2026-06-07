@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column('id', sa.dialects.postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.Column('acceptanceId', sa.String(), nullable=False),
+        sa.Column('acceptanceId', sa.dialects.postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column('productCode', sa.String(), nullable=False),
         sa.Column('productName', sa.String(), nullable=False),
         sa.Column('deliveredQty', sa.String(), nullable=False),

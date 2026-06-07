@@ -39,7 +39,6 @@ def upgrade() -> None:
             NEW.search_vector :=
                 setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') ||
                 setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE(NEW.brand, '')), 'B') ||
                 setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'C') ||
                 setweight(to_tsvector('simple', COALESCE(NEW."originCountry", '')), 'C');
             RETURN NEW;
@@ -67,7 +66,6 @@ def upgrade() -> None:
             search_vector =
                 setweight(to_tsvector('simple', COALESCE(name, '')), 'A') ||
                 setweight(to_tsvector('simple', COALESCE(code, '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE(brand, '')), 'B') ||
                 setweight(to_tsvector('simple', COALESCE(description, '')), 'C') ||
                 setweight(to_tsvector('simple', COALESCE("originCountry", '')), 'C')
         WHERE search_vector IS NULL;
@@ -87,10 +85,7 @@ def upgrade() -> None:
         BEGIN
             NEW.search_vector :=
                 setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE(NEW."skuCode", '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE(NEW.specification, '')), 'B') ||
-                setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'C') ||
-                setweight(to_tsvector('simple', COALESCE(NEW.brand, '')), 'B');
+                setweight(to_tsvector('simple', COALESCE(NEW."skuCode", '')), 'A');
             RETURN NEW;
         END
         $$ LANGUAGE plpgsql;
@@ -115,10 +110,7 @@ def upgrade() -> None:
         UPDATE product_skus SET
             search_vector =
                 setweight(to_tsvector('simple', COALESCE(name, '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE("skuCode", '')), 'A') ||
-                setweight(to_tsvector('simple', COALESCE(specification, '')), 'B') ||
-                setweight(to_tsvector('simple', COALESCE(description, '')), 'C') ||
-                setweight(to_tsvector('simple', COALESCE(brand, '')), 'B')
+                setweight(to_tsvector('simple', COALESCE("skuCode", '')), 'A')
         WHERE search_vector IS NULL;
     """)
 

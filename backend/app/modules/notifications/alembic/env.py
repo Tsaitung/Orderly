@@ -1,7 +1,12 @@
 import os
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool, create_engine
 from alembic import context
+
+# Ensure /backend is on sys.path so "import app.modules.notifications..." resolves
+sys.path.insert(0, str(Path(__file__).parents[4]))
 
 config = context.config
 if config.config_file_name is not None:
@@ -30,12 +35,6 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     # Use unified configuration system for database URL
-    import sys
-    from pathlib import Path
-    
-    # Add parent directory to path to import app modules
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    
     try:
         from app.modules.notifications.core.config import settings
         database_url = settings.get_database_url_sync()

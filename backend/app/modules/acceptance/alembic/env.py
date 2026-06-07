@@ -34,8 +34,8 @@ def run_migrations_online() -> None:
     import sys
     from pathlib import Path
     
-    # Add parent directory to path to import app modules
-    sys.path.insert(0, str(Path(__file__).parent.parent))
+    # Add backend/ directory to path so "import app.modules.acceptance..." resolves
+    sys.path.insert(0, str(Path(__file__).parents[4]))
     
     try:
         from app.modules.acceptance.core.config import settings

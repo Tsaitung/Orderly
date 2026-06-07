@@ -25,13 +25,13 @@ def upgrade() -> None:
     # Products 表添加 tenant_id
     op.add_column(
         'products',
-        sa.Column('tenant_id', sa.String(36), nullable=True, index=True, comment='租戶ID（組織ID）')
+        sa.Column('tenant_id', sa.String(36), nullable=True, comment='租戶ID（組織ID）')
     )
 
     # Product SKUs 表添加 tenant_id
     op.add_column(
         'product_skus',
-        sa.Column('tenant_id', sa.String(36), nullable=True, index=True, comment='租戶ID（組織ID）')
+        sa.Column('tenant_id', sa.String(36), nullable=True, comment='租戶ID（組織ID）')
     )
 
     # 創建索引以優化查詢效能

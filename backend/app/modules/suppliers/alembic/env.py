@@ -1,6 +1,14 @@
+import sys
+from pathlib import Path
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+# Ensure backend/ is on sys.path so "import app.modules.suppliers..." resolves
+# env.py lives at backend/app/modules/suppliers/alembic/env.py -> parents[4] == backend/
+_backend_dir = str(Path(__file__).resolve().parents[4])
+if _backend_dir not in sys.path:
+    sys.path.insert(0, _backend_dir)
 
 from app.modules.suppliers.core.config import settings
 

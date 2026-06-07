@@ -27,14 +27,14 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False),
 
         # 多租戶隔離
-        sa.Column('tenant_id', sa.String(36), nullable=True, index=True),
+        sa.Column('tenant_id', sa.String(36), nullable=True),
 
         # 客戶資訊
-        sa.Column('customer_id', sa.String(36), nullable=False, index=True),
+        sa.Column('customer_id', sa.String(36), nullable=False),
         sa.Column('customer_name', sa.String(200), nullable=True),
 
         # SKU 關聯
-        sa.Column('sku_id', sa.String(36), sa.ForeignKey('product_skus.id', ondelete='CASCADE'), nullable=False, index=True),
+        sa.Column('sku_id', sa.String(36), sa.ForeignKey('product_skus.id', ondelete='CASCADE'), nullable=False),
         sa.Column('product_id', sa.String(36), sa.ForeignKey('products.id', ondelete='CASCADE'), nullable=True, index=True),
 
         # 價格設定
