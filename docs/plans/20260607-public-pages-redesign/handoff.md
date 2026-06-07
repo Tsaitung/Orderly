@@ -1,33 +1,45 @@
-# Handoff — Orderly Public Pages 重設計
+# Handoff — Orderly Public Pages 執行後 Review
 
 **Plan:** `docs/plans/20260607-public-pages-redesign/run.md`
-**Branch:** refactor
-**Gate:** `.claude/plan-gate-pass.json`
-**Risk:** medium（frontend；含破壞性刪 3 元件、新增 2 deps、移除 live 杜撰客戶名）
-**Review:** self-review round-1 ✓ + Codex round 1-3（最終 APPROVED, must-fix 0）
+**Branch:** `codex-public-pages-redesign`
+**Gate:** `.claude/plan-gate-pass.json` 指向此 plan
+**本次 handoff refresh 前基準:** `1c15118`
+**狀態:** implementation 已 committed；plan-review audit 已 approved；剩餘工作是誠實收尾，不是新一輪 redesign scope
+**Review:** 執行前 Codex R1/R2/R3 已收斂到 APPROVED；執行後 Codex R4 抓到 1 個 audit wording must-fix + 1 個 E2E warning；Codex R5 修正後 APPROVED
 
-## Execution Mode
-未定 — 由 H-1 詢問 user（預設 subagent-driven）。
+## 已驗證事實
 
-## Next Exact Step
-**Task 8 — `components/landing/LandingNav.tsx`**：sticky nav，讀 `landingData.NAV_LINKS`（#features/#roles/#pricing/#faq 錨點）+ logo + 登入(`/login`) + 預約Demo(`/contact`) + **dark 切換鈕（必加 `aria-label="切換深色模式"`，用 next-themes `useTheme`）** + 滾動縮高 + 手機漢堡。dark: classes、focus ring、響應式。接著 Task 9-13 其餘元件，全部讀 `landingData.ts`。
+- `components/HeroSection.tsx`、`components/RoleSelector.tsx`、`components/HeroBackground.tsx` 已刪除。
+- `components/landing/` 有預期的 13 個 landing `.tsx` 元件與 `landingData.ts`；`app/page.tsx` 組合 12 個 landing 區塊，且不再 import `SystemStatus`。
+- `app/(marketing)/contact/page.tsx`、`app/(marketing)/privacy/page.tsx`、`app/(marketing)/terms/page.tsx`、`app/api/contact/route.ts` 皆存在。
+- Hero 圖 runtime source 是本機路徑 (`/hero/restaurant-hero.jpg`)；`images.unsplash.com` 只出現在 provenance 註解，因此排除註解行後 live-usage grep 為 0。
+- `/api/contact` 有 3 個 console call，全部 PII-safe：成功只記 `{ requestId, role, timestamp }`；失敗只記 `{ requestId, timestamp }` 或 `{ requestId, timestamp, missing }`。
+- `e2e/public-pages.spec.ts` 目前有 8 個 landing/auth tests，且明確排除 `/contact /privacy /terms`。
 
-> 已完成並 committed：Task 0(114f0a8)、Task 1(866e5bf 移除杜撰客戶名)、Task 4a(f0784d6 修死登入)、Task 7+6(0943f29 landingData+E2E RED)、playwright dep(ffd95bf)。
-> **驗證標準**：repo 1074 pre-existing tsc error，task 判定＝相對 baseline 零新增（非 exit-0）。E2E 驗證需 dev server 在 5566（或設 PLAYWRIGHT_BASE_URL）。
-> **Phase 1 redundancy 決議**：T2/T3/T5/T4b 在同 PR 由 Phase 2 取代，已略過（見 run.md Execution Progress）。
+## 誠實剩餘項
 
-## 階段順序
-1. Task 0：deps + tailwind dark + ThemeProvider
-2. Phase 1（T1-T5）：P0 清地雷（T1 杜撰客戶名務必最先；同 PR 交付時 T2/T5 可略過——見 plan Phase 1 交付策略註）
-3. Phase 2（T6-T18）：新 landing 元件組（E2E RED T6 先於 compose GREEN T14；T15-17 刪過渡元件）
-4. Phase 3（T19-T22）：新頁 /contact /privacy /terms + 全量驗收（type-check:full + Playwright 全綠 + 命名目標 PUBLIC_SCOPE grep 0 hit）
+1. **Task 19 E2E gap（建議的下一個收尾）**：補 Playwright 覆蓋 `/contact` submit success、`/privacy` `/terms` route-200 + 標題/「整理中」斷言。這會關閉 AC4 automation。若現在不做，需把 AC4 降級為 manual verification + E2E follow-up。
+2. **Task 18 dark visual pass**：dark toggle 已測，元件也有 `dark:` variants；但沒有逐區 dark screenshot pass 的紀錄。
+3. **僅 nice-to-have**：whileInView/no-JS robustness 與 provenance-comment rewrite。除非 user 明確拉高門檻，這些不應阻擋 merge。
 
-## 硬約束（每 batch 遵守）
-- 示意數據必標「（示意）」；禁捏造客戶名/假精度；定價真實級距。
-- 每個按鈕都要有對照頁/錨點，零死連結（T22 最終驗）。
-- 命名目標 grep 只限 `$PUBLIC_SCOPE`，不得擴及 OOS dashboard mock。
-- verify 用 `npm run type-check:full`（非 type-check）；輸出 `> /tmp/out.log 2>&1` 完整讀不截斷。
-- commit 精準路徑；每 batch 後更新 run.md + handoff.md 再 compact。
+## 下一個精確步驟
 
-## Dirty tree note
-- 無關 untracked：`.claude/wf-*.js`（workflow 腳本，勿 commit 進本 plan）。
+只 patch `e2e/public-pages.spec.ts`：
+
+- 補 `/contact` test：前往 `/contact`，填 `company`、`name`、`email`、`needs`，submit `送出需求`，assert status text `已收到你的需求，謝謝！`。
+- 補 `/privacy` test：`page.goto('/privacy')`，expect 200、title `隱私權政策`、text `整理中`。
+- 補 `/terms` test：`page.goto('/terms')`，expect 200、title `服務條款`、text `整理中`。
+
+該 patch 後的 focused verification：
+
+```bash
+PLAYWRIGHT_BASE_URL=http://localhost:<dev-port> npx playwright test e2e/public-pages.spec.ts --reporter=line
+```
+
+Expected decision：若通過，在 `run.md` 標記 Task 19 與 AC4 automation closed；若跳過，保留目前已記錄的 gap。
+
+## Scope Guard
+
+- 不要擴成 auth page redesign、真 CRM/email delivery、真實 customer testimonials、dashboard mock cleanup，或新增 marketing pages。
+- PUBLIC_SCOPE grep 維持只限 public landing/marketing paths；dashboard mock names 仍是 out of scope。
+- 此 branch 也有 backend step4-9 plan docs；除非 user 要求，不要碰那些文件。
