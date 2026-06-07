@@ -1,6 +1,10 @@
 # superpowers brainstorm visual companion (local only)
 .superpowers/
 
+# playwright e2e artifacts
+test-results/
+playwright-report/
+
 # Dependencies
 node_modules/
 npm-debug.log*
