@@ -96,10 +96,12 @@ export function NavigationHeader() {
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" size="sm" className="text-gray-700">
-                <UserCircle className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">登入</span>
-              </Button>
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="text-gray-700">
+                  <UserCircle className="mr-1 h-4 w-4" />
+                  <span className="hidden sm:inline">登入</span>
+                </Button>
+              </Link>
             )}
 
             {/* Mobile Menu Button */}
@@ -161,10 +163,12 @@ export function NavigationHeader() {
                   )}
                 </div>
               ) : (
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  登入
-                </Button>
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full justify-start" size="sm">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    登入
+                  </Button>
+                </Link>
               )}
             </div>
           </nav>
