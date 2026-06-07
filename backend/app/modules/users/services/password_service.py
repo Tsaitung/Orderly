@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from passlib.context import CryptContext
+import bcrypt as _bcrypt_lib
 
 # Common weak passwords to block
 COMMON_PASSWORDS = {
@@ -24,8 +24,26 @@ COMMON_PASSWORDS = {
     "iloveyou1234", "welcome@1234", "password@123", "admin@123456",
 }
 
-# Bcrypt context for password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], bcrypt__rounds=12, deprecated="auto")
+
+class _BcryptContext:
+    """Thin wrapper around bcrypt that replaces passlib.CryptContext for hash/verify."""
+
+    ROUNDS = 12
+
+    def hash(self, password: str) -> str:
+        pwd_bytes = password.encode("utf-8")
+        salt = _bcrypt_lib.gensalt(rounds=self.ROUNDS)
+        return _bcrypt_lib.hashpw(pwd_bytes, salt).decode("utf-8")
+
+    def verify(self, plain: str, hashed: str) -> bool:
+        try:
+            return _bcrypt_lib.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
+        except Exception:
+            return False
+
+
+# Bcrypt context for password hashing (uses bcrypt directly to avoid passlib 1.7.4 / bcrypt>=4 incompatibility)
+pwd_context = _BcryptContext()
 
 
 class PasswordService:

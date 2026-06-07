@@ -29,7 +29,7 @@ class OnboardingStatus(PyEnum):
 
 
 # Create PostgreSQL native enum types (referencing existing DB enums)
-organization_type_enum = PgEnum('restaurant', 'supplier', name='OrganizationType', create_type=False)
+organization_type_enum = PgEnum('restaurant', 'supplier', name='organizationtype', create_type=False)
 business_type_enum = PgEnum('company', 'individual', name='businesstype', create_type=False)
 onboarding_status_enum = PgEnum('invited', 'company_info', 'product_categories', 'sku_setup', 'pricing_config', 'completed', name='onboardingstatus', create_type=False)
 
