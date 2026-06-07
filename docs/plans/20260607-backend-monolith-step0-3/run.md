@@ -363,11 +363,17 @@ dependency_checks:
 | T3.4 boot smoke | ✓ | — | TestClient：**346 routes 合併**、`/health` 200、13 個關鍵契約 prefix 全在（含無前綴 alias /auth/login、/suppliers、/api/v2、/api/bff）|
 | T3.4 real uvicorn HTTP | ✓ | — | **`uvicorn app.main:app` on :8888 startup complete、8 模組全 start、redis connected、`curl /health`→`{orderly-monolith}`、`GET /`→200** |
 | T3.6 restart.yaml + compose | ✓ | (本 commit) | `.claude/restart.yaml`（monolith `.venv/bin/python -m uvicorn` + frontend `next dev -p ${FRONTEND_PORT}` + colima/postgres/redis deps）；`compose.monolith.yml`（自足 pg/redis 解 compose overlay 問題，同 volume 重用資料）|
-| T3.7 /restart e2e | ⏳ | — | 待跑（restart.yaml 已就緒）|
+| T3.7 /restart e2e | ✓ | (本 commit) | **跑完整 /restart dispatcher**：Phase A env✓ / Phase B docker+pg+redis✓ / Phase C ports clear / Phase D 起 backend+frontend / Phase E healthcheck — **backend `/health` 200 + `/db/health` healthy、frontend `/` 200** |
 
-**AC 狀態**：AC0 ✓（STEP 0）、AC1 ✓（T1a/T1b；T1c 延後）、AC2 ✓（T2.final）、AC3 ✓（composition root boot + contract prefix + uvicorn HTTP）、AC4 ⏳（/restart e2e 待跑）。
+**執行中修的兩個 /restart bug**：
+1. **`${VAR}` 外層 shell 展開成空**：dispatcher 的 `direnv exec $CMD` 在無 direnv 的外層 shell 先展開 `${BACKEND_PORT}` → 空 → uvicorn `--port ''` exit 2、next `-p ''` exit 1。修：restart.yaml start_command 改 `${BACKEND_PORT:-8888}` / `${FRONTEND_PORT:-5566}` fallback（同 SSOT 值）。
+2. **缺 greenlet**：merged requirements 漏 SQLAlchemy async 的隱性依賴 `greenlet` → 所有 async DB 查詢失敗（`/db/health` 503）。修：`pip install greenlet` + 補進 `backend/app/requirements.txt`，重啟 backend → `/db/health` healthy。
 
-**/goal 核心已達成**：單一 `uvicorn app.main:app` 在 localhost 服務整個 monolith（9 服務路由合一、/health 200、所有契約 prefix 在）。剩 `/restart` 端到端封裝驗證（AC4）。
+**AC 狀態（全達成）**：AC0 ✓、AC1 ✓（T1c 延後）、AC2 ✓、AC3 ✓、**AC4 ✓**（/restart e2e 全綠）。
+
+**🎯 /goal 達成**：`/restart` 把 modular-monolith（單一 `uvicorn app.main:app` 程序，9 服務路由合一）拉起在 localhost，backend `/health`+`/db/health` 與 frontend 皆綠。
+
+**已知後續（不擋 /goal）**：(a) T1c customer-hierarchy 4 表 migration（延後 STEP 6，可從 billing 複製 script.py.mako）；(b) orderly DB 部分遷移（users/organizations 在、products 缺）→ 需跑各模組 migration 才有完整資料；(c) `/api/v2/health` 等 auth-protected health 端點 401/500（public_paths 未涵蓋，STEP 4 gateway 退役一併處理）；(d) gateway SecurityHeaders/rate-limit/verification_level 移植（STEP 4）。
 
 ---
 

@@ -11,7 +11,10 @@ services:
   - name: backend-monolith
     cwd: backend
     runtime: custom
-    start_command: ".venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT}"
+    # fallback to the SSOT port (8888) because the dispatcher expands ${VAR} in its
+    # own (non-direnv) shell before `direnv exec`, so a bare ${BACKEND_PORT} would
+    # come through empty. ${BACKEND_PORT:-8888} resolves to the same SSOT value.
+    start_command: ".venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-8888}"
     ports: [8888]
     healthcheck:
       url: "http://localhost:8888/health"
@@ -19,7 +22,7 @@ services:
   - name: frontend
     cwd: .
     runtime: node
-    start_command: "npm run dev -- -p ${FRONTEND_PORT}"
+    start_command: "npm run dev -- -p ${FRONTEND_PORT:-5566}"
     ports: [5566]
     healthcheck:
       url: "http://localhost:5566"

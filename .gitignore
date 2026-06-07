@@ -23,6 +23,9 @@ backend/.venv/
 **/venv/
 *.pyc
 
+# /restart runtime state (machine-written)
+.claude/restart.state.json
+
 # IDE
 .vscode/
 .idea/
