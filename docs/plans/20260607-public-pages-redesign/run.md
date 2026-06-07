@@ -246,14 +246,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### Phase 3 — 新頁
 
-### Task 19: E2E for new pages（RED）
+### Task 19: E2E for new pages（post-execution GREEN）
 
 **Files:** Modify `e2e/public-pages.spec.ts`
 
-- [ ] Step 1: 加 spec：/contact 表單填寫+送出顯示成功；/privacy /terms 載入有標題與「整理中」說明；三頁皆回 200、有 nav/footer
-- [ ] Step 2: Run，Expected: FAIL；Commit `test(landing): add contact/privacy/terms E2E (RED)`
+- [x] Step 1: 加 spec：/contact 表單填寫+送出顯示成功；/privacy /terms 載入有標題與「整理中」說明；三頁皆回 200、有 nav/footer
+- [x] Step 2: Run，Result: PASS（2026-06-08，`PLAYWRIGHT_BASE_URL=http://localhost:5612 npx playwright test e2e/public-pages.spec.ts --reporter=line` → 11/11 passed）
+- [x] Step 3: Commit `test(landing): add contact privacy terms e2e`
 
-> 執行後稽核註（2026-06-08）：此 Task 的 E2E 增補**未落地**。目前 `e2e/public-pages.spec.ts` 仍是 Task 6 的 landing-scope 8 tests，檔頭明確排除 `/contact /privacy /terms`，且 `/contact` 只驗 href、不驗 200。頁面/API 交付由 Task 20-21 完成；AC4 的自動化 Playwright 覆蓋仍待收尾或明文降級。
+> 收尾註（2026-06-08）：Task 19 的自動化覆蓋已補齊。`e2e/public-pages.spec.ts` 現在包含 11 tests：原 landing/auth 8 tests + `/contact` submit success、`/privacy`、`/terms` 三頁 200/標題/「整理中」/nav/footer 斷言。AC4 automation gap 已關閉。
 
 ### Task 20: /contact 頁 + /api/contact stub
 
@@ -296,7 +297,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - AC1（清地雷，user-facing）：`/` 上 grep 不到任何杜撰客戶名 / demo 帳密 / 死按鈕 / hardcoded unsplash / SystemStatus 引用；Playwright 驗證。
 - AC2（landing 完整，user-facing）：`/` 含 12 區塊，E2E 驗每區可見 + 每按鈕導真目標（錨點捲動或路由 200），零 console error。
 - AC3（質感，user-facing）：dark 切換鈕作用（`<html class="dark">`）；reduced-motion 下動效顯終值；手機寬度 hero/nav/pricing 不破。
-- AC4（新頁，user-facing）：/contact 送出顯示成功；/privacy /terms 回 200 有誠實說明；三頁不撞 login 牆。**執行後狀態**：頁面/API 已交付且手動 dev 驗過；Playwright 三頁斷言未落地，故 AC4 不能標為 fully automated green。收尾二選一：補 Task 19 E2E 關閉缺口，或把本 AC 降級為「手動驗證 + E2E follow-up」。
+- AC4（新頁，user-facing）：/contact 送出顯示成功；/privacy /terms 回 200 有誠實說明；三頁不撞 login 牆。**執行後狀態**：頁面/API 已交付，且 Task 19 已補 Playwright 三頁斷言；2026-06-08 focused run `public-pages.spec.ts` 11/11 passed。
 - AC5（紀律）：所有示意數據畫面標「（示意）」；無捏造客戶名/假精度；定價 Free/3,999/9,999 真實級距 + 抽成註腳。
 - AC6（型別/lint）：**驗證標準＝相對 baseline 零新增 type error**（非 exit-0）。Repo 既有 **1074 個 pre-existing type error**（Task 0 實測，`git stash` baseline 對照確認），`type-check:full` 無法回 exit-0。每個 task 的判定：`npx tsc --noEmit` 後 `comm -13 <baseline> <current>` = 空集合（本 task 新增 0 error），且本 task 觸及的檔不在錯誤清單。`npm run lint` 對新增/修改檔綠。完整輸出不截斷。（pre-existing 1074 錯屬 Out of Scope，另案處理。）
 
@@ -346,12 +347,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **Task 8-13 ✅ DONE**（commit `5ec5089`）：13 landing 元件（workflow 並行 build）。
 - **Task 14 ✅ DONE**（commit `9129969`）：app/page.tsx compose 12 區塊；E2E GREEN。
 - **Task 15-17 ✅ DONE**（commit `9129969`）：刪 HeroSection/RoleSelector/HeroBackground（grep 確認無 dangling import）。
-- **Task 19 ⚠ PARTIAL（E2E 未落地）**：原規劃要把 `/contact` submit 成功、`/privacy`、`/terms` route-200 + 標題/整理中說明加入 `e2e/public-pages.spec.ts`；執行後稽核確認目前 spec 仍 landing-only，明確排除三頁。此為 AC4 自動化覆蓋缺口，不代表三頁功能不存在。
+- **Task 19 ✅ DONE（post-execution GREEN）**：`e2e/public-pages.spec.ts` 已補 `/contact` submit 成功、`/privacy`、`/terms` route-200 + 標題/整理中說明 + nav/footer 斷言；2026-06-08 focused run `PLAYWRIGHT_BASE_URL=http://localhost:5612 npx playwright test e2e/public-pages.spec.ts --reporter=line` → **11/11 passed**。AC4 automation gap 已關閉。
 - **Task 20-21 ✅ DONE**（commit `d2ced75`）：/contact（form + /api/contact PII-safe stub）、/privacy、/terms 誠實 stub。三頁存在，且 /api/contact 只記不含 PII 的 requestId/role/timestamp 或 validation metadata。
-- **Task 22 ✅ controller 親自驗證（landing-scope green；AC4 automation gap retained）**：tsc 1072（< 1074 baseline，無 regression，新檔 0 error）；PUBLIC_SCOPE 命名目標 grep 0 命中；**Playwright landing-scope 8/8 passed**（自跑 :5611，未涵蓋 /contact /privacy /terms）；截圖 oracle 確認 hero+12 區塊 render、對齊 mockup、真實定價、lucide icon。
+- **Task 22 ✅ controller 親自驗證（public-pages green）**：tsc 1072（< 1074 baseline，無 regression，新檔 0 error）；PUBLIC_SCOPE 命名目標 grep 0 命中；**Playwright public-pages 11/11 passed**（2026-06-08 自跑 :5612，涵蓋 landing/auth + /contact /privacy /terms）；截圖 oracle 確認 hero+12 區塊 render、對齊 mockup、真實定價、lucide icon。
 - **whileInView 觀察（非 bug）**：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖」下 IntersectionObserver 不觸發 → 全頁截圖空白；捲動截圖證明真使用者每段都看得到。若要對「無 JS / 預覽爬蟲 / 不捲動截圖」更穩，可把 reveal 改成 viewport margin 觸發或降低 initial opacity 依賴（建議，非阻擋）。
 - **Task 18 dark**：toggle 經 E2E 驗證可加 `class="dark"`；元件皆有 dark: variants。**深色逐區視覺尚未人工逐段確認**（建議補一次 dark 全頁目視）。
-- **狀態：Phase 1-3 核心頁面交付完成並 committed**（11 commits）。誠實收尾剩：Task 19 E2E gap（最小建議：補三頁 Playwright 斷言）、Task 18 dark 逐區人工目視、whileInView robustness / provenance 註解（nice-to-have）。PR/merge 時機 user 決定。
+- **狀態：Phase 1-3 核心頁面交付完成；Task 19 E2E gap 已補齊**。誠實剩餘項：Task 18 dark 逐區人工目視、whileInView robustness / provenance 註解（nice-to-have）。PR/merge 時機 user 決定。
 
 ---
 
@@ -365,7 +366,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - **13 landing 元件齊全**：`components/landing/` 有 13 個 `.tsx`（LandingNav/Hero/ReconciliationCard/TrustBar/PainSolution/HowItWorks/ReconciliationShowcase/RoleTabs/FeatureGrid/Pricing/FAQ/FinalCTA/LandingFooter）+ `landingData.ts`，與 §Complexity Budget「13」一致。
 - **app/page.tsx 純組合**：import 並依序 render 12 區塊（LandingNav→Hero→TrustBar→PainSolution→HowItWorks→ReconciliationShowcase→RoleTabs→FeatureGrid→Pricing→FAQ→FinalCTA→LandingFooter）；無 `SystemStatus`/`HeroSection`/`RoleSelector` 殘留引用。
 - **新頁齊全**：`app/(marketing)/{contact,privacy,terms}/page.tsx` + `app/api/contact/route.ts` 皆存在。
-- **E2E spec 存在**：`e2e/public-pages.spec.ts`（8 tests）+ `playwright.config.ts`。
+- **E2E spec 存在**：`e2e/public-pages.spec.ts`（11 tests，含 /contact /privacy /terms）+ `playwright.config.ts`。
 
 ### B. 紀律硬約束 — ✓真守
 
@@ -390,7 +391,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### E. Honest 剩餘清單（非阻擋；user 決定要不要收）
 
-1. **Task 19 行銷頁 E2E 實際缺席（AC4「via Playwright」未達；頁已建+手動驗）**（Codex R4 抓出）：`e2e/public-pages.spec.ts:9` 明寫「範圍僅限 landing 本頁與既有 /login、/register；**不驗 /contact /privacy /terms**」，且 `/contact` 只驗 href（`:52` 「僅驗 href，不驗 200」）。即 §Task 19 規劃的「/contact 送出顯示成功；/privacy /terms 回 200」**E2E 斷言並未進 spec**。三頁**確實存在**（§A 驗證）且 §Task 20 自承「dev 手動送出一次驗證成功路徑」、privacy/terms dev 目視——但**自動化 E2E 覆蓋缺席**。故 §AC4 的「Playwright 驗證」部分**未達**（功能面以手動驗證代替）。**修法二選一（user 決定）**：(a) 把 Task 19 的三頁斷言補進 `public-pages.spec.ts`（/contact submit→成功、/privacy /terms 200 + 標題）關閉 gap；(b) 把 §AC4 降級為「手動驗證 + 自動化 E2E 列 follow-up」。**本輪 plan-review 已套用文件修正**：Execution Progress 已拆分為 Task 19 PARTIAL、Task 20-21 DONE，避免把頁面交付誤寫成 E2E 也完成。
+1. **Task 19 行銷頁 E2E gap 已關閉（2026-06-08）**：`e2e/public-pages.spec.ts` 已補 `/contact` submit→成功、`/privacy`/`/terms` 200 + 標題 +「整理中」+ nav/footer 斷言；focused run `PLAYWRIGHT_BASE_URL=http://localhost:5612 npx playwright test e2e/public-pages.spec.ts --reporter=line` → **11/11 passed**。§AC4 的 Playwright automation 已達。
 2. **Task 18 深色逐區人工目視**：E2E 已驗 toggle 能加 `<html class="dark">`、11 元件有 `dark:` variants，但「逐區對比 / 無白字白底」尚未人工逐段確認（Execution Progress 自承）。**建議**：merge 前跑一次 dark 全頁目視 + 截圖，或明確接受為 follow-up。
 3. **whileInView reveal robustness**（非 bug）：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖 / 無 JS / 預覽爬蟲」下 IntersectionObserver 不觸發 → 該情境下首屏外內容初始 opacity 低。真使用者捲動正常。**建議（非阻擋）**：reveal 改 viewport-margin 觸發或降低對 initial opacity 的依賴，提升無 JS/預覽穩健度。
 4. **provenance 註解可選改寫**（非阻擋）：若想讓 tripwire grep 永遠純 0、免 carve-out，可把 `Hero.tsx`/`landingData.ts` 兩處註解的 `images.unsplash.com` 改寫成不含完整 domain 的描述（例「Unsplash photo 1414235077428」）。屬 1-line code follow-up，不在本 plan-review 文件範圍內執行。
@@ -414,9 +415,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 - 新頁 `app/(marketing)/{contact,privacy,terms}/page.tsx` + `app/api/contact/route.ts` 皆存在；`public/hero/restaurant-hero.jpg`（602 KB）在。
 - 命名目標 PUBLIC_SCOPE grep：杜撰名 / `demo1234` / `demo.orderly.tw` / `查看功能比較表` / `app/page.tsx` 內 `SystemStatus` 全 0 hit。`images.unsplash.com` 僅 2 hit（`landingData.ts:9`、`Hero.tsx:11`，皆 block-comment provenance），live-usage（排除 `:\s*\*`）0 hit。**5/5 命名目標真除（100%），無跨輪停滯。**
 - `app/api/contact/route.ts` 共 3 個 console（`:48` warn / `:68` warn / `:76` info），payload 僅 `requestId` / `role` / `timestamp` / `missing`，無 PII，與 §B 一致。
-- `e2e/public-pages.spec.ts` = 8 tests，檔頭明排除 `/contact /privacy /terms`，`/contact` 只驗 href（`:52`）— 與 §E item 1 的 AC4 automation gap 一致。
+- `e2e/public-pages.spec.ts` = 11 tests，含 `/contact` submit success、`/privacy`、`/terms` 的 200/標題/整理中/nav/footer 斷言；檔頭已更新為 GREEN 現況。
 
-**本輪唯一新增 nice-to-have（非阻擋，code follow-up，不在本 plan-review 改 code 範圍）：**
-- `e2e/public-pages.spec.ts:3-10` 檔頭註解仍寫「此 spec 為 RED…元件尚未建立…待 Phase 2 元件完成後轉綠」，但 Task 14 已完成、spec 已 GREEN。屬已交付檔內的過期描述（truth-drift）。建議下次觸及 spec 時順手把註解更新為 GREEN / landing-scope 現況；不影響執行結果。
+**本輪新增 nice-to-have 已關閉（2026-06-08）：**
+- `e2e/public-pages.spec.ts:3-10` 檔頭註解已更新為目前 GREEN / public-pages 現況，不再描述 RED 或排除 `/contact /privacy /terms`。
 
-**結論：** 無 scope 變動、無 feature 新增。§E 既有剩餘項（Task 19 E2E gap / Task 18 dark 目視 / whileInView / provenance rewrite）維持原狀；收尾路徑與時機由 user 決定。
+**結論：** 無 scope 變動、無 feature 新增。Task 19 E2E gap 已關閉；剩餘項為 Task 18 dark 目視、whileInView robustness、provenance rewrite（後兩者 nice-to-have），收尾路徑與時機由 user 決定。
