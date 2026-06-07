@@ -334,4 +334,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 - **Task 0 ✅ DONE**（commit `114f0a8`）：next-themes ^0.4.6 + framer-motion ^12.40.0 安裝；`tailwind.config.ts` 加 `darkMode:'class'`；`components/ThemeProvider.tsx` 建立；`app/layout.tsx` 包 ThemeProvider（在 AuthProvider 外）。controller 驗證：ThemeProvider/next-themes/framer-motion 新增 0 type error。
   - **發現**：`type-check:full` = 1074 pre-existing error（baseline）。已據此改 AC6 驗證標準為「相對 baseline 零新增」。
-- Task 1 → 進行中（下一個）。
+- **Task 1 ✅ DONE**（commit `866e5bf`）：移除 HeroSection.tsx 杜撰客戶名信任區塊；PUBLIC_SCOPE grep 0 hit；JSX 平衡確認。**live 可信度地雷已清除**。
+- **Phase 1 其餘 redundancy 決議**（同 PR 全量交付）：T2(RoleSelector demo 帳密/死按鈕)、T3(app/page.tsx SystemStatus)、T5(HeroSection hero 文案) 動的檔將於 Phase 2 被刪除/重寫取代 → **同 PR 下略過**（由 Phase 2 新元件根除）。T4 拆兩半：**T4a NavigationHeader 登入 href（該檔存活，仍需做）**；T4b HeroBackground 圖本地化由 Phase 2 Hero.tsx 內建本地圖取代 → 略過。
+- **Task 4a ✅ DONE**（commit `f0784d6`）：NavigationHeader 桌面+手機登入按鈕補 `<Link href="/login">`。**死登入按鈕已修**。
+- **Task 7 ✅ DONE**（commit `0943f29`）：`components/landing/landingData.ts`（typed SSOT，全 14 export，sample flag、真實定價、ERP/API feature、無杜撰名）。0 新 tsc error。
+- **Task 6 ✅ DONE（RED）**（commit `0943f29`）：`e2e/public-pages.spec.ts`（landing-scope，8 tests）+ `playwright.config.ts`（baseURL 5566）。
+- **@playwright/test ✅ 安裝**（commit `ffd95bf`，^1.60.0 + chromium）；spec 可列 8 tests。
+- ⚠ 給元件實作者：dark-toggle 需 accessible name 含 `深色/dark/主題/切換`（E2E locator 用 `getByRole('button',{name:/(dark|深色|theme|主題|切換)/i})`）→ LandingNav 切換鈕加 `aria-label="切換深色模式"`。
+- **下一步：Task 8-13 元件 build**（讀 landingData，dark: classes + framer-motion + reduced-motion fallback + 響應式 + focus ring）→ T14 compose app/page.tsx（E2E GREEN）→ T15-17 刪過渡元件（HeroSection/RoleSelector/HeroBackground）→ T18 dark 複驗 → Phase 3（T19-22 /contact /privacy /terms + 全量驗收）。

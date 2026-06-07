@@ -10,9 +10,11 @@
 未定 — 由 H-1 詢問 user（預設 subagent-driven）。
 
 ## Next Exact Step
-**Task 1 Step 1**：移除 `components/HeroSection.tsx` L147-165 整段「信任標誌」區塊（含「已獲得以下企業信任」+ 4 個杜撰客戶名 大樂司/樂多多/烤食組合/稻舍）。然後 `grep -rn '大樂司\|樂多多\|烤食組合\|稻舍' $PUBLIC_SCOPE` → 0 hit（PUBLIC_SCOPE 不含 OOS dashboard mock）。
+**Task 8 — `components/landing/LandingNav.tsx`**：sticky nav，讀 `landingData.NAV_LINKS`（#features/#roles/#pricing/#faq 錨點）+ logo + 登入(`/login`) + 預約Demo(`/contact`) + **dark 切換鈕（必加 `aria-label="切換深色模式"`，用 next-themes `useTheme`）** + 滾動縮高 + 手機漢堡。dark: classes、focus ring、響應式。接著 Task 9-13 其餘元件，全部讀 `landingData.ts`。
 
-> Task 0 ✅ 完成（commit 114f0a8）。**驗證標準已改**：repo 有 1074 pre-existing type error，task 判定＝相對 baseline 零新增（非 exit-0）——見 run.md AC6。
+> 已完成並 committed：Task 0(114f0a8)、Task 1(866e5bf 移除杜撰客戶名)、Task 4a(f0784d6 修死登入)、Task 7+6(0943f29 landingData+E2E RED)、playwright dep(ffd95bf)。
+> **驗證標準**：repo 1074 pre-existing tsc error，task 判定＝相對 baseline 零新增（非 exit-0）。E2E 驗證需 dev server 在 5566（或設 PLAYWRIGHT_BASE_URL）。
+> **Phase 1 redundancy 決議**：T2/T3/T5/T4b 在同 PR 由 Phase 2 取代，已略過（見 run.md Execution Progress）。
 
 ## 階段順序
 1. Task 0：deps + tailwind dark + ThemeProvider
