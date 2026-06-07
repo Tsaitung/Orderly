@@ -325,7 +325,7 @@ dependency_checks:
 - **AC0**：`grep -rn "sys.path.append\|sys.path.insert" backend/*-fastapi --include=*.py`（指向 libs 者）為 0；`grep -rln "from libs.orderly_fastapi_core" backend` 為 0；9 服務原地 `import app.main` 全綠。
 - **AC1**：throwaway DB 上 user / product / customer-hierarchy 各 `alembic upgrade head` 成功；product/customer-hierarchy models import 無 mapper error。
 - **AC2**：同一 interpreter 一次 import 全 9 個 `app.modules.<svc>.main` 成功（無 shadow）；原 `backend/*-fastapi` 已無 python 套件殘留。
-- **AC3**：單一 `uvicorn app.main:app` 起；§STEP 3 frozen contract 表 **7 條**全綠（login JSON 形狀、無前綴 alias、雙前綴 `/api/api/suppliers`、product v1-optional、/api/v2 hierarchy、list envelope、/acceptance；**不含 /ws/orders**，見 WebSocket 註）。
+- **AC3**：單一 `uvicorn app.main:app` 起；§STEP 3 frozen contract 表 7 條於 TestClient 層 **route prefix 全數存在**（T3.4 證據：346 routes 合併、13 關鍵 prefix present）。**⚠ 執行後稽核修正（2026-06-07）**：T3.4/T3.7 實際記錄的證據是「route prefix 存在 + `/restart` e2e（`/health`、`/db/health`、frontend `/`）」，**並非逐條 curl 200+expected-shape**。其中 3 row 的字面路徑經靜態重驗與實際 frontend 呼叫不一致（notifications、suppliers 雙前綴、products `v1/skus`，見 §執行後驗證稽核），需 runtime 逐條 curl 補證才算「全綠」。**不含 /ws/orders**（無後端 handler，見 WebSocket 註）。
 - **AC4**：`.claude/restart.yaml` 存在；`/restart` Phase B-E 全綠，monolith `/health` + frontend 皆 200 → **/goal 達成**。
 
 ---
@@ -373,7 +373,14 @@ dependency_checks:
 
 **🎯 /goal 達成**：`/restart` 把 modular-monolith（單一 `uvicorn app.main:app` 程序，9 服務路由合一）拉起在 localhost，backend `/health`+`/db/health` 與 frontend 皆綠。
 
-**已知後續（不擋 /goal）**：(a) T1c customer-hierarchy 4 表 migration（延後 STEP 6，可從 billing 複製 script.py.mako）；(b) orderly DB 部分遷移（users/organizations 在、products 缺）→ 需跑各模組 migration 才有完整資料；(c) `/api/v2/health` 等 auth-protected health 端點 401/500（public_paths 未涵蓋，STEP 4 gateway 退役一併處理）；(d) gateway SecurityHeaders/rate-limit/verification_level 移植（STEP 4）。
+**已知後續（不擋 /goal；狀態於 2026-06-07 執行後稽核更新）**：
+
+- **(a) T1c customer-hierarchy 4 表（activity_metrics/dashboard_summary/performance_rankings/activity_trends）— 部分解，記錄已過時。** plan 後 commit `7dd5e51`（unified-metadata `create_all` rebuild）已在**本機 orderly DB** 建出這 4 表，且 customer-hierarchy alembic 的 `script.py.mako` 現已存在（不再需從 billing 複製）。**residual（仍 open）**：這 4 表**仍無 per-module alembic migration** → 全新環境跑 customer-hierarchy 自己的 `alembic upgrade head` 仍不會建出 → schema-vs-model drift 未閉。歸 STEP 6（真正 alembic 收斂）。
+- **(b) orderly DB 部分遷移（products 缺）— 已解，記錄已過時。** plan 後 `fa22f55`（3→34 表）+ `7dd5e51`（rebuild 至 42 表 unified schema）已補齊；products 表現存。
+- **(c) `/api/v2/health` 等 auth-protected health 401/500 — root-cause 已修，public_paths gap 仍掛 STEP 4。** `fd9d852` 修掉 AuthMiddleware raise-500（改回正規 401）；但 `/api/v2/health` 因 customer-hierarchy 自帶 AuthMiddleware 無 `public_paths` kwarg、composition root union loop 採不到 → 仍 auth-protected，歸 STEP 4。
+- **(d) gateway SecurityHeaders / rate-limit / verification_level 移植 — 仍 open。** 無 commit 處理；composition root 目前只套 CORS + core AuthMiddleware（`backend/app/main.py:14-16,63,88`），SecurityHeaders/rate-limit 明確延 STEP 4。
+
+> **Scope-clarity（防 audit trail 失真）**：plan 後 commit `7dd5e51` 的 subject 寫「STEP 5/6 schema consolidation」，但其實質是 **pragmatic 的 unified `create_all` rebuild**（自描述「STEP 6-pragmatic」），用來把本機 dev DB 重建到能跑通完整 auth flow。它**不是**本 plan §Out of Scope 列的結構性 **STEP 5（收斂成單一 SQLAlchemy Base）/ STEP 6（單一 `alembic_version` + 接鏈）**——repo 現況仍是 **8 個 per-module `Base`（`declarative_base()`）+ 8 條 per-module alembic 鏈**，consolidated migration（`consolidated_schema_0001`）是 `down_revision=None` 的 dangling standalone root，未接入任何鏈。結構性 STEP 5/6 **仍 Out-of-Scope、未做**。
 
 ---
 
@@ -398,3 +405,53 @@ dependency_checks:
 ## Rollback
 
 每個 STEP 的每個動作都是獨立 commit；回退 = `git revert <commit>`。STEP 2 的 `git mv` 亦可整 commit revert 還原原目錄結構。STEP 1a alembic 修改若已套到實 DB，需手動補回（但本 plan 只在 throwaway DB 驗，不碰 staging/prod；DB 收斂屬 STEP 6）。
+
+---
+
+## 執行後驗證稽核 (Post-Execution Verification Audit) — 2026-06-07（plan-review ultra-research）
+
+> 對「已執行」的本 plan，把執行紀錄的宣稱逐條對照 codebase 真實狀態（4-agent 平行靜態驗證 + 手動 spot-check 複驗）。目的：修正 audit trail 失真，**非**擴張 scope。下列發現皆為「文件準確性 / 證據誠實度」修正，不引入新 code、不改既有路由。
+
+### A. 結構性宣稱 — 全部 ✓（無漂移）
+
+- `backend/libs/pyproject.toml`（setuptools find `orderly_fastapi_core*`）存在、core 已 editable 安裝（PEP 660 `.pth`，`import orderly_fastapi_core` 解析到 `backend/libs/orderly_fastapi_core/__init__.py`）。
+- `backend/app/main.py` composition root 存在：迴圈 `include_router(_mapp.router)` 掛 8 模組（gateway_compat 刻意排除）、CORS + AuthMiddleware 套一次、`/health` 200。
+- 9 模組 `backend/app/modules/<svc>/main.py` 全在；`from libs.orderly_fastapi_core` grep = 0；libs-指向的 `sys.path` hack = 0。
+- `.claude/restart.yaml` 存在（monolith `.venv/bin/python -m uvicorn` + frontend + colima/pg/redis deps）。
+
+### B. STEP 1 crasher — 全部 ✓真修真驗
+
+- user 002 建 `supplier_invitations` + 全部 organization 欄位/索引/FK；003 `upgrade()`/`downgrade()` 現為 `pass`（no-op）；鏈 `004.down_revision=003` 完整。
+- products `models/sku.py` 已刪；無 `from app.models.sku import` 殘留；stale test 已 repoint（`sku_simple`/`supplier_sku`）+ `test_get_sku_allergens` skip。
+- customer-hierarchy `script.py.mako` 與 billing `script.py.mako` 皆存在。
+
+### C. STEP 3 frozen contract — 字面字串需 runtime 補證（3 row）
+
+靜態重驗 composition root 路由掛載 vs 真實 frontend 呼叫，**3 row 的契約表字面字串與真實不一致**。注意：composition root 用 `app.include_router(module_app.router)` 會把各 module-app 既有 full path（含其內部 `/api`+`""` dual-mount）原樣複製，故下列需**實機 curl** 才能定論，靜態僅能標出不一致：
+
+| 契約表寫法（run.md §T3.5） | 真實 frontend 呼叫 | 靜態查到的後端掛載 | 判定 |
+|---|---|---|---|
+| `GET /api/notifications`（list envelope row）| `/notifications`（`lib/api/notifications.ts:5`）| notifications router 裸掛 → `/notifications` | **契約表 typo**；真實呼叫與後端一致，功能正常，僅文件字串錯 |
+| `GET /api/api/suppliers/suppliers`（雙前綴 row）| `/api/suppliers/suppliers`（`SUPPLIER_SERVICE_PATH='/api/suppliers'`，`lib/api/supplier/api.ts:44`）| suppliers router dual-mount `/api`+`""`（`suppliers/main.py:27-28`）| 字面 `/api/api/...` 與真實 `/api/...` 不符；**需 runtime curl `/api/suppliers/suppliers` 確認 200** |
+| `GET /api/products/v1/skus`（product v1-optional row）| frontend **確有**呼叫（`lib/api/supplier/api.ts:549,558,568…`，部分走 `/api/bff` 代理）| 靜態全 repo 查無 `v1/skus` 後端路由 | 既有 **v1-optional 缺口**（plan 已標 optional），**非本次遷移引入**；獨立 runtime 查 |
+
+其餘 4 row（login JSON、`/api/v2/hierarchy/tree`、`/api/orders`、`/acceptance/health`）靜態確認路由存在。
+
+### D. Warnings（非阻斷，不擴 scope）
+
+- **W1 舊 dir 非空**：`backend/*-fastapi/` 已無 `app/` python package（AC2 字面成立），但仍留 `tests/`、散落頂層 scripts，且 `customer-hierarchy-service-fastapi` 仍含 nested `venv/`（2312 .py）。清理屬 STEP 9。
+- **W2 alembic sys.path**：6 個 `sys.path.insert` 留在 per-module `alembic/env.py`（指 `backend/` root 非 libs），與 plan 意圖一致（libs hack 已除），AC0 已正確限定「指向 libs 者」。
+- **W3 products 無前綴 alias**：`/products/<x>` 未 dual-mount（products 只掛 `/api/products`）；需確認無 frontend 直呼 unprefixed `/products`。
+
+### E. Positive（認可，保留）
+
+- composition root 以「re-include 每 module-app 的 `.router`」優雅保留 dual `/api`+no-prefix mount，免重宣告前綴。
+- gateway_compat 正確排除、composition path 無 httpx proxy（Codex R1/R2 修正持續成立）。
+- /ws/orders 正確排除 frozen contract（後端確無 WebSocket handler）。
+
+### F. 稽核衍生的 runtime 補證清單（建議下一個 session 起單體後逐條跑，非本 plan 阻斷項）
+
+1. `curl /api/suppliers/suppliers` → 預期 200（確認 suppliers 雙前綴真實路徑）。
+2. `curl /api/products/v1/skus` → 確認屬已知 optional 缺口或實際 404（與 frontend supplier SKU 管理 UI 對照）。
+3. `curl /notifications`、`/api/orders` → 確認 list envelope `{success,data,count}` 形狀。
+4. STEP 4 啟動前確認 `/api/v2/health` public_paths gap（follow-up c）。
