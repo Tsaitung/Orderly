@@ -367,7 +367,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 ### B. 紀律硬約束 — ✓真守
 
 - **hero 圖在地化**：`public/hero/restaurant-hero.jpg` 實體存在（602 KB）；`Hero.tsx:107` `src={HERO_IMAGE_SRC}`，`landingData.ts:20` `HERO_IMAGE_SRC = '/hero/restaurant-hero.jpg'`。**無 runtime Unsplash 熱連**。
-- **/api/contact PII-safe**：`route.ts:75-80` 唯一落地 `console.info` 只記 `{requestId, role, timestamp}`（明確註解「無任何 PII」）；email/聯絡人/需求只用於驗證、不入 log。守 C-W2。
+- **/api/contact PII-safe**：route.ts 共 3 個 console 語句，**皆無 PII**——成功 `console.info`（`:76`）記 `{requestId, role, timestamp}`（註解「唯一允許落地的稽核資訊…無任何 PII」）；2 個失敗 `console.warn`（`:48` invalid JSON、`:68` validation failed）僅記 `{requestId, timestamp}` / `{requestId, timestamp, missing}`。email/聯絡人/需求只用於驗證、不入任何 log。守 C-W2。（Codex R4 修正：原寫「唯一落地 console.info」不準——尚有 2 個 PII-safe warn log。）
 - **示意標記**：6 個 landing 元件含「示意」字樣；定價真實級距（`landingData.ts` 含 3,999 / 9,999 / Free）。
 - **dark variants**：11 個 landing 元件含 `dark:` class。
 
@@ -387,9 +387,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 ### E. Honest 剩餘清單（非阻擋；user 決定要不要收）
 
-1. **Task 18 深色逐區人工目視**：E2E 已驗 toggle 能加 `<html class="dark">`、11 元件有 `dark:` variants，但「逐區對比 / 無白字白底」尚未人工逐段確認（Execution Progress 自承）。**建議**：merge 前跑一次 dark 全頁目視 + 截圖，或明確接受為 follow-up。
-2. **whileInView reveal robustness**（非 bug）：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖 / 無 JS / 預覽爬蟲」下 IntersectionObserver 不觸發 → 該情境下首屏外內容初始 opacity 低。真使用者捲動正常。**建議（非阻擋）**：reveal 改 viewport-margin 觸發或降低對 initial opacity 的依賴，提升無 JS/預覽穩健度。
-3. **provenance 註解可選改寫**（非阻擋）：若想讓 tripwire grep 永遠純 0、免 carve-out，可把 `Hero.tsx`/`landingData.ts` 兩處註解的 `images.unsplash.com` 改寫成不含完整 domain 的描述（例「Unsplash photo 1414235077428」）。屬 1-line code follow-up，不在本 plan-review 文件範圍內執行。
+1. **Task 19 行銷頁 E2E 實際缺席（AC4「via Playwright」未達；頁已建+手動驗）**（Codex R4 抓出）：`e2e/public-pages.spec.ts:9` 明寫「範圍僅限 landing 本頁與既有 /login、/register；**不驗 /contact /privacy /terms**」，且 `/contact` 只驗 href（`:52` 「僅驗 href，不驗 200」）。即 §Task 19 規劃的「/contact 送出顯示成功；/privacy /terms 回 200」**E2E 斷言並未進 spec**。三頁**確實存在**（§A 驗證）且 §Task 20 自承「dev 手動送出一次驗證成功路徑」、privacy/terms dev 目視——但**自動化 E2E 覆蓋缺席**。故 §AC4 的「Playwright 驗證」部分**未達**（功能面以手動驗證代替）。**修法二選一（user 決定）**：(a) 把 Task 19 的三頁斷言補進 `public-pages.spec.ts`（/contact submit→成功、/privacy /terms 200 + 標題）關閉 gap；(b) 把 §AC4 降級為「手動驗證 + 自動化 E2E 列 follow-up」。**Execution Progress「Task 19-21 ✅ DONE」應據此標註**：頁交付 done，Task 19 的 E2E-RED 斷言未落地。
+2. **Task 18 深色逐區人工目視**：E2E 已驗 toggle 能加 `<html class="dark">`、11 元件有 `dark:` variants，但「逐區對比 / 無白字白底」尚未人工逐段確認（Execution Progress 自承）。**建議**：merge 前跑一次 dark 全頁目視 + 截圖，或明確接受為 follow-up。
+3. **whileInView reveal robustness**（非 bug）：framer-motion reveal-on-scroll 在「不捲動 fullPage 截圖 / 無 JS / 預覽爬蟲」下 IntersectionObserver 不觸發 → 該情境下首屏外內容初始 opacity 低。真使用者捲動正常。**建議（非阻擋）**：reveal 改 viewport-margin 觸發或降低對 initial opacity 的依賴，提升無 JS/預覽穩健度。
+4. **provenance 註解可選改寫**（非阻擋）：若想讓 tripwire grep 永遠純 0、免 carve-out，可把 `Hero.tsx`/`landingData.ts` 兩處註解的 `images.unsplash.com` 改寫成不含完整 domain 的描述（例「Unsplash photo 1414235077428」）。屬 1-line code follow-up，不在本 plan-review 文件範圍內執行。
 
 ### F. Positive（認可，保留）
 
