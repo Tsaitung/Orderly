@@ -1,11 +1,10 @@
 'use client'
 
 /**
- * Hero.tsx — 井然 Orderly premium landing 的 Hero（版型 A：大型餐廳照片 + 置中疊圖）。
+ * Hero.tsx — 井然 Orderly premium landing 的 Hero。
  *
  * 文案／數字全部 import 自 landingData（SSOT），元件不 hardcode 任何文案或數字。
- * 對應已核准視覺 mockup 的「2 HERO (A)」區塊：
- *   .superpowers/brainstorm/65035-1780824512/content/full-mockup.html (lines 34-48, 143-163)
+ * 視覺重點：讓對帳產品卡成為首屏主角，餐廳照片退為右側輔助情境。
  *
  * 背景圖為本機在地化檔案 public/hero/restaurant-hero.jpg（NOT 遠端 URL），
  * 來源：Unsplash 免費授權
@@ -16,70 +15,9 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
-import { ArrowRight, PlayCircle, Check, TriangleAlert } from 'lucide-react'
+import { ArrowRight, PlayCircle } from 'lucide-react'
 import { HERO, HERO_STATS, HERO_IMAGE_SRC } from '@/components/landing/landingData'
-
-/**
- * 浮動的對帳卡片預覽（mockup `.reccard`）。
- * 內含示意資料，標籤逐字對應 mockup；行動裝置隱藏（lg 以下）。
- */
-function ReconciliationCard() {
-  const rows: Array<{ name: string; status: 'ok' | 'warn'; tag: string }> = [
-    { name: '牛番茄 12kg', status: 'ok', tag: '相符' },
-    { name: '去骨雞腿 8kg', status: 'ok', tag: '相符' },
-    { name: '高麗菜 6箱', status: 'warn', tag: '價差 NT$54' },
-  ]
-
-  return (
-    <div
-      aria-hidden="true"
-      className="hidden lg:block absolute right-[max(1.5rem,calc((100vw-1180px)/2))] bottom-20 z-20 w-[300px] rounded-[10px] bg-white p-3.5 text-left text-gray-900 shadow-2xl shadow-black/40 ring-1 ring-black/5 dark:bg-gray-900 dark:text-gray-100 dark:ring-white/10"
-    >
-      <div className="flex items-center justify-between text-[13px] font-bold">
-        <span>晨間配送核對</span>
-        <span className="rounded-[10px] bg-amber-100 px-[7px] py-px text-[11px] font-bold text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
-          3 待確認
-        </span>
-      </div>
-      <p className="mb-2 mt-px text-[11px] text-gray-500 dark:text-gray-400">
-        大廚餐飲 · 訂單 #2049
-      </p>
-
-      <ul>
-        {rows.map((row) => (
-          <li
-            key={row.name}
-            className={`flex items-center justify-between border-b border-gray-100 py-[5px] text-[12.5px] last:border-b-0 dark:border-gray-800 ${
-              row.status === 'warn' ? '-mx-3.5 px-3.5 bg-orange-50/70 dark:bg-orange-500/10' : ''
-            }`}
-          >
-            <span className="text-gray-700 dark:text-gray-200">{row.name}</span>
-            {row.status === 'ok' ? (
-              <span className="inline-flex items-center gap-1 rounded-[10px] bg-emerald-100 px-[7px] py-px text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
-                <Check className="h-3 w-3" aria-hidden="true" />
-                {row.tag}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 rounded-[10px] bg-orange-100 px-[7px] py-px text-[11px] font-bold text-orange-800 dark:bg-orange-500/20 dark:text-orange-300">
-                <TriangleAlert className="h-3 w-3" aria-hidden="true" />
-                {row.tag}
-              </span>
-            )}
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-2.5 text-[11px] text-gray-500 dark:text-gray-400">
-        AI 信心 94%
-        <div className="mt-1 h-1.5 overflow-hidden rounded-[3px] bg-gray-200 dark:bg-gray-700">
-          <span className="block h-full w-[94%] bg-gradient-to-r from-primary-500 to-emerald-500" />
-        </div>
-      </div>
-
-      <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">（示意）</p>
-    </div>
-  )
-}
+import ReconciliationCard from '@/components/landing/ReconciliationCard'
 
 export default function Hero() {
   const reduceMotion = useReducedMotion()
@@ -104,95 +42,102 @@ export default function Hero() {
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="relative flex min-h-[88vh] items-center overflow-hidden text-white"
+      className="relative isolate overflow-hidden bg-[#fbfaf7] text-gray-950 dark:bg-gray-950 dark:text-gray-50"
     >
-      {/* 背景照片（本機在地化檔案） */}
-      <Image
-        src={HERO_IMAGE_SRC}
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover [filter:saturate(1.15)_brightness(0.92)]"
-      />
-      {/* 深色漸層遮罩 */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-b from-[rgba(30,18,12,0.55)] to-[rgba(30,18,12,0.80)]"
-      />
-      {/* 細格線疊圖 */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-50 [background-image:linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:40px_40px]"
+        className="absolute inset-0 bg-[linear-gradient(90deg,rgba(164,120,100,0.08)_1px,transparent_1px),linear-gradient(rgba(164,120,100,0.08)_1px,transparent_1px)] bg-[size:44px_44px] opacity-45 dark:bg-[linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px)]"
       />
 
-      {/* 置中內容 */}
-      <div className="container relative z-10 mx-auto px-4">
+      <div className="container relative z-10 mx-auto px-4 py-8 sm:py-12 lg:py-16">
         <motion.div
           variants={container}
           initial="hidden"
           animate="show"
-          className="mx-auto max-w-3xl pb-28 pt-16 text-center md:pt-20"
+          className="grid items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.88fr)_minmax(440px,1.12fr)] lg:gap-10"
         >
-          <motion.h1
-            id="hero-heading"
-            variants={item}
-            className="text-4xl font-black tracking-tight [text-shadow:0_3px_20px_rgba(0,0,0,0.5)] md:text-5xl lg:text-[52px] lg:leading-tight"
-          >
-            {HERO.titleLine1}
-            <br />
-            到 <span className="text-[#f0c9b6]">{HERO.titleAccent}</span>
-          </motion.h1>
-
-          <motion.p
-            variants={item}
-            className="mx-auto mt-5 max-w-xl text-base text-[#f0e8e2] [text-shadow:0_2px_10px_rgba(0,0,0,0.5)] md:text-lg"
-          >
-            {HERO.subtitle}
-          </motion.p>
-
-          <motion.div
-            variants={item}
-            className="mt-8 flex flex-col items-center justify-center gap-3.5 sm:flex-row"
-          >
-            <Link
-              href={HERO.primaryCta.href}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded bg-white px-7 py-3 text-base font-bold text-gray-900 shadow-lg transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 sm:w-auto"
+          <div className="max-w-2xl text-center lg:text-left">
+            <motion.h1
+              id="hero-heading"
+              variants={item}
+              className="text-4xl font-black leading-[1.08] text-gray-950 dark:text-white md:text-5xl lg:text-[56px]"
             >
-              {HERO.primaryCta.label}
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <Link
-              href={HERO.secondaryCta.href}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded border-[1.5px] border-white/60 bg-transparent px-7 py-3 text-base font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 sm:w-auto"
+              {HERO.titleLine1}
+              <br />
+              <span className="inline-block bg-primary-100 px-2 text-primary-900 shadow-[inset_0_-0.22em_0_rgba(164,120,100,0.22)] dark:bg-primary-500/15 dark:text-[#ffd8c7] dark:shadow-[inset_0_-0.22em_0_rgba(255,216,199,0.16)]">
+                {HERO.titleAccent}
+              </span>
+            </motion.h1>
+
+            <motion.p
+              variants={item}
+              className="mx-auto mt-4 max-w-xl text-base leading-7 text-gray-700 dark:text-gray-300 md:mt-5 md:text-lg md:leading-8 lg:mx-0"
             >
-              <PlayCircle className="h-4 w-4" aria-hidden="true" />
-              {HERO.secondaryCta.label}
-            </Link>
+              {HERO.subtitle}
+            </motion.p>
+
+            <motion.div
+              variants={item}
+              className="mx-auto mt-6 grid w-full max-w-[360px] grid-cols-2 gap-3 sm:flex sm:max-w-none sm:flex-row lg:mx-0 lg:justify-start"
+            >
+              <Link
+                href={HERO.primaryCta.href}
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md bg-primary-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary-900/15 transition hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfaf7] dark:bg-primary-500 dark:hover:bg-primary-400 dark:focus-visible:ring-offset-gray-950 sm:w-auto sm:gap-2 sm:px-7 sm:text-base"
+              >
+                {HERO.primaryCta.label}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href={HERO.secondaryCta.href}
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-1.5 rounded-md border border-gray-300 bg-white/75 px-4 py-3 text-sm font-bold text-gray-900 shadow-sm transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbfaf7] dark:border-white/15 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:focus-visible:ring-offset-gray-950 sm:w-auto sm:gap-2 sm:px-7 sm:text-base"
+              >
+                <PlayCircle className="h-4 w-4" aria-hidden="true" />
+                {HERO.secondaryCta.label}
+              </Link>
+            </motion.div>
+          </div>
+
+          <motion.div variants={item} className="relative min-w-0">
+            <div className="relative mx-auto min-h-[250px] w-full max-w-[590px] sm:min-h-[360px] lg:min-h-[520px]">
+              <div
+                aria-hidden="true"
+                className="shadow-primary-950/10 absolute inset-x-2 top-2 h-[175px] overflow-hidden rounded-lg border border-white/70 bg-gray-200 shadow-2xl dark:border-white/10 dark:bg-gray-900 dark:shadow-black/40 sm:h-[270px] lg:inset-0 lg:h-auto"
+              >
+                <Image
+                  src={HERO_IMAGE_SRC}
+                  alt=""
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 48vw, 92vw"
+                  className="object-cover object-center [filter:saturate(0.9)_brightness(1.06)] dark:[filter:saturate(0.78)_brightness(0.64)]"
+                />
+                <div className="lg:to-[#fbfaf7]/72 lg:dark:via-gray-950/42 lg:dark:to-gray-950/78 absolute inset-0 bg-gradient-to-b from-[#fbfaf7]/5 via-[#fbfaf7]/45 to-[#fbfaf7] dark:from-gray-950/5 dark:via-gray-950/45 dark:to-gray-950 lg:bg-gradient-to-r lg:from-[#fbfaf7]/10 lg:via-[#fbfaf7]/35 lg:dark:from-gray-950/5" />
+              </div>
+
+              <div className="relative z-10 flex min-h-[250px] items-center justify-center px-2 py-5 sm:min-h-[360px] sm:px-4 sm:py-7 lg:min-h-[520px] lg:justify-start lg:px-0 lg:pl-8">
+                <ReconciliationCard />
+              </div>
+            </div>
           </motion.div>
+
+          <motion.dl
+            variants={item}
+            className="grid grid-cols-3 gap-3 border-t border-primary-900/10 pt-4 text-center dark:border-white/10 sm:gap-5 sm:pt-5 lg:col-span-2 lg:mt-0 lg:max-w-3xl lg:text-left"
+          >
+            {HERO_STATS.map(stat => (
+              <div key={stat.label} className="min-w-0">
+                <dd className="font-mono text-[22px] font-extrabold tabular-nums leading-none text-primary-900 dark:text-[#ffd8c7] md:text-3xl">
+                  {stat.value}
+                </dd>
+                <dt className="mt-2 text-[11px] leading-snug text-gray-600 dark:text-gray-400 md:text-xs">
+                  {stat.label}
+                  {stat.sample ? '（示意）' : ''}
+                </dt>
+              </div>
+            ))}
+          </motion.dl>
         </motion.div>
       </div>
-
-      {/* 底部統計列 */}
-      <motion.dl
-        initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={reduceMotion ? { duration: 0 } : { duration: 0.5, delay: 0.5 }}
-        className="absolute inset-x-0 bottom-6 z-10 flex flex-wrap items-start justify-center gap-x-12 gap-y-4 px-4 sm:gap-x-16"
-      >
-        {HERO_STATS.map((stat) => (
-          <div key={stat.label} className="text-center">
-            <dd className="font-mono text-2xl font-extrabold tabular-nums">{stat.value}</dd>
-            <dt className="mt-0.5 text-[11px] text-white/80">
-              {stat.label}
-              {stat.sample ? '（示意）' : ''}
-            </dt>
-          </div>
-        ))}
-      </motion.dl>
-
-      {/* 浮動對帳卡片（行動裝置隱藏） */}
-      <ReconciliationCard />
     </section>
   )
 }
