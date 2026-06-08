@@ -100,7 +100,7 @@ This document replaces ad-hoc CI/CD notes that were scattered across `plan.md`, 
   1. Cloud Build Editor
   2. Artifact Registry Writer
   3. Cloud Run Admin
-- Verification of these permissions is tracked in the remediation plan (see `plan.md` §3).
+- Verification of these permissions is tracked in the remediation plan (see `STATUS-SUMMARY.md` §3).
 
 ### 5.3 Environment Variables
 

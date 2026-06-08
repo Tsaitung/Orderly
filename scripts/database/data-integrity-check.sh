@@ -52,7 +52,7 @@ else
 fi
 echo ""
 
-# Expected data counts (from plan.md - updated 2025-09-29)
+# Expected data counts (from docs/3-Development-Plan/STATUS-SUMMARY.md - updated 2025-09-29)
 EXPECTED_COUNTS="
 users:3
 organizations:10

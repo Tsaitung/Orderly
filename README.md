@@ -33,7 +33,7 @@
 
 ### 📖 技術文檔
 
-- **[開發狀態與修復紀錄](plan.md)** - 較長篇的歷史修復與整合筆記（以 `docs/3-Development-Plan/DEVELOPMENT-PLAN.md` 為主）
+- **[開發狀態與修復紀錄](docs/3-Development-Plan/STATUS-SUMMARY.md)** - 較長篇的歷史修復與整合筆記（以 `docs/3-Development-Plan/DEVELOPMENT-PLAN.md` 為主）
 - **[技術架構文檔](docs/0-Design/Technical-Architecture-Summary.md)** - 系統架構設計
 - **[API 規格文檔](docs/0-Design/api-specification.yaml)** - RESTful API 定義
 - **[資料庫架構](docs/0-Design/Database-Schema-Core.md)** - 完整資料庫設計
@@ -173,8 +173,8 @@ npm run test:e2e           # 端到端測試
 ### 性能測試
 
 ```bash
-node scripts/performance-test.js      # 負載測試
-node scripts/performance-analysis.js  # 性能分析
+node scripts/perf/performance-test.js      # 負載測試
+node scripts/perf/performance-analysis.js  # 性能分析
 ```
 
 ### 程式碼品質
@@ -491,7 +491,7 @@ docker run --rm test-build
 - **技術文檔**: docs/ 目錄
 - **API 文檔**: docs/0-Design/api-specification.yaml
 - **錯誤追蹤**: GitHub Issues
-- **性能分析**: scripts/performance-analysis.js
+- **性能分析**: scripts/perf/performance-analysis.js
 
 ---
 
