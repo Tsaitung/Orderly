@@ -379,7 +379,6 @@ jobs:
           echo "- [🔧 Continuous Deployment](../../actions/workflows/cd.yml)" >> $GITHUB_STEP_SUMMARY
           echo "- [🔒 Security Scan](../../actions/workflows/security.yml)" >> $GITHUB_STEP_SUMMARY
           echo "- [📊 Performance Check](../../actions/workflows/monitoring.yml)" >> $GITHUB_STEP_SUMMARY
-          echo "- [🎯 Quality Gates](../../actions/workflows/quality-gates.yml)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "## External Dashboards" >> $GITHUB_STEP_SUMMARY
