@@ -29,7 +29,7 @@ docker compose -f compose.base.yml up -d postgres redis
 - `compose.staging.yml`：staging 覆寫（image + ENVIRONMENT）。
 - `compose.prod.yml`：production 覆寫（image + ENVIRONMENT）。
 
-> 建議用 `docker compose ... config` 檢視合併結果；CI 亦可參考 `scripts/test-docker-compose.sh` 的驗證方式。
+> 建議用 `docker compose ... config` 檢視合併結果；CI 亦可參考 `scripts/dev/test-docker-compose.sh` 的驗證方式。
 
 ## Dockerfile 來源
 

@@ -278,9 +278,9 @@ def main():
     if success:
         print(f"\n{Colors.GREEN}📋 驗證通過！Docker Compose 配置可以使用。{Colors.NC}")
         print(f"\n{Colors.BLUE}💡 下一步：{Colors.NC}")
-        print("1. 運行 scripts/test-docker-compose.sh 進行完整測試")
+        print("1. 運行 scripts/dev/test-docker-compose.sh 進行完整測試")
         print("2. 使用 docker compose up -d 啟動服務")
-        print("3. 運行 scripts/verify-fastapi-health.sh 檢查健康狀態")
+        print("3. 運行 scripts/dev/verify-fastapi-health.sh 檢查健康狀態")
     else:
         print(f"\n{Colors.RED}❌ 請修復配置錯誤後重新驗證{Colors.NC}")
     

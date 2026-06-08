@@ -88,7 +88,7 @@ curl "https://orderly-customer-hierarchy-staging-655602747430.asia-east1.run.app
 curl "https://orderly-frontend-staging-usg6y7o2ba-de.a.run.app/api/bff/v2/hierarchy/tree"
 
 # 運行完整驗證
-./scripts/validate-api-endpoints.sh staging
+./scripts/dev/validate-api-endpoints.sh staging
 ```
 
 ## 🗄️ 資料庫連接問題

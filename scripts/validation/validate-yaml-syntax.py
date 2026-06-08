@@ -167,7 +167,7 @@ def main():
         print("• ✅ 依賴關係清晰")
         print(f"\n{Colors.BLUE}💡 下一步（需要 Docker 環境）：{Colors.NC}")
         print("1. 安裝 Docker 和 Docker Compose")
-        print("2. 運行 scripts/test-docker-compose.sh")
+        print("2. 運行 scripts/dev/test-docker-compose.sh")
         print("3. 執行 docker compose up -d 啟動服務")
         return True
     elif not all_errors:
