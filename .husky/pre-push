@@ -20,10 +20,20 @@ if [ -n "$REFS_INPUT" ]; then
   fi
 fi
 
-# Detect SKIP_VERIFY_PUSH escape hatch
+# SKIP_VERIFY_PUSH escape hatch — does NOT skip everything. The frontend gate
+# (`make verify`: lint / typecheck / format-check / test-fe) runs WITHOUT a
+# backend venv or DB, so it MUST still run — skipping it is how a prettier
+# regression leaked to CI (2026-06-08, PR #8: .eslintrc-security.js unformatted).
+# The escape hatch only waives `make test-be` (needs a venv + Postgres that a
+# bare worktree may lack). Use `git push --no-verify` to bypass the hook entirely
+# (logged by git), but that is the loud, deliberate exit — not the default.
 if [ -n "$SKIP_VERIFY_PUSH" ]; then
-  echo "pre-push: SKIP_VERIFY_PUSH set, skipping verification"
-  exit 0
+  echo "pre-push: SKIP_VERIFY_PUSH set — still running frontend 'make verify' (only test-be waived)"
+  if make verify; then
+    exit 0
+  fi
+  echo "pre-push: frontend 'make verify' FAILED — SKIP_VERIFY_PUSH does not waive the frontend gate; fix before pushing"
+  exit 1
 fi
 
 # Resolve TARGET (default: verify-pr-local)
