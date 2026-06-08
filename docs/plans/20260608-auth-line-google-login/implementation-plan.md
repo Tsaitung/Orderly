@@ -63,8 +63,9 @@
 | `backend/app/modules/users/api/v1/auth/login.py` | Delete | `POST /auth/login`（email+password）整檔移除；`password_hash` login 使用（L56/L79）消失 |
 | `backend/app/modules/users/api/v1/auth/password.py` | Delete | forgot(L34)/reset(L116)/change(L257)-password 三端點整模組移除 |
 | `backend/app/modules/users/api/v1/auth/verification.py` | Modify | 刪 `POST /auth/send-email-verification`（L40）、`POST /auth/verify-email`（L110）；保留 `/auth/send-phone-verification`（L209）、`/auth/verify-phone`（L297）；解除 phone 對 email_verified 的前置依賴（L229）|
-| `backend/app/modules/users/api/v1/auth/registration.py` | Modify | 移除密碼驗證 + `password_hash` 設定（L88）；email 改選填；公開 email+password 註冊路徑停用（改 OAuth complete-registration 為唯一建帳路徑）|
-| `backend/app/modules/users/api/v1/auth/__init__.py` | Modify | 移除 `from .login`（L11）、`from .password`（L12）與對應 `include_router`（L21/L24）|
+| `backend/app/modules/users/api/v1/auth/registration.py` | Delete | email+password 公開註冊端點整檔移除（建帳只走 OAuth `complete-registration`）|
+| `backend/app/modules/users/api/v1/auth/platform_provisioning.py` | Create | `POST /auth/admin/platform-provisioning` 管理供裝 allowlist（限 super_admin/platform_admin）|
+| `backend/app/modules/users/api/v1/auth/__init__.py` | Modify | 移除 `from .login`(L10)/`from .password`(L11)/`from .registration` 與 `include_router`(login L21/password L24/registration)；include `recovery_router` + 供裝 admin router |
 | `backend/app/modules/users/api/v1/oauth.py` | Modify | `complete-registration` 移除 `password_hash=pwd_context.hash(uuid.uuid4().hex)`（L340）；`unlink` 移除 `has_password` fallback、改「保留 ≥1 綁定」（L499/L508）；callback 加平台 MFA 強制 + 供裝 allowlist（L172-301）|
 | `backend/app/modules/users/api/v1/auth/recovery.py` | Create | `POST /auth/oauth/recover`（用第二社群恢復）+ `POST /auth/account-recovery`（platform_support 人工，多證據 + 審計）|
 | `backend/app/modules/users/api/v1/mfa.py` | Modify | enable/disable 移除密碼驗證（L204/L442）改社群 / OTP 驗證；MFA method enum 僅 TOTP/SMS |
@@ -72,16 +73,19 @@
 | `backend/app/modules/users/models/password_history.py` | Delete | 密碼歷史 model 移除 |
 | `backend/app/modules/users/models/user.py` | Modify | `email` 去 unique 改 nullable（L18）；drop `password_reset_token`/`password_reset_expires`（L58/L59）；`email_verified*`（L38/39）、`password_changed_at`（L57）deprecate；`password_hash`（L19）標註不參與認證 |
 | `backend/app/modules/users/models/platform_provisioning.py` | Create | 平台供裝允許名單 model（社群帳號 → 預建平台帳號 mapping + require_mfa）|
-| `backend/app/modules/users/schemas/auth.py` | Modify | 刪 `LoginRequest`(L12)/`RegisterRequest`password/`ForgotPasswordRequest`/`ResetPasswordRequest`(L50-69)/`ChangePasswordRequest`(L72)/`VerifyEmailRequest`(L95)；MFA enable/disable schema 去 password（L136-137/L181-182）；email schema 改選填 |
-| `backend/app/modules/users/main.py` | Modify | `public_auth_paths` 移除 `/auth/login`(L25)、`/api/auth/login`(L28)、`/auth/forgot-password`(L33)、`/auth/reset-password`(L34)、`/api/auth/forgot-password`(L35)、`/api/auth/reset-password`(L36)、`/auth/verify-email`（L24-49 區塊）|
-| `backend/app/alembic/versions/0004_auth_refactor_social_only.py` | Create | drop unique on email、email nullable、drop reset token 欄位、drop `password_histories` 表（down_revision=`0003_acceptance_order_fk`）|
+| `backend/app/modules/users/schemas/auth.py` | Modify | 刪 `LoginRequest`(L12)/`RegisterRequest`/`ForgotPasswordRequest`/`ResetPasswordRequest`(L50-69)/`ChangePasswordRequest`(L72)/`VerifyEmailRequest`(L95)；MFA enable/disable schema 去 password（L136-137/L181-182）；email schema 改選填 |
+| `backend/app/modules/users/main.py` | Modify | `public_auth_paths` 移除 `/auth/login`(L25)、`/auth/register`(L26)、`/api/auth/login`(L28)、`/api/auth/register`(L29)、`/auth/forgot-password`(L33)、`/auth/reset-password`(L34)、`/api/auth/forgot-password`(L35)、`/api/auth/reset-password`(L36)、`/auth/verify-email`；**加** `/auth/oauth/recover`、`/auth/account-recovery`（+ `/api` 版本，恢復端點服務未登入用戶）|
+| `backend/app/alembic/versions/0004_auth_refactor_social_only.py` | Create | `UserRole` ADD VALUE `platform_support`/`super_admin`（txn 外）、drop unique on email + email nullable、drop reset token 欄位、drop `password_history` 表（**單數**）、create `platform_provisioning` 表（down_revision=`0003_acceptance_order_fk`）|
 | `shared/types/src/social-auth.ts` | Create | `SocialProvider`('line'\|'google')、`SocialBinding`、`MFAMethod`('totp'\|'sms')、`LoginWithSocialRequest/Response` DTO |
 | `shared/types/src/index.ts` | Modify | `User`(L11-18)/`UserProfile`(L29-46)/`AuthClaims`(L57-66) email 改選填、加 socialBindings；移除 password_hash 引用 |
 | `shared/types/src/supplier.ts` | Modify | `SupplierOnboardingRequest`(L168) 去 password；`AccountSetupFormData`(L305-306) 去 password/confirmPassword |
 | `app/(auth)/login/page.tsx` | Modify | 移除 email/password 表單（L135-220）、`handleLogin`（L82）、forgot-password 連結（L188）；改 Line（主）/ Google（次）OAuth CTA |
+| `app/api/auth/oauth/[provider]/initiate/route.ts` | Create | 前端 same-origin proxy → backend `/api/auth/oauth/{provider}/initiate`（回授權 URL + state）|
+| `app/(auth)/callback/[provider]/page.tsx` | Create | 接 backend OAuth redirect URI，交換結果、寫 token、導向 dashboard；Google 未綁拒登導引 |
 | `app/(auth)/forgot-password/page.tsx` | Delete | 密碼重設整頁移除 |
-| `app/(auth)/register/page.tsx` | Modify | 移除 password/confirmPassword（L24-25/L42-43/L154-177）；email 改選填 |
+| `app/(auth)/register/page.tsx` | Modify | 移除 email/password 表單（L24-25/L42-43/L154-177）；改 Line OAuth 啟動 + callback 後商業資訊（統編/電話）補齊；email 選填 |
 | `app/api/auth/login/route.ts` | Delete | email+password 代理登入 route（L60-113）整檔移除 |
+| `app/api/auth/register/route.ts` | Delete | email+password 代理註冊 route 整檔移除（建帳改走 OAuth complete-registration）|
 | `app/(auth)/account-recovery/page.tsx` | Create | 帳號恢復頁：偵測已綁定社群、導向另一社群登入；雙失效→聯絡 platform_support |
 | `lib/validation/auth-schemas.ts` | Modify | 刪 `loginFormSchema`(L76-80) password/`registerFormSchema`(L83-102) password/`passwordResetRequestSchema`(L113-115)/`passwordResetSchema`(L118-127)/`PASSWORD_RULES`(L12-21)/`basePasswordSchema`,`passwordSchema`(L35-40)；加 `socialLoginSchema` |
 | `lib/auth/validation.ts` | Modify | 刪 `validatePassword`(L51-59)/`validatePasswordConfirmation`(L64-75)/`validateLoginForm`(L93-106)/`validateRegistrationStep1`(L111-134)/`validatePasswordResetForm`(L181-203)；`FormErrors`(L21-32) 去 password |
