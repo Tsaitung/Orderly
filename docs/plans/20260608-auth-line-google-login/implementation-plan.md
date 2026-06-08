@@ -41,11 +41,12 @@
 
 | 類別 | 數量 | 明細 |
 |---|---|---|
-| 新增檔案 | 7 | `backend/.../api/v1/auth/recovery.py`、`backend/.../models/platform_provisioning.py`、Alembic `0004_auth_refactor_social_only.py`、`shared/types/src/social-auth.ts`、`app/(auth)/account-recovery/page.tsx`、`e2e/auth-login.spec.ts`、backend test pkg `backend/app/modules/users/tests/test_auth_social_only.py` |
+| 新增檔案 | 9 | `backend/.../api/v1/auth/recovery.py`、`backend/.../models/platform_provisioning.py`、Alembic `0004_auth_refactor_social_only.py`、`shared/types/src/social-auth.ts`、`app/(auth)/account-recovery/page.tsx`、`app/api/auth/oauth/[provider]/initiate/route.ts`、`app/(auth)/callback/[provider]/page.tsx`、`e2e/auth-login.spec.ts`、backend test pkg `backend/app/modules/users/tests/test_auth_social_only.py` |
 | 新增 migration | 1 | `0004_auth_refactor_social_only`（down_revision = `0003_acceptance_order_fk`）|
-| 新增端點 | 3 | `POST /auth/oauth/recover`（用第二社群恢復）、`POST /auth/account-recovery`（platform_support 人工）、平台供裝 allowlist 管理端點 `POST /auth/admin/platform-provisioning` |
-| 移除端點 | 6 | `POST /auth/login`、`POST /auth/forgot-password`、`POST /auth/reset-password`、`PUT /auth/change-password`、`POST /auth/verify-email`、`POST /auth/send-email-verification`（+ 前端 `POST /api/auth/login` route）|
-| 刪除整檔 | 6 | `backend/.../auth/login.py`、`backend/.../auth/password.py`、`backend/.../services/password_service.py`、`backend/.../models/password_history.py`、`app/(auth)/forgot-password/page.tsx`、`app/api/auth/login/route.ts` |
+| 新增資料表 | 1 | `platform_provisioning`（social provider + external_id → 預建 platform user + `require_mfa`；0004 `op.create_table` + downgrade drop）|
+| 新增端點 | 3 | `POST /auth/oauth/recover`（用第二社群恢復）、`POST /auth/account-recovery`（platform_support 人工）、平台供裝 allowlist 管理端點 `POST /auth/admin/platform-provisioning`（需 super_admin/platform_admin auth）|
+| 移除端點 | 7 | `POST /auth/login`、`POST /auth/forgot-password`、`POST /auth/reset-password`、`PUT /auth/change-password`、`POST /auth/verify-email`、`POST /auth/send-email-verification`、`POST /auth/register`（email+password 公開註冊；+ 前端 `POST /api/auth/login`、`POST /api/auth/register` route）|
+| 刪除整檔 | 8 | `backend/.../auth/login.py`、`backend/.../auth/password.py`、`backend/.../auth/registration.py`、`backend/.../services/password_service.py`、`backend/.../models/password_history.py`、`app/(auth)/forgot-password/page.tsx`、`app/api/auth/login/route.ts`、`app/api/auth/register/route.ts` |
 | Drop 資料表 | 1 | `password_history`（**單數**，= `__tablename__`，model `password_history.py:17`；非 `password_histories`）|
 | Drop 欄位 | 2 | `users.password_reset_token`、`users.password_reset_expires` |
 | 改 nullable / 去 unique | 1 | `users.email` |
@@ -149,7 +150,7 @@
 
 - **T1.2 無密碼 / Email 非認證（RED）**
   - **Files:** Modify `backend/app/modules/users/tests/test_auth_social_only.py`。
-  - 步驟：寫 `test_post_auth_login_returns_404`（`POST /api/auth/login` 應 404/410）、`test_password_endpoints_gone`（forgot/reset/change → 404）、`test_verify_email_gone`、`test_register_does_not_require_email` → `bash scripts/ci/backend-test.sh` RED → commit。
+  - 步驟：寫 `test_post_auth_login_returns_404`（`POST /api/auth/login` 應 404/410）、`test_post_auth_register_returns_404`（`POST /api/auth/register` 應 404/410，email+password 公開註冊移除）、`test_password_endpoints_gone`（forgot/reset/change → 404）、`test_verify_email_gone` → `bash scripts/ci/backend-test.sh` RED → commit。
   - 驗收：先紅（端點目前仍在 → 回 200/422，測試失敗）。
 
 - **T1.3 social-bindings 解綁保留 ≥1（RED）**
@@ -181,6 +182,7 @@
     2. **移除 email-match→密碼登入分支**（callback L255-278）：刪除「以 email 比對既有帳號並回『此 Email 已註冊，請使用密碼登入後綁定 OAuth』」整段；社群登入不得以 email 解析帳號或導向密碼登入。
     3. **complete-registration**：移除 `password_hash=pwd_context.hash(uuid.uuid4().hex)`（L340，不設密碼）；`OAuthCompleteRegistrationRequest.email` 改 `Optional`（L91）、移除 duplicate-email 拒絕（L326）（否則無 email 的 Line 用戶無法經唯一建帳路徑完成註冊）；補 `tenant_id`/`tenant_type` 設定（對齊 `registration.py`）。
     4. **email 查詢去重**：callback/complete-reg 內 `User.email == ...` 的 `scalar_one_or_none()`（L259、L323）改 `.first()` 或顯式處理（email 去 unique 後可能 `MultipleResultsFound`）。
+    5. **欄位命名（oauth_links camelCase）**：`oauth_links` 的 DB 欄位為 camelCase（`Column("userId")`/`"providerUserId"`/`"createdAt"`，`models/oauth_link.py:20-24`）。一律用 **ORM model 屬性**（`OAuthLink.user_id` → 映射 `"userId"`）；若必須 raw SQL 須 quote `"userId"`，**禁裸 snake_case `user_id`**（column not found）。同規則套用 **T2.2 unlink / T2.4 allowlist** 所有 oauth_links 存取。
     → `bash scripts/ci/backend-test.sh`（T1.1 轉綠）→ commit。
   - 驗收：T1.1 綠（token `type=access` + `tenant_id`/`org_id`/`token_version` + 後續 authed 呼叫 200 + refresh/UserSession 寫入）；`grep -n 'uuid4().hex\|請使用密碼登入' backend/app/modules/users/api/v1/oauth.py` 為 0。
 
@@ -190,14 +192,14 @@
   - 驗收：T1.3 綠；`grep -n has_password backend/app/modules/users/api/v1/oauth.py` 為 0。
 
 - **T2.3 移除密碼面（核心 removal）**
-  - **Files:** Delete `backend/app/modules/users/api/v1/auth/login.py`、`backend/app/modules/users/api/v1/auth/password.py`、`backend/app/modules/users/services/password_service.py`、`backend/app/modules/users/models/password_history.py`。Modify `backend/app/modules/users/api/v1/auth/__init__.py`（移除 `from .login`(L10)、`from .password`(L11)、`include_router(login_router)`(L21)、`include_router(password_router)`(L24)）、**`backend/app/modules/users/models/__init__.py`（移除 `from ...password_history import PasswordHistory`(L14) + `__all__` 的 `"PasswordHistory"`(L31)；否則刪 model 檔後 app boot ImportError）**、`backend/app/modules/users/api/v1/auth/verification.py`（刪 L40 `send-email-verification`、L110 `verify-email` handler；解耦 L229 phone 對 email_verified 依賴）、`backend/app/modules/users/api/v1/auth/registration.py`（**移除 `from ...password_service import PasswordService`(L17)** + 密碼驗證 + `password_hash` 設定 L88，email 改選填）、`backend/app/modules/users/schemas/auth.py`（刪 `LoginRequest`/`ForgotPasswordRequest`/`ResetPasswordRequest`/`ChangePasswordRequest`/`VerifyEmailRequest`，`RegisterRequest` 去 password）、`backend/app/modules/users/main.py`（`public_auth_paths` 移除 L25/L28/L33/L34/L35/L36 與 verify-email）。
-  - 步驟：先 `grep -rn 'password_history\|PasswordHistory\|password_service\|PasswordService\|from .login\|from .password' backend/app/modules/users` 列全部 import 引用 → 刪檔 + 改 import → `python3 -c "import ast; ast.parse(open('backend/app/modules/users/api/v1/auth/__init__.py').read())"` + 同樣對 `models/__init__.py` ast.parse → `bash scripts/ci/backend-test.sh`（T1.2 轉綠）→ commit。
-  - 驗收：T1.2 綠；`grep -rn 'PasswordService\|password_history\|PasswordHistory\|@router.*"/auth/login"\|forgot-password\|verify-email' backend/app/modules/users` 無 route/import 命中；app boot（alembic+pytest）不報 ImportError。
+  - **Files:** Delete `backend/app/modules/users/api/v1/auth/login.py`、`backend/app/modules/users/api/v1/auth/password.py`、`backend/app/modules/users/api/v1/auth/registration.py`（**email+password 公開註冊端點；建帳只走 OAuth `complete-registration`**）、`backend/app/modules/users/services/password_service.py`、`backend/app/modules/users/models/password_history.py`。Modify `backend/app/modules/users/api/v1/auth/__init__.py`（移除 `from .login`(L10)、`from .password`(L11)、`from .registration` 與 `include_router(login_router)`(L21)、`include_router(password_router)`(L24)、`include_router(registration_router)`）、**`backend/app/modules/users/models/__init__.py`（移除 `from ...password_history import PasswordHistory`(L14) + `__all__` 的 `"PasswordHistory"`(L31)；否則刪 model 檔後 app boot ImportError）**、`backend/app/modules/users/api/v1/auth/verification.py`（刪 L40 `send-email-verification`、L110 `verify-email` handler；解耦 L229 phone 對 email_verified 依賴）、`backend/app/modules/users/schemas/auth.py`（刪 `LoginRequest`/`RegisterRequest`/`ForgotPasswordRequest`/`ResetPasswordRequest`/`ChangePasswordRequest`/`VerifyEmailRequest`）、`backend/app/modules/users/main.py`（`public_auth_paths` 移除 `/auth/login`(L25)、`/auth/register`(L26)、`/api/auth/login`(L28)、`/api/auth/register`(L29)、`/auth/forgot-password`(L33)、`/auth/reset-password`(L34)、`/api/auth/forgot-password`(L35)、`/api/auth/reset-password`(L36) 與 verify-email）。
+  - 步驟：先 `grep -rn 'password_history\|PasswordHistory\|password_service\|PasswordService\|from .login\|from .password\|from .registration\|registration_router' backend/app/modules/users` 列全部 import 引用 → 刪檔 + 改 import → `python3 -c "import ast; ast.parse(open('backend/app/modules/users/api/v1/auth/__init__.py').read())"` + 同樣對 `models/__init__.py` ast.parse → `bash scripts/ci/backend-test.sh`（T1.2 轉綠）→ commit。
+  - 驗收：T1.2 綠；`grep -rnE '@router.*"/auth/(login|register)"|PasswordService|password_history|PasswordHistory|forgot-password|verify-email' backend/app/modules/users` 無 route/import 命中；app boot（alembic+pytest）不報 ImportError。
 
 - **T2.4 平台供裝 allowlist + 強制 MFA**
-  - **Files:** Create `backend/app/modules/users/models/platform_provisioning.py`。Modify `backend/app/modules/users/api/v1/oauth.py`（callback L200-253 加 role 判斷）。
-  - 步驟：新增 allowlist model（social provider+external_id → 預建 platform user，require_mfa=true）；callback 對 `role in (platform_admin, platform_support, super_admin)` 校驗 allowlist 命中、未命中拒登、命中則強制 MFA challenge（MFA 通過前不簽 access token）；3 次失敗鎖 15 分（重用既有 lockout）→ `bash scripts/ci/backend-test.sh`（T1.4 轉綠）→ commit。
-  - 驗收：T1.4 綠；plan-review Risk #1 緩解逐項對得上。
+  - **Files:** Create `backend/app/modules/users/models/platform_provisioning.py`、`backend/app/modules/users/api/v1/auth/platform_provisioning.py`（`POST /auth/admin/platform-provisioning` 管理 allowlist，限 super_admin/platform_admin）。Modify `backend/app/modules/users/api/v1/oauth.py`（callback L200-253 加 role 判斷）、`backend/app/modules/users/api/v1/auth/__init__.py`（include admin router）。（⚠️ 資料表 `platform_provisioning` 由 **T3.1 的 0004 `op.create_table`** 建立——model-only 無建表會 runtime 壞，見 C1。）
+  - 步驟：新增 allowlist model（`provider`+`external_id` → 預建 platform `user_id`，`require_mfa=true`；oauth_links camelCase 存取規則同 T2.1）；admin route CRUD allowlist（auth-gated）；callback 對 `role in (platform_admin, platform_support, super_admin)` 校驗 allowlist 命中、未命中拒登、命中則強制 MFA challenge（MFA 通過前不簽 access token）；3 次失敗鎖 15 分（重用既有 lockout）→ `bash scripts/ci/backend-test.sh`（T1.4 轉綠）→ commit。
+  - 驗收：T1.4 綠；`platform_provisioning` 表存在且 admin route 受權限保護；plan-review Risk #1 緩解逐項對得上。
 
 - **T2.5 account-recovery（社群 + 人工）**
   - **Files:** Create `backend/app/modules/users/api/v1/auth/recovery.py`。Modify `backend/app/modules/users/api/v1/auth/__init__.py`（include `recovery_router`）、**`backend/app/modules/users/main.py`（`public_auth_paths` 加 `/auth/oauth/recover`、`/auth/account-recovery` 及 `/api` 前綴版本）**。
@@ -217,6 +219,7 @@
     1. **UserRole enum 擴充**：migration 加 `op.execute("ALTER TYPE \"UserRole\" ADD VALUE IF NOT EXISTS 'platform_support'")` 與 `'super_admin'`；同步把兩值加進 `user.py` enum 定義。⚠️ `ALTER TYPE ... ADD VALUE` 舊版 PG 不可在 transaction block 內，須隔離（`op.get_bind().execution_options(isolation_level='AUTOCOMMIT')` 或放在其他 DDL 之前獨立 `op.execute`）。**否則 T2.4 平台供裝帳號與 T2.5 platform_support 恢復 actor 無法寫入（DB enum 約束）→ Risk #1 緩解與 both-lost 恢復雙雙失效。**
     2. email 去 unique + nullable：`op.drop_constraint`（email unique）、`op.alter_column('users','email', nullable=True)`。
     3. drop reset token 兩欄；`op.drop_table('password_history')`（**單數**，= model `__tablename__`(password_history.py:17)；用 `password_histories`(複數) 會 `table does not exist` 中止 upgrade）。
+    3b. **create `platform_provisioning` 表（C1）**：`op.create_table('platform_provisioning', id, provider, external_id, "userId" FK→users.id, require_mfa bool default true, created_at)`；downgrade `op.drop_table('platform_provisioning')`。供 T2.4 allowlist 查詢/管理，否則 model-only 在 runtime 直接壞。
     4. downgrade 對稱（enum 值無法移除 → downgrade 註記不可逆）。依 T0.2 結論決定 `password_hash` 是否一併收緊。
     → `python3 -c "import ast; ast.parse(open('backend/app/alembic/versions/0004_auth_refactor_social_only.py').read())"` → `bash scripts/ci/backend-test.sh`（內含 `alembic upgrade head`）→ `cd backend && python -m alembic -c app/alembic.ini history --verbose`（鏈 0003→0004 不斷）→ commit。
   - 驗收：`alembic upgrade head` 通過；history 連續；invariant：upgrade 後 `password_history` 表不存在、`users.email` 可為 NULL 且非 unique、**插入一筆 `role='platform_support'` user 成功**。
@@ -229,8 +232,8 @@
 ### T4 — Frontend
 
 - **T4.1 登入頁重構（impl，須在 T1.6 RED 之後）**
-  - **Files:** Modify `app/(auth)/login/page.tsx`（移除 L135-220 email/password 表單、L82 `handleLogin`、L188 forgot 連結）。Delete `app/api/auth/login/route.ts`。Modify `lib/security/auth-service.ts`（**gut** `SecureAuthService.login()`/`validateLoginInput()`/`hashPassword()`/`verifyPassword()` + password Zod schema，移除 `/api/auth/login` 呼叫）、`contexts/auth/services/auth-service.ts`（`performLogin`→`performOAuthLogin`）、`contexts/auth/AuthProvider.tsx`（`login()` 改 OAuth 簽章）、`lib/validation/auth-schemas.ts`（刪 `loginFormSchema` password、加 `socialLoginSchema`）、`lib/auth/validation.ts`（刪 `validateLoginForm`/`validatePassword`/`validatePasswordConfirmation`）、`lib/auth/constants.ts`（刪 `forgotPassword` route + `RESET_MESSAGES`）。
-  - 步驟：登入頁改 Line（主）+ Google（次）CTA，點擊導向 `/api/auth/oauth/{provider}/initiate`；Google 未綁時依 PRD §4.1.1 拒登並引導改用 Line；gut `SecureAuthService` 的 email+password 登入 → 啟 dev server → `npx playwright test e2e/auth-login.spec.ts`（T1.6 轉綠）→ `npm run type-check` → commit。
+  - **Files:** Modify `app/(auth)/login/page.tsx`（移除 L135-220 email/password 表單、L82 `handleLogin`、L188 forgot 連結）。Delete `app/api/auth/login/route.ts`。**Create `app/api/auth/oauth/[provider]/initiate/route.ts`**（前端 same-origin proxy → backend `/api/auth/oauth/{provider}/initiate`，回授權 URL + state）、**`app/(auth)/callback/[provider]/page.tsx`**（接 backend OAuth redirect URI，交換結果、寫 token、導向 dashboard；Google 未綁拒登導引）。Modify `lib/security/auth-service.ts`（**gut** `SecureAuthService.login()`/`validateLoginInput()`/`hashPassword()`/`verifyPassword()` + password Zod schema，移除 `/api/auth/login` 呼叫）、`contexts/auth/services/auth-service.ts`（`performLogin`→`performOAuthLogin`）、`contexts/auth/AuthProvider.tsx`（`login()` 改 OAuth 簽章）、`lib/validation/auth-schemas.ts`（刪 `loginFormSchema` password、加 `socialLoginSchema`）、`lib/auth/validation.ts`（刪 `validateLoginForm`/`validatePassword`/`validatePasswordConfirmation`）、`lib/auth/constants.ts`（刪 `forgotPassword` route + `RESET_MESSAGES`）。
+  - 步驟：⚠️ Next 目前只有 `/api/auth/login|register|refresh|me|logout`，**無 oauth initiate/callback** — 必須新增同源 proxy + callback page 對齊 backend default redirect URI（`/auth/callback/{line|google}`，與 oauth_service redirect 一致，T2.1 確認）。登入頁改 Line（主）+ Google（次）CTA，點擊打 `/api/auth/oauth/{provider}/initiate` proxy → backend → 導向社群授權 → callback page 完成；**明確規則：Line 可首次註冊；Google 未綁定者拒登並依 PRD §4.1.1 引導改用 Line**；gut `SecureAuthService` 的 email+password 登入 → 啟 dev server → `npx playwright test e2e/auth-login.spec.ts`（T1.6 轉綠）→ `npm run type-check` → commit。
   - 驗收：T1.6 綠（E2E `input[type=password]` count===0 為**權威**；登入頁動態 `type={showPassword?...}` 使字面 `type="password"` grep false-pass，不採用）；`grep -rnE 'handleLogin|loginForm\.password|/api/auth/login' "app/(auth)/login/page.tsx" lib/security/auth-service.ts` 為 0；`app/api/auth/login/route.ts` 不存在。
 
 - **T4.2 forgot-password 頁刪除 + 帳號恢復頁**
@@ -238,10 +241,10 @@
   - 步驟：刪頁 → `grep -rn "forgot-password" app lib contexts` 把殘留連結改指 account-recovery → 新增 recovery 頁（偵測已綁社群、導向另一社群；雙失效→聯絡 platform_support）→ `npm run type-check` + dev server 手動點通 → commit。
   - 驗收：`app/(auth)/forgot-password/page.tsx` 不存在；`grep -rn "forgot-password" app lib contexts` 無 dangling link。
 
-- **T4.3 register 去密碼 + onboarding 引導綁第二社群**
-  - **Files:** Modify `app/(auth)/register/page.tsx`（移除 password/confirmPassword L24-25/L42-43/L154-177、email 改選填）、`app/(auth)/supplier-onboarding/page.tsx`（移除密碼欄位 L51-52/L342-367，改社群綁定選擇 + 引導綁第二社群）、`lib/validation/auth-schemas.ts`（刪 `registerFormSchema` password）。
-  - 步驟：去密碼欄位、email 選填、onboarding 加「綁 Google 作恢復保險」步驟 → `npm run type-check` + dev server 手動驗 → commit。
-  - 驗收：`grep -rn 'type="password"' "app/(auth)/register/page.tsx" "app/(auth)/supplier-onboarding/page.tsx"` 為 0。
+- **T4.3 register 改 OAuth 建帳 + onboarding 引導綁第二社群**
+  - **Files:** Delete `app/api/auth/register/route.ts`（email+password 代理註冊；建帳改走 OAuth complete-registration）。Modify `app/(auth)/register/page.tsx`（移除 password/confirmPassword L24-25/L42-43/L154-177 與 email+password 表單；改為 Line OAuth 啟動 + callback 後商業資訊（統編/電話）補齊；email 選填）、`app/(auth)/supplier-onboarding/page.tsx`（移除密碼欄位 L51-52/L342-367，改社群綁定選擇 + 引導綁第二社群）、`lib/validation/auth-schemas.ts`（刪 `registerFormSchema` password）。
+  - 步驟：register 頁去 email/password 表單、改社群建帳流程、onboarding 加「綁 Google 作恢復保險」步驟 → `npm run type-check` + dev server 手動驗 → commit。
+  - 驗收：`grep -rn 'type="password"' "app/(auth)/register/page.tsx" "app/(auth)/supplier-onboarding/page.tsx"` 為 0；`app/api/auth/register/route.ts` 不存在；`grep -rn '/api/auth/register' app lib contexts` 為 0。
 
 ### T5 — Verification
 
@@ -255,8 +258,10 @@
 
 - **T5.3 端點移除回歸 grep（命名目標歸零）**
   - 步驟：依命名目標進度表逐項 grep：
-    - `grep -rn '@router.*"/auth/login"' backend/app/modules/users` → 0
+    - `grep -rnE '@router.*"/auth/(login|register)"' backend/app/modules/users` → 0（login + email/password register 皆移除）
     - `grep -rn 'forgot-password\|reset-password\|change-password' backend/app/modules/users/api` route 定義 → 0
+    - `grep -rn '/api/auth/register' app lib contexts` → 0；`test -e app/api/auth/register/route.ts` → 不存在
+    - `platform_provisioning` 表存在（`SELECT to_regclass('public.platform_provisioning')` 非 NULL）；前端 `app/api/auth/oauth/[provider]/initiate/route.ts` 與 `app/(auth)/callback/[provider]/page.tsx` 存在
     - `grep -rn 'verify-email\|send-email-verification' backend/app/modules/users/api` → 0
     - `grep -rn 'PasswordService\|password_history\|PasswordHistory' backend/app/modules/users` → 0
     - `grep -rn 'has_password\|uuid4().hex\|請使用密碼登入' backend/app/modules/users/api/v1/oauth.py` → 0
@@ -314,3 +319,13 @@ workflow（removal-completeness / correctness / tdd-ordering 三 lens，reviewer
 - **M7（false-pass 驗收，MED）** 登入頁動態 `type={showPassword?...}` 使字面 `type="password"` grep 現況已 0 → T4.1/T5.3 改 E2E `input[type=password]` count===0 為權威。
 
 折入 warnings：recovery 端點進 `public_auth_paths`（T2.5）、`complete-registration` email 改 Optional + 去 dup 拒絕 + `.first()` 去重（T2.1）、`mfa_method='EMAIL'` backfill（T2.6）、`email_verified` 其他消費端（Risks #5）。
+
+## Changes Made — Round 2（Codex 對抗 review，read-only 驗 repo code）
+
+Codex 獨立第二引擎實讀 repo，VERDICT REVISE，3 個 HIGH code-verified must-fix（第一輪 3-lens 全漏），全部已套：
+
+- **C1（HIGH，runtime break）** 平台供裝 allowlist 只有 model 計畫，0004 無 `create_table`、無 admin endpoint 落點 → T3.1 加 `op.create_table('platform_provisioning')`（+ Complexity Budget 新增資料表 1）；T2.4 加 `api/v1/auth/platform_provisioning.py`（`POST /auth/admin/platform-provisioning`，auth-gated）。
+- **C2（HIGH，column drift + 缺前端 OAuth）** oauth SQL 用 snake `user_id` 但 model `Column("userId")`（oauth_link.py:20）→ T2.1 step 5 強制 ORM 屬性 / quote camelCase；Next 無 `/api/auth/oauth/{provider}/initiate` proxy 與 callback page → T4.1 加 `app/api/auth/oauth/[provider]/initiate/route.ts` + `app/(auth)/callback/[provider]/page.tsx`（對齊 backend redirect URI），明寫「Line 可首次註冊、Google 未綁拒登」。
+- **C3（HIGH，殘留公開註冊）** `/auth/register`（email+password）+ 前端 `app/api/auth/register/route.ts` 未移除 → T2.3 刪 `registration.py` + `registration_router` + public_auth_paths `/auth/register`；T4.3 刪前端 register route、頁改 OAuth 建帳；T1.2 改 `test_post_auth_register_returns_404`；Complexity Budget 移除端點 6→7、刪檔 6→8。
+
+非 fatal note（記錄）：`invitations.py` password onboarding 目前未 mount 於 `users/main.py`；若 T4.3 保留 supplier onboarding API，backend schema 須與 `shared/types/src/supplier.ts` 一起去 password。
