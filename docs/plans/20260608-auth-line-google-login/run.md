@@ -18,7 +18,7 @@ changed_identifiers:
 traceability_result: pass — 零孤立（US ↔ PRD ↔ Specs ↔ Test ↔ INDEX 一致，AUTH 22 / 總計 106）
 approval_status: requirement approved by user (4 decisions via /us-edit 2026-06-08); implementation pending plan-review (auth 高風險)
 keep_until: 2026-06-15
-blockers: repo-wide non-auth TS/shared-types gates still fail; auth scope verified below
+blockers: repo-wide non-auth TS/shared-types gates still fail (pre-existing, NOT auth regression — type-check:full 937 errors all non-auth, shared/types build = existing customer-hierarchy enum); real Line/Google provider smoke pending staging creds (G3); make verify-pr-local full CI mirror not yet evidenced (T5.4); auth scope verified below
 governance_gate: not-applicable（repo 無專案級治理 FSM / `.claude/skills/`）
 ---
 
@@ -119,6 +119,17 @@ Broader repo blockers: `npm run type-check:full` and `npm --workspace shared/typ
   - `npm --workspace shared/types run build` still fails in existing `src/customer-hierarchy.ts` enum merge errors (`TS2567` at lines 389 and 431); no `social-auth`, `index`, or `supplier` errors were reported.
   - Earlier dependency setup caveat: `python3.11 -m pip install -r backend/app/requirements.txt` completed but pip reported a global package conflict (`google-genai 1.75.0` wants `httpx>=0.28.1`, repo pins `httpx==0.27.0`). `npm install` completed and reported 29 vulnerabilities.
 - Residual risk not claimed as verified: real Line/Google provider credential callback was not exercised against external OAuth providers in this run; local verification covered routes, proxies, callback pages, MFA page, tests, and migration/composition gates.
+
+### 2026-06-08 — Independent second-party verification audit (reviewer, not executor)
+
+A separate plan-review pass independently re-verified the executor's closeout claims against the committed worktree (`7b10f66`, tree clean):
+
+- **Removal targets — confirmed gone (independent grep + fs):** all 7 named targets return 0; deleted files (`auth/login.py`, `auth/password.py`, `auth/registration.py`, `services/password_service.py`, `models/password_history.py`, `app/(auth)/forgot-password/page.tsx`, `app/api/auth/login/route.ts`, `app/api/auth/register/route.ts`) confirmed absent; new files (`recovery.py`, `platform_provisioning.py` model+route, `social-auth.ts`, frontend oauth initiate/callback proxies, `0004_auth_refactor_social_only.py`, `e2e/auth-login.spec.ts`) confirmed present. No `TODO`/`stub`/`mock`/`NotImplementedError` in auth impl. `invitations.py:251` sets `password_hash=None` (correct social-only state).
+- **`type-check:full` precise result:** 937 `error TS` lines, all in non-auth areas (`components/supplier/*` 135+92+57, `components/platform/*`, `lib/hooks` 61, `lib/reconciliation` 55, etc.). **Zero auth-scope regressions** — the refactor-touched files are clean or pre-existing: `lib/security/auth-service.ts` (gutted) has 0 errors; the 23 `lib/security` errors are all in `database-service.ts`/`validation-middleware.ts` (untouched); `shared/types/src/social-auth.ts` (new) has 0 errors; `middleware.ts:42 .entries()` TS2339 is pre-existing code shifted by the diff (not added by `7b10f66`); `components/auth/AuthGuard.tsx` unused-import is untouched/pre-existing.
+- **`shared/types` build:** confirmed fails only on pre-existing `customer-hierarchy.ts:389,431` (TS2567 enum merge); `7b10f66` did not touch that file → not a regression.
+- **Reviewer-found residual gap NOT in earlier records:** the official backend gate (`scripts/ci/backend-test.sh`, subset) was run, but **`make verify-pr-local` (full CI mirror, plan T5.4) is not evidenced in this packet.** Backend gate + `type-check` + Playwright cover most, but the complete CI mirror against auth scope was not recorded as run.
+
+**Audit verdict:** auth-scope implementation is genuinely complete and regression-free; all open gaps are external or pre-existing — (a) **G3** real Line/Google provider callback smoke (needs staging OAuth creds + `/auth/callback/{provider}` redirect URI), (b) **G1/G2** pre-existing repo-wide TS / shared-types debt (blocks repo-wide green but not caused by this refactor), (c) **G4** T0.2 prod-DB caveat (no separate prod instance discoverable; re-run count if one appears), (d) **T5.4** `verify-pr-local` full CI mirror not yet evidenced.
 
 ## ⚠️ 安全決策註記（provenance）
 
