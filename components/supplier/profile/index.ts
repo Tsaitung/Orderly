@@ -25,7 +25,11 @@ export {
 } from './schemas/profile-schemas'
 
 // Hook
-export { useProfileForm, type EditingSection, type UseProfileFormReturn } from './hooks/useProfileForm'
+export {
+  useProfileForm,
+  type EditingSection,
+  type UseProfileFormReturn,
+} from './hooks/useProfileForm'
 
 // Sections (for custom compositions)
 export {

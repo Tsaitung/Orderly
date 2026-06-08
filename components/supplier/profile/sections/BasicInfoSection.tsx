@@ -160,7 +160,9 @@ export function BasicInfoSection({
             <div className="space-y-3">
               <div>
                 <Label className="text-sm font-medium text-gray-500">配送能力</Label>
-                <p className="text-gray-900">{DELIVERY_CAPACITY_LABELS[profile.delivery_capacity]}</p>
+                <p className="text-gray-900">
+                  {DELIVERY_CAPACITY_LABELS[profile.delivery_capacity]}
+                </p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-gray-500">每日配送容量</Label>

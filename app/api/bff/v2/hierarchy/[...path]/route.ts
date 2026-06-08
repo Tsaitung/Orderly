@@ -65,10 +65,7 @@ const resolveHierarchyServiceBase = (): string => {
   return 'http://localhost:3007/api/v2'
 }
 
-async function handler(
-  req: NextRequest,
-  { params }: { params: Promise<{ path: string[] }> }
-) {
+async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   const pathStr = path?.join('/') || ''
   const url = new URL(req.url)
@@ -118,7 +115,7 @@ async function handler(
         },
         body: JSON.stringify({}),
       })
-      const refreshData = await refreshRes.json().catch(() => ({} as any))
+      const refreshData = await refreshRes.json().catch(() => ({}) as any)
 
       if (refreshRes.ok && refreshData?.success) {
         const newAccess: string | undefined = refreshData.token || refreshData.access_token

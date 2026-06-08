@@ -128,7 +128,9 @@ export function AcceptanceDetail({
                 >
                   {item.receivedQuantity} {item.unit}
                 </div>
-                <div className="flex items-center space-x-1">{getQualityStars(item.qualityRating)}</div>
+                <div className="flex items-center space-x-1">
+                  {getQualityStars(item.qualityRating)}
+                </div>
                 <div>
                   <Badge variant={getConditionVariant(item.condition)} size="sm">
                     {getConditionText(item.condition)}

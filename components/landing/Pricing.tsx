@@ -15,11 +15,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Check } from 'lucide-react'
 
-import {
-  PRICING,
-  PRICING_NOTE,
-  type PricingTier,
-} from '@/components/landing/landingData'
+import { PRICING, PRICING_NOTE, type PricingTier } from '@/components/landing/landingData'
 
 interface PricingCardProps {
   tier: PricingTier
@@ -45,21 +41,17 @@ function PricingCard({ tier }: PricingCardProps) {
         </span>
       )}
 
-      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 md:text-xl">
-        {tier.name}
-      </h3>
+      <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 md:text-xl">{tier.name}</h3>
 
       <div className="mt-2 flex items-baseline gap-1">
         <span className="font-mono text-4xl font-bold tabular-nums tracking-tight text-gray-900 dark:text-gray-100">
           {tier.price}
         </span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
-          {tier.period}
-        </span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">{tier.period}</span>
       </div>
 
       <ul className="mt-5 space-y-2.5">
-        {tier.modules.map((module) => (
+        {tier.modules.map(module => (
           <li
             key={module}
             className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-600 dark:text-gray-300"
@@ -78,7 +70,7 @@ function PricingCard({ tier }: PricingCardProps) {
       <a
         href={tier.cta.href}
         className={[
-          'mt-auto inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-5 py-2.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 dark:focus-visible:ring-offset-gray-900',
+          'mt-auto inline-flex min-h-[44px] w-full items-center justify-center rounded-md px-5 py-2.5 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
           // 強調卡用實心 mocha；其餘用 ghost 邊框
           isHot
             ? 'bg-primary-500 text-white hover:bg-primary-600'
@@ -120,14 +112,12 @@ export default function Pricing() {
           {...reveal}
           className="mx-auto mt-10 grid max-w-5xl grid-cols-1 items-stretch gap-6 pt-3 md:mt-12 md:grid-cols-3"
         >
-          {PRICING.map((tier) => (
+          {PRICING.map(tier => (
             <PricingCard key={tier.name} tier={tier} />
           ))}
         </motion.div>
 
-        <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          {PRICING_NOTE}
-        </p>
+        <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">{PRICING_NOTE}</p>
       </div>
     </section>
   )

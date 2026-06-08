@@ -49,10 +49,7 @@ function parseStatValue(raw: string): {
 }
 
 /** 依原始格式重組目前 count-up 的數值（保留前後綴、小數位、千分位）。 */
-function formatStatValue(
-  current: number,
-  meta: ReturnType<typeof parseStatValue>,
-): string {
+function formatStatValue(current: number, meta: ReturnType<typeof parseStatValue>): string {
   const fixed = current.toFixed(meta.decimals)
   const display = meta.grouped
     ? Number(fixed).toLocaleString('en-US', {
@@ -73,7 +70,7 @@ function CountUpStat({ value }: { value: string }) {
   const inView = useInView(ref, { once: true, amount: 0.6 })
   const [display, setDisplay] = useState<string>(() =>
     // 初始即顯示最終值（reduced-motion 或尚未滑入時的安全預設）。
-    formatStatValue(meta.numeric, meta),
+    formatStatValue(meta.numeric, meta)
   )
 
   useEffect(() => {
@@ -127,9 +124,9 @@ export default function TrustBar() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="grid grid-cols-2 gap-y-8 gap-x-6 md:grid-cols-4 md:gap-x-8"
+          className="grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-4 md:gap-x-8"
         >
-          {TRUST_STATS.map((stat) => (
+          {TRUST_STATS.map(stat => (
             <li key={stat.label} className="text-center">
               <div className="text-3xl font-extrabold leading-none text-primary-800 dark:text-primary-400">
                 <CountUpStat value={stat.value} />

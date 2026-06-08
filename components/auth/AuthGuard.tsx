@@ -32,23 +32,24 @@ export function AuthGuard({
 
   // Check authorization
   const checkAuthorization = React.useCallback(() => {
-    
     // 🔧 Enhanced debugging for staging admin
     console.log('🔧 AuthGuard Debug:', {
       isAuthenticated,
-      user: user ? {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        name: user.name
-      } : null,
+      user: user
+        ? {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            name: user.name,
+          }
+        : null,
       requiredRole,
       isLoading,
       allowSuperUser,
       viewMode,
-      canViewAsOrganization: canViewAsOrganization()
+      canViewAsOrganization: canViewAsOrganization(),
     })
-    
+
     if (!isAuthenticated || !user) {
       console.log('🔧 AuthGuard: Not authenticated or no user')
       return false
@@ -97,7 +98,7 @@ export function AuthGuard({
 
     const hasSupplierAccess = requiredRole === 'supplier' && user.role?.startsWith('supplier_')
 
-  return hasDirectRole || isAdmin || hasRestaurantAccess || hasSupplierAccess
+    return hasDirectRole || isAdmin || hasRestaurantAccess || hasSupplierAccess
   }, [
     isAuthenticated,
     user,

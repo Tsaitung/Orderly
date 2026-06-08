@@ -38,7 +38,7 @@ function Pane({ pane, variant }: PaneProps) {
         {pane.title}
       </h3>
       <ul className="space-y-1">
-        {pane.items.map((item) => (
+        {pane.items.map(item => (
           <li
             key={item}
             className="flex items-start gap-3 py-1.5 text-sm leading-relaxed text-gray-600 dark:text-gray-300 md:text-[15px]"
@@ -90,10 +90,7 @@ export default function PainSolution() {
           </h2>
         </motion.div>
 
-        <motion.div
-          {...reveal}
-          className="mt-8 grid grid-cols-1 gap-6 md:mt-10 md:grid-cols-2"
-        >
+        <motion.div {...reveal} className="mt-8 grid grid-cols-1 gap-6 md:mt-10 md:grid-cols-2">
           <Pane pane={PAIN} variant="bad" />
           <Pane pane={SOLUTION} variant="good" />
         </motion.div>

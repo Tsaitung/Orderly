@@ -60,13 +60,13 @@ export default function FAQSection() {
       }
 
   return (
-    <section id="faq" className="py-16 md:py-20 bg-white dark:bg-gray-950">
+    <section id="faq" className="bg-white py-16 dark:bg-gray-950 md:py-20">
       <div className="container mx-auto px-4">
         <motion.div {...reveal} className="mx-auto max-w-3xl text-center">
-          <p className="text-primary-600 dark:text-primary-400 font-bold tracking-wide text-xs uppercase">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
             常見問題
           </p>
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
             還有疑問？這裡先解答
           </h2>
           <p className="mt-3 text-gray-600 dark:text-gray-300">
@@ -102,7 +102,7 @@ export default function FAQSection() {
                   'dark:focus-visible:ring-offset-gray-950',
                   selected
                     ? activeClass
-                    : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700',
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-700',
                 ].join(' ')}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -118,7 +118,7 @@ export default function FAQSection() {
           id={`faq-panel-${role}`}
           role="tabpanel"
           aria-labelledby={`faq-tab-${role}`}
-          className="mx-auto mt-8 max-w-3xl divide-y divide-gray-200 dark:divide-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden"
+          className="mx-auto mt-8 max-w-3xl divide-y divide-gray-200 overflow-hidden rounded-xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900"
         >
           {items.map((item, i) => {
             const key = `${role}-${i}`
@@ -157,7 +157,7 @@ export default function FAQSection() {
                   role="region"
                   aria-labelledby={headingId}
                   hidden={!isOpen}
-                  className="px-5 pb-5 -mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300"
+                  className="-mt-1 px-5 pb-5 text-sm leading-relaxed text-gray-600 dark:text-gray-300"
                 >
                   {item.a}
                 </div>

@@ -59,9 +59,7 @@ export function ReconciliationShowcase() {
           <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-white md:text-4xl">
             {SECTION_TITLE}
           </h2>
-          <p className="mx-auto mt-3 text-base leading-relaxed text-[#e8ddd5]">
-            {SECTION_LEAD}
-          </p>
+          <p className="mx-auto mt-3 text-base leading-relaxed text-[#e8ddd5]">{SECTION_LEAD}</p>
         </motion.div>
 
         {/* 白色卡片 — 浮在深色 mocha 底之上，內嵌既有 ReconciliationDemo */}
@@ -82,7 +80,7 @@ export function ReconciliationShowcase() {
             {/* 掃描高光：在漸層上來回掃，reduced-motion 時不渲染 */}
             {!reduceMotion && (
               <div
-                className="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent animate-reconciliation-scan"
+                className="absolute inset-y-0 left-0 w-1/3 animate-reconciliation-scan bg-gradient-to-r from-transparent via-white/70 to-transparent"
                 aria-hidden="true"
               />
             )}

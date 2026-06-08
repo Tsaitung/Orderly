@@ -200,8 +200,7 @@ export async function setupStagingAdminSession(): Promise<void> {
 
   await safeExecute(
     () => {
-      document.cookie =
-        'orderly_session=staging-admin-session; path=/; max-age=86400; SameSite=Lax'
+      document.cookie = 'orderly_session=staging-admin-session; path=/; max-age=86400; SameSite=Lax'
     },
     undefined,
     'set cookie'

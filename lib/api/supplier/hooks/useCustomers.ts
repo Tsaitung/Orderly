@@ -37,7 +37,9 @@ export function useSupplierCustomers(
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchCustomers = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -61,7 +63,9 @@ export function useSupplierCustomers(
 
   const addCustomer = useCallback(
     async (customerData: SupplierCustomerCreateRequest) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsAdding(true)
       try {
@@ -80,8 +84,16 @@ export function useSupplierCustomers(
   )
 
   const updateCustomer = useCallback(
-    async ({ customerId, data: updateData }: { customerId: string; data: Partial<SupplierCustomerCreateRequest> }) => {
-      if (!organizationId) {return}
+    async ({
+      customerId,
+      data: updateData,
+    }: {
+      customerId: string
+      data: Partial<SupplierCustomerCreateRequest>
+    }) => {
+      if (!organizationId) {
+        return
+      }
 
       setIsUpdating(true)
       try {
@@ -101,7 +113,9 @@ export function useSupplierCustomers(
 
   const removeCustomer = useCallback(
     async (customerId: string) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsRemoving(true)
       try {
@@ -127,7 +141,9 @@ export function useSupplierCustomers(
       customerIds: string[]
       data: Partial<SupplierCustomerCreateRequest>
     }) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsBulkUpdating(true)
       try {
@@ -165,7 +181,9 @@ export function useSupplierCustomers(
   // Export functionality
   const exportCustomers = useCallback(
     async (format: 'csv' | 'xlsx' = 'csv') => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       try {
         const blob = await supplierCustomerApi.exportCustomers(organizationId, format)

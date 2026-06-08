@@ -177,7 +177,9 @@ async function tryRefreshTokens(params: {
   if (!refresh || !isProbablyJwt(refresh)) return null
 
   const refreshBase =
-    params.routingStrategy === 'gateway' ? params.backendBaseUrl : LOCAL_SERVICE_URLS.USER_SERVICE_URL
+    params.routingStrategy === 'gateway'
+      ? params.backendBaseUrl
+      : LOCAL_SERVICE_URLS.USER_SERVICE_URL
 
   const refreshUrl = joinBaseAndSubPath(refreshBase, 'auth/refresh')
   const res = await fetchWithTimeout(
@@ -193,14 +195,17 @@ async function tryRefreshTokens(params: {
     15000
   )
 
-  const data = await res.json().catch(() => ({} as any))
+  const data = await res.json().catch(() => ({}) as any)
   if (!res.ok || !data?.success) return null
 
   const accessToken: string | undefined = data.token || data.access_token
   const newRefresh: string | undefined = data.refresh_token
   if (!accessToken || !isProbablyJwt(accessToken)) return null
 
-  return { accessToken, refreshToken: newRefresh && isProbablyJwt(newRefresh) ? newRefresh : refresh }
+  return {
+    accessToken,
+    refreshToken: newRefresh && isProbablyJwt(newRefresh) ? newRefresh : refresh,
+  }
 }
 
 export async function handler(req: NextRequest, { params }: { params: { path: string[] } }) {
@@ -229,11 +234,10 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     process.env.BACKEND_URL ||
     deriveBackendFromPublic(new URL(req.url)) ||
     'http://localhost:8000'
-  
+
   const nodeEnv = process.env.NODE_ENV || 'development'
-  const environment = nodeEnv === 'staging' ? 'staging' :
-                     nodeEnv === 'production' ? 'production' : 
-                     'development'
+  const environment =
+    nodeEnv === 'staging' ? 'staging' : nodeEnv === 'production' ? 'production' : 'development'
 
   // 優先使用 API Gateway（Cloud Run 友好）
   let target = `${BACKEND_URL}/api/${subPath}${qs}`
@@ -400,7 +404,9 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     // 如果是本地開發且服務不可用，返回友好的錯誤信息
     if (environment !== 'production' && error.cause?.code === 'ECONNREFUSED') {
       const serviceName =
-        routingStrategy === 'direct' ? target.split('//')[1]?.split('/')[0] || 'Unknown Service' : 'API Gateway'
+        routingStrategy === 'direct'
+          ? target.split('//')[1]?.split('/')[0] || 'Unknown Service'
+          : 'API Gateway'
       return new NextResponse(
         JSON.stringify({
           error: 'Service Unavailable',

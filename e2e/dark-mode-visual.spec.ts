@@ -18,9 +18,7 @@ const SCREENSHOT_DIR = join(process.cwd(), 'playwright-report', 'dark')
 
 test.describe('Public pages dark-mode visual evidence', () => {
   for (const route of ROUTES) {
-    test(`${route.path} renders dark with readable hero/legal heading`, async ({
-      page,
-    }) => {
+    test(`${route.path} renders dark with readable hero/legal heading`, async ({ page }) => {
       await page.addInitScript(() => {
         localStorage.setItem('theme', 'dark')
         document.documentElement.classList.add('dark')
@@ -52,12 +50,7 @@ test.describe('Public pages dark-mode visual evidence', () => {
           if (!numbers || numbers.length < 3) {
             return null
           }
-          const [r, g, b, a = 1] = numbers as [
-            number,
-            number,
-            number,
-            number?,
-          ]
+          const [r, g, b, a = 1] = numbers as [number, number, number, number?]
 
           return {
             r,
@@ -70,25 +63,17 @@ test.describe('Public pages dark-mode visual evidence', () => {
         const luminance = ({ r, g, b }: Rgba) => {
           const toLinear = (channel: number) => {
             const value = channel / 255
-            return value <= 0.03928
-              ? value / 12.92
-              : Math.pow((value + 0.055) / 1.055, 2.4)
+            return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4)
           }
 
-          return (
-            0.2126 * toLinear(r) +
-            0.7152 * toLinear(g) +
-            0.0722 * toLinear(b)
-          )
+          return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
         }
 
         const effectiveBackground = (element: Element | null): Rgba => {
           let current: Element | null = element
 
           while (current) {
-            const color = parseCssColor(
-              window.getComputedStyle(current).backgroundColor,
-            )
+            const color = parseCssColor(window.getComputedStyle(current).backgroundColor)
             if (color && color.a > 0.05) {
               return color
             }
@@ -116,9 +101,7 @@ test.describe('Public pages dark-mode visual evidence', () => {
         return {
           hasH1: true,
           bodyLuminance: luminance(bodyBackground),
-          headingDelta: h1Color
-            ? Math.abs(luminance(h1Color) - luminance(h1Background))
-            : 0,
+          headingDelta: h1Color ? Math.abs(luminance(h1Color) - luminance(h1Background)) : 0,
           headingText: h1.textContent?.trim() ?? '',
         }
       })
@@ -126,11 +109,11 @@ test.describe('Public pages dark-mode visual evidence', () => {
       expect(contrast.hasH1, `${route.path} must render an h1`).toBe(true)
       expect(
         contrast.bodyLuminance,
-        `${route.path} body background should be dark in dark mode`,
+        `${route.path} body background should be dark in dark mode`
       ).toBeLessThan(0.3)
       expect(
         contrast.headingDelta,
-        `${route.path} first h1 should contrast with its effective background`,
+        `${route.path} first h1 should contrast with its effective background`
       ).toBeGreaterThan(0.35)
     })
   }

@@ -37,10 +37,7 @@ export function CertificationsSection({
   const { watch, handleSubmit } = form
   const certifications = watch('quality_certifications') || []
 
-  function updateCertificationField(
-    field: keyof QualityCertification,
-    value: string
-  ): void {
+  function updateCertificationField(field: keyof QualityCertification, value: string): void {
     setNewCertification(prev => ({ ...prev, [field]: value }))
   }
 

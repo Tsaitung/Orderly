@@ -40,9 +40,7 @@ export default function HowItWorks() {
   const containerVariants = {
     hidden: {},
     show: {
-      transition: reduceMotion
-        ? {}
-        : { staggerChildren: 0.18, delayChildren: 0.1 },
+      transition: reduceMotion ? {} : { staggerChildren: 0.18, delayChildren: 0.1 },
     },
   }
 
@@ -54,7 +52,7 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="py-16 md:py-20 bg-white dark:bg-gray-950"
+      className="bg-white py-16 dark:bg-gray-950 md:py-20"
       aria-labelledby="how-it-works-heading"
     >
       <div className="container mx-auto px-4">
@@ -66,12 +64,12 @@ export default function HowItWorks() {
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <p className="text-primary-600 dark:text-primary-400 font-bold tracking-wide text-xs uppercase">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
             運作方式
           </p>
           <h2
             id="how-it-works-heading"
-            className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100"
+            className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl"
           >
             下單到結算，一條龍自動化
           </h2>
@@ -84,8 +82,8 @@ export default function HowItWorks() {
           whileInView="show"
           viewport={{ once: true, amount: 0.3 }}
           className="
-            relative mt-12 md:mt-16
-            flex flex-col gap-8
+            relative mt-12 flex
+            flex-col gap-8 md:mt-16
             md:flex-row md:gap-0
           "
         >
@@ -93,16 +91,16 @@ export default function HowItWorks() {
           <span
             aria-hidden="true"
             className="
-              hidden md:block absolute top-6 left-[10%] right-[10%]
-              h-0.5 bg-gray-200 dark:bg-gray-800
+              absolute left-[10%] right-[10%] top-6 hidden h-0.5
+              bg-gray-200 dark:bg-gray-800 md:block
             "
           />
           {/* 桌機進度連接線（Mocha）：隨捲入填滿，reduced-motion 直接滿格 */}
           <motion.span
             aria-hidden="true"
             className="
-              hidden md:block absolute top-6 left-[10%]
-              h-0.5 origin-left bg-primary-500
+              absolute left-[10%] top-6 hidden h-0.5
+              origin-left bg-primary-500 md:block
             "
             style={{ right: '10%' }}
             initial={reduceMotion ? false : { scaleX: 0 }}
@@ -115,32 +113,32 @@ export default function HowItWorks() {
             }}
           />
 
-          {STEPS.map((step) => {
+          {STEPS.map(step => {
             const Icon = STEP_ICONS[step.n]
             return (
               <motion.li
                 key={step.n}
                 variants={stepVariants}
                 className="
-                  relative md:flex-1 md:px-2
-                  flex items-start gap-4
-                  md:flex-col md:items-center md:gap-0 md:text-center
+                  relative flex items-start
+                  gap-4 md:flex-1 md:flex-col
+                  md:items-center md:gap-0 md:px-2 md:text-center
                 "
               >
                 {/* 編號圓圈 48px：Mocha 底白字，含 lucide icon */}
                 <div
                   className="
-                    relative z-10 shrink-0
-                    w-12 h-12 rounded-full
-                    bg-primary-500 text-white
-                    flex items-center justify-center
-                    font-extrabold
+                    relative z-10 flex
+                    h-12 w-12 shrink-0
+                    items-center justify-center
+                    rounded-full bg-primary-500 font-extrabold
+                    text-white
                     shadow-md shadow-primary-500/20
                     md:mb-3
                   "
                 >
                   {Icon ? (
-                    <Icon className="w-5 h-5" aria-hidden="true" />
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   ) : (
                     <span className="font-mono tabular-nums">{step.n}</span>
                   )}
@@ -148,12 +146,12 @@ export default function HowItWorks() {
                   <span
                     className="
                       absolute -bottom-1 -right-1
-                      w-5 h-5 rounded-full
-                      bg-white dark:bg-gray-950
-                      ring-2 ring-primary-500
-                      text-primary-600 dark:text-primary-400
-                      text-[11px] font-bold font-mono tabular-nums
-                      flex items-center justify-center
+                      flex h-5 w-5
+                      items-center justify-center
+                      rounded-full bg-white
+                      font-mono text-[11px]
+                      font-bold tabular-nums text-primary-600 ring-2
+                      ring-primary-500 dark:bg-gray-950 dark:text-primary-400
                     "
                     aria-hidden="true"
                   >
@@ -165,9 +163,7 @@ export default function HowItWorks() {
                   <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
                     {step.title}
                   </h3>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                    {step.desc}
-                  </p>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{step.desc}</p>
                 </div>
               </motion.li>
             )

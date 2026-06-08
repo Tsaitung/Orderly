@@ -21,7 +21,9 @@ export function useSupplierDashboard(organizationId?: string) {
   const [refreshInterval, setRefreshInterval] = useState(30000) // 30 seconds
 
   const fetchDashboard = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setDashboardLoading(true)
     setDashboardError(null)
@@ -38,7 +40,9 @@ export function useSupplierDashboard(organizationId?: string) {
   }, [organizationId])
 
   const fetchMetrics = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setMetricsLoading(true)
     setMetricsError(null)
@@ -64,7 +68,9 @@ export function useSupplierDashboard(organizationId?: string) {
 
   // Auto-refresh functionality
   useEffect(() => {
-    if (!autoRefresh || !organizationId) {return}
+    if (!autoRefresh || !organizationId) {
+      return
+    }
 
     const interval = setInterval(() => {
       fetchMetrics()

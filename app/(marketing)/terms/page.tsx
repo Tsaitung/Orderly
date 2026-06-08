@@ -37,7 +37,7 @@ export default function TermsPage() {
                 Legal
               </span>
 
-              <h1 className="mt-3 flex items-center gap-3 text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl dark:text-gray-100">
+              <h1 className="mt-3 flex items-center gap-3 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
                 <span
                   aria-hidden="true"
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-primary-50 text-primary-600 dark:bg-primary-500/10 dark:text-primary-400"
@@ -93,23 +93,17 @@ export default function TermsPage() {
                 >
                   井
                 </span>
-                <span className="text-lg font-extrabold tracking-tight text-white">
-                  Orderly
-                </span>
+                <span className="text-lg font-extrabold tracking-tight text-white">Orderly</span>
               </Link>
-              <p className="mt-3 text-[13px] text-[#8b94a3]">
-                餐飲供應鏈全鏈路數位對帳平台
-              </p>
+              <p className="mt-3 text-[13px] text-[#8b94a3]">餐飲供應鏈全鏈路數位對帳平台</p>
             </div>
 
             {/* 連結欄（產品 / 方案 / 公司）— 全取自 FOOTER SSOT */}
-            {FOOTER.map((column) => (
+            {FOOTER.map(column => (
               <div key={column.title}>
-                <h2 className="mb-3.5 text-sm font-bold text-white">
-                  {column.title}
-                </h2>
+                <h2 className="mb-3.5 text-sm font-bold text-white">{column.title}</h2>
                 <ul className="space-y-1">
-                  {column.links.map((link) => (
+                  {column.links.map(link => (
                     <li key={`${column.title}-${link.href}`}>
                       <Link
                         href={link.href}

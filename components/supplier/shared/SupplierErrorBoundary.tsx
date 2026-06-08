@@ -54,9 +54,7 @@ export function SupplierFormErrorBoundary({ children }: { children: ReactNode })
       fallback={
         <div className="rounded-lg border-2 border-dashed border-red-200 p-6 text-center">
           <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-red-500" />
-          <h3 className="mb-2 font-medium text-gray-900">
-            Form loading failed
-          </h3>
+          <h3 className="mb-2 font-medium text-gray-900">Form loading failed</h3>
           <p className="mb-4 text-sm text-gray-600">
             Form component encountered an error. Please reload or contact support.
           </p>

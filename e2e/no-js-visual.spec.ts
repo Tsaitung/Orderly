@@ -4,10 +4,7 @@ import { expect, test } from '@playwright/test'
 
 const SCREENSHOT_DIR = join(process.cwd(), 'playwright-report', 'no-js')
 
-test('landing deep sections remain visible without JavaScript', async ({
-  browser,
-  baseURL,
-}) => {
+test('landing deep sections remain visible without JavaScript', async ({ browser, baseURL }) => {
   const context = await browser.newContext({
     baseURL,
     javaScriptEnabled: false,
@@ -25,7 +22,7 @@ test('landing deep sections remain visible without JavaScript', async ({
     await expect(footer).toBeVisible()
     await expect(footer).toContainText('Orderly')
 
-    const pricingVisibility = await pricing.evaluate((element) => {
+    const pricingVisibility = await pricing.evaluate(element => {
       const style = window.getComputedStyle(element)
       const rect = element.getBoundingClientRect()
 
@@ -36,7 +33,7 @@ test('landing deep sections remain visible without JavaScript', async ({
       }
     })
 
-    const footerVisibility = await footer.evaluate((element) => {
+    const footerVisibility = await footer.evaluate(element => {
       const style = window.getComputedStyle(element)
       const rect = element.getBoundingClientRect()
 

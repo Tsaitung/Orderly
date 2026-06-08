@@ -52,7 +52,7 @@ export default function ContactPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const update = <K extends keyof FormFields>(key: K, value: FormFields[K]) => {
-    setFields((prev) => ({ ...prev, [key]: value }))
+    setFields(prev => ({ ...prev, [key]: value }))
   }
 
   // reveal 動畫（尊重 reduced motion：直接顯示最終狀態）。
@@ -82,13 +82,11 @@ export default function ContactPage() {
       })
 
       if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null
+        const data = (await res.json().catch(() => null)) as { error?: string } | null
         setErrorMsg(
           data?.error === 'VALIDATION_FAILED'
             ? '請確認所有欄位皆已正確填寫。'
-            : '送出失敗，請稍後再試或直接來信聯絡。',
+            : '送出失敗，請稍後再試或直接來信聯絡。'
         )
         setStatus('error')
         return
@@ -114,8 +112,7 @@ export default function ContactPage() {
     'dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 dark:placeholder:text-gray-500',
   ].join(' ')
 
-  const labelClass =
-    'mb-1.5 block text-sm font-semibold text-gray-800 dark:text-gray-200'
+  const labelClass = 'mb-1.5 block text-sm font-semibold text-gray-800 dark:text-gray-200'
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f7] dark:bg-gray-950">
@@ -129,7 +126,7 @@ export default function ContactPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400">
                 聯絡我們
               </span>
-              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 md:text-4xl dark:text-gray-100">
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
                 預約 Demo，看井然怎麼幫你對帳
               </h1>
               <p className="mt-3 text-gray-600 dark:text-gray-300">
@@ -158,7 +155,7 @@ export default function ContactPage() {
                     transition: { duration: 0.5, delay: 0.1 },
                   })}
             >
-              <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-sm md:p-8 dark:border-gray-800 dark:bg-gray-900">
+              <div className="rounded-[4px] border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 md:p-8">
                 {status === 'success' ? (
                   // 成功狀態
                   <div className="py-6 text-center" role="status" aria-live="polite">
@@ -194,7 +191,7 @@ export default function ContactPage() {
                     <fieldset className="mb-6">
                       <legend className={labelClass}>你的身分</legend>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                        {ROLES.map((roleItem) => {
+                        {ROLES.map(roleItem => {
                           const checked = fields.role === roleItem.key
                           return (
                             <label
@@ -206,11 +203,7 @@ export default function ContactPage() {
                                   ? 'border-transparent text-white'
                                   : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800',
                               ].join(' ')}
-                              style={
-                                checked
-                                  ? { backgroundColor: roleItem.accent }
-                                  : undefined
-                              }
+                              style={checked ? { backgroundColor: roleItem.accent } : undefined}
                             >
                               <input
                                 type="radio"
@@ -244,7 +237,7 @@ export default function ContactPage() {
                           required
                           autoComplete="organization"
                           value={fields.company}
-                          onChange={(e) => update('company', e.target.value)}
+                          onChange={e => update('company', e.target.value)}
                           placeholder="例：大廚餐飲"
                           className={`${inputClass} pl-9`}
                         />
@@ -268,7 +261,7 @@ export default function ContactPage() {
                           required
                           autoComplete="name"
                           value={fields.name}
-                          onChange={(e) => update('name', e.target.value)}
+                          onChange={e => update('name', e.target.value)}
                           placeholder="您的姓名"
                           className={`${inputClass} pl-9`}
                         />
@@ -292,7 +285,7 @@ export default function ContactPage() {
                           required
                           autoComplete="email"
                           value={fields.email}
-                          onChange={(e) => update('email', e.target.value)}
+                          onChange={e => update('email', e.target.value)}
                           placeholder="you@company.com"
                           className={`${inputClass} pl-9`}
                         />
@@ -310,7 +303,7 @@ export default function ContactPage() {
                         required
                         rows={4}
                         value={fields.needs}
-                        onChange={(e) => update('needs', e.target.value)}
+                        onChange={e => update('needs', e.target.value)}
                         placeholder="簡單描述你目前的對帳流程、門市 / 供應商數量，或想了解的功能。"
                         className={`${inputClass} resize-y`}
                       />

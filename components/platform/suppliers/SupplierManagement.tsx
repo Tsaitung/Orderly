@@ -553,7 +553,8 @@ export function SupplierManagement() {
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-gray-700">
                   顯示第 {(page - 1) * filters.page_size! + 1} -{' '}
-                  {Math.min(page * filters.page_size!, total || 0)} 項， 共 {(total || 0).toLocaleString()} 項
+                  {Math.min(page * filters.page_size!, total || 0)} 項， 共{' '}
+                  {(total || 0).toLocaleString()} 項
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button

@@ -11,12 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/contexts/auth'
 import { AuthValidation, type LoginFormData } from '@/lib/validation/auth-schemas'
 import { http } from '@/lib/api/http'
-import {
-  type FormErrors,
-  validateMfaCode,
-  API_ERROR_MESSAGES,
-  type LoginStep,
-} from '@/lib/auth'
+import { type FormErrors, validateMfaCode, API_ERROR_MESSAGES, type LoginStep } from '@/lib/auth'
 import {
   createFieldUpdater,
   getRedirectPathFromSession,
@@ -144,9 +139,7 @@ export default function LoginPage(): React.ReactElement {
             id="email"
             type="email"
             value={loginForm.email}
-            onChange={e =>
-              updateLoginField('email', AuthValidation.sanitizeString(e.target.value))
-            }
+            onChange={e => updateLoginField('email', AuthValidation.sanitizeString(e.target.value))}
             placeholder="your.email@company.com"
             className={errors.email ? 'border-red-500' : ''}
             disabled={isLoading}

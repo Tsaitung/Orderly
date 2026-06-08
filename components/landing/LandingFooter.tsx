@@ -53,23 +53,17 @@ export default function LandingFooter() {
               >
                 井
               </span>
-              <span className="text-lg font-extrabold tracking-tight text-white">
-                Orderly
-              </span>
+              <span className="text-lg font-extrabold tracking-tight text-white">Orderly</span>
             </Link>
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-500">
-              {BRAND_BLURB}
-            </p>
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-500">{BRAND_BLURB}</p>
           </div>
 
           {/* 連結欄：產品 / 方案 / 公司（資料來自 FOOTER SSOT） */}
-          {FOOTER.map((column) => (
+          {FOOTER.map(column => (
             <nav key={column.title} aria-label={column.title}>
-              <h2 className="mb-3 text-sm font-bold text-white">
-                {column.title}
-              </h2>
+              <h2 className="mb-3 text-sm font-bold text-white">{column.title}</h2>
               <ul className="space-y-1">
-                {column.links.map((link) => (
+                {column.links.map(link => (
                   <li key={link.href}>
                     <Link
                       href={link.href}

@@ -53,7 +53,9 @@ const PRODUCT_SERVICE_PATH = '/products'
  * Get auth token from localStorage
  */
 function getAuthToken(): string | null {
-  if (typeof window === 'undefined') {return null}
+  if (typeof window === 'undefined') {
+    return null
+  }
   return localStorage.getItem('access_token')
 }
 
@@ -461,9 +463,15 @@ export const supplierInvitationApi = {
   ): Promise<InvitationListResponse> {
     const params = new URLSearchParams()
 
-    if (pagination.page) {params.append('page', pagination.page.toString())}
-    if (pagination.pageSize) {params.append('page_size', pagination.pageSize.toString())}
-    if (filters.status) {params.append('status_filter', filters.status)}
+    if (pagination.page) {
+      params.append('page', pagination.page.toString())
+    }
+    if (pagination.pageSize) {
+      params.append('page_size', pagination.pageSize.toString())
+    }
+    if (filters.status) {
+      params.append('status_filter', filters.status)
+    }
 
     const queryString = params.toString()
     const url = `${USER_SERVICE_PATH}/invitations/sent${queryString ? `?${queryString}` : ''}`
@@ -537,13 +545,27 @@ export const supplierProductApi = {
   ): Promise<unknown> {
     const params = new URLSearchParams()
 
-    if (pagination.page) {params.append('page', pagination.page.toString())}
-    if (pagination.pageSize) {params.append('page_size', pagination.pageSize.toString())}
-    if (filters.search) {params.append('search', filters.search)}
-    if (filters.category) {params.append('category', filters.category)}
-    if (filters.packagingType) {params.append('packaging_type', filters.packagingType)}
-    if (filters.qualityGrade) {params.append('quality_grade', filters.qualityGrade)}
-    if (filters.isActive !== undefined) {params.append('is_active', filters.isActive.toString())}
+    if (pagination.page) {
+      params.append('page', pagination.page.toString())
+    }
+    if (pagination.pageSize) {
+      params.append('page_size', pagination.pageSize.toString())
+    }
+    if (filters.search) {
+      params.append('search', filters.search)
+    }
+    if (filters.category) {
+      params.append('category', filters.category)
+    }
+    if (filters.packagingType) {
+      params.append('packaging_type', filters.packagingType)
+    }
+    if (filters.qualityGrade) {
+      params.append('quality_grade', filters.qualityGrade)
+    }
+    if (filters.isActive !== undefined) {
+      params.append('is_active', filters.isActive.toString())
+    }
 
     const queryString = params.toString()
     const url = `${PRODUCT_SERVICE_PATH}/v1/skus${queryString ? `?${queryString}` : ''}`

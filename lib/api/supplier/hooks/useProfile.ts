@@ -6,7 +6,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 import { supplierProfileApi } from '../api'
 import { getErrorMessage } from '../errors'
-import type { SupplierProfile, SupplierProfileCreateRequest, SupplierProfileUpdateRequest } from '../types'
+import type {
+  SupplierProfile,
+  SupplierProfileCreateRequest,
+  SupplierProfileUpdateRequest,
+} from '../types'
 
 interface UseAsyncState<T> {
   data: T | null
@@ -30,7 +34,9 @@ export function useSupplierProfile(organizationId?: string) {
   const [createError, setCreateError] = useState<string | null>(null)
 
   const fetchProfile = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setState(prev => ({ ...prev, loading: true, error: null }))
     try {
@@ -51,7 +57,9 @@ export function useSupplierProfile(organizationId?: string) {
 
   const updateProfile = useCallback(
     async (data: SupplierProfileUpdateRequest) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsUpdating(true)
       setUpdateError(null)

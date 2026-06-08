@@ -50,8 +50,7 @@ export interface HeroContent {
 export const HERO: HeroContent = {
   titleLine1: '對帳，從 8 小時',
   titleAccent: '到 30 分鐘',
-  subtitle:
-    '井然 Orderly 用 AI 自動比對訂單・送貨單・發票，三方逐筆勾稽，差異一鍵核准。',
+  subtitle: '井然 Orderly 用 AI 自動比對訂單・送貨單・發票，三方逐筆勾稽，差異一鍵核准。',
   primaryCta: { label: '預約 Demo', href: '/contact' },
   secondaryCta: { label: '看實際運作', href: '#reconciliation' },
 }
@@ -169,11 +168,7 @@ export const ROLES: RoleItem[] = [
     name: '餐廳',
     accent: '#ff6b35',
     href: '/restaurant',
-    valueProps: [
-      '數位下單，價格稅則自動帶入',
-      '拍照驗收，差異即時留證',
-      'AI 對帳，帳務透明可追溯',
-    ],
+    valueProps: ['數位下單，價格稅則自動帶入', '拍照驗收，差異即時留證', 'AI 對帳，帳務透明可追溯'],
     shotLabel: '餐廳 Dashboard 縮影',
   },
   {
@@ -229,12 +224,7 @@ export const PRICING: PricingTier[] = [
     price: 'NT$3,999',
     period: '/月',
     popular: true,
-    modules: [
-      'AI 自動對帳',
-      '多門市 + ERP 同步',
-      '財務報表 + 稽核軌跡',
-      '優先支援',
-    ],
+    modules: ['AI 自動對帳', '多門市 + ERP 同步', '財務報表 + 稽核軌跡', '優先支援'],
     cta: { label: '開始使用', href: '/register' },
   },
   {
@@ -247,8 +237,7 @@ export const PRICING: PricingTier[] = [
   },
 ]
 
-export const PRICING_NOTE =
-  '另含交易抽成 1.5–3% GMV（依量級與品類分級）。價格為實際級距。'
+export const PRICING_NOTE = '另含交易抽成 1.5–3% GMV（依量級與品類分級）。價格為實際級距。'
 
 // ---------------------------------------------------------------------------
 // FAQ（依角色分組）

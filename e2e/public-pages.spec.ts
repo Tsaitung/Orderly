@@ -48,9 +48,7 @@ test.describe('Landing (public home)', () => {
     await expect(page.locator('#pricing')).toBeInViewport()
   })
 
-  test('預約 Demo / 聯絡 CTA 的 href 等於 /contact（僅驗 href，不驗 200）', async ({
-    page,
-  }) => {
+  test('預約 Demo / 聯絡 CTA 的 href 等於 /contact（僅驗 href，不驗 200）', async ({ page }) => {
     await page.goto('/')
     const contactCta = page.locator('a[href="/contact"]').first()
     await expect(contactCta).toBeVisible()
@@ -62,9 +60,7 @@ test.describe('Landing (public home)', () => {
     const html = page.locator('html')
 
     // 切換鈕以 aria-label 或常見命名定位（元件需提供可存取的切換鈕）。
-    const toggle = page
-      .getByRole('button', { name: /(dark|深色|theme|主題|切換)/i })
-      .first()
+    const toggle = page.getByRole('button', { name: /(dark|深色|theme|主題|切換)/i }).first()
     await expect(toggle).toBeVisible()
     await toggle.click()
     await expect(html).toHaveClass(/dark/)
@@ -77,7 +73,7 @@ test.describe('Landing (public home)', () => {
         errors.push(msg.text())
       }
     })
-    page.on('pageerror', (err) => {
+    page.on('pageerror', err => {
       errors.push(err.message)
     })
 
@@ -114,9 +110,7 @@ test.describe('Marketing pages', () => {
     await page.getByLabel('公司名稱').fill('測試餐飲股份有限公司')
     await page.getByLabel('聯絡人').fill('測試使用者')
     await page.getByLabel('Email').fill('test@example.com')
-    await page
-      .getByLabel('需求說明')
-      .fill('想了解井然 Orderly 的對帳流程與導入時程。')
+    await page.getByLabel('需求說明').fill('想了解井然 Orderly 的對帳流程與導入時程。')
 
     await page.getByRole('button', { name: '送出需求' }).click()
 

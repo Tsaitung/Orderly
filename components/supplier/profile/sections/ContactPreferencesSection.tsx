@@ -161,18 +161,9 @@ function ContactPreferencesDisplay({
 }: ContactPreferencesDisplayProps): React.ReactElement {
   return (
     <div className="space-y-4">
-      <NotificationStatus
-        label="Email 通知"
-        enabled={preferences?.email_notifications}
-      />
-      <NotificationStatus
-        label="SMS 通知"
-        enabled={preferences?.sms_notifications}
-      />
-      <NotificationStatus
-        label="WhatsApp 通知"
-        enabled={preferences?.whatsapp_notifications}
-      />
+      <NotificationStatus label="Email 通知" enabled={preferences?.email_notifications} />
+      <NotificationStatus label="SMS 通知" enabled={preferences?.sms_notifications} />
+      <NotificationStatus label="WhatsApp 通知" enabled={preferences?.whatsapp_notifications} />
       {preferences?.preferred_contact_time && (
         <div className="flex items-center justify-between">
           <span>偏好聯絡時間</span>

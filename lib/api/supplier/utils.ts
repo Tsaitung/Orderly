@@ -221,7 +221,9 @@ export interface PaginationInfo {
 export function extractPaginationInfo<T extends Partial<PaginationInfo>>(
   data: T | null
 ): PaginationInfo | null {
-  if (!data) {return null}
+  if (!data) {
+    return null
+  }
 
   return {
     total_count: data.total_count ?? 0,
@@ -304,7 +306,9 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   let timeout: NodeJS.Timeout | null = null
 
   return (...args: Parameters<T>) => {
-    if (timeout) {clearTimeout(timeout)}
+    if (timeout) {
+      clearTimeout(timeout)
+    }
     timeout = setTimeout(() => func(...args), wait)
   }
 }

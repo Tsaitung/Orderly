@@ -56,20 +56,20 @@ export default function FeatureGrid() {
       }
 
   return (
-    <section id="features" className="py-16 md:py-20 bg-white dark:bg-gray-950">
+    <section id="features" className="bg-white py-16 dark:bg-gray-950 md:py-20">
       <div className="container mx-auto px-4">
         {/* 區塊標題 */}
         <motion.div className="text-center" {...headerMotion}>
-          <span className="text-primary-600 font-bold tracking-wide text-xs uppercase">
+          <span className="text-xs font-bold uppercase tracking-wide text-primary-600">
             完整功能
           </span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+          <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
             一個平台，串起全流程
           </h2>
         </motion.div>
 
         {/* 功能卡片：4 欄 → 平板 2 欄 → 手機 1 欄，stagger reveal */}
-        <div className="mt-10 md:mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 lg:grid-cols-4">
           {FEATURES.map((feature, index) => {
             const Icon = ICONS[feature.icon]
             const cardMotion = reduceMotion
@@ -88,9 +88,7 @@ export default function FeatureGrid() {
                 className="group h-full rounded-xl border border-gray-200 bg-white p-6 transition-colors hover:border-primary-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-700"
               >
                 <div className="mb-4 grid h-11 w-11 place-items-center rounded-lg bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
-                  {Icon ? (
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  ) : null}
+                  {Icon ? <Icon className="h-5 w-5" aria-hidden="true" /> : null}
                 </div>
                 <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">
                   {feature.title}

@@ -78,8 +78,9 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       // Log to console in development (safe process.env check)
-      const nodeEnv = typeof process !== 'undefined' && process.env ? process.env.NODE_ENV : 'development'
-      
+      const nodeEnv =
+        typeof process !== 'undefined' && process.env ? process.env.NODE_ENV : 'development'
+
       if (nodeEnv === 'development') {
         console.group(`🚨 Error Boundary Caught Error (${errorId})`)
         console.error('Error:', error)
@@ -177,7 +178,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
             {/* Error Details (Development Only) */}
             {this.props.showDetails &&
-              (typeof process === 'undefined' || !process.env || process.env.NODE_ENV === 'development') &&
+              (typeof process === 'undefined' ||
+                !process.env ||
+                process.env.NODE_ENV === 'development') &&
               this.state.error && (
                 <details className="mb-6 rounded-md bg-red-50 p-3">
                   <summary className="cursor-pointer text-sm font-medium text-red-700">

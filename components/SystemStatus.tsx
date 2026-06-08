@@ -5,12 +5,16 @@ import { cn, formatRelativeTime } from '@/lib/utils'
 import type { ServiceHealth } from '@/types'
 
 const frontendUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/+$/, '')
-const backendBase =
-  (process.env.ORDERLY_BACKEND_URL ||
-    process.env.BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8000').replace(/\/+$/, '')
-const postgresUrl = (process.env.NEXT_PUBLIC_POSTGRES_URL || 'postgresql://localhost:5432').replace(/\/+$/, '')
+const backendBase = (
+  process.env.ORDERLY_BACKEND_URL ||
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'http://localhost:8000'
+).replace(/\/+$/, '')
+const postgresUrl = (process.env.NEXT_PUBLIC_POSTGRES_URL || 'postgresql://localhost:5432').replace(
+  /\/+$/,
+  ''
+)
 const redisUrl = (process.env.NEXT_PUBLIC_REDIS_URL || 'redis://localhost:6379').replace(/\/+$/, '')
 
 const withBackendPath = (path: string) => `${backendBase}${path}`

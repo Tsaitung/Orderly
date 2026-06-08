@@ -43,18 +43,14 @@ function RolePanel({ role }: { role: RoleItem }) {
           {role.name}端
         </h3>
         <ul className="mt-4 space-y-3" role="list">
-          {role.valueProps.map((prop) => (
+          {role.valueProps.map(prop => (
             <li key={prop} className="flex items-start gap-3">
               <span
                 aria-hidden="true"
                 className="mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded"
                 style={{ backgroundColor: withAlpha(role.accent, 0.14) }}
               >
-                <Check
-                  className="h-4 w-4"
-                  strokeWidth={3}
-                  style={{ color: role.accent }}
-                />
+                <Check className="h-4 w-4" strokeWidth={3} style={{ color: role.accent }} />
               </span>
               <span className="text-gray-700 dark:text-gray-300">{prop}</span>
             </li>
@@ -62,7 +58,7 @@ function RolePanel({ role }: { role: RoleItem }) {
         </ul>
         <a
           href={role.href}
-          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 dark:focus-visible:ring-offset-gray-900"
+          className="mt-6 inline-flex min-h-[44px] items-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           style={{ backgroundColor: role.accent }}
         >
           了解{role.name}方案
@@ -124,11 +120,11 @@ export default function RoleTabs() {
               aria-label="選擇角色方案"
               className="flex flex-col gap-2.5 sm:flex-row sm:justify-center"
             >
-              {ROLES.map((role) => (
+              {ROLES.map(role => (
                 <Tabs.Trigger
                   key={role.key}
                   value={role.key}
-                  className="group inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500 data-[state=active]:border-current data-[state=active]:bg-[var(--role-soft)] data-[state=active]:text-[var(--role-accent)] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900"
+                  className="group inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 data-[state=active]:border-current data-[state=active]:bg-[var(--role-soft)] data-[state=active]:text-[var(--role-accent)] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus-visible:ring-offset-gray-900"
                   style={
                     {
                       '--role-accent': role.accent,
@@ -141,12 +137,8 @@ export default function RoleTabs() {
               ))}
             </Tabs.List>
 
-            {ROLES.map((role) => (
-              <Tabs.Content
-                key={role.key}
-                value={role.key}
-                className="focus-visible:outline-none"
-              >
+            {ROLES.map(role => (
+              <Tabs.Content key={role.key} value={role.key} className="focus-visible:outline-none">
                 <RolePanel role={role} />
               </Tabs.Content>
             ))}

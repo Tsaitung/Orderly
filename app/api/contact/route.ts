@@ -46,10 +46,7 @@ export async function POST(request: Request) {
   } catch {
     // 無法解析 JSON：僅記錄不含 PII 的失敗事件。
     console.warn('[contact] invalid JSON body', { requestId, timestamp })
-    return NextResponse.json(
-      { ok: false, error: 'INVALID_JSON' },
-      { status: 400 },
-    )
+    return NextResponse.json({ ok: false, error: 'INVALID_JSON' }, { status: 400 })
   }
 
   const role = body.role
@@ -66,10 +63,7 @@ export async function POST(request: Request) {
   if (missing.length > 0) {
     // 失敗 log 同樣不含 PII，只記錄欄位「名稱」與 requestId。
     console.warn('[contact] validation failed', { requestId, timestamp, missing })
-    return NextResponse.json(
-      { ok: false, error: 'VALIDATION_FAILED', missing },
-      { status: 400 },
-    )
+    return NextResponse.json({ ok: false, error: 'VALIDATION_FAILED', missing }, { status: 400 })
   }
 
   // 唯一允許落地的稽核資訊：requestId / role / timestamp（無任何 PII）。

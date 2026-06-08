@@ -46,8 +46,11 @@ function withBody<T>(method: string, path: string, body?: unknown, opts?: HttpOp
 export const http = {
   request,
   get: <T>(path: string, opts?: HttpOptions) => request<T>(path, { method: 'GET' }, opts),
-  post: <T>(path: string, body?: unknown, opts?: HttpOptions) => withBody<T>('POST', path, body, opts),
-  patch: <T>(path: string, body?: unknown, opts?: HttpOptions) => withBody<T>('PATCH', path, body, opts),
-  put: <T>(path: string, body?: unknown, opts?: HttpOptions) => withBody<T>('PUT', path, body, opts),
+  post: <T>(path: string, body?: unknown, opts?: HttpOptions) =>
+    withBody<T>('POST', path, body, opts),
+  patch: <T>(path: string, body?: unknown, opts?: HttpOptions) =>
+    withBody<T>('PATCH', path, body, opts),
+  put: <T>(path: string, body?: unknown, opts?: HttpOptions) =>
+    withBody<T>('PUT', path, body, opts),
   delete: <T>(path: string, opts?: HttpOptions) => request<T>(path, { method: 'DELETE' }, opts),
 }

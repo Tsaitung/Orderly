@@ -38,7 +38,9 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
   const [isBulkUpdating, setIsBulkUpdating] = useState(false)
 
   const fetchOrders = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -55,7 +57,9 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
   }, [organizationId, params])
 
   const fetchStats = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setStatsLoading(true)
     setStatsError(null)
@@ -80,8 +84,18 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
 
   // Individual order operations
   const updateOrderStatus = useCallback(
-    async ({ orderId, status, notes }: { orderId: string; status: OrderStatus; notes?: string }) => {
-      if (!organizationId) {return}
+    async ({
+      orderId,
+      status,
+      notes,
+    }: {
+      orderId: string
+      status: OrderStatus
+      notes?: string
+    }) => {
+      if (!organizationId) {
+        return
+      }
 
       setIsUpdatingStatus(true)
       try {
@@ -101,8 +115,18 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
 
   // Bulk operations
   const bulkUpdateOrderStatus = useCallback(
-    async ({ orderIds, status, notes }: { orderIds: string[]; status: OrderStatus; notes?: string }) => {
-      if (!organizationId) {return}
+    async ({
+      orderIds,
+      status,
+      notes,
+    }: {
+      orderIds: string[]
+      status: OrderStatus
+      notes?: string
+    }) => {
+      if (!organizationId) {
+        return
+      }
 
       setIsBulkUpdating(true)
       try {
@@ -146,7 +170,9 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
   // Export functionality
   const exportOrders = useCallback(
     async (format: 'csv' | 'xlsx' = 'csv') => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       try {
         const blob = await supplierOrderApi.exportOrders(organizationId, format, params)
@@ -161,7 +187,9 @@ export function useSupplierOrders(organizationId?: string, initialParams: OrderF
 
   // Computed values for quick stats
   const quickStats = useMemo(() => {
-    if (!ordersData?.orders) {return null}
+    if (!ordersData?.orders) {
+      return null
+    }
 
     const orderList = ordersData.orders
     return {
@@ -224,7 +252,9 @@ export function useSupplierOrder(organizationId?: string, orderId?: string) {
   const [updateError, setUpdateError] = useState<string | null>(null)
 
   const fetchOrder = useCallback(async () => {
-    if (!organizationId || !orderId) {return}
+    if (!organizationId || !orderId) {
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -248,7 +278,9 @@ export function useSupplierOrder(organizationId?: string, orderId?: string) {
 
   const updateStatus = useCallback(
     async ({ status, notes }: { status: OrderStatus; notes?: string }) => {
-      if (!organizationId || !orderId) {return}
+      if (!organizationId || !orderId) {
+        return
+      }
 
       setIsUpdating(true)
       setUpdateError(null)

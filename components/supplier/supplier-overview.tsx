@@ -189,9 +189,12 @@ function SupplierOverviewContent({ organizationId }: SupplierOverviewContentProp
     return `${value.toFixed(1)}%`
   }, [])
 
-  const getChangeType = React.useCallback((current: number, previous: number): 'increase' | 'decrease' => {
-    return current >= previous ? 'increase' : 'decrease'
-  }, [])
+  const getChangeType = React.useCallback(
+    (current: number, previous: number): 'increase' | 'decrease' => {
+      return current >= previous ? 'increase' : 'decrease'
+    },
+    []
+  )
 
   const getChangePercentage = React.useCallback((current: number, previous: number): number => {
     if (previous === 0) return current > 0 ? 100 : 0

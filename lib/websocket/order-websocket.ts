@@ -44,7 +44,9 @@ const resolveWsBase = (): string => {
     'http://localhost:8000'
 
   try {
-    const baseUrl = httpBase.startsWith('http') ? httpBase : `http://${httpBase.replace(/^\/+/, '')}`
+    const baseUrl = httpBase.startsWith('http')
+      ? httpBase
+      : `http://${httpBase.replace(/^\/+/, '')}`
     const u = new URL(baseUrl)
     u.protocol = u.protocol === 'https:' ? 'wss:' : 'ws:'
     u.pathname = ''

@@ -9,7 +9,9 @@ const deriveBackendBase = (reqUrl?: URL): string => {
 
   if (ordered) {
     try {
-      const u = ordered.startsWith('http') ? new URL(ordered) : new URL(`http://${ordered.replace(/^\/+/, '')}`)
+      const u = ordered.startsWith('http')
+        ? new URL(ordered)
+        : new URL(`http://${ordered.replace(/^\/+/, '')}`)
       // 僅保留協定與 host，避免重複 /api
       return `${u.protocol}//${u.host}`
     } catch (err) {
