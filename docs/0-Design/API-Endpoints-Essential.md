@@ -42,18 +42,20 @@ interface AuthHeaders {
 
 ## 1. Authentication & User Management
 
-### POST /api/auth/login
+### 登入模型（2026-06-08 更新）：Line / Google OAuth
 
-**Purpose**: 用户登录认证
+> 平台僅支援 **Line（主要）/ Google（次要，需先綁定）** OAuth 登入，適用全體使用者（含平台內部員工）。**已移除 Email + 密碼登入**：`POST /api/auth/login`（email/password）、`/api/auth/password/forgot`、`/api/auth/password/reset`、`/api/auth/password/change` 一律停用（密碼於認證流程中完全廢除）。Email 不用於登入或帳號恢復，僅作財務對帳聯絡欄位。帳號恢復改走 US-AUTH-022（社群帳號恢復）。
+
+### GET /api/auth/oauth/{provider}/initiate
+
+**Purpose**: 啟動 OAuth 登入流程（`provider`: `line` | `google`），回傳授權導向 URL 與 `state`
+
+### GET /api/auth/oauth/{provider}/callback
+
+**Purpose**: OAuth 回呼，驗證 `state` 後以授權 code 交換 token，建立或登入平台帳號並簽發 JWT
 
 ```typescript
-interface LoginRequest {
-  email: string
-  password: string
-  organization_id?: string
-}
-
-interface LoginResponse {
+interface OAuthCallbackResponse {
   success: true
   data: {
     tokens: {
@@ -63,14 +65,18 @@ interface LoginResponse {
     }
     user: {
       id: string
-      email: string
       role: UserRole
       organization: {
         id: string
         name: string
-        type: 'restaurant' | 'supplier'
+        type: 'restaurant' | 'supplier' | 'platform'
+      }
+      social_bindings: {
+        line: boolean
+        google: boolean
       }
     }
+    requires_mfa?: boolean  // 若帳號啟用 MFA（平台端強制），需再走 /api/auth/mfa/verify
   }
 }
 ```
@@ -78,22 +84,13 @@ interface LoginResponse {
 **Example Usage**:
 
 ```typescript
-// Frontend login handler
-async function handleLogin(credentials: LoginRequest) {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(credentials),
-  })
-
-  const result = await response.json()
-  if (result.success) {
-    // Store tokens securely
-    localStorage.setItem('access_token', result.data.tokens.access_token)
-    // Redirect to dashboard
-    router.push('/dashboard')
-  }
+// Frontend：點擊「使用 Line 登入」→ 取得授權 URL 並導向
+async function startOAuth(provider: 'line' | 'google') {
+  const res = await fetch(`/api/auth/oauth/${provider}/initiate`)
+  const { data } = await res.json()
+  window.location.href = data.authorization_url  // 帶 state
 }
+// callback 由後端 /api/auth/oauth/{provider}/callback 處理，成功後簽發 JWT 並導向 dashboard
 ```
 
 ### GET /api/auth/me

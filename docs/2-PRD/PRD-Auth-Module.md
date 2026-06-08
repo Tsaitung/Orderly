@@ -2,8 +2,8 @@
 
 ## Document Information
 
-- **Version**: 1.0
-- **Date**: 2025-09-19
+- **Version**: 1.1
+- **Date**: 2026-06-08
 - **Owner**: Product Team
 - **Status**: In Review（本文件已切換為中文撰寫，欄位命名維持英文）
 - **Implementation Priority**: P0 - Critical
@@ -11,8 +11,24 @@
 
 ---
 
+## ⚠️ 登入模型變更（2026-06-08，本文件權威）
+
+本次需求變更重訂全平台登入模型，**取代本文件後續所有與 Email+密碼登入、密碼重設、強制 Email 綁定相關的描述**（衝突時以本段為準）：
+
+1. **登入方式僅二：Line（主要）+ Google（次要，需先綁定後可登入）。** 不再提供 Email + 密碼或其他任何登入方式。適用全體使用者，**含平台內部員工**。
+2. **密碼於認證流程中完全廢除**：無密碼登入、無密碼重設（Section 5 停用）、無密碼相關欄位作認證用途。
+3. **Email 不用於登入或帳號恢復**：Email 僅作**財務對帳聯絡欄位**（選填）。移除「首次登入強制綁定 Email」。
+4. **平台端不再使用獨立 Email+密碼系統**（Section 4.5 改寫）：改用 Line/Google + **強制 MFA** + 帳號供裝限定 + 更嚴格鎖定 + 審計 + IP 白名單。
+5. **帳號恢復**：依賴另一個已綁定社群帳號（Line 失效用 Google）；兩者皆失效須走人工支援（platform_support 協助重新綁定）。帳號**至少保留一個有效社群綁定**。
+6. **MFA** 作為第二因素疊加於社群登入；MFA 方法僅 **TOTP / SMS**，移除 Email OTP。
+
+> 對應 User Story：US-AUTH-001/002/003/005/006/008/014/016 已改寫、US-AUTH-004 停用、US-AUTH-022（社群帳號恢復）新增。
+
+---
+
 ## 0. 設計原則與技術選擇（中文版新增）
 - 單一身份源：所有登入、租戶隔離、角色與權限由 `backend/user-service-fastapi` 提供；API Gateway 僅驗證與轉發授權。
+- **登入方式（2026-06-08）**：僅 Line（主要）/ Google（次要綁定）OAuth；無 Email+密碼；密碼廢除；Email 僅作財務對帳用途。
 - 多租戶隔離：強制 `tenant_id`；所有查詢需帶租戶條件，禁止跨租戶存取。
 - 角色 + 細粒度權限：`role`（枚舉） + `permissions`（JSON/array）用於例外授權，避免僵硬 RBAC。
 - 無狀態授權：短效 JWT 搭配 Refresh Token；JWT 包含 `sub`、`tenant_id`、`role`、`permissions`、`org_id` 等最小必要聲明。
@@ -128,11 +144,11 @@ Based on current system analysis:
 - 契約來源：`shared/types` 定義 DTO；資料庫欄位需在 `backend/user-service-fastapi` Alembic 遷移同步。
 
 ### 2.4 認證／授權流程（中文新增）
-1. 登入：User Service `/auth/login` 驗證密碼（bcrypt），簽發短效 Access JWT + Refresh Token。
+1. 登入：User Service `/auth/oauth/{line|google}/initiate` → 社群授權 → `/auth/oauth/{line|google}/callback` 完成 OAuth，建立或登入帳號，簽發短效 Access JWT + Refresh Token（**無密碼驗證**）。
 2. Gateway 校驗：API Gateway 中間件驗證 JWT，並在上游請求頭附帶 `x-user-id`、`x-tenant-id`、`x-role`、`x-permissions`。
 3. 租戶隔離：下游服務所有查詢強制帶 `tenant_id` 條件。
 4. Refresh：`/auth/refresh` 以 Refresh Token 交換新 Access Token，可於 Redis/DB 吊銷。
-5. MFA（可選）：支援 TOTP，啟用後登入需額外通過 MFA。
+5. MFA（可選 / 平台端強制）：支援 TOTP、SMS（**不含 Email OTP**），啟用後登入需額外通過 MFA。
 
 ---
 
@@ -146,28 +162,33 @@ Based on current system analysis:
 ### 3.2 必填欄位（依租戶類型）
 
 **餐廳：**
-- 基本：`restaurantName`、`businessRegistrationNumber`、`email`、`phone`、`password`
+- 認證：Line 社群帳號（必填，註冊即綁定）；可於登入後加綁 Google
+- 基本：`restaurantName`、`businessRegistrationNumber`、`phone`（必填）；`email`（**選填，僅財務對帳用途**）
 - 營運：`restaurantType`、`locationsCount`、`avgMonthlyPurchaseVolume`、`currentSuppliersCount`
-- 驗證：Email OTP、SMS OTP，可選 `businessLicenseUpload`
+- 驗證：SMS OTP（電話），可選 `businessLicenseUpload`（**移除密碼欄位、不再使用 Email OTP**）
 
 **供應商：**
-- 基本：`companyName`、`businessRegistrationNumber`、`taxId`、`email`、`phone`、`password`
+- 認證：Line 社群帳號（必填，註冊即綁定）；可於登入後加綁 Google
+- 基本：`companyName`、`businessRegistrationNumber`、`taxId`、`phone`（必填）；`email`（**選填，僅財務對帳用途**）
 - 營運：`productCategories[]`、`serviceAreas`、`minOrderRequirement`、`deliveryCapabilities`、`paymentTermsOffered`、`currentCustomerCount`
-- 驗證：Email OTP、SMS OTP、`businessLicenseUpload`（必填）、食安證書（選填）、銀行帳戶驗證
+- 驗證：SMS OTP（電話）、`businessLicenseUpload`（必填）、食安證書（選填）、銀行帳戶驗證（**移除密碼欄位、不再使用 Email OTP**）
 
 ### 3.3 驗證規則
-- Email：RFC 5322 格式、拒絕一次性網域、全租戶唯一、6 碼 OTP（10 分鐘）。
-- 密碼：最少 12 碼，大小寫/數字/特殊字元各 1，不得接近 email 或組織名，不得重複最近 5 組。
-- 營業資訊：統編/稅籍 checksum + 政府 API 查核；電話 E.164 + 簡訊可達性；供應商須提供營業／稅務證照。
+- Email（**選填，財務對帳用**）：RFC 5322 格式即可；作對帳聯絡欄位，不再要求登入用 OTP 驗證或全租戶唯一性約束。
+- 密碼：**已移除**（認證流程不使用密碼）。
+- 社群帳號：Line / Google OAuth 提供者驗證 + `state`/`nonce` 防重放（見 Section 4.1.1）。
+- 營業資訊：統編/稅籍 checksum + 政府 API 查核；電話 E.164 + SMS OTP 可達性；供應商須提供營業／稅務證照。
 
 ### 3.4 用戶故事（中文）
 
-**Line 快速註冊（主要路徑）**：
-- 餐廳/供應商：一鍵 Line 授權啟動註冊 → **強制綁定 Email** → 補齊必要商業資訊 → 完成
+**Line 快速註冊（唯一註冊路徑）**：
+- 餐廳/供應商：一鍵 Line 授權啟動註冊 → 補齊必要商業資訊（統編、電話 SMS OTP） → 完成
+- Email 為選填的財務對帳聯絡欄位，**不再強制綁定**、不作登入或恢復用途
+- 可於登入後在設定頁綁定 **Google 作為次要登入/恢復管道**
 - 優勢：降低註冊門檻、自動取得 Line 顯示名稱與頭像、簡化身份驗證
 
-**傳統註冊（備選路徑）**：
-- 餐廳：5 分鐘內完成註冊；未完成營業驗證前可瀏覽／收藏，驗證後可正式下單；收到歡迎信與下一步指引。
+**傳統 Email + 密碼註冊**：**已移除**（平台僅支援 Line 註冊）。
+- 餐廳：未完成營業驗證前可瀏覽／收藏，驗證後可正式下單；於系統內顯示下一步指引。
 - 供應商：可多選品類、上傳多張證照，提交前可預覽；銀行驗證 24 小時內完成；完成後可被餐廳搜尋。
 
 ### 3.5 合作夥伴邀請導向註冊/登入（供應商 ↔ 餐廳）
@@ -186,13 +207,13 @@ Based on current system analysis:
 
 - 受邀者可透過邀請連結或 QR Code 開啟落地頁。
 - 落地頁需清楚顯示邀請方資訊（名稱、聯絡方式、邀請訊息、有效期），並提示「接受後將建立合作關係」。
-- CTA：以 **Line 登入/註冊** 為主路徑；Email + 密碼為備選。
+- CTA：以 **Line 登入/註冊** 為主路徑；**Google 登入為次要**（不再提供 Email + 密碼）。
 
 #### 3.5.3 受邀者流程（既有帳戶/新帳戶）
 
 - 未登入：
-  - 新用戶：走既有註冊流程（Line 授權 → Email 綁定 → 補齊商業資訊 → OTP），不得因邀請跳過強制安全步驟。
-  - 既有用戶：先完成登入後再接受邀請。
+  - 新用戶：走既有註冊流程（Line 授權 → 補齊商業資訊 → 電話 SMS OTP），不得因邀請跳過強制安全步驟；**不再要求 Email 綁定**。
+  - 既有用戶：先完成登入（Line 或 Google）後再接受邀請。
 - 已登入：
   - 接受邀請前需顯示「將綁定到目前登入的組織」並二次確認，避免誤綁。
 
@@ -218,53 +239,50 @@ Based on current system analysis:
 ## 4. 登入與 MFA（中文）
 
 ### 4.1 標準登入流程
-1. 輸入 email；判斷是否啟用 MFA  
-2. 驗證密碼（bcrypt）  
-3. 若啟用 MFA：要求 OTP（SMS/Email/TOTP）  
+1. 選擇登入方式：Line（主要）或 Google（次要，需已綁定）  
+2. 完成社群 OAuth 授權（`/auth/oauth/{provider}/initiate` → `callback`）；**無密碼步驟**  
+3. 若帳號啟用 MFA（平台端強制）：要求 OTP（SMS / TOTP，**不含 Email**）  
 4. 簽發 Access + Refresh JWT；記錄審計事件  
 5. 導向儀表板
 
-### 4.1.1 Line 登入（主要方式）與 Email 綁定
+### 4.1.1 Line 主要登入與 Google 次要綁定
 
-**設計原則：Line Login 為平台主要登入方式**
-- 登入頁預設顯示「使用 Line 登入」作為首選
+**設計原則：Line Login 為平台主要登入方式，Google 為次要**
+- 登入頁預設顯示「使用 Line 登入」作為首選，並提供「使用 Google 登入」作為次要入口
 - 台灣市場用戶普遍使用 Line，降低登入門檻
-- Email + 密碼登入作為備選方式
+- **不再提供 Email + 密碼登入**
 
 **Line Login 流程**：
 1. 前端導向 `/auth/oauth/line/initiate`，取得 state + redirect_uri
 2. 用戶在 Line 授權頁同意
 3. 回調 `/auth/oauth/line/callback`，交換 code/token，取得 Line `sub`、`displayName`、`pictureUrl`
-4. **強制 Email 綁定**（首次登入）：
-   - 輸入 Email → 發送 6 碼 OTP（10 分鐘有效） → 驗證通過 → 綁定完成
-   - Email 全平台唯一，用於帳號恢復與重要通知
-5. 已綁定 Email 的 Line 帳號可直接登入，簽發 JWT
+4. 首次登入即建立帳號（補齊租戶與角色），**不再強制綁定 Email**
+5. 簽發 JWT；若帳號啟用 MFA 需先通過 MFA
 
-**Email 綁定規則**：
-- 首次 Line 登入**強制綁定 Email**
-- Line 帳號與平台帳號一對一綁定
-- Email 已存在時：需使用者確認是否綁定既有帳戶
-- 支援解除 Line 綁定（需先設定密碼作為備用登入方式）
-- Email 變更需 OTP 驗證
+**Google 綁定與次要登入規則**：
+- Google 為**次要登入方式**：使用者於登入後在設定頁授權 Google → 綁定至目前帳號 → 之後可用 Google 一鍵登入
+- Line 帳號與平台帳號一對一綁定；Google 帳號可額外綁定同一平台帳戶
+- 綁定既有帳戶需使用者確認，避免誤綁
+- 解除社群綁定時，**帳號必須至少保留一個有效社群綁定（Line 或 Google）**，不得解除至零
 
-**Google OAuth（備選方式）**：
-- 入口：「使用 Google 登入」作為備選
-- 流程：`/auth/oauth/google/initiate` → Google 授權 → `/auth/oauth/google/callback`
-- Google 帳號可與 Line 帳號同時綁定同一平台帳戶
+**Email 與帳號恢復**：
+- Email **不用於登入或帳號恢復**，僅作財務對帳聯絡欄位（選填）
+- 帳號恢復：主帳號（Line）不可用時改用已綁定 Google；兩者皆失效須走人工支援（platform_support 驗證身分後協助重新綁定）。詳見 Section 5
 
 **共通規則**：
 - 安全：state/nonce 檢查、防重放
-- MFA：若帳號啟用 MFA，OAuth 登入成功後仍需補 MFA
-- 審計：記錄 provider、user_id、tenant_id、IP、UA、狀態（成功/失敗/綁定/拒絕）
+- MFA：若帳號啟用 MFA（平台端強制），OAuth 登入成功後仍需補 MFA（TOTP / SMS）
+- 審計：記錄 provider、user_id、tenant_id、IP、UA、狀態（成功/失敗/綁定/解綁/拒絕）
 - 新用戶：需補齊租戶資訊（餐廳/供應商）與角色，建立後才簽發 JWT
 
 ### 4.2 MFA 規則（依角色）
+> MFA 方法僅 **TOTP / SMS**（**移除 Email OTP**，Email 僅作財務對帳用途）。
 | 角色 | MFA 要求 | 方法 |
 | --- | --- | --- |
-| restaurant_operator | Optional | SMS, Email |
-| restaurant_manager | Recommended | SMS, Email, TOTP |
+| restaurant_operator | Optional | SMS, TOTP |
+| restaurant_manager | Recommended | SMS, TOTP |
 | restaurant_admin | Recommended | SMS, TOTP |
-| supplier_manager | Recommended | SMS, Email, TOTP |
+| supplier_manager | Recommended | SMS, TOTP |
 | supplier_admin | Mandatory | SMS, TOTP |
 | platform_admin | Mandatory | TOTP only |
 | super_admin / super_user | Mandatory | TOTP + Biometric |
@@ -277,17 +295,19 @@ Based on current system analysis:
 - 一般使用者：支援「記住我」（延長 Refresh 30 天）、行動生物辨識、密碼管理器自動填寫。
 - 平台管理者：強制 MFA、登入通知、Session 審計、可設定允許 IP 範圍。
 
-### 4.5 平台用戶獨立登入系統
+### 4.5 平台用戶登入系統（Line/Google + 強制 MFA）
 
-**設計原則：平台用戶與餐廳/供應商完全分離**
+> **變更（2026-06-08）**：依登入模型統一決策，平台用戶**改用與餐廳/供應商相同的 Line/Google 社群登入**，移除原 Email + 密碼獨立系統。本段取代原「平台獨立登入」設計。
 
-平台端使用者（`platform_admin`、`platform_support`、`super_admin`）為內部員工，安全等級最高，需使用獨立於第三方社群登入的認證系統。
+**設計原則：統一社群登入，安全等級以 MFA + 供裝控管維持**
 
-**獨立性特徵**：
-- **不支援** Line Login、Google OAuth 等社群登入
-- 登入方式：Email + 密碼 + **強制 MFA**（TOTP 優先）
-- 帳號由 `super_admin` 或現有 `platform_admin` 創建（非公開註冊）
-- 首次登入強制變更密碼
+平台端使用者（`platform_admin`、`platform_support`、`super_admin`）為內部員工，採與終端用戶相同的 Line（主要）/ Google（次要）登入，但疊加更嚴格的第二因素與存取控制。
+
+**登入與供裝特徵**：
+- 登入方式：**Line 主要 / Google 次要**（與餐廳/供應商一致），不再使用 Email + 密碼
+- **強制 MFA**（TOTP 優先，SMS 次之）
+- 帳號**僅能由 `super_admin` 或現有 `platform_admin` 供裝**（非公開註冊）；社群帳號須綁定到預先建立的平台帳號才能登入（社群帳號未在允許名單者拒絕）
+- 首次登入強制完成 MFA 設定
 
 **安全強化**：
 - 登入失敗：3 次鎖定 15 分鐘（比一般用戶更嚴格）
@@ -295,10 +315,11 @@ Based on current system analysis:
 - 支援 IP 白名單限制登入來源（可選）
 - Session 併發數限制：最多 3 個（比一般用戶更嚴格）
 
-**設計理由**：
-1. 降低第三方服務依賴風險（Line/Google 服務中斷不影響平台營運）
-2. 滿足企業內部合規要求（審計追蹤、存取控制）
-3. 防止社交工程攻擊（釣魚網站偽造 OAuth 頁面）
+**⚠️ 風險權衡與緩解（決策註記）**：
+- 本決策由產品於 2026-06-08 拍板，刻意以「統一身份系統、降低維護複雜度」優先，**取代**原「平台獨立系統」設計理由（降低第三方依賴、防 OAuth 釣魚）。
+- 已知新增風險：(a) 平台營運對 Line/Google 可用性的依賴；(b) OAuth 釣魚頁面偽造風險。
+- 緩解：強制 MFA + 帳號供裝限定（社群帳號允許名單）+ IP 白名單 + 異常登入告警 + 完整審計。
+- 實作時須走 plan-review（auth flow 高風險），並驗證上述緩解到位。
 
 ### 4.6 行動裝置支援
 
@@ -356,19 +377,21 @@ Based on current system analysis:
 
 ---
 
-## 5. 密碼重設流程（中文）
-1. 使用者點擊「忘記密碼」並通過 CAPTCHA  
-2. 送出 email，附 1 小時有效的單次使用連結  
-3. 進入連結後二次驗證（安全問題 / SMS OTP / 近期交易確認）  
-4. 設定新密碼，強制登出所有 Session，發送完成通知  
-5. 下一次登入強制 MFA
+## 5. 帳號恢復流程（中文）— 取代密碼重設
 
-安全措施：每日最多 3 次重設嘗試；所有重設事件審計；連結為單次使用；通知含申請與完成兩封。
+> **變更（2026-06-08）**：密碼廢除後無「密碼重設」。帳號恢復改以社群綁定為基礎（對應 US-AUTH-022）。
+
+1. 主要登入（Line）不可用時，改用已綁定的 **Google 次要登入**直接進入帳號  
+2. 鼓勵使用者於設定頁綁定第二個社群帳號（Google）作為恢復保險；帳號**至少保留一個有效社群綁定**  
+3. 兩個社群帳號皆失效時，走**人工支援恢復**：身分驗證（統編 / 營業資訊 / 已知交易）後由 `platform_support` 協助重新綁定社群帳號  
+4. **不使用 Email 連結或密碼重設**作為恢復手段  
+
+安全措施：人工恢復需多項身分證據 + 敏感帳號雙人覆核；所有恢復事件完整審計（actor、entity、方式、結果）；恢復後強制重新 MFA。
 
 ---
 
 ## 6. 帳戶驗證等級（中文）
-- Level 1：Email 驗證完成；可瀏覽／收藏；限制 3 筆試用訂單。
+- Level 1：Line 帳號建立完成；可瀏覽／收藏；限制 3 筆試用訂單。（原「Email 驗證」改為「Line 帳號建立」；Email 不作認證用途）
 - Level 2：電話驗證（5 分鐘）；可下正式單（限額）、基本分析、加入供應商網絡、付款僅 COD。
 - Level 3：營業驗證（24–48 小時）；完整功能、無訂單限制、所有付款方式、API 存取、合約價。
 
@@ -379,7 +402,7 @@ Based on current system analysis:
 ## 7. 安全需求（中文）
 
 ### 7.1 加密與 Token
-- 密碼：bcrypt（成本 12）/ 未來可切換 Argon2id；傳輸 TLS 1.3；靜態 AES-256。  
+- 密碼：**已移除**（認證流程不使用密碼，無密碼雜湊）；社群 OAuth token 與 MFA secret 加密儲存；傳輸 TLS 1.3；靜態 AES-256。  
 - JWT：預設 HS256（可升級 RS256）；Access 15 分、Refresh 7 天（旋轉）；包含 `sub/tenant_id/org_id/org_type/role/permissions/token_version`。  
 - Token 吊銷：Refresh 綁 `token_version`；黑名單/版本提升即失效。
 
@@ -400,7 +423,8 @@ Based on current system analysis:
 
 ### 8.1 API Gateway
 - 驗證/授權在 Gateway 執行，向下游傳遞 `x-user-id`、`x-tenant-id`、`x-role`、`x-permissions`。  
-- 路由（示例）：`POST /auth/register`、`POST /auth/login`、`POST /auth/refresh`、`POST /auth/logout`、`POST /auth/verify-email`、`POST /auth/verify-phone`、`POST /auth/forgot-password`、`POST /auth/reset-password`、`PUT /auth/change-password`、`POST /auth/mfa/enable|disable|verify`、`GET /auth/session`、`DELETE /auth/sessions`、`GET /auth/oauth/{provider}/initiate`、`GET /auth/oauth/{provider}/callback`（provider: `line` / `google`）。
+- 路由（示例，2026-06-08 更新）：`GET /auth/oauth/{provider}/initiate`、`GET /auth/oauth/{provider}/callback`（provider: `line` / `google`）、`POST /auth/refresh`、`POST /auth/logout`、`POST /auth/verify-phone`、`POST /auth/mfa/enable|disable|verify`、`POST /auth/social-bindings/{provider}`（綁定）、`DELETE /auth/social-bindings/{provider}`（解綁，須留至少一個有效綁定）、`POST /auth/account-recovery`（人工恢復）、`GET /auth/session`、`DELETE /auth/sessions`。
+  - **已停用（密碼廢除 / Email 非登入）**：`POST /auth/login`、`POST /auth/forgot-password`、`POST /auth/reset-password`、`PUT /auth/change-password`、`POST /auth/verify-email`、公開 `POST /auth/register`（Email 註冊）。
 
 ### 8.2 服務整合
 - User Service：用戶/租戶/角色/權限管理，簽發/吊銷 Token，記錄審計。
@@ -716,21 +740,23 @@ All flows must pass the following criteria:
 
 ### Appendix A: API Request/Response Examples
 
-#### Registration Request
+#### Registration Request（2026-06-08 更新：OAuth 流程）
+
+> 公開 Email + 密碼註冊已移除。註冊改為 Line OAuth callback 後補齊商業資訊；Email 為選填財務對帳欄位，無密碼。
 
 ```json
-POST /api/auth/register
+POST /api/auth/oauth/line/complete-registration
 {
   "organizationType": "restaurant",
   "organizationName": "Happy Kitchen",
   "businessRegistration": "12345678",
-  "email": "admin@happykitchen.com",
   "phone": "+886912345678",
-  "password": "SecureP@ssw0rd123!",
+  "email": "billing@happykitchen.com",
   "acceptTerms": true,
   "marketingConsent": false
 }
 ```
+> `email` 為選填，僅作財務對帳聯絡用途（非登入/恢復）。
 
 #### Login Response
 
@@ -824,6 +850,7 @@ CREATE TABLE login_attempts (
 | Version | Date       | Author       | Changes                   |
 | ------- | ---------- | ------------ | ------------------------- |
 | 1.0     | 2025-09-19 | Product Team | Initial comprehensive PRD |
+| 1.1     | 2026-06-08 | Product Team | 登入模型改為 Line（主）/ Google（次，綁定後可登入）；廢除密碼與 Email 登入/恢復（Email 改財務對帳用）；平台端改用社群登入 + 強制 MFA（移除獨立 Email+密碼系統）；US-AUTH-004 停用、US-AUTH-022 社群帳號恢復新增 |
 
 ---
 

@@ -1,8 +1,8 @@
 # User Story 索引
 
-> 最後更新: 2025-12-18
+> 最後更新: 2026-06-08
 > 狀態: Active
-> 總計: 105 User Stories
+> 總計: 106 User Stories
 
 本資料夾整合所有 User Story，按功能模組和角色分類索引。
 
@@ -14,7 +14,7 @@
 1-User-Story/
 ├── INDEX.md                              # 本文件
 ├── by-module/                            # 按功能模組分類
-│   ├── 01-auth-user-management.md       # 身份驗證與用戶管理 (21 stories)
+│   ├── 01-auth-user-management.md       # 身份驗證與用戶管理 (22 stories)
 │   ├── 02-product-sku-management.md     # 商品與 SKU 管理 (24 stories)
 │   ├── 03-order-management.md           # 訂單管理 (7 stories)
 │   ├── 04-acceptance-receiving.md       # 驗收點收 (7 stories)
@@ -38,7 +38,7 @@
 
 | 模組 | User Story 數 | P0 | P1 | P2 | 說明 |
 |------|:------------:|:--:|:--:|:--:|------|
-| [01-身份驗證](./by-module/01-auth-user-management.md) | 21 | 11 | 6 | 4 | 註冊、登入、**Line OAuth**、合作邀請加入、MFA、行動裝置、平台獨立 |
+| [01-身份驗證](./by-module/01-auth-user-management.md) | 22 | 12 | 6 | 4 | 註冊、登入、**Line 主 / Google 次 OAuth**、社群帳號恢復、合作邀請加入、MFA、行動裝置、平台統一登入 |
 | [02-商品管理](./by-module/02-product-sku-management.md) | 24 | 17 | 5 | 2 | 商品目錄、SKU、**SKU別名整合**、**圖片審核**、**品牌管理**、**價格表管理** |
 | [03-訂單管理](./by-module/03-order-management.md) | 7 | 4 | 3 | 0 | 訂單建立、追蹤、協商 |
 | [04-驗收點收](./by-module/04-acceptance-receiving.md) | 7 | 4 | 1 | 2 | 掃碼點收、異常標記 |
@@ -47,7 +47,7 @@
 | [07-導入流程](./by-module/07-onboarding-process.md) | 11 | 4 | 4 | 3 | 註冊引導、教學 |
 | [08-推薦系統](./by-module/08-referral-system.md) | 12 | 3 | 4 | 5 | 雙向推薦、獎勵 |
 | [09-ERP整合](./by-module/09-erp-integration.md) | 5 | 3 | 2 | 0 | API、數據同步 |
-| **總計** | **105** | **55** | **31** | **19** | |
+| **總計** | **106** | **56** | **31** | **19** | |
 
 ---
 
@@ -76,7 +76,7 @@
 
 | 模組 | 代表性 User Story |
 |------|-----------------|
-| AUTH | US-AUTH-001 餐廳快速註冊、US-AUTH-003 標準登入、**US-AUTH-019 合作邀請分享**、**US-AUTH-021 受邀加入與收藏**、**US-AUTH-016 平台獨立登入**、**US-AUTH-017 行動瀏覽器** |
+| AUTH | US-AUTH-001 餐廳快速註冊、US-AUTH-003 標準登入（Line 主/Google 次）、**US-AUTH-022 社群帳號恢復**、**US-AUTH-019 合作邀請分享**、**US-AUTH-021 受邀加入與收藏**、**US-AUTH-016 平台統一登入**、**US-AUTH-017 行動瀏覽器** |
 | PRD | US-PRD-001 多條件搜尋、US-PRD-005 批量上傳 SKU、**US-PRD-011 SKU 重複比對**、**US-PRD-014 圖片上傳審核**、**US-PRD-017 品牌選擇**、**US-PRD-021 價格表管理**、**US-PRD-022 客戶分類** |
 | ORD | US-ORD-001 快速建立訂單、US-ORD-002 即時追蹤狀態 |
 | ACC | US-ACC-001 掃碼點收、US-ACC-002 拍照記錄異常 |
@@ -102,7 +102,7 @@ AI 品質評估、多幣別、Super User、漏斗分析、**品牌篩選規則**
 |---------|:------------:|---------|
 | [PRD-Complete.md](../2-PRD/PRD-Complete.md) | 47 | ORD, PRD, ACC, BIL, ERP |
 | [PRD-SKU-Sharing-System.md](../2-PRD/PRD-SKU-Sharing-System.md) | - | PRD（SKU 別名、圖片、品牌管理）|
-| [PRD-Auth-Module.md](../2-PRD/PRD-Auth-Module.md) | 21 | AUTH（含合作邀請加入、平台獨立登入、行動裝置支援）|
+| [PRD-Auth-Module.md](../2-PRD/PRD-Auth-Module.md) | 22 | AUTH（Line 主/Google 次登入、社群帳號恢復、含合作邀請加入、平台統一登入、行動裝置支援）|
 | [PRD-Customer-Hierarchy.md](../2-PRD/PRD-Customer-Hierarchy.md) | 10 | HIER |
 | [PRD-Onboarding-Process.md](../2-PRD/PRD-Onboarding-Process.md) | 11 | ONB |
 | [PRD-Referral-System.md](../2-PRD/PRD-Referral-System.md) | 12 | REF |

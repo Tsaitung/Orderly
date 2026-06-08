@@ -6,10 +6,27 @@
 
 ## Document Information
 
-- **Version**: 1.0
-- **Date**: 2025-09-19
+- **Version**: 1.1
+- **Date**: 2026-06-08
 - **Status**: Final Architecture Specification
 - **Implementation Priority**: P0 - Critical Path
+
+---
+
+## 0. Auth Model Update (2026-06-08) — Line/Google-Only（本段權威，取代下方衝突描述）
+
+本次登入模型變更**取代本文件後續所有與 Email+密碼登入、密碼雜湊、密碼重設、強制 Email 綁定相關的規格**（衝突以本段為準）：
+
+- **登入方式僅二**：Line（主要）+ Google（次要，需先綁定後可登入）。適用全體使用者，含平台內部員工。
+- **密碼完全移除**：認證流程無密碼。`User.passwordHash` 不再用於認證；新帳號不寫入密碼，既有欄位視為 deprecated（可保留 nullable 供歷史資料，但不參與登入）。移除 `POST /api/auth/login`（password）、`/api/auth/password/*`（forgot/reset/change）。
+- **Email 不作認證**：移除「首次登入強制綁定 Email」與 Email OTP；Email 僅作財務對帳聯絡欄位（選填、不要求唯一）。MFA 方法僅 TOTP / SMS。
+- **社群綁定**：帳號可同時綁定 Line + Google；解綁須保留至少一個有效社群綁定。新增 social-bindings 端點與 `account-recovery`（人工恢復）。
+- **平台端**（platform_admin/support/super_admin）：改用 Line/Google + **強制 MFA** + 帳號供裝允許名單 + 更嚴格鎖定 + IP 白名單 + 審計（取代原獨立 Email+密碼系統）。
+- **帳號恢復**：依賴另一社群綁定（Line 失效用 Google）；皆失效走人工支援。無 Email/密碼恢復。
+
+**受本段取代的章節**：1.2（Password Hashing）、2.2（auth flow 的 Verify Password 步驟）、3.1（`User.passwordHash` / `PasswordHistory` / `SecurityQuestion` 改為 deprecated for auth）、4.1（`/api/auth/login`、`/api/auth/password/*` 停用，改 OAuth）、7.x（Email OTP 移除）、13.2（密碼遷移腳本不適用）。
+
+> 對應 PRD：`docs/2-PRD/PRD-Auth-Module.md` Section 4.1.1 / 4.5 / 5。對應 US：`docs/1-User-Story/by-module/01-auth-user-management.md` US-AUTH-003/006/008/016/022。
 
 ---
 
@@ -21,10 +38,10 @@ The authentication system extends the existing User Service (port 3001) with enh
 
 ### 1.2 Technology Stack
 
-- **Authentication**: JWT (RS256) with asymmetric keys
-- **Password Hashing**: Argon2id
+- **Authentication**: JWT (RS256) with asymmetric keys；登入由 Line / Google OAuth 提供（見 Section 0）
+- **Password Hashing**: ~~Argon2id~~ — **已移除（2026-06-08）**，認證無密碼（見 Section 0）
 - **Session Management**: Redis with sliding windows
-- **MFA**: TOTP (RFC 6238) + SMS/Email OTP
+- **MFA**: TOTP (RFC 6238) + SMS OTP（**移除 Email OTP**）
 - **Rate Limiting**: Redis-based with token bucket algorithm
 - **Database**: PostgreSQL with SQLAlchemy ORM + Alembic (via FastAPI user-service)
 - **Audit Logging**: Structured JSON to centralized log system
@@ -140,8 +157,8 @@ User          Frontend        API Gateway      User Service      Redis         P
 ```prisma
 model User {
   id                    String    @id @default(cuid())
-  email                 String    @unique
-  passwordHash          String?
+  email                 String?   // 2026-06-08：改財務對帳用途、選填、不要求 unique；不作登入識別
+  passwordHash          String?   // DEPRECATED 2026-06-08：認證不使用密碼（見 Section 0）
   organizationId        String
   role                  UserRole
 
@@ -398,8 +415,10 @@ Request:
 
 #### Login Endpoints
 
+> **⚠️ 已停用（2026-06-08，見 Section 0）**：以下 `POST /api/auth/login`（email/password）已移除。登入改走 `GET /api/auth/oauth/{line|google}/initiate` → `callback`。MFA 驗證（`/api/auth/mfa/verify`）保留，方法僅 TOTP / SMS。以下保留作歷史對照。
+
 ```typescript
-// Standard Login
+// Standard Login（DEPRECATED — 改用 OAuth）
 POST /api/auth/login
 Request:
 {
@@ -506,8 +525,10 @@ Request:
 
 #### Password Management
 
+> **⚠️ 整段已停用（2026-06-08，見 Section 0）**：密碼於認證流程中完全廢除，`/api/auth/password/*`（change / forgot / reset）一律移除。帳號恢復改走社群綁定 + 人工支援（PRD Section 5 / US-AUTH-022）。以下保留作歷史對照。
+
 ```typescript
-// Change Password
+// Change Password（DEPRECATED — 密碼已廢除）
 PUT /api/auth/password/change
 Headers: {
   "Authorization": "Bearer {accessToken}"
