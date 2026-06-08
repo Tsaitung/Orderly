@@ -154,6 +154,9 @@ jobs:
         ports:
           - 6379:6379
     env:
+      # Mirror the deploy env (cd.yml sets ENVIRONMENT): run the test against the
+      # same config branch the monolith runs in production, not the dev default.
+      ENVIRONMENT: test
       DATABASE_HOST: localhost
       DATABASE_PORT: 5432
       DATABASE_USER: orderly
