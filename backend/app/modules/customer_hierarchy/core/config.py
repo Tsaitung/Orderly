@@ -25,7 +25,7 @@ class CustomerHierarchyServiceSettings(UnifiedSettings):
     
     # 環境和CORS配置
     environment: str = Field(default="development", description="運行環境")
-    backend_cors_origins: List[str] = Field(default=["http://localhost:3000"], description="CORS 允許的來源")
+    backend_cors_origins: List[str] = Field(default=["http://localhost:5566"], description="CORS 允許的來源")
     allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], description="允許的主機")
     redis_url: str = Field(default="redis://localhost:6379/0", description="Redis 連接 URL")
     

@@ -1,31 +1,22 @@
-"""Unified, deduplicated SQLAlchemy MetaData across all 8 backend modules.
+"""Unified SQLAlchemy MetaData across all backend modules.
 
-Runtime services keep their own per-module ``declarative_base()`` instances
-(each module's ``models/base.py`` defines a separate ``Base`` and therefore a
-separate ``Base.metadata``). This module does NOT change that: it never mutates
-any module's ``Base`` and never rewrites a model file.
-
-Instead it builds ONE fresh ``MetaData`` that is the union of every module's
-tables, deduplicated by table name, intended purely as a *target* for building
-the consolidated schema (e.g. ``unified_metadata.create_all(engine)`` against a
-single database, or feeding Alembic autogenerate for a unified schema).
+Runtime modules now share ``app.db.base.Base``. This helper imports every
+module's models in a deterministic order and then builds one fresh ``MetaData``
+copy for the consolidated Alembic root.
 
 Deduplication / canonical ownership
 -----------------------------------
-Two table names are defined in more than one module:
+Two table names used to be defined in more than one module:
 
 * ``organizations``     -> users.models.organization.Organization (canonical)
                            vs suppliers.models.organization.Organization (stub)
 * ``supplier_profiles`` -> users.models.supplier.SupplierProfile   (canonical)
                            vs suppliers.models.supplier_profile.SupplierProfile (stub)
 
-The user-service definitions are canonical. By importing + copying the
-``users`` module FIRST and skipping any table name already present, the
-user-service ``organizations`` and ``supplier_profiles`` win, and the
-``suppliers`` duplicates are excluded. The suppliers module still contributes
-its unique tables (``supplier_customers``, ``supplier_onboarding_progress``),
-whose foreign keys to ``organizations`` resolve against the canonical table
-already present in the unified metadata.
+The user-service definitions are canonical. The suppliers module now re-exports
+those canonical mapped classes and only owns its unique tables
+(``supplier_customers``, ``supplier_onboarding_progress``). The import order
+remains load-bearing because it gives deterministic table ownership metadata.
 """
 
 from __future__ import annotations
@@ -76,18 +67,40 @@ def _import_models_package(module: str) -> object:
     return package
 
 
-def _iter_module_tables(module: str) -> List[sa.Table]:
-    """Return all tables registered on a module's Base.metadata.
-
-    Every module defines exactly one ``declarative_base()`` (or a single
-    ``DeclarativeBase`` subclass for billing). Importing the package + submodules
-    registers all of that module's tables onto that one metadata, which we read
-    back via ``Base.metadata`` exposed on the package's ``base`` submodule.
-    """
-    base_mod = importlib.import_module(_MODELS_PACKAGE.format(module=module) + ".base")
-    base = getattr(base_mod, "Base")
-    # Preserve declaration order for deterministic, readable output.
-    return list(base.metadata.sorted_tables)
+def _infer_owner(table_name: str) -> str:
+    """Best-effort owner label for reporting on the shared metadata."""
+    if table_name in {"organizations", "supplier_profiles", "users", "sessions"}:
+        return "users"
+    if table_name.startswith("order_") or table_name == "orders":
+        return "orders"
+    if table_name.startswith("product") or table_name in {
+        "customer_prices",
+        "price_history",
+        "promotions",
+        "sku_uploads",
+        "sku_upload_items",
+        "sku_upload_audit_logs",
+        "sku_code_sequences",
+        "supplier_skus",
+    }:
+        return "products"
+    if table_name.startswith("acceptance"):
+        return "acceptance"
+    if table_name.startswith("reconciliation") or table_name in {"billing_periods", "fee_configs"}:
+        return "billing"
+    if table_name == "notifications":
+        return "notifications"
+    if table_name.startswith("customer_") or table_name in {
+        "business_units",
+        "activity_metrics",
+        "dashboard_summaries",
+        "performance_rankings",
+        "activity_trends",
+    }:
+        return "customer_hierarchy"
+    if table_name.startswith("supplier_"):
+        return "suppliers"
+    return "monolith"
 
 
 def build_unified_metadata() -> Tuple[sa.MetaData, Dict[str, str], Dict[str, List[str]]]:
@@ -96,22 +109,18 @@ def build_unified_metadata() -> Tuple[sa.MetaData, Dict[str, str], Dict[str, Lis
     * ``owner_map``   : table name -> module that contributed it (the winner).
     * ``skipped_map`` : table name -> list of modules whose duplicate was skipped.
     """
+    for module in MODULE_ORDER:
+        _import_models_package(module)
+
+    from app.db.base import Base
+
     unified = sa.MetaData()
     owner_map: Dict[str, str] = {}
     skipped_map: Dict[str, List[str]] = {}
 
-    for module in MODULE_ORDER:
-        _import_models_package(module)
-        for table in _iter_module_tables(module):
-            if table.name in unified.tables:
-                # Already contributed by an earlier (canonical) module -> skip.
-                skipped_map.setdefault(table.name, []).append(module)
-                continue
-            # Copy the Table definition into the unified metadata. FK string
-            # references are resolved against `unified` at access time; parents
-            # (e.g. `organizations`) are already present thanks to MODULE_ORDER.
-            table.to_metadata(unified)
-            owner_map[table.name] = module
+    for table in Base.metadata.sorted_tables:
+        table.to_metadata(unified)
+        owner_map[table.name] = _infer_owner(table.name)
 
     # Collision-free invariant: every table name in the unified metadata is unique
     # by construction (dict keyed by name). Assert there is exactly one owner per

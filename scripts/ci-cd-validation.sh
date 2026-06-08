@@ -50,13 +50,13 @@ fi
 
 # 3. FastAPI 依賴檢查
 ((total++))
-if validate_step "FastAPI 依賴文件" "test -f backend/product-service-fastapi/requirements.txt"; then
+if validate_step "FastAPI 依賴文件" "test -f backend/app/requirements.txt"; then
     ((passed++))
 fi
 
 # 4. Docker 配置檢查
 ((total++))
-if validate_step "FastAPI Dockerfile" "test -f backend/product-service-fastapi/Dockerfile"; then
+if validate_step "FastAPI Dockerfile" "test -f backend/Dockerfile.monolith"; then
     ((passed++))
 fi
 
@@ -65,15 +65,15 @@ echo "=== 🧪 測試配置驗證 ==="
 
 # 5. FastAPI 測試安裝檢查
 ((total++))
-cd backend/product-service-fastapi
-if validate_step "FastAPI 依賴安裝" "pip install -r requirements.txt --quiet"; then
+cd backend
+if validate_step "FastAPI 依賴安裝" "pip install -r app/requirements.txt --quiet"; then
     ((passed++))
 fi
-cd ../..
+cd ..
 
 # 6. FastAPI 健康檢查端點
 ((total++))
-if validate_step "FastAPI 健康檢查" "curl -f http://localhost:3003/health"; then
+if validate_step "FastAPI 健康檢查" "curl -f http://localhost:8888/health"; then
     ((passed++))
 fi
 
@@ -94,7 +94,7 @@ fi
 
 # 9. FastAPI workflow 更新檢查
 ((total++))
-if validate_step "FastAPI workflow 更新" "grep -q 'product-service-fastapi' .github/workflows/main.yml"; then
+if validate_step "FastAPI workflow 更新" "grep -q 'backend-monolith' .github/workflows/cd.yml"; then
     ((passed++))
 fi
 

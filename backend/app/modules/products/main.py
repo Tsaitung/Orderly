@@ -161,3 +161,21 @@ app.include_router(
 
 # BFF routes consumed by the frontend platform
 app.include_router(bff_router)
+
+# API gateway compatibility aliases. These preserve the no-prefix product routes
+# without mounting the retired gateway proxy module.
+for _router, _prefix, _tags in [
+    (categories_router, "/products", ["Product Categories"]),
+    (products_router, "/products", ["Products"]),
+    (skus_router, "/products", ["SKU Management"]),
+    (sku_upload_router, "/products", ["SKU Batch Upload"]),
+    (sku_analytics_router, "/products", ["SKU Analytics"]),
+    (sku_sharing_router, "/products", ["SKU Sharing System"]),
+    (price_history_router, "/products", ["Price History"]),
+    (product_images_router, "/products", ["Product Images"]),
+    (promotions_router, "/products/promotions", ["Promotions"]),
+    (supplier_skus_router, "/products", ["Supplier SKU Management"]),
+    (customer_prices_router, "/products/customer-prices", ["Customer Prices"]),
+    (bulk_operations_router, "/products", ["Bulk Operations"]),
+]:
+    app.include_router(_router, prefix=_prefix, tags=_tags)

@@ -6,16 +6,23 @@ export const dynamic = 'force-dynamic'
 const ACCESS_COOKIE_NAME = 'orderly_session'
 const REFRESH_COOKIE_NAME = 'orderly_refresh'
 
-// 本地開發環境的服務 URLs（僅在 API Gateway 不可用時使用）
+const MONOLITH_BACKEND_URL = (
+  process.env.ORDERLY_BACKEND_URL ||
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  'http://localhost:8888'
+).replace(/\/api(?:\/bff)?\/?$/i, '')
+
+// 本地開發環境的服務 URLs（單體預設；僅在 backend health check 不可用時使用）
 const LOCAL_SERVICE_URLS = {
-  USER_SERVICE_URL: process.env.USER_SERVICE_URL || 'http://localhost:3001',
-  SUPPLIER_SERVICE_URL: process.env.SUPPLIER_SERVICE_URL || 'http://localhost:3008',
+  USER_SERVICE_URL: process.env.USER_SERVICE_URL || MONOLITH_BACKEND_URL,
+  SUPPLIER_SERVICE_URL: process.env.SUPPLIER_SERVICE_URL || MONOLITH_BACKEND_URL,
   CUSTOMER_HIERARCHY_SERVICE_URL:
-    process.env.CUSTOMER_HIERARCHY_SERVICE_URL || 'http://localhost:3007',
-  PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL || 'http://localhost:3003',
-  ORDER_SERVICE_URL: process.env.ORDER_SERVICE_URL || 'http://localhost:3002',
-  ACCEPTANCE_SERVICE_URL: process.env.ACCEPTANCE_SERVICE_URL || 'http://localhost:3004/acceptance',
-  NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3006',
+    process.env.CUSTOMER_HIERARCHY_SERVICE_URL || MONOLITH_BACKEND_URL,
+  PRODUCT_SERVICE_URL: process.env.PRODUCT_SERVICE_URL || MONOLITH_BACKEND_URL,
+  ORDER_SERVICE_URL: process.env.ORDER_SERVICE_URL || MONOLITH_BACKEND_URL,
+  ACCEPTANCE_SERVICE_URL: process.env.ACCEPTANCE_SERVICE_URL || MONOLITH_BACKEND_URL,
+  NOTIFICATION_SERVICE_URL: process.env.NOTIFICATION_SERVICE_URL || MONOLITH_BACKEND_URL,
 }
 
 // 避免直連模式路徑拼錯：預設會補 /api，若 base 已含 /api 或 /acceptance 則避免重複
@@ -233,7 +240,7 @@ export async function handler(req: NextRequest, { params }: { params: { path: st
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     deriveBackendFromPublic(new URL(req.url)) ||
-    'http://localhost:8000'
+    'http://localhost:8888'
 
   const nodeEnv = process.env.NODE_ENV || 'development'
   const environment =

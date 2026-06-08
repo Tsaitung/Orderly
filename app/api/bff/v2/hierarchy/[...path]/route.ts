@@ -37,7 +37,7 @@ function resolveGatewayBase(req?: NextRequest): string {
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:8000'
+    'http://localhost:8888'
 
   const cleaned = candidate.replace(/\/api(?:\/bff)?\/?$/i, '')
   if (cleaned.startsWith('http')) {
@@ -52,17 +52,16 @@ function resolveGatewayBase(req?: NextRequest): string {
       /* ignore */
     }
   }
-  return 'http://localhost:8000'
+  return 'http://localhost:8888'
 }
 
-// 代理到 Customer Hierarchy Service
+// 代理到 monolith customer hierarchy API
 const resolveHierarchyServiceBase = (): string => {
   const custom = process.env.NEXT_PUBLIC_CUSTOMER_HIERARCHY_API_URL
   if (custom) {
     return custom.replace(/\/+$/, '')
   }
-  // 直接連接 customer-hierarchy-service (port 3007)
-  return 'http://localhost:3007/api/v2'
+  return `${resolveGatewayBase()}/api/v2`
 }
 
 async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {

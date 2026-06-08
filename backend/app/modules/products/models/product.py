@@ -35,7 +35,13 @@ class Product(BaseModel):
     __tablename__ = "products"
 
     # Foreign Keys
-    supplier_id = Column("supplierId", String, nullable=True, index=True)
+    supplier_id = Column(
+        "supplierId",
+        String,
+        ForeignKey("organizations.id", name="fk_products_supplier_id_organizations"),
+        nullable=True,
+        index=True,
+    )
     category_id = Column("categoryId", String, ForeignKey("product_categories.id"), nullable=False, index=True)
 
     # Core Product Information

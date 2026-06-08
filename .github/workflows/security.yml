@@ -87,44 +87,28 @@ jobs:
   container-scan:
     name: Container Security Scan
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [api-gateway, user-service, order-service, product-service, acceptance-service, billing-service, notification-service, admin-service]
-      fail-fast: false
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Check if service exists
-        id: check-service
-        run: |
-          if [ -d "backend/${{ matrix.service }}" ] && [ -f "backend/${{ matrix.service }}/Dockerfile" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-          fi
 
       - name: Build Docker image for security scan
-        if: steps.check-service.outputs.exists == 'true'
         run: |
-          docker build -f backend/${{ matrix.service }}/Dockerfile \
-            -t orderly-${{ matrix.service }}:scan \
-            backend/${{ matrix.service }}
+          docker build -f backend/Dockerfile.monolith \
+            -t orderly-backend-monolith:scan \
+            .
       
       - name: Run Trivy vulnerability scanner
-        if: steps.check-service.outputs.exists == 'true'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'orderly-${{ matrix.service }}:scan'
+          image-ref: 'orderly-backend-monolith:scan'
           format: 'sarif'
-          output: 'trivy-${{ matrix.service }}.sarif'
+          output: 'trivy-backend-monolith.sarif'
           severity: 'HIGH,CRITICAL'
       
       - name: Upload Trivy scan results
-        if: steps.check-service.outputs.exists == 'true'
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-${{ matrix.service }}.sarif'
-          category: 'trivy-${{ matrix.service }}'
+          sarif_file: 'trivy-backend-monolith.sarif'
+          category: 'trivy-backend-monolith'
 
   secrets-scan:
     name: Secrets Detection
@@ -243,7 +227,7 @@ jobs:
           docker_issues=()
           
           # Check for non-root users in Dockerfiles
-          for dockerfile in backend/*/Dockerfile*; do
+          for dockerfile in backend/Dockerfile.monolith Dockerfile.frontend; do
             if [ -f "$dockerfile" ]; then
               if ! grep -q "USER " "$dockerfile"; then
                 docker_issues+=("$dockerfile: Missing non-root user")
@@ -252,7 +236,7 @@ jobs:
           done
           
           # Check for security updates in Dockerfiles
-          for dockerfile in backend/*/Dockerfile*; do
+          for dockerfile in backend/Dockerfile.monolith Dockerfile.frontend; do
             if [ -f "$dockerfile" ]; then
               if ! grep -q "apk.*upgrade\|apt.*upgrade" "$dockerfile"; then
                 docker_issues+=("$dockerfile: Missing security updates")

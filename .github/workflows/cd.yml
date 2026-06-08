@@ -1,7 +1,7 @@
 name: CD
 
 # CD = build + deploy, gated on CI. Triggered on pushes to deploy branches.
-# Key optimizations vs the old deploy.yml:
+# Key optimizations vs the retired deploy workflow:
 #   - Single CI gate (reusable ci.yml) instead of CI/CD racing unguarded.
 #   - build + deploy MERGED per service (no cross-job image-poll loop).
 #   - Images built in-runner with BuildKit registry layer cache (deps cached
@@ -76,7 +76,7 @@ jobs:
       - name: Detect changed services
         id: changes
         env:
-          ALL: '["api-gateway-fastapi","user-service-fastapi","order-service-fastapi","product-service-fastapi","acceptance-service-fastapi","notification-service-fastapi","customer-hierarchy-service-fastapi","supplier-service-fastapi"]'
+          ALL: '["backend-monolith"]'
         run: |
           force="${{ github.event.inputs.force_all }}"
           manual="${{ github.event.inputs.services }}"
@@ -98,17 +98,17 @@ jobs:
           changed=$(git diff --name-only HEAD~1 HEAD || true)
           echo "Changed files:"; echo "$changed"
 
-          # Shared libs / workflow / shared types => rebuild everything.
-          if echo "$changed" | grep -qE '(backend/libs/|shared/types/|\.github/workflows/cd\.yml|Dockerfile\.base)'; then
+          # Shared libs / workflow / shared types => rebuild the monolith.
+          if echo "$changed" | grep -qE '(backend/app/|backend/libs/|shared/types/|\.github/workflows/cd\.yml|backend/Dockerfile\.monolith|backend/cloudbuild\.monolith\.yaml)'; then
             echo "services=$ALL" >> "$GITHUB_OUTPUT"
             echo "frontend=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           svcs=()
-          for s in api-gateway-fastapi user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            if echo "$changed" | grep -q "backend/$s/"; then svcs+=("\"$s\""); fi
-          done
+          if echo "$changed" | grep -qE 'backend/(api-gateway-fastapi|user-service-fastapi|order-service-fastapi|product-service-fastapi|acceptance-service-fastapi|notification-service-fastapi|customer-hierarchy-service-fastapi|supplier-service-fastapi)/'; then
+            svcs+=("\"backend-monolith\"")
+          fi
           if [ ${#svcs[@]} -eq 0 ]; then
             echo "services=[]" >> "$GITHUB_OUTPUT"
           else
@@ -121,11 +121,190 @@ jobs:
             echo "frontend=false" >> "$GITHUB_OUTPUT"
           fi
 
+  # ---- Preflight: read-only DB safety gate (orphan audit + schema diff) ------
+  # CD-PREFLIGHT-ORPHAN-GATE + GUARD-MONOLITH-AWARE + SCHEMA-DRIFT-DIFF (prep).
+  # Runs BEFORE any migration/deploy. Read-only: it never writes to the DB.
+  #   1. Deploy-config drift guard (no auth needed): Dockerfile.monolith COPY
+  #      sources still exist in the build context.
+  #   2. Orphan audit: scripts/database/monolith_fk_audit.sql against the resolved
+  #      target DB. FAIL the deploy if SUM(orphan_count) > 0 — the 7 cross-module
+  #      FKs that 0002/0003 enforce would otherwise abort the migration on real
+  #      orphans. Staging targets orderly-db-v2; prod targets orderly-db (which
+  #      does NOT exist yet — owner-gated infra, deploy is OUT OF SCOPE here).
+  #   3. alembic_version_monolith assertion: absent on first run, else at head.
+  #   4. Schema-drift diff (prep, read-only): pg_dump --schema-only of the live
+  #      DB captured as an artifact for human review vs unified_metadata. We do
+  #      NOT auto-resolve drift (owner decision: create_all(checkfirst=True)
+  #      silently skips existing tables and never reconciles drift).
+  # Requires GitHub environment approval (production reviewer) before it proceeds.
+  preflight:
+    name: Preflight DB Safety Gate
+    runs-on: ubuntu-latest
+    needs: resolve
+    if: needs.resolve.outputs.services != '[]'
+    environment: ${{ needs.resolve.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy-config drift guard (monolith COPY sources)
+        run: bash scripts/ci/check-deploy-consistency.sh
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install Cloud SQL Auth Proxy + psql client
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          curl -sSL -o /tmp/cloud-sql-proxy \
+            https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.11.0/cloud-sql-proxy.linux.amd64
+          chmod +x /tmp/cloud-sql-proxy
+
+      - name: Read-only orphan audit + schema-drift snapshot
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          DB_INSTANCE: ${{ needs.resolve.outputs.db_instance }}
+        run: |
+          set -euo pipefail
+
+          # The prod DB instance (orderly-db) is owner-gated infra and may not
+          # exist. Fail LOUD (not silently) if the resolved instance is missing,
+          # so a deploy can never proceed without a real preflight oracle.
+          if ! DB_CONN=$(gcloud sql instances describe "$DB_INSTANCE" \
+              --format="value(connectionName)" --project="$GOOGLE_CLOUD_PROJECT" 2>/tmp/sql_describe.err); then
+            echo "::error::Preflight: SQL instance '$DB_INSTANCE' not found — cannot run the orphan audit oracle."
+            echo "  ($ENVIRONMENT path). Resolve the DB instance before deploying; do NOT skip the gate."
+            cat /tmp/sql_describe.err || true
+            exit 1
+          fi
+
+          PG_PASS=$(gcloud secrets versions access latest \
+            --secret=postgres-password --project="$GOOGLE_CLOUD_PROJECT")
+
+          /tmp/cloud-sql-proxy --port 5432 "$DB_CONN" &
+          PROXY_PID=$!
+          trap 'kill "$PROXY_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 20); do
+            if PGPASSWORD="$PG_PASS" psql -h 127.0.0.1 -p 5432 -U orderly -d orderly \
+                 -c 'SELECT 1' >/dev/null 2>&1; then break; fi
+            echo "waiting for proxy ($i/20)"; sleep 2
+          done
+
+          export PGPASSWORD="$PG_PASS"
+          PSQL="psql -h 127.0.0.1 -p 5432 -U orderly -d orderly -v ON_ERROR_STOP=1"
+
+          # (3) alembic_version_monolith assertion (first-run absence / re-deploy).
+          AVM=$($PSQL -tA -c "SELECT to_regclass('public.alembic_version_monolith') IS NOT NULL;")
+          echo "alembic_version_monolith present: $AVM"
+
+          # (2) Orphan audit — fail if any of the 7 cross-module FK checks > 0.
+          echo "::group::Orphan audit (monolith_fk_audit.sql)"
+          $PSQL -f scripts/database/monolith_fk_audit.sql | tee /tmp/orphan_audit.txt
+          echo "::endgroup::"
+          TOTAL=$($PSQL -tA -f scripts/database/monolith_fk_audit.sql \
+            | awk -F'|' 'NF>=2 {s+=$2} END {print s+0}')
+          echo "Total orphan rows across 7 FK checks: $TOTAL"
+          if [ "${TOTAL:-0}" -gt 0 ]; then
+            echo "::error::Preflight orphan audit FAILED: $TOTAL orphan rows would abort the 0002/0003 FK migration. Owner must remediate (backfill / archive / approved cleanup) — do NOT auto-delete or auto-NULL."
+            exit 1
+          fi
+
+          # (4) Schema-drift snapshot (read-only) for human review vs unified_metadata.
+          pg_dump -h 127.0.0.1 -p 5432 -U orderly -d orderly \
+            --schema-only --no-owner --no-privileges > /tmp/live_schema.sql || true
+          echo "Captured live schema snapshot ($(wc -l < /tmp/live_schema.sql) lines) for drift review."
+
+      - name: Upload schema-drift + audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preflight-${{ needs.resolve.outputs.environment }}
+          path: |
+            /tmp/orphan_audit.txt
+            /tmp/live_schema.sql
+          if-no-files-found: warn
+
+  # ---- Migrate: gated, decoupled `alembic upgrade head` (CD-DECOUPLE-MIGRATION)
+  # Runs the monolith migration as a SEPARATE step BEFORE the serving deploy,
+  # using the SAME image (built by build-deploy is not yet available, so build the
+  # migration image here from the same Dockerfile and run alembic via the same
+  # entrypoint). A migration abort is now observable/retryable and never crash-loops
+  # the serving revision. Gated behind preflight (orphan audit = 0) AND the
+  # production environment reviewer approval.
+  migrate:
+    name: DB Migration (decoupled, gated)
+    runs-on: ubuntu-latest
+    needs: [resolve, preflight]
+    if: needs.resolve.outputs.services != '[]'
+    environment: ${{ needs.resolve.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Log in to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build + push migration image (same Dockerfile.monolith)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile.monolith
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-backend-monolith:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-backend-monolith:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-backend-monolith:buildcache,mode=max
+
+      - name: Run alembic upgrade head via Cloud Run Job (same image)
+        env:
+          ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
+          DB_INSTANCE: ${{ needs.resolve.outputs.db_instance }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          DB_CONN=$(gcloud sql instances describe "$DB_INSTANCE" \
+            --format="value(connectionName)" --project="$GOOGLE_CLOUD_PROJECT")
+          JOB="orderly-monolith-migrate-$ENVIRONMENT"
+          IMAGE="$REGISTRY/$GOOGLE_CLOUD_PROJECT/$AR_REPO/orderly-backend-monolith:$IMAGE_TAG"
+
+          # The serving CMD is just uvicorn; override it to run alembic only.
+          gcloud run jobs deploy "$JOB" \
+            --image="$IMAGE" \
+            --region="$GOOGLE_CLOUD_REGION" \
+            --project="$GOOGLE_CLOUD_PROJECT" \
+            --service-account="orderly-migration@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com" \
+            --set-env-vars="ENVIRONMENT=$ENVIRONMENT,NODE_ENV=$ENVIRONMENT,DATABASE_HOST=/cloudsql/$DB_CONN,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly" \
+            --set-secrets="POSTGRES_PASSWORD=postgres-password:latest" \
+            --set-cloudsql-instances="$DB_CONN" \
+            --command="sh" \
+            --args="-c,alembic -c app/alembic.ini upgrade head" \
+            --max-retries=0 --task-timeout=30m --parallelism=1
+
+          echo "Executing migration job (blocks until done)…"
+          gcloud run jobs execute "$JOB" \
+            --region="$GOOGLE_CLOUD_REGION" --project="$GOOGLE_CLOUD_PROJECT" --wait
+
   # ---- Build (cached) + deploy, merged per service --------------------------
   build-deploy:
     name: Build+Deploy ${{ matrix.service }}
     runs-on: ubuntu-latest
-    needs: resolve
+    needs: [resolve, preflight, migrate]
     if: needs.resolve.outputs.services != '[]'
     environment: ${{ needs.resolve.outputs.environment }}
     strategy:
@@ -157,10 +336,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: backend/${{ matrix.service }}/Dockerfile
-          build-args: |
-            SERVICE_PATH=backend/${{ matrix.service }}
-            LIBS_PATH=backend/libs
+          file: backend/Dockerfile.monolith
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.GOOGLE_CLOUD_PROJECT }}/${{ env.AR_REPO }}/orderly-${{ matrix.service }}:${{ github.sha }}
@@ -192,7 +368,7 @@ jobs:
             MEM=512Mi; CPU=1; MINI=0; MAXI=10; CONC=100
           fi
 
-          ENV_VARS="NODE_ENV=$ENVIRONMENT,DATABASE_HOST=/cloudsql/$DB_CONN,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly"
+          ENV_VARS="ENVIRONMENT=$ENVIRONMENT,NODE_ENV=$ENVIRONMENT,DATABASE_HOST=/cloudsql/$DB_CONN,DATABASE_PORT=5432,DATABASE_NAME=orderly,DATABASE_USER=orderly"
           [ -n "$REDIS_HOST" ] && ENV_VARS="$ENV_VARS,REDIS_HOST=$REDIS_HOST,REDIS_PORT=6379"
 
           gcloud run deploy "$SERVICE_NAME" \
@@ -228,9 +404,9 @@ jobs:
           done
           echo "::error::$SERVICE did not become healthy"; exit 1
 
-  # ---- Configure gateway routing + frontend env (one job, one auth) ---------
+  # ---- Resolve monolith URL (one job, one auth) -----------------------------
   wire-up:
-    name: Wire Up Routing
+    name: Resolve Backend Routing
     runs-on: ubuntu-latest
     needs: [resolve, build-deploy]
     if: always() && needs.build-deploy.result == 'success'
@@ -241,40 +417,33 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Configure API Gateway routes
+      - name: Resolve backend monolith URL
         env:
           ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
           SUFFIX: ${{ needs.resolve.outputs.suffix }}
         run: |
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
-          declare -A urls
-          for s in user-service-fastapi order-service-fastapi product-service-fastapi acceptance-service-fastapi notification-service-fastapi customer-hierarchy-service-fastapi supplier-service-fastapi; do
-            n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
-            u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
-              --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
-            [ -n "$u" ] && urls[$s]="$u"
-          done
-          ev="NODE_ENV=$ENVIRONMENT"
-          [ -n "${urls[user-service-fastapi]:-}" ] && ev="$ev,USER_SERVICE_URL=${urls[user-service-fastapi]}"
-          [ -n "${urls[order-service-fastapi]:-}" ] && ev="$ev,ORDER_SERVICE_URL=${urls[order-service-fastapi]}"
-          [ -n "${urls[product-service-fastapi]:-}" ] && ev="$ev,PRODUCT_SERVICE_URL=${urls[product-service-fastapi]}"
-          [ -n "${urls[acceptance-service-fastapi]:-}" ] && ev="$ev,ACCEPTANCE_SERVICE_URL=${urls[acceptance-service-fastapi]}/acceptance"
-          [ -n "${urls[notification-service-fastapi]:-}" ] && ev="$ev,NOTIFICATION_SERVICE_URL=${urls[notification-service-fastapi]}"
-          [ -n "${urls[customer-hierarchy-service-fastapi]:-}" ] && ev="$ev,CUSTOMER_HIERARCHY_SERVICE_URL=${urls[customer-hierarchy-service-fastapi]}"
-          [ -n "${urls[supplier-service-fastapi]:-}" ] && ev="$ev,SUPPLIER_SERVICE_URL=${urls[supplier-service-fastapi]}"
-          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
-          gcloud run services update "$gw" --region="$GOOGLE_CLOUD_REGION" \
-            --update-env-vars="$ev" --project="$GOOGLE_CLOUD_PROJECT"
+          be=$(cr_service_name "backend-monolith" "$ENVIRONMENT" "$SUFFIX")
+          gcloud run services describe "$be" --region="$GOOGLE_CLOUD_REGION" \
+            --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT"
 
   # ---- Frontend (cached build) ----------------------------------------------
   deploy-frontend:
     name: Build+Deploy Frontend
     runs-on: ubuntu-latest
-    # Parallel with build-deploy: the gateway URL is stable across redeploys,
-    # so the frontend can build while the backend is (re)deploying.
-    needs: [resolve]
-    if: needs.resolve.outputs.frontend == 'true'
+    # CD-FRONTEND-GATE: gate on build-deploy success. The frontend repoints
+    # ORDERLY_BACKEND_URL/BACKEND_URL/NEXT_PUBLIC_API_BASE_URL to the monolith
+    # URL; if it runs in parallel and the backend never boots/migrates, the
+    # frontend serves user-facing 5xx. Wait for a healthy backend revision first.
+    # build-deploy is SKIPPED on a frontend-only deploy (services == '[]'); allow
+    # that, but NEVER proceed if build-deploy actually FAILED.
+    needs: [resolve, build-deploy]
+    if: >-
+      always()
+      && needs.resolve.outputs.frontend == 'true'
+      && needs.build-deploy.result != 'failure'
+      && needs.build-deploy.result != 'cancelled'
     environment: ${{ needs.resolve.outputs.environment }}
     steps:
       - uses: actions/checkout@v4
@@ -297,8 +466,8 @@ jobs:
         run: |
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
-          gw=$(cr_service_name "api-gateway-fastapi" "$ENVIRONMENT" "$SUFFIX")
-          url=$(gcloud run services describe "$gw" --region="$GOOGLE_CLOUD_REGION" \
+          be=$(cr_service_name "backend-monolith" "$ENVIRONMENT" "$SUFFIX")
+          url=$(gcloud run services describe "$be" --region="$GOOGLE_CLOUD_REGION" \
             --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Build + push frontend (cached)
@@ -344,7 +513,7 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Smoke check (gateway + product /health only)
+      - name: Smoke check (backend monolith /health)
         env:
           ENVIRONMENT: ${{ needs.resolve.outputs.environment }}
           SUFFIX: ${{ needs.resolve.outputs.suffix }}
@@ -352,7 +521,7 @@ jobs:
           set -euo pipefail
           source scripts/ci/cloud-run-names.sh
           fail=0
-          for s in api-gateway-fastapi product-service-fastapi customer-hierarchy-service-fastapi; do
+          for s in backend-monolith; do
             n=$(cr_service_name "$s" "$ENVIRONMENT" "$SUFFIX")
             u=$(gcloud run services describe "$n" --region="$GOOGLE_CLOUD_REGION" \
               --format="value(status.url)" --project="$GOOGLE_CLOUD_PROJECT" 2>/dev/null || echo "")

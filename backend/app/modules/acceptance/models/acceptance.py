@@ -7,7 +7,12 @@ from .base import BaseModel
 class Acceptance(BaseModel):
     __tablename__ = "acceptances"
 
-    order_id = Column("orderId", String, nullable=False)
+    order_id = Column(
+        "orderId",
+        String,
+        ForeignKey("orders.id", name="fk_acceptances_order_id_orders"),
+        nullable=False,
+    )
     restaurant_id = Column("restaurantId", String, nullable=False)
     supplier_id = Column("supplierId", String, nullable=False)
     status = Column(String, nullable=False, default="pending")
@@ -28,4 +33,3 @@ class AcceptanceItem(BaseModel):
     accepted_qty = Column("acceptedQty", String, nullable=False)
     unit = Column(String, nullable=True)
     reason = Column(String, nullable=True)
-

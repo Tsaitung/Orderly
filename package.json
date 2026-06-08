@@ -33,7 +33,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "clean": "rm -rf .next",
     "setup": "npm install && npm run build",
-    "dev:backend": "echo 'Use docker compose up to run FastAPI services'"
+    "dev:backend": "docker-compose -f compose.monolith.yml up backend"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

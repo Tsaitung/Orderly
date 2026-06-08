@@ -1,7 +1,8 @@
 .PHONY: ensure-db \
        test-be test-fe \
        lint typecheck format-check \
-       verify verify-pr-local verify-pr
+       verify verify-pr-local verify-pr \
+       deploy-check
 
 # Parallelism control
 PYTEST_WORKERS ?= auto
@@ -137,3 +138,11 @@ verify-pr-local: verify test-be
 verify-pr:
 	@echo "verify-pr: CI authoritative gate (see .github/workflows/ci.yml)"
 	@echo "  Run locally: make verify-pr-local"
+
+# ── Pre-deploy drift guard: monolith Dockerfile COPY-source consistency ──
+# Asserts backend/Dockerfile.monolith's repo-relative COPY sources still exist in
+# the build context, so deploy-config vs code drift fails FAST and LOCAL instead
+# of mid-CD. Wired as cd.yml `preflight` job (build-deploy / deploy-frontend gate).
+
+deploy-check:
+	bash scripts/ci/check-deploy-consistency.sh

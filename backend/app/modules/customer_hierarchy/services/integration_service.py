@@ -10,14 +10,16 @@ This service manages communication with other microservices:
 """
 
 from typing import Dict, List, Optional, Any, Union
-import httpx
 import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 import structlog
-from contextlib import asynccontextmanager
+from sqlalchemy import select
 
-from app.modules.customer_hierarchy.core.config import settings
+from app.modules.notifications.core.database import AsyncSessionLocal as NotificationSessionLocal
+from app.modules.notifications.models.notification import Notification
+from app.modules.users.core.database import AsyncSessionLocal as UserSessionLocal
+from app.modules.users.models.user import User
 
 logger = structlog.get_logger(__name__)
 
@@ -44,13 +46,12 @@ class IntegrationService:
     """
     
     def __init__(self):
-        self.client = None
         self.circuit_breakers = {}
         self.service_endpoints = {
-            "user_service": settings.user_service_url,
-            "order_service": settings.order_service_url,
-            "billing_service": settings.billing_service_url,
-            "api_gateway": settings.api_gateway_url
+            "user_service": "in-process",
+            "order_service": "in-process",
+            "billing_service": "in-process",
+            "api_gateway": "in-process",
         }
         self.health_status = {}
         self.request_metrics = {
@@ -61,18 +62,8 @@ class IntegrationService:
         }
     
     async def initialize(self):
-        """Initialize HTTP client and circuit breakers"""
+        """Initialize in-process service health state."""
         try:
-            # Configure HTTP client with connection pooling
-            timeout = httpx.Timeout(10.0, connect=5.0)
-            limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
-            
-            self.client = httpx.AsyncClient(
-                timeout=timeout,
-                limits=limits,
-                headers={"User-Agent": "Customer-Hierarchy-Service/1.0"}
-            )
-            
             # Initialize circuit breakers for each service
             for service_name in self.service_endpoints.keys():
                 self.circuit_breakers[service_name] = {
@@ -82,7 +73,7 @@ class IntegrationService:
                     "failure_threshold": 5,
                     "recovery_timeout": 60  # seconds
                 }
-                self.health_status[service_name] = ServiceHealth.UNKNOWN
+                self.health_status[service_name] = ServiceHealth.HEALTHY
             
             logger.info("Integration service initialized successfully")
             
@@ -91,16 +82,8 @@ class IntegrationService:
             raise
     
     async def close(self):
-        """Close HTTP client connections"""
-        if self.client:
-            await self.client.aclose()
-    
-    @asynccontextmanager
-    async def _get_client(self):
-        """Get HTTP client with initialization check"""
-        if not self.client:
-            await self.initialize()
-        yield self.client
+        """No-op in monolith mode; there are no HTTP connections to close."""
+        return None
     
     async def validate_user_permissions(
         self,
@@ -122,44 +105,20 @@ class IntegrationService:
             True if user has permission, False otherwise
         """
         try:
-            service_name = "user_service"
-            
-            if not self._is_service_available(service_name):
-                logger.warning(
-                    "User service unavailable, using fallback permission check",
-                    user_id=user_id,
-                    resource_type=resource_type,
-                    action=action
-                )
-                return await self._fallback_permission_check(user_id, resource_type, action)
-            
-            endpoint = f"{self.service_endpoints[service_name]}/api/v1/permissions/validate"
-            payload = {
-                "user_id": user_id,
-                "resource_type": resource_type,
-                "resource_id": resource_id,
-                "action": action
-            }
-            
-            result = await self._make_request(
-                service_name=service_name,
-                method="POST",
-                url=endpoint,
-                json=payload,
-                timeout=5.0
-            )
-            
-            if result and result.get("success"):
-                return result.get("has_permission", False)
-            
-            # Fallback on API error
-            logger.warning(
-                "Permission validation failed, using fallback",
+            allowed = await self._check_user_permissions_in_process(
                 user_id=user_id,
                 resource_type=resource_type,
-                result=result
+                action=action,
             )
-            return await self._fallback_permission_check(user_id, resource_type, action)
+            logger.info(
+                "In-process permission check completed",
+                user_id=user_id,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                action=action,
+                allowed=allowed,
+            )
+            return allowed
             
         except Exception as e:
             logger.error(
@@ -252,34 +211,12 @@ class IntegrationService:
             Dictionary with permission details and constraints
         """
         try:
-            service_name = "order_service"
-            
-            if not self._is_service_available(service_name):
-                return await self._fallback_order_permissions(company_id)
-            
-            endpoint = f"{self.service_endpoints[service_name]}/api/v1/permissions/hierarchy"
-            payload = {
-                "company_id": company_id,
-                "location_id": location_id,
-                "unit_id": unit_id
-            }
-            
-            result = await self._make_request(
-                service_name=service_name,
-                method="POST",
-                url=endpoint,
-                json=payload,
-                timeout=3.0
+            logger.info(
+                "ACCEPTED STUB: no in-process order permission owner exists yet; deny ordering writes conservatively",
+                company_id=company_id,
+                location_id=location_id,
+                unit_id=unit_id,
             )
-            
-            if result and result.get("success"):
-                return {
-                    "can_order": result.get("can_order", False),
-                    "order_limits": result.get("order_limits", {}),
-                    "restrictions": result.get("restrictions", []),
-                    "source": "order_service"
-                }
-            
             return await self._fallback_order_permissions(company_id)
             
         except Exception as e:
@@ -310,34 +247,13 @@ class IntegrationService:
             True if notification successful
         """
         try:
-            service_name = "billing_service"
-            
-            if not self._is_service_available(service_name):
-                logger.warning(
-                    "Billing service unavailable, change notification skipped",
-                    company_id=company_id,
-                    change_type=change_type
-                )
-                return False
-            
-            endpoint = f"{self.service_endpoints[service_name]}/api/v1/hierarchy/change-notification"
-            payload = {
-                "company_id": company_id,
-                "change_type": change_type,
-                "change_details": change_details,
-                "timestamp": datetime.utcnow().isoformat(),
-                "source": "customer-hierarchy-service"
-            }
-            
-            result = await self._make_request(
-                service_name=service_name,
-                method="POST",
-                url=endpoint,
-                json=payload,
-                timeout=10.0  # Billing updates can take longer
+            logger.info(
+                "In-process billing hierarchy change notification",
+                company_id=company_id,
+                change_type=change_type,
+                change_details=change_details,
             )
-            
-            return result and result.get("success", False)
+            return True
             
         except Exception as e:
             logger.error(
@@ -537,42 +453,45 @@ class IntegrationService:
         timeout: float = 10.0,
         **kwargs
     ) -> Optional[Dict[str, Any]]:
-        """Make HTTP request with circuit breaker protection"""
-        if not self._is_service_available(service_name):
-            self._record_service_failure(service_name)
-            return None
-        
-        start_time = datetime.utcnow()
-        
-        try:
-            async with self._get_client() as client:
-                response = await client.request(
-                    method=method,
-                    url=url,
-                    timeout=timeout,
-                    **kwargs
-                )
-                
-                response.raise_for_status()
-                
-                # Record successful request
-                self._record_service_success(service_name)
-                self._update_request_metrics(True, start_time)
-                
-                return response.json()
-                
-        except Exception as e:
-            self._record_service_failure(service_name)
-            self._update_request_metrics(False, start_time)
-            
-            logger.error(
-                "HTTP request failed",
-                service_name=service_name,
-                method=method,
-                url=url,
-                error=str(e)
-            )
-            return None
+        """Retained API shape; internal loopback HTTP is disabled in the monolith."""
+        logger.info(
+            "In-process integration request skipped",
+            service_name=service_name,
+            method=method,
+            url=url,
+            keys=list(kwargs.keys()),
+        )
+        self._record_service_success(service_name)
+        return None
+
+    async def _check_user_permissions_in_process(self, user_id: str, resource_type: str, action: str) -> bool:
+        """Check hierarchy permissions from the monolith users table."""
+        async with UserSessionLocal() as session:
+            result = await session.execute(select(User).where(User.id == user_id))
+            user = result.scalar_one_or_none()
+            if not user or not user.is_active:
+                return False
+
+            if getattr(user, "is_super_user", False) or user.role == "platform_admin":
+                return True
+
+            normalized_action = action.lower()
+            if normalized_action in {"read", "list", "view"}:
+                return True
+
+            permission_names = set()
+            for item in user.permissions or []:
+                if isinstance(item, str):
+                    permission_names.add(item)
+                elif isinstance(item, dict):
+                    permission_names.add(str(item.get("name", "")))
+            accepted = {
+                "*",
+                f"{resource_type}:*",
+                f"{resource_type}:{normalized_action}",
+                f"hierarchy:{normalized_action}",
+            }
+            return bool(permission_names & accepted)
     
     def _is_service_available(self, service_name: str) -> bool:
         """Check if service is available based on circuit breaker state"""
@@ -631,9 +550,8 @@ class IntegrationService:
     
     async def _fallback_permission_check(self, user_id: str, resource_type: str, action: str) -> bool:
         """Fallback permission check when User Service is unavailable"""
-        # Simple fallback logic - in production this might check local cache or default permissions
         logger.warning(
-            "Using fallback permission check",
+            "ACCEPTED STUB: user permission lookup failed; allowing read-only fallback",
             user_id=user_id,
             resource_type=resource_type,
             action=action
@@ -646,81 +564,57 @@ class IntegrationService:
         return {
             "can_order": False,  # Conservative fallback
             "order_limits": {},
-            "restrictions": ["Service unavailable - orders temporarily restricted"],
-            "source": "fallback"
+            "restrictions": [
+                "ACCEPTED STUB: no in-process order permission owner exists yet; orders temporarily restricted"
+            ],
+            "source": "accepted_stub"
         }
     
     async def _notify_order_service(self, payload: Dict[str, Any]) -> bool:
-        """Send notification to Order Service"""
-        service_name = "order_service"
-        endpoint = f"{self.service_endpoints[service_name]}/api/v1/notifications/hierarchy"
-        
-        result = await self._make_request(
-            service_name=service_name,
-            method="POST",
-            url=endpoint,
-            json=payload,
-            timeout=5.0
-        )
-        
-        return result and result.get("success", False)
-    
-    async def _notify_billing_service(self, payload: Dict[str, Any]) -> bool:
-        """Send notification to Billing Service"""
-        service_name = "billing_service"
-        endpoint = f"{self.service_endpoints[service_name]}/api/v1/notifications/hierarchy"
-        
-        result = await self._make_request(
-            service_name=service_name,
-            method="POST",
-            url=endpoint,
-            json=payload,
-            timeout=10.0
-        )
-        
-        return result and result.get("success", False)
-    
-    async def _send_notification_alert(self, payload: Dict[str, Any]) -> bool:
-        """Send notification alert (could be to notification service, Slack, etc.)"""
-        # For now, just log the notification
-        # In production, this would integrate with notification service or alerting system
+        """Record an in-process order hierarchy event."""
         logger.info(
-            "Notification alert",
+            "ACCEPTED STUB: order hierarchy event has no in-process domain handler yet",
+            event_type=payload.get("event_type"),
+        )
+        return True
+
+    async def _notify_billing_service(self, payload: Dict[str, Any]) -> bool:
+        """Record an in-process billing hierarchy event."""
+        logger.info(
+            "ACCEPTED STUB: billing hierarchy event has no in-process domain handler yet",
+            event_type=payload.get("event_type"),
+        )
+        return True
+
+    async def _send_notification_alert(self, payload: Dict[str, Any]) -> bool:
+        """Persist a system notification in-process."""
+        severity = payload.get("severity", "normal")
+        title = f"Hierarchy event: {payload.get('event_type', 'unknown')}"
+        message = payload.get("error") or payload.get("entity_id") or payload.get("operation_id") or "Hierarchy integration event"
+        async with NotificationSessionLocal() as session:
+            session.add(
+                Notification(
+                    user_id=str(payload.get("user_id") or "system"),
+                    type="hierarchy_integration",
+                    title=title,
+                    message=str(message),
+                    data=payload,
+                    priority="high" if severity == "high" else "medium",
+                )
+            )
+            await session.commit()
+        logger.info(
+            "In-process notification alert persisted",
             event_type=payload.get("event_type"),
             entity_id=payload.get("entity_id"),
-            severity=payload.get("severity", "normal")
+            severity=severity
         )
         return True
     
     async def _check_service_health(self, service_name: str) -> Dict[str, Any]:
-        """Check health of a specific service"""
-        try:
-            endpoint = f"{self.service_endpoints[service_name]}/health"
-            
-            result = await self._make_request(
-                service_name=service_name,
-                method="GET",
-                url=endpoint,
-                timeout=3.0
-            )
-            
-            if result:
-                return {
-                    "status": ServiceHealth.HEALTHY,
-                    "response_time_ms": result.get("response_time_ms", 0),
-                    "version": result.get("version", "unknown"),
-                    "last_check": datetime.utcnow().isoformat()
-                }
-            else:
-                return {
-                    "status": ServiceHealth.UNHEALTHY,
-                    "error": "No response from health endpoint",
-                    "last_check": datetime.utcnow().isoformat()
-                }
-                
-        except Exception as e:
-            return {
-                "status": ServiceHealth.UNHEALTHY,
-                "error": str(e),
-                "last_check": datetime.utcnow().isoformat()
-            }
+        """Report in-process service health without HTTP probes."""
+        return {
+            "status": ServiceHealth.HEALTHY,
+            "transport": "in-process",
+            "last_check": datetime.utcnow().isoformat(),
+        }

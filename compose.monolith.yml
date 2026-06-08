@@ -8,6 +8,37 @@
 # postgres_data / redis_data volumes resolve to the existing orderly_postgres_data /
 # orderly_redis_data volumes (i.e. the same data + containers as the current dev stack).
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.monolith
+    environment:
+      PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-orderly}
+      DATABASE_USER: ${DATABASE_USER:-orderly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderly_dev_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-jwt-refresh-secret}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5566}
+    ports:
+      - "${BACKEND_PORT:-8888}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   postgres:
     image: postgres:15-alpine
     environment:

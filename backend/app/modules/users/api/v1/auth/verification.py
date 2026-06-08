@@ -4,10 +4,8 @@
 包含 Email 和手機驗證功能
 """
 
-import os
 from datetime import datetime
 
-import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -25,6 +23,7 @@ from app.modules.users.schemas.auth import (
     VerifyPhoneResponse,
 )
 from app.modules.users.services.verification_service import VerificationService
+from app.modules.users.services.otp_bridge import in_process_otp
 
 from .core import get_current_user_from_token
 
@@ -63,46 +62,35 @@ async def send_email_verification(
                 error="Email already verified"
             )
 
-        # 3. 調用 Notification Service 發送 OTP
-        notification_service_url = os.getenv(
-            "NOTIFICATION_SERVICE_URL",
-            "http://localhost:3006"
+        # 3. Direct in-process OTP call to Notification module
+        data = await in_process_otp.send_email_otp(
+            user_id=str(current_user.id),
+            email=current_user.email,
+            purpose="Email 驗證",
         )
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                f"{notification_service_url}/otp/send-email",
-                json={
-                    "user_id": str(current_user.id),
-                    "email": current_user.email,
-                    "purpose": "Email 驗證"
-                }
-            )
-
-            if response.status_code == 200:
-                data = response.json()
-                if data.get("success"):
-                    logger.info(
-                        "email_verification_otp_sent",
-                        user_id=str(current_user.id),
-                        email=current_user.email
-                    )
-                    return SendEmailVerificationResponse(
-                        success=True,
-                        message=f"驗證碼已發送到 {current_user.email}",
-                        expires_in=data.get("expires_in", 600)
-                    )
-
-            logger.error(
-                "email_verification_otp_send_failed",
+        if data.get("success"):
+            logger.info(
+                "email_verification_otp_sent",
                 user_id=str(current_user.id),
-                status_code=response.status_code
+                email=current_user.email
             )
             return SendEmailVerificationResponse(
-                success=False,
-                message="發送驗證碼失敗，請稍後再試",
-                error="Failed to send OTP"
+                success=True,
+                message=f"驗證碼已發送到 {current_user.email}",
+                expires_in=data.get("expires_in", 600)
             )
+
+        logger.error(
+            "email_verification_otp_send_failed",
+            user_id=str(current_user.id),
+            error=data.get("error"),
+        )
+        return SendEmailVerificationResponse(
+            success=False,
+            message="發送驗證碼失敗，請稍後再試",
+            error=data.get("error") or "Failed to send OTP"
+        )
 
     except HTTPException:
         raise
@@ -146,37 +134,26 @@ async def verify_email(
                 verification_level=VerificationService.calculate_user_level(current_user)
             )
 
-        # 2. 調用 Notification Service 驗證 OTP
-        notification_service_url = os.getenv(
-            "NOTIFICATION_SERVICE_URL",
-            "http://localhost:3006"
+        # 2. Direct in-process OTP validation
+        data = await in_process_otp.verify_otp(
+            user_id=str(current_user.id),
+            otp_type="email",
+            code=payload.otp_code,
         )
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                f"{notification_service_url}/otp/verify",
-                json={
-                    "user_id": str(current_user.id),
-                    "otp_type": "email",
-                    "code": payload.otp_code
-                }
+        if not data.get("success"):
+            return VerifyEmailResponse(
+                success=False,
+                message="驗證服務暫時不可用",
+                error="Verification service unavailable"
             )
 
-            if response.status_code != 200:
-                return VerifyEmailResponse(
-                    success=False,
-                    message="驗證服務暫時不可用",
-                    error="Verification service unavailable"
-                )
-
-            data = response.json()
-
-            if not data.get("valid"):
-                return VerifyEmailResponse(
-                    success=False,
-                    message="驗證碼錯誤或已過期",
-                    error=data.get("error", "Invalid OTP")
-                )
+        if not data.get("valid"):
+            return VerifyEmailResponse(
+                success=False,
+                message="驗證碼錯誤或已過期",
+                error=data.get("error", "Invalid OTP")
+            )
 
         # 3. 更新用戶 email_verified 狀態
         current_user.email_verified = True
@@ -268,42 +245,26 @@ async def send_phone_verification(
         # 3. 更新用戶手機號碼
         current_user.phone = payload.phone
 
-        # 4. 調用 Notification Service 發送 SMS OTP
-        notification_service_url = os.getenv(
-            "NOTIFICATION_SERVICE_URL",
-            "http://localhost:3006"
+        # 4. Direct in-process SMS OTP call
+        data = await in_process_otp.send_sms_otp(
+            user_id=str(current_user.id),
+            phone=payload.phone,
+            purpose="手機驗證",
         )
+        if data.get("success"):
+            await db.commit()
+            logger.info(
+                "phone_verification_otp_sent",
+                user_id=str(current_user.id),
+                phone=payload.phone
+            )
+            return SendPhoneVerificationResponse(
+                success=True,
+                message=f"驗證碼已發送到 {payload.phone}",
+                expires_in=data.get("expires_in", 600)
+            )
 
-        # 注意：SMS OTP 端點可能尚未實現
-        # 這裡先使用 email OTP 的結構，實際需要 SMS 服務
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(
-                    f"{notification_service_url}/otp/send-sms",
-                    json={
-                        "user_id": str(current_user.id),
-                        "phone": payload.phone,
-                        "purpose": "手機驗證"
-                    }
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get("success"):
-                        await db.commit()
-                        logger.info(
-                            "phone_verification_otp_sent",
-                            user_id=str(current_user.id),
-                            phone=payload.phone
-                        )
-                        return SendPhoneVerificationResponse(
-                            success=True,
-                            message=f"驗證碼已發送到 {payload.phone}",
-                            expires_in=data.get("expires_in", 600)
-                        )
-
-        except httpx.ConnectError:
-            # SMS 服務尚未實現，暫時回傳提示
+        if data.get("error") == "SMS service not available":
             await db.commit()  # 仍然保存手機號碼
             return SendPhoneVerificationResponse(
                 success=False,
@@ -314,7 +275,7 @@ async def send_phone_verification(
         return SendPhoneVerificationResponse(
             success=False,
             message="發送驗證碼失敗，請稍後再試",
-            error="Failed to send SMS OTP"
+            error=data.get("error") or "Failed to send SMS OTP"
         )
 
     except HTTPException:
@@ -368,44 +329,25 @@ async def verify_phone(
                 verification_level=VerificationService.calculate_user_level(current_user)
             )
 
-        # 2. 調用 Notification Service 驗證 OTP
-        notification_service_url = os.getenv(
-            "NOTIFICATION_SERVICE_URL",
-            "http://localhost:3006"
+        # 2. Direct in-process OTP validation
+        data = await in_process_otp.verify_otp(
+            user_id=str(current_user.id),
+            otp_type="sms",
+            code=payload.otp_code,
         )
 
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.post(
-                    f"{notification_service_url}/otp/verify",
-                    json={
-                        "user_id": str(current_user.id),
-                        "otp_type": "sms",
-                        "code": payload.otp_code
-                    }
-                )
-
-                if response.status_code != 200:
-                    return VerifyPhoneResponse(
-                        success=False,
-                        message="驗證服務暫時不可用",
-                        error="Verification service unavailable"
-                    )
-
-                data = response.json()
-
-                if not data.get("valid"):
-                    return VerifyPhoneResponse(
-                        success=False,
-                        message="驗證碼錯誤或已過期",
-                        error=data.get("error", "Invalid OTP")
-                    )
-
-        except httpx.ConnectError:
+        if not data.get("success"):
             return VerifyPhoneResponse(
                 success=False,
                 message="驗證服務暫時不可用",
                 error="Verification service unavailable"
+            )
+
+        if not data.get("valid"):
+            return VerifyPhoneResponse(
+                success=False,
+                message="驗證碼錯誤或已過期",
+                error=data.get("error", "Invalid OTP")
             )
 
         # 3. 更新用戶 phone_verified 狀態

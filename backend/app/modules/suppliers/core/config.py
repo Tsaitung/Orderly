@@ -111,7 +111,5 @@ settings = SupplierServiceSettings()
 # 為了向後兼容，保持原有接口
 DATABASE_URL = settings.get_database_url_async()
 JWT_SECRET = settings.jwt_secret
-USER_SERVICE_URL = settings.user_service_url
-ORDER_SERVICE_URL = settings.order_service_url
 APP_NAME = settings.app_name
 PORT = settings.port

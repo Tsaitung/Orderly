@@ -24,5 +24,6 @@ app = create_service_app(
 )
 
 # 註冊供應商路由
+app.include_router(suppliers_router, prefix="/api/suppliers", tags=["Suppliers"])
 app.include_router(suppliers_router, prefix="/api", tags=["Suppliers"])
 app.include_router(suppliers_router, prefix="", tags=["Suppliers"])

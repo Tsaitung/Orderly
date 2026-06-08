@@ -4,10 +4,8 @@
 包含忘記密碼、重設密碼、修改密碼等功能
 """
 
-import os
 from datetime import datetime
 
-import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -24,6 +22,7 @@ from app.modules.users.schemas.auth import (
     ResetPasswordResponse,
 )
 from app.modules.users.services.password_service import PasswordService
+from app.modules.users.services.otp_bridge import in_process_otp
 
 from .core import get_current_user_from_token, pwd_context
 
@@ -71,33 +70,24 @@ async def forgot_password(
             message="如果該 Email 已註冊，您將收到密碼重設驗證碼"
         )
 
-    # 調用 Notification Service 發送 OTP
-    notification_service_url = os.getenv("NOTIFICATION_SERVICE_URL", "http://localhost:3006")
-
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                f"{notification_service_url}/otp/send-email",
-                json={
-                    "user_id": str(user.id),
-                    "email": user.email,
-                    "user_name": user.display_name or user.email.split("@")[0],
-                    "purpose": "密碼重設"
-                }
+        otp_result = await in_process_otp.send_email_otp(
+            user_id=str(user.id),
+            email=user.email,
+            user_name=user.display_name or user.email.split("@")[0],
+            purpose="密碼重設",
+        )
+        if not otp_result.get("success"):
+            logger.error(
+                "forgot_password_otp_send_failed",
+                user_id=str(user.id),
+                error=otp_result.get("error"),
             )
-
-            if response.status_code != 200:
-                logger.error(
-                    "forgot_password_otp_send_failed",
-                    user_id=str(user.id),
-                    status_code=response.status_code,
-                    response=response.text
-                )
-                return ForgotPasswordResponse(
-                    success=False,
-                    message="發送驗證碼失敗，請稍後再試",
-                    error="OTP service error"
-                )
+            return ForgotPasswordResponse(
+                success=False,
+                message="發送驗證碼失敗，請稍後再試",
+                error=otp_result.get("error") or "OTP service error",
+            )
 
         logger.info(
             "forgot_password_otp_sent",
@@ -163,45 +153,34 @@ async def reset_password(
             error="用戶不存在"
         )
 
-    # 驗證 OTP
-    notification_service_url = os.getenv("NOTIFICATION_SERVICE_URL", "http://localhost:3006")
-
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            otp_response = await client.post(
-                f"{notification_service_url}/otp/verify",
-                json={
-                    "user_id": str(user.id),
-                    "otp_type": "email",
-                    "code": payload.otp_code
-                }
+        otp_result = await in_process_otp.verify_otp(
+            user_id=str(user.id),
+            otp_type="email",
+            code=payload.otp_code,
+        )
+        if not otp_result.get("success"):
+            logger.error(
+                "reset_password_otp_verify_failed",
+                user_id=str(user.id),
+                error=otp_result.get("error"),
             )
-
-            if otp_response.status_code != 200:
-                logger.error(
-                    "reset_password_otp_verify_failed",
-                    user_id=str(user.id),
-                    status_code=otp_response.status_code
-                )
-                return ResetPasswordResponse(
-                    success=False,
-                    message="驗證失敗，請重試",
-                    error="OTP verification service error"
-                )
-
-            otp_result = otp_response.json()
-
-            if not otp_result.get("valid"):
-                logger.warn(
-                    "reset_password_invalid_otp",
-                    user_id=str(user.id),
-                    error=otp_result.get("error")
-                )
-                return ResetPasswordResponse(
-                    success=False,
-                    message="驗證碼無效或已過期",
-                    error=otp_result.get("error")
-                )
+            return ResetPasswordResponse(
+                success=False,
+                message="驗證失敗，請重試",
+                error="OTP verification service error",
+            )
+        if not otp_result.get("valid"):
+            logger.warn(
+                "reset_password_invalid_otp",
+                user_id=str(user.id),
+                error=otp_result.get("error"),
+            )
+            return ResetPasswordResponse(
+                success=False,
+                message="驗證碼無效或已過期",
+                error=otp_result.get("error"),
+            )
 
         # OTP 驗證成功，驗證新密碼強度
         password_validation = PasswordService.validate_strength(

@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     deriveBackendFromPublic(new URL(req.url)) ||
-    'http://localhost:8000'
+    'http://localhost:8888'
 
   const nodeEnv = process.env.NODE_ENV || 'development'
   const environment =
@@ -68,7 +68,7 @@ export async function GET(req: Request) {
         ORDERLY_BACKEND_URL: !!process.env.ORDERLY_BACKEND_URL,
         BACKEND_URL: !!process.env.BACKEND_URL,
       },
-      backend_url_resolved: BACKEND_URL !== 'http://localhost:8000',
+      backend_url_resolved: BACKEND_URL !== 'http://localhost:8888',
       environment_detected: environment,
       total_env_vars: Object.keys(process.env).length,
     },
