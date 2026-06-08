@@ -7,7 +7,12 @@ from app.modules._unified_metadata import unified_metadata
 from app.modules.users.core.config import settings
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.get_database_url_sync())
+# Alembic stores sqlalchemy.url in a ConfigParser, which treats `%` as
+# interpolation syntax. A URL-encoded password (special chars like / + = ->
+# %2F %2B %3D) would raise "invalid interpolation syntax". Escape `%` -> `%%`
+# so ConfigParser stores it literally; get_main_option/get_section un-escape it
+# back to the real URL-encoded string, which SQLAlchemy then decodes correctly.
+config.set_main_option("sqlalchemy.url", settings.get_database_url_sync().replace("%", "%%"))
 
 VERSION_TABLE = "alembic_version_monolith"
 target_metadata = unified_metadata
