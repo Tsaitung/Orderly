@@ -4,16 +4,7 @@
   "description": "井然 Orderly - 餐飲產業全鏈路數位供應平台",
   "private": true,
   "workspaces": [
-    "shared/types",
-    "backend/user-service-fastapi",
-    "backend/order-service-fastapi",
-    "backend/product-service-fastapi",
-    "backend/acceptance-service-fastapi",
-    "backend/billing-service-fastapi",
-    "backend/notification-service-fastapi",
-    "backend/api-gateway-fastapi",
-    "backend/customer-hierarchy-service-fastapi",
-    "backend/supplier-service-fastapi"
+    "shared/types"
   ],
   "scripts": {
     "dev": "next dev",
