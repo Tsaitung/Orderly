@@ -32,8 +32,11 @@ jobs:
       - name: Run npm audit
         run: |
           echo "## NPM Audit Results" >> $GITHUB_STEP_SUMMARY
+          # Gate on PRODUCTION deps only (--omit=dev). Dev-only vulns (eslint /
+          # typescript toolchain) are never shipped to the running service, so they
+          # must not block the gate; they still surface in a full local `npm audit`.
           # npm audit exits non-zero when vulns exist and can emit non-JSON; never let that crash the step.
-          npm audit --audit-level moderate --json > audit.json 2>/dev/null || true
+          npm audit --omit=dev --audit-level moderate --json > audit.json 2>/dev/null || true
 
           # Default counts to 0 when audit.json is missing or not valid JSON, so jq cannot parse-crash.
           HIGH_VULN=0
