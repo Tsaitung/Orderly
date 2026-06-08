@@ -199,19 +199,36 @@ jobs:
           PSQL="psql -h 127.0.0.1 -p 5432 -U orderly -d orderly -v ON_ERROR_STOP=1"
 
           # (3) alembic_version_monolith assertion (first-run absence / re-deploy).
+          #     AVM is the load-bearing first-run signal: when the monolith has
+          #     never migrated this DB, alembic_version_monolith does not exist yet,
+          #     and NONE of the 7 monolith FK tables (orders/order_items/products/
+          #     supplier_skus/acceptances/organizations/product_skus) exist either —
+          #     the `migrate` job (which runs AFTER this gate) is what creates them.
           AVM=$($PSQL -tA -c "SELECT to_regclass('public.alembic_version_monolith') IS NOT NULL;")
           echo "alembic_version_monolith present: $AVM"
 
           # (2) Orphan audit — fail if any of the 7 cross-module FK checks > 0.
-          echo "::group::Orphan audit (monolith_fk_audit.sql)"
-          $PSQL -f scripts/database/monolith_fk_audit.sql | tee /tmp/orphan_audit.txt
-          echo "::endgroup::"
-          TOTAL=$($PSQL -tA -f scripts/database/monolith_fk_audit.sql \
-            | awk -F'|' 'NF>=2 {s+=$2} END {print s+0}')
-          echo "Total orphan rows across 7 FK checks: $TOTAL"
-          if [ "${TOTAL:-0}" -gt 0 ]; then
-            echo "::error::Preflight orphan audit FAILED: $TOTAL orphan rows would abort the 0002/0003 FK migration. Owner must remediate (backfill / archive / approved cleanup) — do NOT auto-delete or auto-NULL."
-            exit 1
+          #     Belt: gate on AVM. On first run (AVM=f) the monolith schema does not
+          #     exist yet, so there are 0 orphans BY CONSTRUCTION (migrate creates
+          #     empty tables); skip the audit with a clear log line instead of
+          #     pretending to oracle a schema that isn't there.
+          #     Suspenders: monolith_fk_audit.sql is ALSO defensive (to_regclass
+          #     absence guard => missing table yields 0), so even if this gate
+          #     regressed, the audit would not error under ON_ERROR_STOP=1.
+          if [ "$AVM" != "t" ]; then
+            echo "preflight: alembic_version_monolith absent -> first run, no monolith tables yet, orphan audit skipped (migrate will create empty tables = 0 orphans by construction)"
+            : > /tmp/orphan_audit.txt
+          else
+            echo "::group::Orphan audit (monolith_fk_audit.sql)"
+            $PSQL -f scripts/database/monolith_fk_audit.sql | tee /tmp/orphan_audit.txt
+            echo "::endgroup::"
+            TOTAL=$($PSQL -tA -f scripts/database/monolith_fk_audit.sql \
+              | awk -F'|' 'NF>=2 {s+=$2} END {print s+0}')
+            echo "Total orphan rows across 7 FK checks: $TOTAL"
+            if [ "${TOTAL:-0}" -gt 0 ]; then
+              echo "::error::Preflight orphan audit FAILED: $TOTAL orphan rows would abort the 0002/0003 FK migration. Owner must remediate (backfill / archive / approved cleanup) — do NOT auto-delete or auto-NULL."
+              exit 1
+            fi
           fi
 
           # (4) Schema-drift snapshot (read-only) for human review vs unified_metadata.
