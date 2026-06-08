@@ -149,14 +149,16 @@ verify-pr:
 # locally; they are gated by the cd.yml `preflight` job (itself gated on CI green)
 # + post-deploy smoke + monitoring. See docs/3-Development-Plan/CI-CD-PARITY.md.
 deploy-check:
-	@echo "deploy-check (1/3): Dockerfile.monolith COPY-source drift guard"
+	@echo "deploy-check (1/4): Dockerfile.monolith COPY-source drift guard"
 	@bash scripts/ci/check-deploy-consistency.sh
-	@echo "deploy-check (2/3): shell syntax of cd.yml-referenced scripts"
-	@for s in backend-test.sh check-deploy-consistency.sh cloud-run-names.sh; do \
+	@echo "deploy-check (2/4): shell syntax of cd.yml-referenced scripts"
+	@for s in backend-test.sh check-deploy-consistency.sh cloud-run-names.sh resolve-deploy-context.sh; do \
 		bash -n "scripts/ci/$$s" && echo "  ok: scripts/ci/$$s" || exit 1; \
 	done
-	@echo "deploy-check (3/3): cloud-run-names contract self-test"
+	@echo "deploy-check (3/4): cloud-run-names contract self-test"
 	@bash scripts/ci/cloud-run-names.test.sh
+	@echo "deploy-check (4/4): resolve-deploy-context self-test (env + changed services)"
+	@bash scripts/ci/resolve-deploy-context.test.sh
 	@echo "✓ deploy-check passed (cd.yml repo-content checks; cloud-state checks gated in CD)"
 
 # ── predeploy-check: deploy-check + real Docker builds (the cd.yml BUILD mirror) ──

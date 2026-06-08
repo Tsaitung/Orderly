@@ -48,78 +48,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: gate
     outputs:
-      environment: ${{ steps.env.outputs.environment }}
-      suffix: ${{ steps.env.outputs.suffix }}
-      db_instance: ${{ steps.env.outputs.db_instance }}
-      services: ${{ steps.changes.outputs.services }}
-      frontend: ${{ steps.changes.outputs.frontend }}
+      environment: ${{ steps.ctx.outputs.environment }}
+      suffix: ${{ steps.ctx.outputs.suffix }}
+      db_instance: ${{ steps.ctx.outputs.db_instance }}
+      services: ${{ steps.ctx.outputs.services }}
+      frontend: ${{ steps.ctx.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-      - name: Resolve environment / suffix / db
-        id: env
-        run: |
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            {
-              echo "environment=production"
-              echo "suffix="
-              echo "db_instance=orderly-db"
-            } >> "$GITHUB_OUTPUT"
-          else
-            {
-              echo "environment=staging"
-              echo "suffix=-v2"
-              echo "db_instance=orderly-db-v2"
-            } >> "$GITHUB_OUTPUT"
-          fi
-      - name: Detect changed services
-        id: changes
+      - name: Resolve deploy context (env + suffix + db + changed services)
+        id: ctx
+        # Logic lives in scripts/ci/resolve-deploy-context.sh (SSOT) so it is
+        # unit-tested by resolve-deploy-context.test.sh (run in `make deploy-check`),
+        # not only exercised here. Keep this step a thin caller.
         env:
-          ALL: '["backend-monolith"]'
-        run: |
-          force="${{ github.event.inputs.force_all }}"
-          manual="${{ github.event.inputs.services }}"
-
-          # Manual explicit list wins.
-          if [ -n "$manual" ]; then
-            json=$(printf '%s' "$manual" | tr ',' '\n' | sed 's/^ *//;s/ *$//' | grep -v '^$' \
-              | python3 -c 'import sys,json;print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
-            echo "services=$json" >> "$GITHUB_OUTPUT"
-            echo "frontend=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [ "$force" = "true" ]; then
-            echo "services=$ALL" >> "$GITHUB_OUTPUT"
-            echo "frontend=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          changed=$(git diff --name-only HEAD~1 HEAD || true)
-          echo "Changed files:"; echo "$changed"
-
-          # Shared libs / workflow / shared types => rebuild the monolith.
-          if echo "$changed" | grep -qE '(backend/app/|backend/libs/|shared/types/|\.github/workflows/cd\.yml|backend/Dockerfile\.monolith|backend/cloudbuild\.monolith\.yaml)'; then
-            echo "services=$ALL" >> "$GITHUB_OUTPUT"
-            echo "frontend=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          svcs=()
-          if echo "$changed" | grep -qE 'backend/(api-gateway-fastapi|user-service-fastapi|order-service-fastapi|product-service-fastapi|acceptance-service-fastapi|notification-service-fastapi|customer-hierarchy-service-fastapi|supplier-service-fastapi)/'; then
-            svcs+=("\"backend-monolith\"")
-          fi
-          if [ ${#svcs[@]} -eq 0 ]; then
-            echo "services=[]" >> "$GITHUB_OUTPUT"
-          else
-            echo "services=[$(IFS=,; echo "${svcs[*]}")]" >> "$GITHUB_OUTPUT"
-          fi
-
-          if echo "$changed" | grep -qE '(app/|components/|lib/|contexts/|hooks/|stores/|public/|next\.config\.js|middleware\.ts|tailwind\.config\.ts|package(-lock)?\.json)'; then
-            echo "frontend=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "frontend=false" >> "$GITHUB_OUTPUT"
-          fi
+          REF: ${{ github.ref }}
+          INPUT_SERVICES: ${{ github.event.inputs.services }}
+          INPUT_FORCE_ALL: ${{ github.event.inputs.force_all }}
+        run: bash scripts/ci/resolve-deploy-context.sh | tee -a "$GITHUB_OUTPUT"
 
   # ---- Preflight: read-only DB safety gate (orphan audit + schema diff) ------
   # CD-PREFLIGHT-ORPHAN-GATE + GUARD-MONOLITH-AWARE + SCHEMA-DRIFT-DIFF (prep).

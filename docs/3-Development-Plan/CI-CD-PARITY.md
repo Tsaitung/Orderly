@@ -34,8 +34,8 @@ Run locally: `make verify-pr-local` (the pre-push gate) + `make predeploy-check`
 | build-deploy / wire-up / smoke · `cloud-run-names.sh` naming | `make deploy-check` (3/3) `cloud-run-names.test.sh` | ✅ contract locked |
 | every cd.yml shell script syntax | `make deploy-check` (2/3) `bash -n` | ✅ |
 | `migrate` · `alembic upgrade head` (migration chain) | `make test-be` runs `alembic upgrade head` on a fresh DB | ✅ chain mirrored (cloud *execution* N-A) |
-| `resolve` · env/suffix/db + changed-service shell | — | ⚠ **TODO**: logic is inline in cd.yml, not unit-tested locally. Deterministic + observable (wrong env/services is visible in the run). To close: extract to `scripts/ci/resolve-deploy-context.sh` + a self-test. |
-| `preflight` · orphan audit `monolith_fk_audit.sql` vs live DB | — | ⚠ N-A-local (**data**): real orphan counts live only in the cloud DB. SQL **syntax** is TODO-local. Compensating: runs in cd.yml `preflight` (gated on CI green) and **blocks the deploy** before migrate. |
+| `resolve` · env/suffix/db + changed-service shell | `scripts/ci/resolve-deploy-context.sh` (cd.yml sources it) + `resolve-deploy-context.test.sh` in `make deploy-check` (4/4) | ✅ logic extracted + 15-case self-test |
+| `preflight` · orphan audit `monolith_fk_audit.sql` — SQL syntax + zero-on-clean-schema | `backend/app/tests/test_fk_audit.py` runs the exact .sql against the migrated CI/local DB (in CI backend-test + `make test-be`) | ✅ syntax + invariant. Orphan COUNTS on live prod data stay cloud-only (N-A-local); that part is gated in cd.yml `preflight`. |
 | `preflight` · gcloud auth / Cloud SQL proxy / schema-drift `pg_dump` | — | N-A-local: needs GCP creds + live Cloud SQL. Compensating: CD preflight gate. |
 | build-deploy / frontend · `gcloud run deploy` | — | N-A-local: deploys to Cloud Run. Compensating: the deploy job fails loud (self-gating — a broken deploy never goes live). |
 | build-deploy · health poll + `smoke` · `curl $URL/health` | — | N-A-local: probes a deployed revision URL. Compensating: post-deploy smoke job + monitoring/alerting. |
