@@ -518,12 +518,17 @@ jobs:
     name: Smoke
     runs-on: ubuntu-latest
     needs: [resolve, build-deploy, wire-up, deploy-frontend]
-    # Run at the end unless an upstream deploy job actually failed.
+    # Smoke only when a deploy ACTUALLY happened: no upstream deploy failed AND
+    # at least one of build-deploy / deploy-frontend succeeded. Without the
+    # success requirement, a no-op run (resolve -> services=[] + frontend=false,
+    # e.g. a docs-only push) leaves all deploy jobs 'skipped' (!= 'failure'),
+    # so smoke would run against nothing and falsely go red.
     if: >-
       always()
       && needs.build-deploy.result != 'failure'
       && needs.wire-up.result != 'failure'
       && needs.deploy-frontend.result != 'failure'
+      && (needs.build-deploy.result == 'success' || needs.deploy-frontend.result == 'success')
     steps:
       - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v2
