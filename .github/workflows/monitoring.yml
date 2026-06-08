@@ -28,10 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.check_type == 'health' || github.event.inputs.check_type == 'all' || github.event_name == 'schedule'
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
       
       - name: Check service health
@@ -122,10 +125,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.check_type == 'performance' || github.event.inputs.check_type == 'all'
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
       
       - name: Check service performance
@@ -178,10 +184,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.check_type == 'cost' || github.event.inputs.check_type == 'all'
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
       
       - name: Check costs and budgets
@@ -222,10 +231,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.check_type == 'security' || github.event.inputs.check_type == 'all'
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
       
       - name: Security audit
@@ -263,10 +275,13 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.inputs.check_type == 'all' || github.event_name == 'schedule'
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
           project_id: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
       
       - name: Analyze logs for anomalies
@@ -362,9 +377,8 @@ jobs:
 
           echo "## Quick Actions" >> $GITHUB_STEP_SUMMARY
           echo "- [🔧 Continuous Deployment](../../actions/workflows/cd.yml)" >> $GITHUB_STEP_SUMMARY
-          echo "- [🔒 Security Scan](../../actions/workflows/security.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- [🔒 Security Scan (in CI)](../../actions/workflows/ci.yml)" >> $GITHUB_STEP_SUMMARY
           echo "- [📊 Performance Check](../../actions/workflows/monitoring.yml)" >> $GITHUB_STEP_SUMMARY
-          echo "- [🎯 Quality Gates](../../actions/workflows/quality-gates.yml)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           echo "## External Dashboards" >> $GITHUB_STEP_SUMMARY
