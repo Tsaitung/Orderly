@@ -176,6 +176,17 @@ A separate plan-review pass independently re-verified the executor's closeout cl
 - Runner fixes made to make this gate truthful/repeatable: `Makefile` now uses `compose.base.yml + compose.dev.yml` for local DB startup, probes DB via configurable DSN defaulting to the repo `.envrc` credentials, passes the same DB password into `test-be`, and selects a Python 3.11+ interpreter only if backend test dependencies are importable.
 - T5.4 status: verified. Remaining unverified items are outside local PR gate: real external Line/Google provider callback smoke needs staging OAuth credentials; repo-wide `type-check:full` / `shared/types` build debt remains non-auth.
 
+### 2026-06-08 — Independent CI-parity audit (reviewer)
+
+Second-party review verified the T5.4 closeout claim and mapped remaining gaps against the actual CI gate (`.github/workflows/ci.yml`), at commit `0b274f4` (tree clean):
+
+- **`0b274f4` content confirmed:** `Makefile` runner-drift fixes + 9 auth/refactor files reformatted (Prettier) + packet updates. The 10 unformatted files were a real catch — CI step `format:check` (`ci.yml:88`) would have gone RED without this commit.
+- **CI runner parity:** `ci.yml` runs `npm run lint` (L84), `npm run type-check` (L86, **scoped, not `:full`**), `npm run format:check` (L88), `npx jest` (L121, no tests → exit 0), and `bash scripts/ci/backend-test.sh` (L189, the shared runner `make test-be` also calls). The `0b274f4` Makefile Python-selector / compose / `TEST_PG_ADMIN_DSN` fixes are **local-runner ergonomics only**; CI invokes `scripts/ci/backend-test.sh` directly with its own container Python, so no CI contract drift.
+- **Key reframe — G1/G2 do NOT block CI/merge:** `ci.yml` never runs `type-check:full` or `npm --workspace shared/types run build`. The 937 `type-check:full` errors and the `customer-hierarchy.ts` enum build failure are pre-existing repo-wide debt that the CI gate does not exercise. They block "repo-wide full green" but **not this PR's CI**.
+- **CI verdict for auth scope:** all `ci.yml` gates would pass (lint = 1 allowed pre-existing warning in untouched `lib/hooks`, scoped type-check clean, format:check fixed, jest no-tests, backend-test 12 passed).
+
+**Final gap status:** auth-scope implementation is complete, regression-free, and CI-green. The only genuinely open item is **G3** (real Line/Google provider callback smoke — needs staging OAuth credentials + `/auth/callback/{provider}` redirect URI; a pre-production-deploy verification, legitimately deferred). **G1/G2** are pre-existing non-CI-gating repo debt (out of this plan's scope). **G4** is a T0.2 prod-DB caveat (re-run the password-only count if a separate prod instance is later introduced).
+
 ## ⚠️ 安全決策註記（provenance）
 
 平台端由「獨立 Email+密碼+MFA 系統」改為「Line/Google + 強制 MFA」是**刻意降低**原獨立系統的防釣魚/降第三方依賴等級，由使用者明確拍板。緩解：強制 MFA + 帳號供裝允許名單 + IP 白名單 + 異常告警 + 完整審計。實作時**必須走 plan-review（auth flow 高風險）**並驗證緩解到位。帳號恢復僅剩另一社群綁定，兩者皆失效須人工支援 → 需在 onboarding 引導使用者綁第二個社群帳號。
