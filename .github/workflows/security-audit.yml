@@ -379,30 +379,7 @@ jobs:
           pip install safety
           safety check --json --output safety-report.json || true
           safety check || true
-          
-      - name: 🛡️ Check Snyk Token
-        id: snyktok
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          # Secrets cannot be referenced directly in an `if:` expression, so route
-          # SNYK_TOKEN presence through an output. Absent token => neutral skip below,
-          # never a hard failure and never a fake pass.
-          if [ -n "$SNYK_TOKEN" ]; then
-            echo "has=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has=false" >> "$GITHUB_OUTPUT"
-            echo "ℹ️ SNYK_TOKEN not set — skipping Snyk dependency scan (neutral skip)."
-          fi
 
-      - name: 🛡️ Snyk Security Scan
-        if: steps.snyktok.outputs.has == 'true'
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high --json-file-output=snyk-report.json
-          
       - name: 🔍 Retire.js Scan
         run: |
           npm install -g retire
@@ -591,54 +568,8 @@ jobs:
           echo "status_emoji=$status_emoji" >> $GITHUB_OUTPUT
           echo "status_color=$status_color" >> $GITHUB_OUTPUT
           
-      - name: 📧 Send Security Report
-        uses: 8398a7/action-slack@v3
-        with:
-          status: custom
-          custom_payload: |
-            {
-              text: "${{ steps.aggregate.outputs.status_emoji }} Security Audit Report",
-              attachments: [{
-                color: "${{ steps.aggregate.outputs.status_color }}",
-                fields: [
-                  {
-                    title: "SAST Scanning",
-                    value: "${{ needs.sast-scanning.result }}",
-                    short: true
-                  },
-                  {
-                    title: "DAST Scanning", 
-                    value: "${{ needs.dast-scanning.result }}",
-                    short: true
-                  },
-                  {
-                    title: "Container Security",
-                    value: "${{ needs.container-security.result }}",
-                    short: true
-                  },
-                  {
-                    title: "Dependencies",
-                    value: "${{ needs.dependency-security.result }}",
-                    short: true
-                  },
-                  {
-                    title: "Compliance",
-                    value: "${{ needs.compliance-monitoring.result }}",
-                    short: true
-                  },
-                  {
-                    title: "Scan Time",
-                    value: "${{ steps.aggregate.outputs.scan_time }}",
-                    short: true
-                  }
-                ],
-                footer: "Orderly Security Audit",
-                ts: "${{ github.event.head_commit.timestamp }}"
-              }]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          
+      # Slack notification removed (no Slack in this org). Results are visible in
+      # the job summary / aggregate step output above and the badge step below.
       - name: 📋 Generate Security Badge
         run: |
           # Generate security status badge

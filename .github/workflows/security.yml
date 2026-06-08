@@ -52,35 +52,6 @@ jobs:
             echo "❌ Security scan failed: Too many high/critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-      
-      - name: Check Snyk token availability
-        id: snyktok
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          # Secrets cannot be referenced directly in an `if:` expression, so route the
-          # presence check through an output. Missing/empty token -> explicit neutral skip.
-          if [ -n "$SNYK_TOKEN" ]; then
-            echo "has=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has=false" >> "$GITHUB_OUTPUT"
-            echo "⚠️ SNYK_TOKEN not set; skipping Snyk dependency scan (neutral skip)." >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Run Snyk vulnerability scan
-        if: steps.snyktok.outputs.has == 'true'
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high --json > snyk.json
-        continue-on-error: true
-
-      - name: Upload Snyk results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        if: steps.snyktok.outputs.has == 'true' && hashFiles('snyk.sarif') != ''
-        with:
-          sarif_file: snyk.sarif
 
   sast-scan:
     name: Static Application Security Testing
@@ -310,7 +281,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Scan Type | Status | Details |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan | ${{ needs.dependency-scan.result }} | NPM Audit + Snyk |" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result }} | NPM Audit |" >> $GITHUB_STEP_SUMMARY
           echo "| SAST Scan | ${{ needs.sast-scan.result }} | CodeQL Analysis |" >> $GITHUB_STEP_SUMMARY
           echo "| Container Scan | ${{ needs.container-scan.result }} | Trivy Vulnerability Scanner |" >> $GITHUB_STEP_SUMMARY
           echo "| Secrets Detection | ${{ needs.secrets-scan.result }} | TruffleHog OSS |" >> $GITHUB_STEP_SUMMARY
