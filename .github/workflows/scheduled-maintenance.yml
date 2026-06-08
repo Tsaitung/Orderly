@@ -39,12 +39,12 @@ jobs:
         uses: actions/checkout@v4
         
       - name: 🔐 Setup GCP Auth
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           
       - name: ⚙️ Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         
       - name: 🗄️ Database Optimization
         run: |
@@ -204,12 +204,12 @@ jobs:
         uses: actions/checkout@v4
         
       - name: 🔐 Setup GCP Auth
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           
       - name: ⚙️ Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         
       - name: 🔄 Dependency Updates
         run: |
@@ -405,12 +405,12 @@ jobs:
         uses: actions/checkout@v4
         
       - name: 🔐 Setup GCP Auth
-        uses: google-github-actions/auth@v1
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           
       - name: ⚙️ Setup Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+        uses: google-github-actions/setup-gcloud@v2
         
       - name: 🚨 Disaster Recovery Drill
         run: |

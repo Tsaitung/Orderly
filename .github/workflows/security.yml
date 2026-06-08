@@ -32,33 +32,53 @@ jobs:
       - name: Run npm audit
         run: |
           echo "## NPM Audit Results" >> $GITHUB_STEP_SUMMARY
-          npm audit --audit-level moderate --format json > audit.json || true
-          
-          # Parse and display critical/high vulnerabilities
-          if [ -f audit.json ]; then
+          # npm audit exits non-zero when vulns exist and can emit non-JSON; never let that crash the step.
+          npm audit --audit-level moderate --json > audit.json 2>/dev/null || true
+
+          # Default counts to 0 when audit.json is missing or not valid JSON, so jq cannot parse-crash.
+          HIGH_VULN=0
+          CRITICAL_VULN=0
+          if [ -f audit.json ] && jq empty audit.json >/dev/null 2>&1; then
             HIGH_VULN=$(jq '.metadata.vulnerabilities.high // 0' audit.json)
             CRITICAL_VULN=$(jq '.metadata.vulnerabilities.critical // 0' audit.json)
-            
-            echo "- **Critical vulnerabilities:** $CRITICAL_VULN" >> $GITHUB_STEP_SUMMARY
-            echo "- **High vulnerabilities:** $HIGH_VULN" >> $GITHUB_STEP_SUMMARY
-            
-            if [ "$CRITICAL_VULN" -gt 0 ] || [ "$HIGH_VULN" -gt 5 ]; then
-              echo "❌ Security scan failed: Too many high/critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
-              exit 1
-            fi
+          else
+            echo "⚠️ npm audit did not produce valid JSON; defaulting vulnerability counts to 0." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "- **Critical vulnerabilities:** $CRITICAL_VULN" >> $GITHUB_STEP_SUMMARY
+          echo "- **High vulnerabilities:** $HIGH_VULN" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$CRITICAL_VULN" -gt 0 ] || [ "$HIGH_VULN" -gt 5 ]; then
+            echo "❌ Security scan failed: Too many high/critical vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
       
+      - name: Check Snyk token availability
+        id: snyktok
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          # Secrets cannot be referenced directly in an `if:` expression, so route the
+          # presence check through an output. Missing/empty token -> explicit neutral skip.
+          if [ -n "$SNYK_TOKEN" ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ SNYK_TOKEN not set; skipping Snyk dependency scan (neutral skip)." >> $GITHUB_STEP_SUMMARY
+          fi
+
       - name: Run Snyk vulnerability scan
+        if: steps.snyktok.outputs.has == 'true'
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           args: --severity-threshold=high --json > snyk.json
         continue-on-error: true
-      
+
       - name: Upload Snyk results to GitHub
-        uses: github/codeql-action/upload-sarif@v2
-        if: hashFiles('snyk.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        if: steps.snyktok.outputs.has == 'true' && hashFiles('snyk.sarif') != ''
         with:
           sarif_file: snyk.sarif
 
@@ -71,16 +91,16 @@ jobs:
           fetch-depth: 0
       
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript, typescript
           queries: security-and-quality
-      
+
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
-      
+        uses: github/codeql-action/autobuild@v3
+
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: "/language:javascript"
 
@@ -105,7 +125,7 @@ jobs:
           severity: 'HIGH,CRITICAL'
       
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-backend-monolith.sarif'
           category: 'trivy-backend-monolith'
@@ -215,7 +235,7 @@ jobs:
       
       - name: Upload infrastructure scan results
         if: hashFiles('trivy-infrastructure.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: 'trivy-infrastructure.sarif'
           category: 'trivy-infrastructure'

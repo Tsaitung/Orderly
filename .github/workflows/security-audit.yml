@@ -111,13 +111,13 @@ jobs:
           fi
           
       - name: 📤 Upload SARIF Results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: semgrep.sarif
           
       - name: 📁 Archive Security Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-reports
@@ -336,7 +336,7 @@ jobs:
           fi
           
       - name: 📤 Upload Container Security Results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -360,7 +360,7 @@ jobs:
           cache: 'npm'
           
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           
@@ -368,7 +368,9 @@ jobs:
         run: |
           cd frontend
           npm ci
-          npm audit --audit-level=moderate --json > npm-audit.json || true
+          # npm audit exits non-zero when vulns exist and may emit non-JSON to stderr;
+          # capture JSON only and never let the parse step downstream crash on it.
+          npm audit --audit-level=moderate --json > npm-audit.json 2>/dev/null || true
           npm audit --audit-level=moderate || true
           
       - name: 🐍 Python Safety Check
@@ -378,7 +380,23 @@ jobs:
           safety check --json --output safety-report.json || true
           safety check || true
           
+      - name: 🛡️ Check Snyk Token
+        id: snyktok
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          # Secrets cannot be referenced directly in an `if:` expression, so route
+          # SNYK_TOKEN presence through an output. Absent token => neutral skip below,
+          # never a hard failure and never a fake pass.
+          if [ -n "$SNYK_TOKEN" ]; then
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "ℹ️ SNYK_TOKEN not set — skipping Snyk dependency scan (neutral skip)."
+          fi
+
       - name: 🛡️ Snyk Security Scan
+        if: steps.snyktok.outputs.has == 'true'
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -394,8 +412,14 @@ jobs:
         run: |
           echo "📦 Dependency Security Summary:"
           
-          # Count vulnerabilities from each tool
-          npm_vulns=$(cat frontend/npm-audit.json | jq '.metadata.vulnerabilities.total' 2>/dev/null || echo "0")
+          # Count vulnerabilities from each tool.
+          # Guard the npm-audit.json parse: npm audit can emit a non-JSON / truncated
+          # file, which crashes jq with "Invalid numeric literal". Verify it parses
+          # first ('jq empty'); if not, default the count to 0 instead of failing.
+          npm_vulns=0
+          if [ -f frontend/npm-audit.json ] && jq empty frontend/npm-audit.json >/dev/null 2>&1; then
+            npm_vulns=$(jq '.metadata.vulnerabilities.total // 0' frontend/npm-audit.json 2>/dev/null || echo "0")
+          fi
           safety_vulns=$(cat backend/safety-report.json | jq '. | length' 2>/dev/null || echo "0")
           retire_vulns=$(cat retire-report.json | jq '. | length' 2>/dev/null || echo "0")
           

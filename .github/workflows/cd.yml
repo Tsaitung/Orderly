@@ -400,14 +400,19 @@ jobs:
     # ORDERLY_BACKEND_URL/BACKEND_URL/NEXT_PUBLIC_API_BASE_URL to the monolith
     # URL; if it runs in parallel and the backend never boots/migrates, the
     # frontend serves user-facing 5xx. Wait for a healthy backend revision first.
-    # build-deploy is SKIPPED on a frontend-only deploy (services == '[]'); allow
-    # that, but NEVER proceed if build-deploy actually FAILED.
+    # build-deploy is SKIPPED on a frontend-only deploy (services == '[]') — allow
+    # that. But when there IS a backend to deploy (services != '[]'), proceed ONLY
+    # if build-deploy actually SUCCEEDED. Otherwise a backend preflight failure
+    # leaves build-deploy 'skipped' (which is != 'failure'), and the old gate would
+    # still ship the frontend pointing at a backend URL that never came up.
+    # 2026-06-08 incident: merge to main → prod preflight failed (no orderly-db) →
+    # backend skipped → a broken orderly-frontend-production deployed with empty
+    # BACKEND_URL. This gate prevents the frontend from going live without a backend.
     needs: [resolve, build-deploy]
     if: >-
       always()
       && needs.resolve.outputs.frontend == 'true'
-      && needs.build-deploy.result != 'failure'
-      && needs.build-deploy.result != 'cancelled'
+      && (needs.resolve.outputs.services == '[]' || needs.build-deploy.result == 'success')
     environment: ${{ needs.resolve.outputs.environment }}
     steps:
       - uses: actions/checkout@v4
