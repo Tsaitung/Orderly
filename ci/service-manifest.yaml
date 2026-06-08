@@ -36,13 +36,12 @@ infrastructure:
 # Frontend configuration
 frontend:
   path: .
-  cloud_build: frontend/cloudbuild.yaml
+  cloud_build: cloudbuild-frontend.yaml
   health_check: /
   port: 8080
   triggers:
     - app/**
     - components/**
-    - frontend/**
     - lib/**
     - public/**
     - styles/**
