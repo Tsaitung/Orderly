@@ -77,7 +77,8 @@
 
 ### 身份驗證
 - [US-AUTH-003: 標準登入流程](../by-module/01-auth-user-management.md#us-auth-003-標準登入流程)
-- [US-AUTH-004: 密碼重設](../by-module/01-auth-user-management.md#us-auth-004-密碼重設)
+- [US-AUTH-004: 密碼重設（已停用，2026-06-08）](../by-module/01-auth-user-management.md#us-auth-004-密碼重設)
+- [US-AUTH-022: 社群帳號恢復（取代密碼重設）](../by-module/01-auth-user-management.md#us-auth-022-社群帳號恢復取代密碼重設)
 - [US-AUTH-010: 查看個人權限](../by-module/01-auth-user-management.md#us-auth-010-查看個人權限)
 - [US-AUTH-013: 行動裝置生物辨識](../by-module/01-auth-user-management.md#us-auth-013-行動裝置生物辨識)
 

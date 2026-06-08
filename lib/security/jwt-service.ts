@@ -3,7 +3,7 @@
  * Implements enterprise-grade JWT security with key rotation and token management
  */
 
-import { SignJWT, jwtVerify, generateKeyPair, importJWK, exportJWK } from 'jose'
+import { SignJWT, jwtVerify, generateKeyPair, type KeyLike } from 'jose'
 import crypto from 'crypto'
 
 export interface JWTConfig {
@@ -27,7 +27,7 @@ export interface JWTPayload {
   email: string
   organizationId: string
   role: string
-  organizationType: 'restaurant' | 'supplier'
+  organizationType: 'restaurant' | 'supplier' | 'platform'
   iat: number
   exp: number
   jti: string // JWT ID for revocation
@@ -35,8 +35,8 @@ export interface JWTPayload {
 }
 
 export interface KeyPair {
-  publicKey: crypto.KeyObject
-  privateKey: crypto.KeyObject
+  publicKey: KeyLike
+  privateKey: KeyLike
   kid: string // Key ID
   createdAt: Date
 }
@@ -192,7 +192,7 @@ class SecureJWTService {
         audience: this.config.audience,
       })
 
-      const jwtPayload = payload as JWTPayload
+      const jwtPayload = payload as unknown as JWTPayload
 
       // Check if token is revoked
       if (this.revokedTokens.has(jwtPayload.jti)) {
@@ -257,7 +257,7 @@ class SecureJWTService {
   /**
    * Get public key for token verification (for microservices)
    */
-  public getPublicKey(): crypto.KeyObject | null {
+  public getPublicKey(): KeyLike | null {
     return this.currentKeyPair?.publicKey || null
   }
 
@@ -284,8 +284,6 @@ class SecureJWTService {
   public cleanupRevokedTokens(): void {
     // This is a simplified implementation
     // In production, you'd want to store revoked tokens in Redis with TTL
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
-
     // For now, we'll clear all tokens periodically
     // In production, implement with Redis and proper TTL
     if (this.revokedTokens.size > 10000) {

@@ -2,6 +2,22 @@
 
 Quick checks for user endpoints via the API Gateway and directly against the user-service.
 
+## Auth Test Plan — Line/Google 登入模型（2026-06-08）
+
+> 對應 US-AUTH-003/006/008/016/022、PRD Section 4.1.1 / 4.5 / 5。design-stage Test Plan，待 OAuth 端點實作後轉為 `tests/integration` 可執行測試。
+
+- [ ] **Line 主要登入**：`GET /api/v1/auth/oauth/line/initiate` 回授權 URL + `state`；`callback` 簽發 JWT
+- [ ] **Google 次要登入**：已綁定 Google 的帳號可經 `oauth/google/callback` 登入
+- [ ] **Google 綁定/解綁**：`POST|DELETE /api/v1/auth/social-bindings/google`；解綁至零須被拒（保留至少一個社群綁定）
+- [ ] **無密碼**：`POST /api/v1/auth/login`（email/password）與 `/auth/password/*` 回 404/410（已移除）
+- [ ] **Email 非認證**：註冊不要求 Email；Email 僅作財務對帳欄位
+- [ ] **平台端**：平台帳號以 Line/Google + 強制 MFA 登入；未在供裝允許名單的社群帳號被拒
+- [ ] **帳號恢復**：Line 失效 → Google 登入成功；雙失效 → 人工恢復（platform_support）
+- [ ] **MFA**：方法僅 TOTP / SMS（無 Email OTP）
+- [ ] **審計**：登入/綁定/解綁/恢復事件寫入 `audit_logs`，欄位非空
+
+> **⚠️ 已停用**：下方 forgot-password / reset-password smoke 隨密碼廢除而停用，保留作歷史對照。
+
 ## Prerequisites
 
 - Services running locally (user-service default `:3001`, api-gateway default `:3000`).

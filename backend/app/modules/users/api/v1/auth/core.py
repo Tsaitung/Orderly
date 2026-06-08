@@ -1,7 +1,7 @@
 """
 認證核心模組
 
-包含 JWT 配置、token 創建函式、密碼上下文和用戶驗證依賴
+包含 JWT 配置、token 創建函式和用戶驗證依賴
 """
 
 from datetime import datetime, timedelta
@@ -12,7 +12,6 @@ from typing import Any, Dict
 import structlog
 from fastapi import Depends, HTTPException, Request, status
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,13 +21,6 @@ from app.modules.users.models.user import User
 from app.modules.users.services.verification_service import VerificationService
 
 logger = structlog.get_logger()
-
-# Secure password hashing with bcrypt (cost factor 12)
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12
-)
 
 # JWT configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")

@@ -2,21 +2,9 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str
-    organizationName: str
-    organizationType: str  # restaurant | supplier
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
 class SessionPayload(BaseModel):
     userId: str
-    email: EmailStr
+    email: EmailStr | None = None
     organizationId: str
     role: str
     organizationType: str
@@ -34,8 +22,7 @@ class AuthResponse(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
+    email: EmailStr | None = None
     firstName: str
     lastName: str
     phone: str | None = None
@@ -45,63 +32,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int | None = None
-
-
-class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-
-class ForgotPasswordResponse(BaseModel):
-    success: bool
-    message: str
-    error: str | None = None
-
-
-class ResetPasswordRequest(BaseModel):
-    email: EmailStr
-    otp_code: str
-    new_password: str
-
-
-class ResetPasswordResponse(BaseModel):
-    success: bool
-    message: str
-    error: str | None = None
-
-
-class ChangePasswordRequest(BaseModel):
-    current_password: str
-    new_password: str
-
-
-class ChangePasswordResponse(BaseModel):
-    success: bool
-    message: str
-    error: str | None = None
-
-
-class SendEmailVerificationRequest(BaseModel):
-    """發送 Email 驗證碼請求"""
-    pass  # 用戶已登入，從 JWT 獲取資訊
-
-
-class SendEmailVerificationResponse(BaseModel):
-    success: bool
-    message: str
-    expires_in: int | None = None
-    error: str | None = None
-
-
-class VerifyEmailRequest(BaseModel):
-    """驗證 Email OTP 請求"""
-    otp_code: str
-
-
-class VerifyEmailResponse(BaseModel):
-    success: bool
-    message: str
-    verification_level: int | None = None
-    error: str | None = None
 
 
 class SendPhoneVerificationRequest(BaseModel):
@@ -133,8 +63,8 @@ class VerifyPhoneResponse(BaseModel):
 # ============================================================================
 
 class MFAEnableRequest(BaseModel):
-    """啟用 MFA 請求（需要密碼確認）"""
-    password: str
+    """啟用 MFA 請求"""
+    pass
 
 
 class MFAEnableResponse(BaseModel):
@@ -179,7 +109,6 @@ class MFAVerifyResponse(BaseModel):
 
 class MFADisableRequest(BaseModel):
     """停用 MFA 請求"""
-    password: str
     code: str  # 當前 TOTP 碼或備份碼
 
 
@@ -212,4 +141,3 @@ class MFAChallengeResponse(BaseModel):
     challenge_token: str
     mfa_method: str
     message: str
-

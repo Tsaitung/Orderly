@@ -5,6 +5,8 @@
 - **Scope（本次盤點範圍）**：以近期更新的「合作夥伴邀請（供應商↔餐廳）/ Referral / Favorite」與其跨域依賴（Auth/JWT/Role/OrgType/Gateway）為主；未完整覆蓋訂單/商品/驗收/帳務等所有 PRD。
 - **Method**：以 repo 內靜態搜尋與閱讀（`rg`/檔案檢視）比對 PRD/US；未實際啟動服務跑整合測試，因此部分項目需在實作時二次驗證。
 
+> **⚠️ 登入模型變更（2026-06-08）**：登入方式已改為 **Line（主）/ Google（次，綁定後可登入）**，廢除 Email + 密碼登入與密碼重設，Email 改財務對帳用途，平台端改用社群登入 + 強制 MFA。本盤點中 **GAP-AUTH-005**（Line login 主路徑）升級為「登入頁須移除 Email+密碼、僅實作 Line+Google」；**GAP-AUTH-003 / GAP-AUTH-004** 的平台 org type / JWT claims 需依新模型對齊。詳見 `docs/2-PRD/PRD-Auth-Module.md` Section 0 與 `docs/1-User-Story/by-module/01-auth-user-management.md`（US-AUTH-003/006/008/016/022）。
+
 ## 1) 參考規格（Spec Baseline）
 
 - Auth PRD：`docs/2-PRD/PRD-Auth-Module.md`

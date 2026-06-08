@@ -3,6 +3,9 @@ export * from './logging'
 export * from './customer-hierarchy'
 export * from './supplier'
 export * from './notification'
+export * from './social-auth'
+
+import type { SocialBinding } from './social-auth'
 
 // 用戶／權限類型
 export type TenantType = 'restaurant' | 'supplier' | 'platform'
@@ -32,10 +35,11 @@ export interface UserProfile {
   tenantType: TenantType
   role: UserRole
   permissions: UserPermissions | string[] // string[] for簡化的權限列表
-  email: string
+  email?: string
   phone?: string
   displayName?: string
   avatarUrl?: string
+  socialBindings?: SocialBinding[]
   locale?: string
   timezone?: string
   status: UserStatus
@@ -48,16 +52,18 @@ export interface UserProfile {
 // 兼容舊版的基本 User 介面
 export interface User {
   id: string
-  email: string
+  email?: string
   role: 'RESTAURANT' | 'SUPPLIER' | 'ADMIN' | UserRole
+  socialBindings?: SocialBinding[]
   createdAt: Date
   updatedAt: Date
 }
 
 export interface AuthClaims {
   sub: string
-  email: string
+  email?: string
   tenant_id: string
+  org_id?: string
   role: UserRole
   permissions?: UserPermissions | string[]
   tenant_type?: TenantType

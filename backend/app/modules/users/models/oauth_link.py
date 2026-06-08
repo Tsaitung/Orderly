@@ -6,7 +6,7 @@ OAuth Link Model
 
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, String, DateTime, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSON as PGJSON
 
 from app.modules.users.models.base import Base
@@ -15,6 +15,9 @@ from app.modules.users.models.base import Base
 class OAuthLink(Base):
     """OAuth 連結表"""
     __tablename__ = "oauth_links"
+    __table_args__ = (
+        UniqueConstraint("provider", "providerUserId", name="uq_oauth_links_provider_provider_user_id"),
+    )
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column("userId", String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

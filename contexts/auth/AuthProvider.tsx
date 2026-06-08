@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { SecureStorage } from '@/lib/secure-storage'
-import type { LoginFormData } from '@/lib/validation/auth-schemas'
+import type { SocialProvider } from '@/lib/validation/auth-schemas'
 import { AuthContext } from './AuthContext'
 import type {
   User,
@@ -20,9 +20,8 @@ import type {
 } from './types'
 import {
   safeExecute,
-  performLogin,
+  performOAuthLogin,
   performLogout,
-  buildUserFromResponse,
   buildUserFromStoredData,
   fetchOrganizations,
   fetchUserOrganization,
@@ -117,10 +116,10 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
 
   // Login handler
   const login = useCallback(
-    async (credentials: LoginFormData): Promise<LoginResult> => {
+    async (provider: SocialProvider): Promise<LoginResult> => {
       setIsLoading(true)
       try {
-        const result = await performLogin(credentials)
+        const result = await performOAuthLogin(provider)
 
         if (result.success) {
           // Refetch tokens to get user data

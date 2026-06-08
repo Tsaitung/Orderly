@@ -22,30 +22,26 @@ from app.modules.users.api.v1.organizations import router as organizations_route
 
 # User Service 需要額外的公開路徑
 public_auth_paths = DEFAULT_PUBLIC_PATHS | {
-    "/auth/login",
-    "/auth/register",
     "/auth/refresh",
-    "/api/auth/login",
-    "/api/auth/register",
     "/api/auth/refresh",
     "/auth/mfa/verify",
     "/api/auth/mfa/verify",
-    "/auth/forgot-password",
-    "/auth/reset-password",
-    "/api/auth/forgot-password",
-    "/api/auth/reset-password",
     "/auth/oauth/providers",
     "/auth/oauth/line/initiate",
     "/auth/oauth/google/initiate",
     "/auth/oauth/line/callback",
     "/auth/oauth/google/callback",
     "/auth/oauth/complete-registration",
+    "/auth/oauth/recover",
+    "/auth/account-recovery",
     "/api/auth/oauth/providers",
     "/api/auth/oauth/line/initiate",
     "/api/auth/oauth/google/initiate",
     "/api/auth/oauth/line/callback",
     "/api/auth/oauth/google/callback",
     "/api/auth/oauth/complete-registration",
+    "/api/auth/oauth/recover",
+    "/api/auth/account-recovery",
 }
 
 app = create_service_app(
