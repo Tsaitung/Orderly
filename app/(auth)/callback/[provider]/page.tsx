@@ -140,7 +140,8 @@ export default function OAuthCallbackPage(): React.ReactElement {
 
         if (data.requires_registration || data.requiresRegistration) {
           const oauthData = data.oauth_data || data.oauthData
-          if (oauthData) sessionStorage.setItem('orderly_oauth_registration', JSON.stringify(oauthData))
+          if (oauthData)
+            sessionStorage.setItem('orderly_oauth_registration', JSON.stringify(oauthData))
           router.replace('/register?oauth=1')
           return
         }

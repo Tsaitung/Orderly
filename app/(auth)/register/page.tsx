@@ -147,9 +147,18 @@ export default function RegisterPage(): React.ReactElement {
           <p className="text-sm text-gray-600">新帳號使用 Line 建立。</p>
         </div>
 
-        <Button type="button" className="h-12 w-full justify-between" onClick={startLineRegistration} disabled={isLoading}>
+        <Button
+          type="button"
+          className="h-12 w-full justify-between"
+          onClick={startLineRegistration}
+          disabled={isLoading}
+        >
           <span className="flex items-center gap-3">
-            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <MessageCircle className="h-5 w-5" />}
+            {isLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <MessageCircle className="h-5 w-5" />
+            )}
             <span>Line</span>
           </span>
           <ArrowRight className="h-4 w-4" />
@@ -235,7 +244,12 @@ export default function RegisterPage(): React.ReactElement {
         </div>
       )}
 
-      <Button type="button" className="mt-6 h-12 w-full" onClick={completeRegistration} disabled={isLoading}>
+      <Button
+        type="button"
+        className="mt-6 h-12 w-full"
+        onClick={completeRegistration}
+        disabled={isLoading}
+      >
         {isLoading ? '送出中...' : '完成註冊'}
       </Button>
     </div>

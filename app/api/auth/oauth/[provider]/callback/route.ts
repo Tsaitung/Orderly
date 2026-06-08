@@ -17,7 +17,9 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   if (!raw) return null
   const padded = raw.padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
   try {
-    return JSON.parse(Buffer.from(padded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'))
+    return JSON.parse(
+      Buffer.from(padded.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+    )
   } catch {
     return null
   }
@@ -42,7 +44,11 @@ function resolveBackendBase(req: NextRequest): string {
   return `${url.protocol}//${url.host}`
 }
 
-function withAuthCookies(response: NextResponse, accessToken?: string, refreshToken?: string): NextResponse {
+function withAuthCookies(
+  response: NextResponse,
+  accessToken?: string,
+  refreshToken?: string
+): NextResponse {
   if (accessToken && isProbablyJwt(accessToken)) {
     response.cookies.set(ACCESS_COOKIE_NAME, accessToken, {
       httpOnly: true,

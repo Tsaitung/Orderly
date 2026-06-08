@@ -170,7 +170,12 @@ export default function AccountRecoveryPage(): React.ReactElement {
         </div>
       )}
 
-      <Button type="button" className="mt-6 h-12 w-full" onClick={submitRecovery} disabled={isLoading}>
+      <Button
+        type="button"
+        className="mt-6 h-12 w-full"
+        onClick={submitRecovery}
+        disabled={isLoading}
+      >
         {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : '送出恢復請求'}
       </Button>
 

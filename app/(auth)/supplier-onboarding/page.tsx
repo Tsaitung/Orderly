@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Building2,
-  User,
-  Phone,
-  ShieldCheck,
-} from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Building2, User, Phone, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -25,7 +17,11 @@ import {
 import { cn } from '@/lib/utils'
 import { http } from '@/lib/api/http'
 import { SecureStorage } from '@/lib/secure-storage'
-import type { InvitationDetailResponse, SupplierOnboardingRequest, BusinessType } from '@/shared/types/src/supplier'
+import type {
+  InvitationDetailResponse,
+  SupplierOnboardingRequest,
+  BusinessType,
+} from '@/shared/types/src/supplier'
 
 const ONBOARDING_STEPS = [
   { id: 'account', title: '帳戶設定', icon: User, description: '建立您的登入帳戶' },
@@ -341,7 +337,9 @@ function SupplierOnboardingPageContent() {
           <Label htmlFor="primarySocialProvider">主要登入</Label>
           <Select
             value={formData.primarySocialProvider}
-            onValueChange={(value: 'line' | 'google') => updateFormData('primarySocialProvider', value)}
+            onValueChange={(value: 'line' | 'google') =>
+              updateFormData('primarySocialProvider', value)
+            }
           >
             <SelectTrigger id="primarySocialProvider">
               <SelectValue />
@@ -356,7 +354,9 @@ function SupplierOnboardingPageContent() {
           <Label htmlFor="recoverySocialProvider">恢復登入</Label>
           <Select
             value={formData.recoverySocialProvider}
-            onValueChange={(value: 'line' | 'google') => updateFormData('recoverySocialProvider', value)}
+            onValueChange={(value: 'line' | 'google') =>
+              updateFormData('recoverySocialProvider', value)
+            }
           >
             <SelectTrigger id="recoverySocialProvider">
               <SelectValue />

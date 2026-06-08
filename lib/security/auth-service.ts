@@ -137,7 +137,10 @@ class SecureAuthService {
           )
         }
 
-        const context = await this.verifyAuth(token, req.headers.get('x-forwarded-for') || undefined)
+        const context = await this.verifyAuth(
+          token,
+          req.headers.get('x-forwarded-for') || undefined
+        )
         if (!context) {
           return NextResponse.json(
             {

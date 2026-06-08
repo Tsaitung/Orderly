@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       const maxAge = getJwtMaxAgeSeconds(newRefresh, 7 * 24 * 60 * 60)
       resp.cookies.set(REFRESH_COOKIE_NAME, newRefresh, {
         httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
+        secure: process.env['NODE_ENV'] === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge,

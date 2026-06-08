@@ -1,6 +1,6 @@
 ---
 run_id: 20260608-auth-line-google-login
-state: implementation_complete_auth_scope_verified
+state: implementation_complete_auth_scope_and_local_pr_gate_verified
 scope: >
   全平台登入模型改為 Line（主要）/ Google（次要，綁定後可登入）。廢除 Email+密碼登入與密碼、
   Email 改財務對帳用途、平台端改社群登入+強制 MFA、新增社群帳號恢復（US-AUTH-022）。
@@ -16,16 +16,16 @@ changed_identifiers:
   endpoints_removed: ["POST /api/auth/login", "/api/auth/password/*", "POST /api/auth/verify-email", "公開 POST /api/auth/register"]
   endpoints_planned: ["GET /api/auth/oauth/{provider}/initiate|callback", "POST|DELETE /api/auth/social-bindings/{provider}", "POST /api/auth/account-recovery"]
 traceability_result: pass — 零孤立（US ↔ PRD ↔ Specs ↔ Test ↔ INDEX 一致，AUTH 22 / 總計 106）
-approval_status: requirement approved by user (4 decisions via /us-edit 2026-06-08); implementation pending plan-review (auth 高風險)
+approval_status: requirement approved by user (4 decisions via /us-edit 2026-06-08); implementation executed after approved plan-review
 keep_until: 2026-06-15
-blockers: repo-wide non-auth TS/shared-types gates still fail (pre-existing, NOT auth regression — type-check:full 937 errors all non-auth, shared/types build = existing customer-hierarchy enum); real Line/Google provider smoke pending staging creds (G3); make verify-pr-local full CI mirror not yet evidenced (T5.4); auth scope verified below
+blockers: repo-wide non-auth TS/shared-types gates still fail (pre-existing, NOT auth regression — type-check:full 937 errors all non-auth, shared/types build = existing customer-hierarchy enum); real Line/Google provider smoke pending staging creds (G3); auth scope and local PR gate verified below
 governance_gate: not-applicable（repo 無專案級治理 FSM / `.claude/skills/`）
 ---
 
 # Run: Auth Line/Google 登入模型文檔同步
 
-**State:** `implementation_complete_auth_scope_verified`
-**Current gate:** implementation complete for auth scope; repo-wide non-auth TS/shared-types debt remains documented below.
+**State:** `implementation_complete_auth_scope_and_local_pr_gate_verified`
+**Current gate:** implementation complete for auth scope; T5.4 local PR gate verified; repo-wide non-auth TS/shared-types debt and external OAuth smoke remain documented below.
 
 ## 決策來源（2026-06-08，使用者經 /us-edit 拍板）
 
@@ -46,9 +46,9 @@ governance_gate: not-applicable（repo 無專案級治理 FSM / `.claude/skills/
 
 ## Blockers
 
-Auth scope blockers: none after the 2026-06-08 implementation closeout.
+Auth scope blockers: none after the 2026-06-08 implementation closeout. T5.4 `make verify-pr-local` is now verified in the 19:44 CST closeout below.
 
-Broader repo blockers: `npm run type-check:full` and `npm --workspace shared/types run build` are not repo-wide green; see closeout notes and `handoff.md` for exact residual prompt.
+Broader repo blockers: `npm run type-check:full` and `npm --workspace shared/types run build` are not repo-wide green; real Line/Google provider callback smoke still needs staging credentials. See closeout notes and `handoff.md` for exact residual prompt.
 
 ## Implementation execution log
 
@@ -127,9 +127,54 @@ A separate plan-review pass independently re-verified the executor's closeout cl
 - **Removal targets — confirmed gone (independent grep + fs):** all 7 named targets return 0; deleted files (`auth/login.py`, `auth/password.py`, `auth/registration.py`, `services/password_service.py`, `models/password_history.py`, `app/(auth)/forgot-password/page.tsx`, `app/api/auth/login/route.ts`, `app/api/auth/register/route.ts`) confirmed absent; new files (`recovery.py`, `platform_provisioning.py` model+route, `social-auth.ts`, frontend oauth initiate/callback proxies, `0004_auth_refactor_social_only.py`, `e2e/auth-login.spec.ts`) confirmed present. No `TODO`/`stub`/`mock`/`NotImplementedError` in auth impl. `invitations.py:251` sets `password_hash=None` (correct social-only state).
 - **`type-check:full` precise result:** 937 `error TS` lines, all in non-auth areas (`components/supplier/*` 135+92+57, `components/platform/*`, `lib/hooks` 61, `lib/reconciliation` 55, etc.). **Zero auth-scope regressions** — the refactor-touched files are clean or pre-existing: `lib/security/auth-service.ts` (gutted) has 0 errors; the 23 `lib/security` errors are all in `database-service.ts`/`validation-middleware.ts` (untouched); `shared/types/src/social-auth.ts` (new) has 0 errors; `middleware.ts:42 .entries()` TS2339 is pre-existing code shifted by the diff (not added by `7b10f66`); `components/auth/AuthGuard.tsx` unused-import is untouched/pre-existing.
 - **`shared/types` build:** confirmed fails only on pre-existing `customer-hierarchy.ts:389,431` (TS2567 enum merge); `7b10f66` did not touch that file → not a regression.
-- **Reviewer-found residual gap NOT in earlier records:** the official backend gate (`scripts/ci/backend-test.sh`, subset) was run, but **`make verify-pr-local` (full CI mirror, plan T5.4) is not evidenced in this packet.** Backend gate + `type-check` + Playwright cover most, but the complete CI mirror against auth scope was not recorded as run.
+- **Reviewer-found residual gap at `336e3b3` (now closed below):** the official backend gate (`scripts/ci/backend-test.sh`, subset) had been run, but **`make verify-pr-local` (full CI mirror, plan T5.4) was still missing from the packet at that point.** Backend gate + `type-check` + Playwright covered most, but the complete CI mirror against auth scope still needed a recorded run.
 
-**Audit verdict:** auth-scope implementation is genuinely complete and regression-free; all open gaps are external or pre-existing — (a) **G3** real Line/Google provider callback smoke (needs staging OAuth creds + `/auth/callback/{provider}` redirect URI), (b) **G1/G2** pre-existing repo-wide TS / shared-types debt (blocks repo-wide green but not caused by this refactor), (c) **G4** T0.2 prod-DB caveat (no separate prod instance discoverable; re-run count if one appears), (d) **T5.4** `verify-pr-local` full CI mirror not yet evidenced.
+**Audit verdict at 336e3b3:** auth-scope implementation is genuinely complete and regression-free; open gaps were external or pre-existing — (a) **G3** real Line/Google provider callback smoke (needs staging OAuth creds + `/auth/callback/{provider}` redirect URI), (b) **G1/G2** pre-existing repo-wide TS / shared-types debt (blocks repo-wide green but not caused by this refactor), (c) **G4** T0.2 prod-DB caveat (no separate prod instance discoverable; re-run count if one appears), (d) **T5.4** `verify-pr-local` full CI mirror pending. T5.4 was closed by the 19:44 CST verification below.
+
+### 2026-06-08 19:39 CST — T5.4 verify-pr-local started
+
+- Trigger: user requested `/goal resume til finished`; previous packet still had T5.4 as the only unevidenced local gate.
+- Exact command: `direnv exec . bash -lc 'make verify-pr-local > /tmp/vpl.log 2>&1; status=$?; grep -nE "FAIL|Error|error|passed|✓|ERROR" /tmp/vpl.log | tail -120; exit $status'`.
+- Decision standard: if the command exits 0, mark T5.4 verified; if non-zero, record the first failing sub-gate, whether it is auth-scope or broader repo debt, and the next exact step before final.
+
+### 2026-06-08 19:40 CST — T5.4 first attempt failed at format-check
+
+- Command result: non-zero (`make: *** [format-check] Error 1`) before backend/Jest/deploy-check ran.
+- Sub-gate truth:
+  - `lint` completed with one warning in untouched `lib/hooks/useHierarchyFilter.ts` (`react-hooks/exhaustive-deps`); allowed by the repo lint threshold and not auth-regression.
+  - `npm run type-check` passed.
+  - `npm run format:check` failed because 10 auth/refactor-touched files needed Prettier formatting: `app/(auth)/account-recovery/page.tsx`, `app/(auth)/callback/[provider]/page.tsx`, `app/(auth)/register/page.tsx`, `app/(auth)/supplier-onboarding/page.tsx`, `app/api/auth/mfa/verify/route.ts`, `app/api/auth/oauth/[provider]/callback/route.ts`, `app/api/auth/refresh/route.ts`, `e2e/auth-login.spec.ts`, `lib/security/auth-service.ts`, `middleware.ts`.
+- Action: run Prettier only on the 10 reported files, then rerun the exact T5.4 command.
+
+### 2026-06-08 19:42 CST — T5.4 second attempt reached DB gate, local runner drift fixed
+
+- After Prettier, `verify` passed: `lint` (same one allowed warning), `type-check`, `format-check`, and frontend Jest (`No tests found, exiting with code 0`) all completed.
+- Failure moved to `ensure-db`: `compose.dev.yml` is an overlay without `postgres`/`redis` image definitions, but `Makefile` invoked it alone (`-f compose.dev.yml`), producing `service "redis" has neither an image nor a build context specified`.
+- Additional runner drift: `ensure-db` declared `TEST_PG_ADMIN_DSN` but ignored it and hard-coded `postgres/postgres`; the current local compose DB uses `orderly/orderly_dev_password`, so the probe failed even though `orderly-postgres-1` was healthy and reachable with the configured app credentials.
+- Fix applied to `Makefile`: use `compose.base.yml + compose.dev.yml` for local DB startup, probe via configurable `TEST_PG_ADMIN_DSN` defaulting to `orderly/orderly_dev_password`, and pass the same local DB password into `test-be`.
+- Action: rerun the exact T5.4 command.
+
+### 2026-06-08 19:43 CST — T5.4 third attempt reached backend runner, Python selector fixed
+
+- `verify` and `ensure-db` passed (`ensure-db: PostgreSQL reachable on :54888 ✓`).
+- Failure moved to `test-be` before Alembic: Makefile selected `/opt/homebrew/opt/python@3.13/bin/python3.13`, which satisfies version 3.11+ but has no backend dependencies (`No module named alembic`).
+- Fix applied to `Makefile`: Python auto-detection now requires both Python 3.11+ and backend gate imports (`alembic`, `pytest`, `sqlalchemy`, `xdist`), so it selects `python3.11` in this environment instead of the dependency-empty Homebrew 3.13.
+- Action: rerun the exact T5.4 command.
+
+### 2026-06-08 19:44 CST — T5.4 verify-pr-local passed
+
+- Command: `direnv exec . bash -lc 'make verify-pr-local > /tmp/vpl.log 2>&1; status=$?; grep -nE "FAIL|Error|error|passed|✓|ERROR" /tmp/vpl.log | tail -120; exit $status'`.
+- Result: pass (`✓ verify-pr-local passed (verify + monolith backend test + deploy-check, mirrors CI/CD)`).
+- Sub-gate truth:
+  - `lint`: completed with the existing allowed warning in untouched `lib/hooks/useHierarchyFilter.ts`.
+  - `npm run type-check`: passed.
+  - `npm run format:check`: passed after Prettier formatting of the 10 auth/refactor-touched files from the first attempt.
+  - `npx jest --ci --passWithNoTests`: passed (`No tests found, exiting with code 0`).
+  - `ensure-db`: passed against local Postgres on `POSTGRES_PORT=54888`.
+  - `test-be`: passed; Alembic upgrade head completed and monolith pytest reported `12 passed, 1874 warnings`.
+  - `deploy-check`: passed (`deploy-consistency`, shell syntax checks, `cloud-run-names` self-test, `resolve-deploy-context` self-test).
+- Runner fixes made to make this gate truthful/repeatable: `Makefile` now uses `compose.base.yml + compose.dev.yml` for local DB startup, probes DB via configurable DSN defaulting to the repo `.envrc` credentials, passes the same DB password into `test-be`, and selects a Python 3.11+ interpreter only if backend test dependencies are importable.
+- T5.4 status: verified. Remaining unverified items are outside local PR gate: real external Line/Google provider callback smoke needs staging OAuth credentials; repo-wide `type-check:full` / `shared/types` build debt remains non-auth.
 
 ## ⚠️ 安全決策註記（provenance）
 

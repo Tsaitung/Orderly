@@ -10,14 +10,15 @@ PYTEST_WORKERS ?= auto
 # Python detection (3.11+)
 PYTHON_MIN_VERSION := 3.11
 PYTHON_VERSION_CHECK := import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)
+PYTHON_BACKEND_DEPS_CHECK := import alembic, pytest, sqlalchemy, xdist
 MISSING_PYTHON_SENTINEL := __MISSING_PYTHON_311__
 
 ROOT_PYTHON := $(shell \
-	if [ -x backend/venv/bin/python3 ] && backend/venv/bin/python3 -c '$(PYTHON_VERSION_CHECK)' >/dev/null 2>&1; then \
+	if [ -x backend/venv/bin/python3 ] && backend/venv/bin/python3 -c '$(PYTHON_VERSION_CHECK)' >/dev/null 2>&1 && backend/venv/bin/python3 -c '$(PYTHON_BACKEND_DEPS_CHECK)' >/dev/null 2>&1; then \
 		echo backend/venv/bin/python3; \
 	else \
 		for python in python3.13 python3.12 python3.11 python3; do \
-			if command -v $$python >/dev/null 2>&1 && $$python -c '$(PYTHON_VERSION_CHECK)' >/dev/null 2>&1; then \
+			if command -v $$python >/dev/null 2>&1 && $$python -c '$(PYTHON_VERSION_CHECK)' >/dev/null 2>&1 && $$python -c '$(PYTHON_BACKEND_DEPS_CHECK)' >/dev/null 2>&1; then \
 				echo $$python; \
 				exit 0; \
 			fi; \
@@ -26,11 +27,12 @@ ROOT_PYTHON := $(shell \
 	fi)
 
 ifeq ($(ROOT_PYTHON),$(MISSING_PYTHON_SENTINEL))
-$(error Python $(PYTHON_MIN_VERSION)+ is required. Run: python3.11 -m venv backend/venv && backend/venv/bin/python3 -m pip install -r backend/requirements.txt)
+$(error Python $(PYTHON_MIN_VERSION)+ with backend test dependencies is required. Run: python3.11 -m venv backend/venv && backend/venv/bin/python3 -m pip install -r backend/app/requirements.txt)
 endif
 
 # Docker command detection
 DOCKER_CMD := $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; elif docker compose version >/dev/null 2>&1; then echo "docker compose"; else echo "echo ERROR: neither docker-compose nor docker compose found; false"; fi)
+DEV_COMPOSE_FILES := -f compose.base.yml -f compose.dev.yml
 
 # ── Infrastructure: Auto-detect & start PostgreSQL + Redis for local tests ──
 # CI has services via blocks; locally Docker container binds to POSTGRES_PORT / REDIS_PORT (from direnv .envrc)
@@ -43,8 +45,8 @@ else
 	@: $${POSTGRES_PORT:?run direnv allow at repo root}
 	@: $${REDIS_PORT:?run direnv allow at repo root}
 	@# Test PostgreSQL connectivity
-	@PG_DSN=$${TEST_PG_ADMIN_DSN:-postgresql://postgres:postgres@localhost:$${POSTGRES_PORT}/postgres}; \
-	if PGPASSWORD=postgres psql -h localhost -p $${POSTGRES_PORT} -U postgres -d postgres -c "SELECT 1" >/dev/null 2>&1; then \
+	@PG_DSN=$${TEST_PG_ADMIN_DSN:-postgresql://orderly:$${POSTGRES_PASSWORD:-orderly_dev_password}@localhost:$${POSTGRES_PORT}/orderly}; \
+	if psql "$$PG_DSN" -c "SELECT 1" >/dev/null 2>&1; then \
 		echo "ensure-db: PostgreSQL reachable on :$${POSTGRES_PORT} ✓"; \
 	else \
 		echo "ensure-db: PostgreSQL not on :$${POSTGRES_PORT} — starting colima+compose..."; \
@@ -60,13 +62,13 @@ else
 			fi; \
 		fi; \
 		echo "ensure-db: starting postgres + redis via compose.dev.yml..."; \
-		$(DOCKER_CMD) -f compose.dev.yml up -d postgres redis 2>&1 | tail -5; \
+		$(DOCKER_CMD) $(DEV_COMPOSE_FILES) up -d postgres redis 2>&1 | tail -5; \
 		echo "ensure-db: waiting for PostgreSQL ready on :$${POSTGRES_PORT}..."; \
 		for i in $$(seq 1 15); do \
-			PGPASSWORD=postgres psql -h localhost -p $${POSTGRES_PORT} -U postgres -d postgres -c "SELECT 1" >/dev/null 2>&1 && break; \
+			psql "$$PG_DSN" -c "SELECT 1" >/dev/null 2>&1 && break; \
 			sleep 2; \
 		done; \
-		if ! PGPASSWORD=postgres psql -h localhost -p $${POSTGRES_PORT} -U postgres -d postgres -c "SELECT 1" >/dev/null 2>&1; then \
+		if ! psql "$$PG_DSN" -c "SELECT 1" >/dev/null 2>&1; then \
 			echo "ERROR: PostgreSQL not reachable on :$${POSTGRES_PORT} after 30s"; \
 			exit 1; \
 		fi; \
@@ -88,7 +90,7 @@ test-be: ensure-db
 	  DATABASE_PORT=$${POSTGRES_PORT} \
 	  DATABASE_USER=orderly \
 	  DATABASE_NAME=orderly \
-	  POSTGRES_PASSWORD=orderly_test \
+	  POSTGRES_PASSWORD=$${POSTGRES_PASSWORD:-orderly_dev_password} \
 	  REDIS_HOST=localhost \
 	  REDIS_PORT=$${REDIS_PORT} \
 	  JWT_SECRET=test_jwt_secret_for_ci_only \

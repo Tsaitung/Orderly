@@ -89,6 +89,8 @@
 - `npm run type-check` passed.
 - Playwright auth spec passed against worktree dev server: `PLAYWRIGHT_BASE_URL=http://localhost:5577 npx playwright test e2e/auth-login.spec.ts` -> `5 passed`.
 - Password-removal grep has no product-path hits for active email/password auth/reset/verify-email routes; remaining hits are negative tests and retained historical `users.passwordHash` storage column assigned to `None`.
+- T5.4 local PR mirror passed: `direnv exec . bash -lc 'make verify-pr-local > /tmp/vpl.log 2>&1; status=$?; grep -nE "FAIL|Error|error|passed|✓|ERROR" /tmp/vpl.log | tail -120; exit $status'` -> `✓ verify-pr-local passed`; sub-gates included `lint`, `type-check`, `format-check`, frontend Jest, `ensure-db`, backend monolith pytest (`12 passed`), and `deploy-check`.
+- Local PR runner drift fixed in `Makefile`: DB startup uses `compose.base.yml + compose.dev.yml`, DB probe uses configurable DSN defaulting to repo `.envrc` credentials, `test-be` receives the same local DB password, and Python auto-detection requires backend test dependencies before selecting an interpreter.
 
 ### Not completed / next exact prompt
 
@@ -101,8 +103,9 @@ Read CLAUDE.md and docs/plans/20260608-auth-line-google-login/run.md first. Do n
 - backend gate: scripts/ci/backend-test.sh -> 12 passed
 - npm run type-check -> passed
 - Playwright auth spec -> 5 passed
+- T5.4 local PR mirror: make verify-pr-local -> passed
 
-Close the remaining broader verification gaps:
+Close the remaining broader/external verification gaps:
 1. If business requires repo-wide TS full green, fix the non-auth `npm run type-check:full` failures. The auth-scope filter currently has no matches; failures are in dashboard/supplier/shared areas.
 2. Fix `npm --workspace shared/types run build`, currently blocked by existing `shared/types/src/customer-hierarchy.ts` enum merge errors at lines 389 and 431.
 3. Run real Line and Google OAuth provider callback smoke with staging credentials and configured redirect URI `/auth/callback/{provider}`. Verify callback writes httpOnly cookies and SecureStorage, Google-unbound guides to Line, platform users require MFA, and audit rows are non-empty.

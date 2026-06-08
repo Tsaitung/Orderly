@@ -11,17 +11,17 @@ export async function middleware(request: NextRequest) {
 
     // 公開路徑，不需要驗證
     const publicPaths = [
-	      '/',
-	      '/api/health',
-	      '/login',
-	      '/register',
-	      '/mfa',
-	      '/account-recovery',
-	      '/auth/callback/line',
-	      '/auth/callback/google',
-	      '/callback/line',
-	      '/callback/google',
-	    ]
+      '/',
+      '/api/health',
+      '/login',
+      '/register',
+      '/mfa',
+      '/account-recovery',
+      '/auth/callback/line',
+      '/auth/callback/google',
+      '/callback/line',
+      '/callback/google',
+    ]
 
     // 靜態資源路徑
     const staticPaths = ['/_next', '/favicon.ico', '/images', '/icons', '/assets']

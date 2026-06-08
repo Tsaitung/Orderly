@@ -39,7 +39,9 @@ test.describe('Social auth login', () => {
 
   test('MFA page renders with stored challenge', async ({ page }) => {
     await page.goto('/login')
-    await page.evaluate(() => sessionStorage.setItem('orderly_mfa_challenge', 'header.payload.signature'))
+    await page.evaluate(() =>
+      sessionStorage.setItem('orderly_mfa_challenge', 'header.payload.signature')
+    )
     await page.goto('/mfa')
     await expect(page.getByRole('heading', { name: 'MFA 驗證' })).toBeVisible()
   })
