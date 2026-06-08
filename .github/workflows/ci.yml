@@ -125,13 +125,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true'
-    # Backend is now a single modular monolith (backend/app). The old 9-service
-    # matrix tested per-service dirs whose app/ was re-rooted into
-    # backend/app/modules/* (the dirs were deleted), so it only ever reported
-    # `ModuleNotFoundError: No module named 'app'`. This validates the monolith:
-    # deps install + alembic upgrade head on a fresh CI DB. Advisory until the
-    # monolith ships its own pytest suite.
-    continue-on-error: true
+    # Backend is a single modular monolith (backend/app). BLOCKING gate:
+    # deps install + alembic upgrade head on a fresh CI DB + pytest backend/app
+    # (composition-root smoke: every module's routers import/mount, /health 200,
+    # OpenAPI builds, top-level auth gate enforced). Promoted from advisory once
+    # the monolith shipped its own pytest suite.
     services:
       postgres:
         image: postgres:15-alpine
@@ -201,12 +199,12 @@ jobs:
     steps:
       - name: Aggregate results (skipped = OK, failed/cancelled = block)
         run: |
-          # backend-test is ADVISORY (continue-on-error) and reported, not gated.
-          echo "backend-test (advisory) = ${{ needs.backend-test.result }}"
+          # backend-test (monolith) is now a BLOCKING gate alongside frontend.
           fail=0
           for r in \
             "frontend-quality:${{ needs.frontend-quality.result }}" \
-            "frontend-test:${{ needs.frontend-test.result }}"; do
+            "frontend-test:${{ needs.frontend-test.result }}" \
+            "backend-test:${{ needs.backend-test.result }}"; do
             name="${r%%:*}"; res="${r##*:}"
             echo "$name = $res"
             case "$res" in
