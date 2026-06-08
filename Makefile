@@ -6,7 +6,6 @@
 
 # Parallelism control
 PYTEST_WORKERS ?= auto
-BACKEND_LOCAL_PYTEST_WORKERS ?= 4
 
 # Python detection (3.11+)
 PYTHON_MIN_VERSION := 3.11
@@ -75,35 +74,29 @@ else
 	fi
 endif
 
-# ── Backend Tests: 9-service matrix with per-service PYTHONPATH ──
-# Each service imports from its own app/ dir (cwd) and from backend/libs via orderly_fastapi_core.
-# Set PYTHONPATH=<repo>/backend/<service>:<repo>/backend/libs per service.
-# Advisory mode: backend test suites are unproven; failures do not block verify-pr-local.
-
-BACKEND_SERVICES := api-gateway-fastapi \
-                   user-service-fastapi \
-                   order-service-fastapi \
-                   product-service-fastapi \
-                   acceptance-service-fastapi \
-                   billing-service-fastapi \
-                   notification-service-fastapi \
-                   customer-hierarchy-service-fastapi \
-                   supplier-service-fastapi
+# ── Backend Tests: monolith gate — MIRRORS CI (.github/workflows/ci.yml backend-test) ──
+# CI and this target call the SAME runner (scripts/ci/backend-test.sh): identical
+# commands + identical env contract, so a command/env divergence fails locally
+# (before push) instead of one-at-a-time in GitHub Actions. App-env below is
+# identical to the CI job env: block; only DB/Redis host+port are local-specific.
+# BLOCKING: the script runs `set -e`, so a failure fails the push.
 
 test-be: ensure-db
-	@echo "Backend tests (9 services, advisory mode):"
-	@for service in $(BACKEND_SERVICES); do \
-		echo "  Testing $$service..."; \
-		service_dir="backend/$$service"; \
-		if [ ! -d "$$service_dir" ]; then \
-			echo "    ERROR: $$service_dir not found"; \
-			exit 1; \
-		fi; \
-		cd "$$service_dir" || exit 1; \
-		PYTHONPATH="$$PWD:../libs" $(ROOT_PYTHON) -m pytest tests/ -n $(BACKEND_LOCAL_PYTEST_WORKERS) --dist loadscope --no-cov -q --tb=short || echo "    WARN: $$service tests failed (advisory; not blocking)"; \
-		cd - >/dev/null; \
-	done
-	@echo "✓ test-be passed (advisory; backend test suites unproven)"
+	@echo "Backend monolith test (mirrors CI .github/workflows/ci.yml backend-test):"
+	@ENVIRONMENT=test \
+	  DATABASE_HOST=localhost \
+	  DATABASE_PORT=$${POSTGRES_PORT} \
+	  DATABASE_USER=orderly \
+	  DATABASE_NAME=orderly \
+	  POSTGRES_PASSWORD=orderly_test \
+	  REDIS_HOST=localhost \
+	  REDIS_PORT=$${REDIS_PORT} \
+	  JWT_SECRET=test_jwt_secret_for_ci_only \
+	  JWT_REFRESH_SECRET=test_refresh_secret_for_ci_only \
+	  PYTHONPATH="$$PWD/backend:$$PWD/backend/libs" \
+	  BACKEND_TEST_PYTHON="$(ROOT_PYTHON)" \
+	  bash scripts/ci/backend-test.sh
+	@echo "✓ test-be passed (monolith — mirrors CI backend-test; BLOCKING)"
 
 # ── Frontend Tests & Quality ──
 
@@ -125,11 +118,12 @@ format-check:
 verify: lint typecheck format-check test-fe
 	@echo "✓ verify passed (daily gate: lint + typecheck + format-check + test-fe)"
 
-# ── PR local gate: verify + test-be (advisory) ──
-# Runs advisory backend tests before pushing; failures do not block the push.
+# ── PR local gate: verify + test-be (BLOCKING, mirrors CI) ──
+# test-be now runs the same monolith gate CI does (scripts/ci/backend-test.sh),
+# so a backend failure blocks the push instead of surfacing later in Actions.
 
 verify-pr-local: verify test-be
-	@echo "✓ verify-pr-local passed (verify + advisory backend tests)"
+	@echo "✓ verify-pr-local passed (verify + monolith backend test, mirrors CI)"
 
 # ── PR CI gate: authoritative ──
 # CI .github/workflows/ci.yml is the source of truth for backend test results.

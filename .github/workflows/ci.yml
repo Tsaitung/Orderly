@@ -182,17 +182,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r app/requirements.txt
           pip install pytest pytest-asyncio pytest-xdist httpx
-      - name: Alembic upgrade head (monolith chain on fresh CI DB)
-        working-directory: backend
-        run: alembic -c app/alembic.ini upgrade head
-      - name: Pytest (monolith, if any tests exist)
-        working-directory: backend
-        run: |
-          if find app -path '*/tests/*' -name 'test_*.py' | grep -q .; then
-            python -m pytest -q -n auto app
-          else
-            echo "No monolith tests yet, skipping"
-          fi
+      - name: Backend test gate (shared runner — same script as `make test-be`)
+        # Commands + env contract live in scripts/ci/backend-test.sh so CI and
+        # the local pre-push mirror can't drift. The job env: block above is the
+        # CI-side env source; the script asserts the full set is present.
+        run: bash scripts/ci/backend-test.sh
 
   ci-gate:
     name: CI Gate
