@@ -11,7 +11,14 @@ name: CD
 
 on:
   push:
-    branches: [staging, main]
+    # PRODUCTION AUTO-DEPLOY DISABLED (2026-06-08): the prod DB (orderly-db Cloud
+    # SQL) is not provisioned, so every push to main hit the preflight gate's
+    # "orderly-db not found" → red with ZERO deploy. `main` is removed from the
+    # auto-deploy push triggers until production is actually set up. To deploy
+    # prod, run this workflow manually via workflow_dispatch (and only after
+    # orderly-db exists). Staging (push to `staging` branch → orderly-db-v2) is
+    # unaffected. Re-add `main` here when prod infra is ready.
+    branches: [staging]
   workflow_dispatch:
     inputs:
       services:
