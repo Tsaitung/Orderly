@@ -121,29 +121,17 @@ jobs:
         run: npx jest --ci --shard=${{ matrix.shard }}/4 --cacheDirectory=.jest-cache --passWithNoTests --maxWorkers=2
 
   backend-test:
-    name: Backend ${{ matrix.service }}
+    name: Backend Monolith
     runs-on: ubuntu-latest
     needs: detect-changes
     if: needs.detect-changes.outputs.backend == 'true'
-    # ADVISORY (pre-existing debt): these pytest suites have never run green in
-    # CI -- they were skipped behind ghost matrices for months. They now run and
-    # report real results, but do NOT block CD yet. Promote to blocking (remove
-    # continue-on-error) once the backend test suites are stabilized.
+    # Backend is now a single modular monolith (backend/app). The old 9-service
+    # matrix tested per-service dirs whose app/ was re-rooted into
+    # backend/app/modules/* (the dirs were deleted), so it only ever reported
+    # `ModuleNotFoundError: No module named 'app'`. This validates the monolith:
+    # deps install + alembic upgrade head on a fresh CI DB. Advisory until the
+    # monolith ships its own pytest suite.
     continue-on-error: true
-    strategy:
-      fail-fast: false
-      # One shard per service = natural backend sharding; all run in parallel.
-      matrix:
-        service:
-          - api-gateway-fastapi
-          - user-service-fastapi
-          - order-service-fastapi
-          - product-service-fastapi
-          - acceptance-service-fastapi
-          - billing-service-fastapi
-          - notification-service-fastapi
-          - customer-hierarchy-service-fastapi
-          - supplier-service-fastapi
     services:
       postgres:
         image: postgres:15-alpine
@@ -177,38 +165,32 @@ jobs:
       REDIS_PORT: 6379
       JWT_SECRET: test_jwt_secret_for_ci_only
       JWT_REFRESH_SECRET: test_refresh_secret_for_ci_only
-      # Mirror the container runtime path: service code (`app`) is importable
-      # from the service dir, and the shared core (`orderly_fastapi_core`) lives
-      # in backend/libs (Dockerfile sets WORKDIR /app + PYTHONPATH=/app/libs).
-      PYTHONPATH: ${{ github.workspace }}/backend/${{ matrix.service }}:${{ github.workspace }}/backend/libs
+      # Monolith: `app` package lives at backend/app, so its parent (backend) is
+      # on PYTHONPATH; shared core (orderly_fastapi_core) lives in backend/libs.
+      PYTHONPATH: ${{ github.workspace }}/backend:${{ github.workspace }}/backend/libs
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: backend/${{ matrix.service }}/requirements.txt
+          cache-dependency-path: backend/app/requirements.txt
       - name: Install deps
-        working-directory: backend/${{ matrix.service }}
+        working-directory: backend
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r app/requirements.txt
           pip install pytest pytest-asyncio pytest-xdist httpx
-      - name: Alembic migrate (if present)
-        working-directory: backend/${{ matrix.service }}
+      - name: Alembic upgrade head (monolith chain on fresh CI DB)
+        working-directory: backend
+        run: alembic -c app/alembic.ini upgrade head
+      - name: Pytest (monolith, if any tests exist)
+        working-directory: backend
         run: |
-          if [ -f alembic.ini ]; then
-            alembic upgrade head
+          if find app -path '*/tests/*' -name 'test_*.py' | grep -q .; then
+            python -m pytest -q -n auto app
           else
-            echo "No alembic.ini for ${{ matrix.service }}, skipping migrate"
-          fi
-      - name: Pytest (xdist within the service)
-        working-directory: backend/${{ matrix.service }}
-        run: |
-          if [ -d tests ]; then
-            python -m pytest -q -n auto tests
-          else
-            echo "No tests/ for ${{ matrix.service }}, skipping"
+            echo "No monolith tests yet, skipping"
           fi
 
   ci-gate:

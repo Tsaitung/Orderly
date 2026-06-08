@@ -13,10 +13,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Any, Optional
 
-# 添加 backend 路径
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../backend/user-service-fastapi"))
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../backend/customer-hierarchy-service-fastapi"))
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../backend/product-service-fastapi"))
+# 添加 backend 路径（monolith：`app` 套件在 backend/app，故把 backend 加到 path）
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../backend"))
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -304,9 +302,9 @@ class DatabaseManager:
         """創建測試客戶資料"""
         session, engine = await self.get_session()
         try:
-            from app.models.customer_company import CustomerCompany
-            from app.models.customer_location import CustomerLocation
-            from app.models.business_unit import BusinessUnit
+            from app.modules.customer_hierarchy.models.customer_company import CustomerCompany
+            from app.modules.customer_hierarchy.models.customer_location import CustomerLocation
+            from app.modules.customer_hierarchy.models.business_unit import BusinessUnit
             
             # 檢查現有測試客戶數量
             check_query = text("SELECT COUNT(*) as count FROM customer_companies WHERE created_by = 'test_script'")

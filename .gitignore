@@ -5,6 +5,9 @@
 test-results/
 playwright-report/
 
+# jest local cache (CI caches it via actions/cache)
+.jest-cache/
+
 # Dependencies
 node_modules/
 npm-debug.log*
