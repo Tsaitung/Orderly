@@ -377,7 +377,7 @@ jobs:
 
           echo "## Quick Actions" >> $GITHUB_STEP_SUMMARY
           echo "- [🔧 Continuous Deployment](../../actions/workflows/cd.yml)" >> $GITHUB_STEP_SUMMARY
-          echo "- [🔒 Security Scan](../../actions/workflows/security.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "- [🔒 Security Scan (in CI)](../../actions/workflows/ci.yml)" >> $GITHUB_STEP_SUMMARY
           echo "- [📊 Performance Check](../../actions/workflows/monitoring.yml)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
