@@ -22,15 +22,7 @@ class UserServiceSettings(UnifiedSettings):
     # 用戶服務特定配置
     enable_user_registration: bool = Field(default=True, description="啟用用戶註冊")
     enable_email_verification: bool = Field(default=True, description="啟用郵箱驗證")
-    enable_password_reset: bool = Field(default=True, description="啟用密碼重置")
-    
-    # 密碼策略
-    password_min_length: int = Field(default=8, description="密碼最小長度")
-    password_require_uppercase: bool = Field(default=True, description="密碼需要大寫字母")
-    password_require_lowercase: bool = Field(default=True, description="密碼需要小寫字母")
-    password_require_numbers: bool = Field(default=True, description="密碼需要數字")
-    password_require_symbols: bool = Field(default=False, description="密碼需要符號")
-    
+
     # 用戶會話配置
     session_duration_hours: int = Field(default=24, description="用戶會話持續時間")
     max_login_attempts: int = Field(default=5, description="最大登入嘗試次數")
@@ -47,4 +39,3 @@ settings = UserServiceSettings()
 # 為了向後兼容，保持原有接口
 DATABASE_URL = settings.get_database_url_async()
 JWT_SECRET = settings.jwt_secret
-

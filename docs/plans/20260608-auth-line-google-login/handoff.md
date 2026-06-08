@@ -54,3 +54,59 @@
 3. OAuth token claims 與 auth claims 可能不一致（GAP-AUTH-004）→ T2.1 統一 claims。
 
 **Exact start**：執行 `tasks.md` T0.1（plan-review，auth 高風險），不得跳過。
+
+---
+
+## 2026-06-08 implementation handoff（若需再交接）
+
+> 上方「待實作」段落是原 docs-only handoff，已過期。以本段與 `run.md` 的 2026-06-08 19:23 closeout 為準。
+
+### Current implementation state
+
+- Auth scope implementation is complete in this worktree (`refactor-login`).
+- Backend social-only flow implemented:
+  - Removed email/password login/register/reset/change routes and email verification routes from mounted auth.
+  - OAuth Line first-registration / Google bound-login implemented.
+  - Line registration uses server-side short-lived `registration_ticket`; frontend no longer sends trusted `provider_user_id`.
+  - `oauth_links(provider, "providerUserId")` unique constraint added in model + Alembic 0004.
+  - Platform social login has provisioning allowlist, forced MFA, static IP allowlist via `PLATFORM_AUTH_ALLOWED_IPS`, 3 failed attempts -> 15 minute lock, max 3 active sessions, active/status checks, and audit rows.
+  - Manual account recovery requires multiple evidence points and writes pending audit.
+- Frontend social-only flow implemented:
+  - Login/register pages no longer have password form.
+  - Same-origin OAuth initiate/callback/complete-registration/recover/link/unlink/linked-accounts/MFA proxies exist.
+  - `/auth/callback/{provider}` alias exists for OAuth provider redirects.
+  - `/mfa` page completes platform MFA challenge.
+  - `/account-recovery` supports social verification plus manual support request.
+  - Supplier settings has Line/Google binding UI; supplier onboarding stores tokens in `SecureStorage`.
+
+### Verified
+
+- T0.2 accessible DB inventory: `pw_only = 0` on `orderly-472413:asia-east1:orderly-db-v2`; no separate production DB/service was discoverable in this project.
+- `python3.11 -m compileall -q backend/app/modules/users backend/app/tests/test_auth_social_only.py` passed.
+- Backend import smoke passed for `oauth`, `mfa`, `invitations`, `recovery`.
+- Focused pytest passed: `backend/app/tests/test_auth_social_only.py` -> `5 passed`.
+- Official backend gate passed: `direnv exec . bash -lc 'ENVIRONMENT=testing POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-orderly_dev_password} JWT_SECRET=${JWT_SECRET:-test} JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-test} PYTHONPATH=.:libs BACKEND_TEST_PYTHON=python3.11 bash scripts/ci/backend-test.sh'` -> Alembic + monolith pytest `12 passed`.
+- `npm run type-check` passed.
+- Playwright auth spec passed against worktree dev server: `PLAYWRIGHT_BASE_URL=http://localhost:5577 npx playwright test e2e/auth-login.spec.ts` -> `5 passed`.
+- Password-removal grep has no product-path hits for active email/password auth/reset/verify-email routes; remaining hits are negative tests and retained historical `users.passwordHash` storage column assigned to `None`.
+
+### Not completed / next exact prompt
+
+Use this prompt only if the plan must be closed beyond auth-scope verification:
+
+```text
+Continue from /Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/refactor-login on branch refactor-login.
+
+Read CLAUDE.md and docs/plans/20260608-auth-line-google-login/run.md first. Do not redo the auth implementation. Current auth scope is implemented and verified with:
+- backend gate: scripts/ci/backend-test.sh -> 12 passed
+- npm run type-check -> passed
+- Playwright auth spec -> 5 passed
+
+Close the remaining broader verification gaps:
+1. If business requires repo-wide TS full green, fix the non-auth `npm run type-check:full` failures. The auth-scope filter currently has no matches; failures are in dashboard/supplier/shared areas.
+2. Fix `npm --workspace shared/types run build`, currently blocked by existing `shared/types/src/customer-hierarchy.ts` enum merge errors at lines 389 and 431.
+3. Run real Line and Google OAuth provider callback smoke with staging credentials and configured redirect URI `/auth/callback/{provider}`. Verify callback writes httpOnly cookies and SecureStorage, Google-unbound guides to Line, platform users require MFA, and audit rows are non-empty.
+4. Record results back to docs/plans/20260608-auth-line-google-login/run.md before final.
+
+Do not revert the auth changes. Use wt guard before edits.
+```

@@ -26,7 +26,7 @@ interface StoredData {
   email: string
   role: string
   organizationId: string
-  organizationType: 'restaurant' | 'supplier'
+  organizationType: 'restaurant' | 'supplier' | 'platform'
   expiresAt: number
   rememberMe: boolean
 }

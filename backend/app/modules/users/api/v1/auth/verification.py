@@ -1,7 +1,7 @@
 """
 驗證相關端點模組
 
-包含 Email 和手機驗證功能
+包含手機驗證功能。Email 不再是登入或驗證因素。
 """
 
 from datetime import datetime
@@ -14,11 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.users.core.database import get_async_session
 from app.modules.users.models.organization import Organization
 from app.modules.users.schemas.auth import (
-    SendEmailVerificationResponse,
     SendPhoneVerificationRequest,
     SendPhoneVerificationResponse,
-    VerifyEmailRequest,
-    VerifyEmailResponse,
     VerifyPhoneRequest,
     VerifyPhoneResponse,
 )
@@ -30,175 +27,6 @@ from .core import get_current_user_from_token
 logger = structlog.get_logger()
 
 router = APIRouter()
-
-
-# ============================================================================
-# Email 驗證端點
-# ============================================================================
-
-
-@router.post("/auth/send-email-verification", response_model=SendEmailVerificationResponse)
-async def send_email_verification(
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
-) -> SendEmailVerificationResponse:
-    """
-    發送 Email 驗證碼（需要登入）
-
-    流程：
-    1. 驗證 JWT token
-    2. 檢查 Email 是否已驗證
-    3. 調用 Notification Service 發送 OTP
-    """
-    try:
-        # 1. 驗證 JWT 並取得當前用戶
-        current_user = await get_current_user_from_token(request, db)
-
-        # 2. 檢查是否已驗證
-        if current_user.email_verified:
-            return SendEmailVerificationResponse(
-                success=False,
-                message="Email 已經驗證過了",
-                error="Email already verified"
-            )
-
-        # 3. Direct in-process OTP call to Notification module
-        data = await in_process_otp.send_email_otp(
-            user_id=str(current_user.id),
-            email=current_user.email,
-            purpose="Email 驗證",
-        )
-
-        if data.get("success"):
-            logger.info(
-                "email_verification_otp_sent",
-                user_id=str(current_user.id),
-                email=current_user.email
-            )
-            return SendEmailVerificationResponse(
-                success=True,
-                message=f"驗證碼已發送到 {current_user.email}",
-                expires_in=data.get("expires_in", 600)
-            )
-
-        logger.error(
-            "email_verification_otp_send_failed",
-            user_id=str(current_user.id),
-            error=data.get("error"),
-        )
-        return SendEmailVerificationResponse(
-            success=False,
-            message="發送驗證碼失敗，請稍後再試",
-            error=data.get("error") or "Failed to send OTP"
-        )
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        logger.error(
-            "send_email_verification_error",
-            error=str(e)
-        )
-        return SendEmailVerificationResponse(
-            success=False,
-            message="發送驗證碼失敗，請稍後再試",
-            error=str(e)
-        )
-
-
-@router.post("/auth/verify-email", response_model=VerifyEmailResponse)
-async def verify_email(
-    payload: VerifyEmailRequest,
-    request: Request,
-    db: AsyncSession = Depends(get_async_session)
-) -> VerifyEmailResponse:
-    """
-    驗證 Email OTP（需要登入）
-
-    流程：
-    1. 驗證 JWT token
-    2. 調用 Notification Service 驗證 OTP
-    3. 更新用戶 email_verified 狀態
-    4. 更新驗證級別
-    """
-    try:
-        # 1. 驗證 JWT 並取得當前用戶
-        current_user = await get_current_user_from_token(request, db)
-
-        # 檢查是否已驗證
-        if current_user.email_verified:
-            return VerifyEmailResponse(
-                success=True,
-                message="Email 已經驗證過了",
-                verification_level=VerificationService.calculate_user_level(current_user)
-            )
-
-        # 2. Direct in-process OTP validation
-        data = await in_process_otp.verify_otp(
-            user_id=str(current_user.id),
-            otp_type="email",
-            code=payload.otp_code,
-        )
-
-        if not data.get("success"):
-            return VerifyEmailResponse(
-                success=False,
-                message="驗證服務暫時不可用",
-                error="Verification service unavailable"
-            )
-
-        if not data.get("valid"):
-            return VerifyEmailResponse(
-                success=False,
-                message="驗證碼錯誤或已過期",
-                error=data.get("error", "Invalid OTP")
-            )
-
-        # 3. 更新用戶 email_verified 狀態
-        current_user.email_verified = True
-        current_user.email_verified_at = datetime.utcnow()
-
-        # 4. 更新驗證級別
-        # 獲取用戶的組織
-        result = await db.execute(
-            select(Organization).where(Organization.id == current_user.organization_id)
-        )
-        org = result.scalar_one_or_none()
-
-        new_level = VerificationService.calculate_user_level(current_user, org)
-        if hasattr(current_user, 'verification_level'):
-            current_user.verification_level = new_level
-
-        await db.commit()
-
-        logger.info(
-            "email_verified_successfully",
-            user_id=str(current_user.id),
-            email=current_user.email,
-            verification_level=new_level
-        )
-
-        return VerifyEmailResponse(
-            success=True,
-            message="Email 驗證成功",
-            verification_level=new_level
-        )
-
-    except HTTPException:
-        raise
-
-    except Exception as e:
-        await db.rollback()
-        logger.error(
-            "verify_email_error",
-            error=str(e)
-        )
-        return VerifyEmailResponse(
-            success=False,
-            message="驗證失敗，請稍後再試",
-            error=str(e)
-        )
 
 
 # ============================================================================
@@ -217,21 +45,12 @@ async def send_phone_verification(
 
     流程：
     1. 驗證 JWT token
-    2. 檢查 Email 是否已驗證（前置條件）
-    3. 更新用戶手機號碼
-    4. 調用 Notification Service 發送 SMS OTP
+    2. 更新用戶手機號碼
+    3. 調用 Notification Service 發送 SMS OTP
     """
     try:
         # 1. 驗證 JWT 並取得當前用戶
         current_user = await get_current_user_from_token(request, db)
-
-        # 2. 檢查前置條件：Email 必須先驗證
-        if not current_user.email_verified:
-            return SendPhoneVerificationResponse(
-                success=False,
-                message="請先完成 Email 驗證",
-                error="Email verification required"
-            )
 
         # 檢查手機是否已驗證
         if hasattr(current_user, 'phone_verified') and current_user.phone_verified:

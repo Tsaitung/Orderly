@@ -3,9 +3,9 @@
 
 管理用戶和組織的驗證級別：
 - Level 0: 未驗證
-- Level 1: Email 已驗證
-- Level 2: Email + Phone 已驗證
-- Level 3: Email + Phone + 營業登記已驗證
+- Level 1: 社群帳號已建立
+- Level 2: 社群帳號 + Phone 已驗證
+- Level 3: 社群帳號 + Phone + 營業登記已驗證
 
 不同級別可訪問不同功能。
 """
@@ -23,15 +23,15 @@ class VerificationService:
 
     # 驗證級別定義
     LEVEL_UNVERIFIED = 0  # 未驗證
-    LEVEL_EMAIL = 1       # Email 已驗證
-    LEVEL_PHONE = 2       # Email + Phone 已驗證
-    LEVEL_BUSINESS = 3    # Email + Phone + 營業登記已驗證
+    LEVEL_ACCOUNT = 1     # 社群帳號已建立
+    LEVEL_PHONE = 2       # 社群帳號 + Phone 已驗證
+    LEVEL_BUSINESS = 3    # 社群帳號 + Phone + 營業登記已驗證
 
     # 級別說明
     LEVEL_DESCRIPTIONS = {
         0: "未驗證",
-        1: "Email 已驗證",
-        2: "Email + 手機已驗證",
+        1: "社群帳號已建立",
+        2: "社群帳號 + 手機已驗證",
         3: "完整驗證（含營業登記）"
     }
 
@@ -47,12 +47,12 @@ class VerificationService:
         Returns:
             驗證級別 (0-3)
         """
-        # Level 0: 未驗證
-        if not user.email_verified:
+        # Level 0: 未啟用或停用
+        if not getattr(user, "is_active", True) or getattr(user, "status", "active") != "active":
             return VerificationService.LEVEL_UNVERIFIED
 
-        # Level 1: Email 已驗證
-        level = VerificationService.LEVEL_EMAIL
+        # Level 1: 社群帳號已建立。Email 不再作為身份驗證因素。
+        level = VerificationService.LEVEL_ACCOUNT
 
         # Level 2: Phone 已驗證
         if hasattr(user, 'phone_verified') and user.phone_verified:
@@ -130,7 +130,7 @@ class VerificationService:
             Dict 包含各項驗證步驟的完成狀態
         """
         steps = {
-            "email_verified": current_level >= VerificationService.LEVEL_EMAIL,
+            "account_created": current_level >= VerificationService.LEVEL_ACCOUNT,
             "phone_verified": current_level >= VerificationService.LEVEL_PHONE,
             "business_verified": current_level >= VerificationService.LEVEL_BUSINESS
         }
@@ -202,7 +202,7 @@ class VerificationService:
             if hasattr(user, 'verification_level'):
                 user.verification_level = max(
                     user.verification_level or 0,
-                    VerificationService.LEVEL_EMAIL
+                    VerificationService.LEVEL_ACCOUNT
                 )
 
             await db.commit()
@@ -246,7 +246,7 @@ class VerificationService:
             user.phone_verified_at = datetime.utcnow()
 
             # 更新驗證級別
-            if user.email_verified and hasattr(user, 'verification_level'):
+            if hasattr(user, 'verification_level'):
                 user.verification_level = max(
                     user.verification_level or 0,
                     VerificationService.LEVEL_PHONE

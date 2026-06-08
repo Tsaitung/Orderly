@@ -36,7 +36,7 @@ export {
 
 // Services (for advanced use cases)
 export {
-  performLogin,
+  performOAuthLogin,
   performLogout,
   fetchOrganizations,
   fetchUserOrganization,

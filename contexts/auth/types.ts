@@ -3,7 +3,7 @@
  * Central type definitions for the authentication module
  */
 
-import type { LoginFormData } from '@/lib/validation/auth-schemas'
+import type { SocialProvider } from '@/lib/validation/auth-schemas'
 
 // User role union type
 export type UserRole =
@@ -13,9 +13,11 @@ export type UserRole =
   | 'supplier_admin'
   | 'supplier_manager'
   | 'platform_admin'
+  | 'platform_support'
+  | 'super_admin'
 
 // Organization type
-export type OrganizationType = 'restaurant' | 'supplier'
+export type OrganizationType = 'restaurant' | 'supplier' | 'platform'
 
 // Current role (simplified for routing/UI)
 export type CurrentRole = 'restaurant' | 'supplier' | 'platform' | 'admin'
@@ -31,7 +33,7 @@ export interface Organization {
 // User interface
 export interface User {
   id: string
-  email: string
+  email?: string
   role: UserRole
   organizationId: string
   name: string
@@ -68,7 +70,7 @@ export interface AuthContextType {
   viewMode: ViewMode
 
   // Actions
-  login: (credentials: LoginFormData) => Promise<LoginResult>
+  login: (provider: SocialProvider) => Promise<LoginResult>
   logout: () => void
   switchToOrganizationView: (organizationId: string) => Promise<boolean>
   exitViewMode: () => void

@@ -13,6 +13,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length < 2) return null
   const raw = parts[1]
+  if (!raw) return null
   const padded = raw.padEnd(raw.length + ((4 - (raw.length % 4)) % 4), '=')
   const base64 = padded.replace(/-/g, '+').replace(/_/g, '/')
   try {
@@ -25,7 +26,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 
 function getJwtMaxAgeSeconds(token: string, fallbackSeconds: number): number {
   const payload = decodeJwtPayload(token)
-  const exp = typeof payload?.exp === 'number' ? payload.exp : null
+  const exp = typeof payload?.['exp'] === 'number' ? payload['exp'] : null
   if (!exp) return fallbackSeconds
   const now = Math.floor(Date.now() / 1000)
   const delta = exp - now
@@ -34,9 +35,9 @@ function getJwtMaxAgeSeconds(token: string, fallbackSeconds: number): number {
 
 const resolveBackendBase = (req?: NextRequest): string => {
   const candidate =
-    process.env.ORDERLY_BACKEND_URL ||
-    process.env.BACKEND_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env['ORDERLY_BACKEND_URL'] ||
+    process.env['BACKEND_URL'] ||
+    process.env['NEXT_PUBLIC_API_BASE_URL'] ||
     'http://localhost:8888'
 
   // 去除 /api 或 /api/bff 避免 /api/api/ 重複
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
       const maxAge = getJwtMaxAgeSeconds(accessToken, 15 * 60)
       resp.cookies.set(ACCESS_COOKIE_NAME, accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env['NODE_ENV'] === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge,
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       const maxAge = getJwtMaxAgeSeconds(newRefresh, 7 * 24 * 60 * 60)
       resp.cookies.set(REFRESH_COOKIE_NAME, newRefresh, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+      secure: process.env['NODE_ENV'] === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge,

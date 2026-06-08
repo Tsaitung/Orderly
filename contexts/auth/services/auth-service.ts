@@ -4,7 +4,7 @@
  */
 
 import { SecureStorage } from '@/lib/secure-storage'
-import { AuthValidation, type LoginFormData } from '@/lib/validation/auth-schemas'
+import type { SocialProvider } from '@/lib/validation/auth-schemas'
 import type {
   User,
   Organization,
@@ -31,45 +31,18 @@ export async function safeExecute<T>(
 }
 
 /**
- * Perform login with credentials
+ * Start OAuth login for a social provider
  */
-export async function performLogin(credentials: LoginFormData): Promise<LoginResult> {
-  // Validate input
-  const validation = AuthValidation.validateLogin(credentials)
-  if (!validation.success) {
-    const firstError = Object.values(validation.errors)[0]
-    return { success: false, error: firstError }
-  }
-
+export async function performOAuthLogin(provider: SocialProvider): Promise<LoginResult> {
   try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: validation.data.email,
-        password: validation.data.password,
-        rememberMe: validation.data.rememberMe,
-      }),
-    })
-
-    const data: LoginApiResponse = await response.json()
-
-    if (response.ok && data.success) {
-      // Store tokens securely
-      SecureStorage.setTokens({
-        token: 'session_cookie',
-        refreshToken: undefined,
-        userId: data.user.id,
-        email: data.user.email,
-        role: data.user.role,
-        organizationId: data.user.organization.id,
-        organizationType: data.user.organization.type,
-        rememberMe: validation.data.rememberMe,
-        expiresIn: 7 * 24 * 60 * 60 * 1000,
-      })
-
+    const response = await fetch(`/api/auth/oauth/${provider}/initiate`)
+    const data = await response.json()
+    const authorizationUrl = data.authorization_url || data.authorizationUrl
+    if (response.ok && data.success && authorizationUrl) {
+      if (data.state) sessionStorage.setItem(`oauth_state_${provider}`, data.state)
+      const verifier = data.code_verifier || data.codeVerifier
+      if (verifier) sessionStorage.setItem(`oauth_code_verifier_${provider}`, verifier)
+      window.location.href = authorizationUrl
       return { success: true }
     }
 
@@ -86,10 +59,10 @@ export async function performLogin(credentials: LoginFormData): Promise<LoginRes
 export function buildUserFromResponse(data: LoginApiResponse): User {
   return {
     id: data.user.id,
-    email: data.user.email,
+    email: data.user.email || '',
     role: data.user.role,
     organizationId: data.user.organization.id,
-    name: data.user.name || data.user.email.split('@')[0],
+    name: data.user.name || data.user.email?.split('@')[0] || 'User',
     isActive: true,
   }
 }
@@ -108,7 +81,7 @@ export function buildUserFromStoredData(storedData: {
     email: storedData.email,
     role: storedData.role as User['role'],
     organizationId: storedData.organizationId,
-    name: storedData.email.split('@')[0] || 'User',
+    name: storedData.email?.split('@')[0] || 'User',
     avatar: '/avatars/default.png',
     isActive: true,
   }

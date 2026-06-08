@@ -13,15 +13,22 @@ MFA (Multi-Factor Authentication) API 端點
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from passlib.context import CryptContext
+from sqlalchemy import func, select
 from jose import jwt
 import os
 import structlog
 
 from app.modules.users.core.database import get_async_session
+from app.modules.users.api.v1.auth.core import (
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS as CORE_JWT_REFRESH_TOKEN_EXPIRE_DAYS,
+    _build_claims as build_auth_claims,
+    create_access_token as create_core_access_token,
+    create_refresh_token as create_core_refresh_token,
+)
+from app.modules.users.models.audit_log import AuditEventResult, AuditLog
 from app.modules.users.models.user import User
 from app.modules.users.models.organization import Organization
+from app.modules.users.models.session import Session as UserSession
 from app.modules.users.schemas.auth import (
     MFAEnableRequest,
     MFAEnableResponse,
@@ -41,15 +48,30 @@ logger = structlog.get_logger()
 
 router = APIRouter(prefix="/auth/mfa", tags=["MFA"])
 
-# 密碼驗證
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # JWT 配置
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 15
 JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7
 MFA_CHALLENGE_EXPIRE_MINUTES = 5
+PLATFORM_ROLES = {"platform_admin", "platform_support", "super_admin"}
+PLATFORM_AUTH_MAX_ACTIVE_SESSIONS = 3
+
+
+def _is_platform_user(user: User) -> bool:
+    return str(user.role) in PLATFORM_ROLES
+
+
+async def _platform_active_session_count(db: AsyncSession, user: User) -> int:
+    result = await db.execute(
+        select(func.count())
+        .select_from(UserSession)
+        .where(
+            UserSession.user_id == str(user.id),
+            UserSession.expires_at > datetime.utcnow(),
+        )
+    )
+    return int(result.scalar_one() or 0)
 
 
 async def get_current_user_from_token(
@@ -184,7 +206,7 @@ async def enable_mfa(
     """
     啟用 MFA
 
-    1. 驗證用戶密碼
+    1. 驗證使用者 access token
     2. 生成 TOTP 密鑰和 QR Code
     3. 生成備份碼
     4. 返回設置資訊（用戶需要完成驗證才會真正啟用）
@@ -200,16 +222,10 @@ async def enable_mfa(
                 error="MFA already enabled"
             )
 
-        # 驗證密碼
-        if not pwd_context.verify(payload.password, current_user.password_hash):
-            return MFAEnableResponse(
-                success=False,
-                message="密碼錯誤",
-                error="Invalid password"
-            )
-
         # 生成 MFA 設置
-        setup = MFAService.setup_mfa_for_user(current_user.email)
+        setup = MFAService.setup_mfa_for_user(
+            current_user.email or current_user.display_name or str(current_user.id)
+        )
 
         logger.info(
             "mfa_enable_initiated",
@@ -343,11 +359,11 @@ async def verify_mfa(
         )
         user = result.scalar_one_or_none()
 
-        if not user or not user.mfa_enabled:
+        if not user or not user.mfa_enabled or user.status != "active" or not user.is_active:
             return MFAVerifyResponse(
                 success=False,
-                message="用戶不存在或未啟用 MFA",
-                error="Invalid user or MFA not enabled"
+                message="用戶不存在、已停用或未啟用 MFA",
+                error="Invalid user, inactive user, or MFA not enabled"
             )
 
         # 驗證碼
@@ -375,13 +391,53 @@ async def verify_mfa(
             select(Organization).where(Organization.id == user.organization_id)
         )
         org = result.scalar_one_or_none()
+        if not org:
+            return MFAVerifyResponse(
+                success=False,
+                message="使用者缺少組織",
+                error="Organization not found"
+            )
 
-        claims = _build_claims(user, org)
-        access_token = create_access_token(claims)
-        refresh_token = create_refresh_token({"sub": str(user.id)})
+        if _is_platform_user(user):
+            active_sessions = await _platform_active_session_count(db, user)
+            if active_sessions >= PLATFORM_AUTH_MAX_ACTIVE_SESSIONS:
+                db.add(
+                    AuditLog(
+                        event_type="OAUTH_LOGIN",
+                        event_result=AuditEventResult.BLOCKED.value,
+                        action="platform_mfa_session_limit",
+                        entity_type="AUTH",
+                        entity_id=str(user.id),
+                        user_id=str(user.id),
+                        user_email=user.email,
+                        organization_id=str(user.organization_id),
+                        event_metadata={"active_sessions": active_sessions},
+                        created_at=datetime.utcnow(),
+                    )
+                )
+                await db.commit()
+                return MFAVerifyResponse(
+                    success=False,
+                    message="平台帳號已達同時登入上限",
+                    error="Session limit exceeded"
+                )
+
+        claims = build_auth_claims(user, org)
+        access_token = create_core_access_token(claims)
+        refresh_token = create_core_refresh_token({"sub": str(user.id), "token_version": user.token_version})
 
         # 更新登入時間
         user.last_login_at = datetime.utcnow()
+        if _is_platform_user(user):
+            user.failed_login_attempts = 0
+            user.locked_until = None
+        db.add(
+            UserSession(
+                user_id=str(user.id),
+                token=refresh_token,
+                expires_at=datetime.utcnow() + timedelta(days=CORE_JWT_REFRESH_TOKEN_EXPIRE_DAYS),
+            )
+        )
         await db.commit()
 
         logger.info(
@@ -425,7 +481,7 @@ async def disable_mfa(
     """
     停用 MFA
 
-    需要密碼和當前 TOTP 碼（或備份碼）確認
+    需要當前 TOTP 碼（或備份碼）確認
     """
     try:
         current_user = await get_current_user_from_token(request, db)
@@ -436,14 +492,6 @@ async def disable_mfa(
                 success=False,
                 message="MFA 未啟用",
                 error="MFA not enabled"
-            )
-
-        # 驗證密碼
-        if not pwd_context.verify(payload.password, current_user.password_hash):
-            return MFADisableResponse(
-                success=False,
-                message="密碼錯誤",
-                error="Invalid password"
             )
 
         # 驗證 TOTP 碼或備份碼

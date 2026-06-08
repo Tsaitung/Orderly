@@ -5,8 +5,8 @@
 
 'use client'
 
-import React from 'react'
-import { Building2, Shield, AlertCircle } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { Building2, Shield, AlertCircle, Chrome, Link2, MessageCircle, Unlink } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -82,6 +82,159 @@ function ProfileHeader({
 // Content Component
 // ============================================================================
 
+type SocialProvider = 'line' | 'google'
+
+type LinkedAccount = {
+  provider: SocialProvider
+  provider_user_id?: string
+  providerUserId?: string
+  linked_at?: string
+  linkedAt?: string
+}
+
+const socialProviders: Record<SocialProvider, { label: string; icon: typeof MessageCircle }> = {
+  line: { label: 'Line', icon: MessageCircle },
+  google: { label: 'Google', icon: Chrome },
+}
+
+function SocialBindingsSection(): React.ReactElement {
+  const [accounts, setAccounts] = useState<LinkedAccount[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyProvider, setBusyProvider] = useState<SocialProvider | null>(null)
+  const [error, setError] = useState('')
+
+  async function loadAccounts(): Promise<void> {
+    setLoading(true)
+    setError('')
+    try {
+      const response = await fetch('/api/auth/oauth/linked-accounts')
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        setError(data.message || '無法載入社群綁定')
+        return
+      }
+      setAccounts(data.linked_accounts || data.linkedAccounts || [])
+    } catch {
+      setError('無法載入社群綁定')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadAccounts()
+  }, [])
+
+  async function startBinding(provider: SocialProvider): Promise<void> {
+    setBusyProvider(provider)
+    setError('')
+    try {
+      const response = await fetch(`/api/auth/oauth/${provider}/initiate`)
+      const data = await response.json()
+      const authorizationUrl = data.authorization_url || data.authorizationUrl
+      if (!response.ok || !data.success || !authorizationUrl) {
+        setError(data.message || '社群綁定啟動失敗')
+        return
+      }
+
+      sessionStorage.setItem('orderly_oauth_link_provider', provider)
+      if (data.state) sessionStorage.setItem(`oauth_state_${provider}`, data.state)
+      const verifier = data.code_verifier || data.codeVerifier
+      if (verifier) sessionStorage.setItem(`oauth_code_verifier_${provider}`, verifier)
+      window.location.href = authorizationUrl
+    } catch {
+      setError('社群綁定啟動失敗')
+    } finally {
+      setBusyProvider(null)
+    }
+  }
+
+  async function unlinkProvider(provider: SocialProvider): Promise<void> {
+    setBusyProvider(provider)
+    setError('')
+    try {
+      const response = await fetch(`/api/auth/oauth/${provider}/unlink`, { method: 'DELETE' })
+      const data = await response.json()
+      if (!response.ok || !data.success) {
+        setError(data.message || '解除綁定失敗')
+        return
+      }
+      await loadAccounts()
+    } catch {
+      setError('解除綁定失敗')
+    } finally {
+      setBusyProvider(null)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg">社群登入</CardTitle>
+            <p className="mt-1 text-sm text-gray-600">管理 Line 與 Google 登入綁定</p>
+          </div>
+          <Link2 className="h-5 w-5 text-gray-500" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {(Object.keys(socialProviders) as SocialProvider[]).map(provider => {
+            const config = socialProviders[provider]
+            const Icon = config.icon
+            const linked = accounts.some(account => account.provider === provider)
+            const canUnlink = linked && accounts.length > 1
+            const isBusy = busyProvider === provider
+
+            return (
+              <div
+                key={provider}
+                className="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="h-5 w-5 text-gray-700" />
+                  <div>
+                    <div className="font-medium text-gray-900">{config.label}</div>
+                    <div className="text-xs text-gray-500">{linked ? '已綁定' : '未綁定'}</div>
+                  </div>
+                </div>
+                {linked ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => unlinkProvider(provider)}
+                    disabled={!canUnlink || isBusy}
+                  >
+                    <Unlink className="mr-2 h-4 w-4" />
+                    解除
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => startBinding(provider)}
+                    disabled={loading || isBusy}
+                  >
+                    <Link2 className="mr-2 h-4 w-4" />
+                    綁定
+                  </Button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        {error && (
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 interface SupplierProfileSettingsContentProps {
   organizationId: string
 }
@@ -152,6 +305,8 @@ function SupplierProfileSettingsContent({
         verifiedAt={profile.verified_at}
         completeness={completeness}
       />
+
+      <SocialBindingsSection />
 
       <BasicInfoSection
         {...sharedProps}

@@ -164,8 +164,9 @@ export interface SupplierOnboardingRequest {
   invitationCode: string
 
   // User account information
-  email: string
-  password: string
+  email?: string
+  primarySocialProvider: 'line' | 'google'
+  recoverySocialProvider?: 'line' | 'google'
   firstName: string
   lastName: string
   phone?: string
@@ -301,9 +302,9 @@ export interface StepFormData {
 }
 
 export interface AccountSetupFormData extends StepFormData {
-  email: string
-  password: string
-  confirmPassword: string
+  email?: string
+  primarySocialProvider: 'line' | 'google'
+  recoverySocialProvider?: 'line' | 'google'
   firstName: string
   lastName: string
   phone?: string
@@ -377,13 +378,6 @@ export interface SupplierFormValidation {
       message: string
     }
   }
-  password: {
-    required: string
-    minLength: {
-      value: number
-      message: string
-    }
-  }
   taxId: {
     required?: string
     pattern: {
@@ -412,7 +406,6 @@ export const SUPPLIER_CONSTANTS = {
   TAX_ID_LENGTH: 8,
   PERSONAL_ID_LENGTH: 10,
   DEFAULT_INVITATION_EXPIRY_DAYS: 30,
-  MIN_PASSWORD_LENGTH: 12,
   VALIDATION_PATTERNS: {
     TAX_ID: /^\d{8}$/,
     PERSONAL_ID: /^[A-Z]\d{9}$/,

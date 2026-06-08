@@ -58,7 +58,7 @@ export default function SupplierInvitePage() {
     }
   }
 
-  const getStatusIcon = (status: InvitationStatus, isExpired: boolean, canBeAccepted: boolean) => {
+  const getStatusIcon = (_status: InvitationStatus, isExpired: boolean, canBeAccepted: boolean) => {
     if (canBeAccepted) {
       return <CheckCircle className="h-5 w-5 text-green-500" />
     } else if (isExpired) {

@@ -57,8 +57,9 @@ class SupplierOnboardingRequest(BaseModel):
     invitation_code: str = Field(..., min_length=8, max_length=8, description="邀請代碼")
     
     # User account information
-    email: EmailStr = Field(..., description="使用者電子郵件")
-    password: str = Field(..., min_length=12, description="密碼")
+    email: Optional[EmailStr] = Field(None, description="對帳聯絡電子郵件")
+    primary_social_provider: str = Field(default="line", pattern="^(line|google)$", description="主要社群登入")
+    recovery_social_provider: Optional[str] = Field(default="google", pattern="^(line|google)$", description="恢復社群登入")
     first_name: str = Field(..., min_length=1, max_length=50, description="名字")
     last_name: str = Field(..., min_length=1, max_length=50, description="姓氏")
     phone: Optional[str] = Field(None, max_length=20, description="手機號碼")

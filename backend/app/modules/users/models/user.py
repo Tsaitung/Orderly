@@ -8,6 +8,7 @@ from .base import BaseModel
 user_role_enum = PgEnum(
     'restaurant_admin', 'restaurant_manager', 'restaurant_operator',
     'supplier_admin', 'supplier_manager', 'platform_admin',
+    'platform_support', 'super_admin',
     name='UserRole', create_type=False
 )
 
@@ -15,7 +16,8 @@ user_role_enum = PgEnum(
 class User(BaseModel):
     __tablename__ = "users"
 
-    email = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, nullable=True, index=True)
+    # Deprecated for auth: retained only for historical rows and migration safety.
     password_hash = Column("passwordHash", String, nullable=True)
     organization_id = Column("organizationId", String, ForeignKey("organizations.id"), nullable=False)
     role = Column(user_role_enum, nullable=False)
@@ -35,6 +37,7 @@ class User(BaseModel):
 
     # Auth related (subset of fields to start)
     is_super_user = Column("isSuperUser", Boolean, default=False, nullable=False)
+    # Deprecated for auth: email is a billing/contact field, not an identity proof.
     email_verified = Column("emailVerified", Boolean, default=False, nullable=False)
     email_verified_at = Column("emailVerifiedAt", DateTime(timezone=True), nullable=True)
 
@@ -44,19 +47,17 @@ class User(BaseModel):
     phone_verified_at = Column("phoneVerifiedAt", DateTime(timezone=True), nullable=True)
 
     # MFA extended (from migration 005)
-    mfa_method = Column("mfaMethod", String(20), nullable=True)  # TOTP/SMS/EMAIL
+    mfa_method = Column("mfaMethod", String(20), nullable=True)  # TOTP/SMS only
     mfa_backup_codes = Column("mfaBackupCodes", JSON, default=list, nullable=False)
     mfa_enforced_at = Column("mfaEnforcedAt", DateTime(timezone=True), nullable=True)
 
     # Verification level (from migration 005)
     verification_level = Column("verificationLevel", Integer, default=0, nullable=False)
 
-    # Password security (from migration 005)
+    # Login lockout. Password timestamp is deprecated for auth.
     failed_login_attempts = Column("failedLoginAttempts", Integer, default=0, nullable=False)
     locked_until = Column("lockedUntil", DateTime(timezone=True), nullable=True)
     password_changed_at = Column("passwordChangedAt", DateTime(timezone=True), nullable=True)
-    password_reset_token = Column("passwordResetToken", String, unique=True, nullable=True)
-    password_reset_expires = Column("passwordResetExpires", DateTime(timezone=True), nullable=True)
 
     # Super User (from migration 005)
     super_user_activated_at = Column("superUserActivatedAt", DateTime(timezone=True), nullable=True)

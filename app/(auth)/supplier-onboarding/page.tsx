@@ -9,7 +9,6 @@ import {
   Building2,
   User,
   Phone,
-  MapPin,
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,15 +24,8 @@ import {
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { http } from '@/lib/api/http'
-import type {
-  InvitationDetailResponse,
-  SupplierOnboardingRequest,
-  BusinessType,
-  OnboardingStep,
-  AccountSetupFormData,
-  CompanyInfoFormData,
-  ContactDetailsFormData,
-} from '@orderly/types'
+import { SecureStorage } from '@/lib/secure-storage'
+import type { InvitationDetailResponse, SupplierOnboardingRequest, BusinessType } from '@/shared/types/src/supplier'
 
 const ONBOARDING_STEPS = [
   { id: 'account', title: '帳戶設定', icon: User, description: '建立您的登入帳戶' },
@@ -48,8 +40,8 @@ type StepId = (typeof ONBOARDING_STEPS)[number]['id']
 interface OnboardingFormData {
   // Account Setup
   email: string
-  password: string
-  confirmPassword: string
+  primarySocialProvider: 'line' | 'google'
+  recoverySocialProvider: 'line' | 'google'
   firstName: string
   lastName: string
   phone: string
@@ -68,6 +60,8 @@ interface OnboardingFormData {
   address: string
 }
 
+type ValidationErrors = Partial<Record<keyof OnboardingFormData, string>>
+
 function SupplierOnboardingPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -77,12 +71,12 @@ function SupplierOnboardingPageContent() {
   const [invitation, setInvitation] = useState<InvitationDetailResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
 
   const [formData, setFormData] = useState<OnboardingFormData>({
     email: '',
-    password: '',
-    confirmPassword: '',
+    primarySocialProvider: 'line',
+    recoverySocialProvider: 'google',
     firstName: '',
     lastName: '',
     phone: '',
@@ -116,7 +110,7 @@ function SupplierOnboardingPageContent() {
         setError('邀請無效或已過期')
         setTimeout(() => router.push('/auth/supplier-invite'), 3000)
       }
-    } catch (err) {
+    } catch {
       setError('無法載入邀請資訊')
     }
   }, [invitationCode, router])
@@ -140,19 +134,13 @@ function SupplierOnboardingPageContent() {
   }
 
   const validateCurrentStep = (): boolean => {
-    const errors: Record<string, string> = {}
+    const errors: ValidationErrors = {}
 
     switch (currentStep) {
       case 'account':
-        if (!formData.email) errors.email = '請輸入電子信箱'
-        else if (!/\S+@\S+\.\S+/.test(formData.email)) errors.email = '請輸入有效的電子信箱'
-
-        if (!formData.password) errors.password = '請輸入密碼'
-        else if (formData.password.length < 12) errors.password = '密碼至少需要12個字符'
-
-        if (!formData.confirmPassword) errors.confirmPassword = '請確認密碼'
-        else if (formData.password !== formData.confirmPassword)
-          errors.confirmPassword = '密碼確認不符'
+        if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+          errors.email = '請輸入有效的電子信箱'
+        }
 
         if (!formData.firstName) errors.firstName = '請輸入名字'
         if (!formData.lastName) errors.lastName = '請輸入姓氏'
@@ -190,15 +178,17 @@ function SupplierOnboardingPageContent() {
     if (!validateCurrentStep()) return
 
     const currentIndex = ONBOARDING_STEPS.findIndex(step => step.id === currentStep)
-    if (currentIndex < ONBOARDING_STEPS.length - 1) {
-      setCurrentStep(ONBOARDING_STEPS[currentIndex + 1].id as StepId)
+    const nextStep = ONBOARDING_STEPS[currentIndex + 1]
+    if (nextStep) {
+      setCurrentStep(nextStep.id)
     }
   }
 
   const handleBack = () => {
     const currentIndex = ONBOARDING_STEPS.findIndex(step => step.id === currentStep)
-    if (currentIndex > 0) {
-      setCurrentStep(ONBOARDING_STEPS[currentIndex - 1].id as StepId)
+    const previousStep = ONBOARDING_STEPS[currentIndex - 1]
+    if (previousStep) {
+      setCurrentStep(previousStep.id)
     }
   }
 
@@ -211,8 +201,9 @@ function SupplierOnboardingPageContent() {
     try {
       const request: SupplierOnboardingRequest = {
         invitationCode,
-        email: formData.email,
-        password: formData.password,
+        email: formData.email || undefined,
+        primarySocialProvider: formData.primarySocialProvider,
+        recoverySocialProvider: formData.recoverySocialProvider,
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
@@ -229,9 +220,16 @@ function SupplierOnboardingPageContent() {
 
       const data = await http.post<any>(`/api/invitations/accept`, request)
       if (data?.accessToken && data?.refreshToken) {
-        // Store tokens
-        localStorage.setItem('access_token', data.accessToken)
-        localStorage.setItem('refresh_token', data.refreshToken)
+        SecureStorage.setTokens({
+          token: data.accessToken,
+          refreshToken: data.refreshToken,
+          userId: data.userId,
+          email: formData.email,
+          role: 'supplier_admin',
+          organizationId: data.organizationId,
+          organizationType: 'supplier',
+          rememberMe: true,
+        })
 
         setCurrentStep('completion')
 
@@ -242,7 +240,7 @@ function SupplierOnboardingPageContent() {
       } else {
         setError(data.detail || '註冊失敗，請重試')
       }
-    } catch (err) {
+    } catch {
       setError('網路錯誤，請重試')
     } finally {
       setLoading(false)
@@ -323,7 +321,7 @@ function SupplierOnboardingPageContent() {
       </div>
 
       <div>
-        <Label htmlFor="email">電子信箱</Label>
+        <Label htmlFor="email">電子信箱（選填）</Label>
         <Input
           id="email"
           type="email"
@@ -338,34 +336,37 @@ function SupplierOnboardingPageContent() {
         )}
       </div>
 
-      <div>
-        <Label htmlFor="password">密碼</Label>
-        <Input
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={e => updateFormData('password', e.target.value)}
-          placeholder="至少12個字符"
-          className={validationErrors.password ? 'border-red-500' : ''}
-        />
-        {validationErrors.password && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.password}</p>
-        )}
-      </div>
-
-      <div>
-        <Label htmlFor="confirmPassword">確認密碼</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={e => updateFormData('confirmPassword', e.target.value)}
-          placeholder="再次輸入密碼"
-          className={validationErrors.confirmPassword ? 'border-red-500' : ''}
-        />
-        {validationErrors.confirmPassword && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.confirmPassword}</p>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="primarySocialProvider">主要登入</Label>
+          <Select
+            value={formData.primarySocialProvider}
+            onValueChange={(value: 'line' | 'google') => updateFormData('primarySocialProvider', value)}
+          >
+            <SelectTrigger id="primarySocialProvider">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="line">Line</SelectItem>
+              <SelectItem value="google">Google</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="recoverySocialProvider">恢復登入</Label>
+          <Select
+            value={formData.recoverySocialProvider}
+            onValueChange={(value: 'line' | 'google') => updateFormData('recoverySocialProvider', value)}
+          >
+            <SelectTrigger id="recoverySocialProvider">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="google">Google</SelectItem>
+              <SelectItem value="line">Line</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -623,7 +624,7 @@ function SupplierOnboardingPageContent() {
   }
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex(step => step.id === currentStep)
-  const currentStepInfo = ONBOARDING_STEPS[currentStepIndex]
+  const currentStepInfo = ONBOARDING_STEPS[currentStepIndex] ?? ONBOARDING_STEPS[0]
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">

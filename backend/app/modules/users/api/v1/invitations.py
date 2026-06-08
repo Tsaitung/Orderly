@@ -3,14 +3,23 @@ Supplier Invitation API endpoints
 Handles restaurant-to-supplier invitation workflows
 """
 from typing import List, Optional
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import Session
 
-from ...core.database import get_async_session
+from ...core.database import get_async_session, get_db
+from ...api.v1.auth.core import (
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS,
+    _build_claims,
+    create_access_token,
+    create_refresh_token,
+)
 from ...models.invitation import SupplierInvitation, InvitationStatus
 from ...models.organization import Organization, OrganizationType, BusinessType, OnboardingStatus
+from ...models.session import Session as UserSession
 from ...models.user import User
 from ...schemas.invitation import (
     InvitationSendRequest,
@@ -25,13 +34,6 @@ from ...schemas.invitation import (
     OrganizationResponse,
     InvitationErrorResponse
 )
-from ...schemas.auth import UserCreate, Token
-from ..auth import pwd_context, create_access_token
-
-
-def get_password_hash(password: str) -> str:
-    """Hash password using bcrypt"""
-    return pwd_context.hash(password)
 
 
 def get_current_user():
@@ -192,7 +194,7 @@ async def accept_invitation_and_onboard(
         )
     
     # Check if user already exists
-    existing_user = db.query(User).filter(User.email == request.email).first()
+    existing_user = db.query(User).filter(User.email == request.email).first() if request.email else None
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -246,13 +248,17 @@ async def accept_invitation_and_onboard(
         # Create user account
         user = User(
             email=request.email,
-            password_hash=get_password_hash(request.password),
+            password_hash=None,
             organization_id=supplier_org.id,
+            tenant_id=supplier_org.id,
+            tenant_type="supplier",
             role="supplier_admin",
             user_metadata={
                 "first_name": request.first_name,
                 "last_name": request.last_name,
                 "phone": request.phone,
+                "primary_social_provider": request.primary_social_provider,
+                "recovery_social_provider": request.recovery_social_provider,
                 "onboarded_via_invitation": True,
                 "invitation_id": invitation.id
             }
@@ -281,13 +287,19 @@ async def accept_invitation_and_onboard(
         db.refresh(user)
         
         # Generate access tokens
-        access_token = create_access_token(
-            data={"sub": user.email, "user_id": user.id, "org_id": supplier_org.id}
+        claims = _build_claims(user, supplier_org)
+        access_token = create_access_token(claims)
+        refresh_token = create_refresh_token(
+            {"sub": str(user.id), "token_version": user.token_version}
         )
-        refresh_token = create_access_token(
-            data={"sub": user.email, "type": "refresh"},
-            expires_delta=timedelta(days=30)
+        db.add(
+            UserSession(
+                user_id=str(user.id),
+                token=refresh_token,
+                expires_at=datetime.utcnow() + timedelta(days=JWT_REFRESH_TOKEN_EXPIRE_DAYS),
+            )
         )
+        db.commit()
         
         return SupplierOnboardingResponse(
             user_id=user.id,
