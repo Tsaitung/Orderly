@@ -2,7 +2,7 @@
        test-be test-fe \
        lint typecheck format-check \
        verify verify-pr-local verify-pr \
-       deploy-check predeploy-check
+       deploy-check predeploy-check security-scan
 
 # Parallelism control
 PYTEST_WORKERS ?= auto
@@ -127,8 +127,14 @@ verify: lint typecheck format-check test-fe
 # test-be now runs the same monolith gate CI does (scripts/ci/backend-test.sh),
 # so a backend failure blocks the push instead of surfacing later in Actions.
 
-verify-pr-local: verify test-be deploy-check
-	@echo "✓ verify-pr-local passed (verify + monolith backend test + deploy-check, mirrors CI/CD)"
+# Mirror of ci.yml `security-scan` job — same scripts/ci/security-scan.sh
+# (gitleaks + npm audit --omit=dev + pip-audit). Runs locally so a security
+# finding surfaces before push, not CI-only.
+security-scan:
+	bash scripts/ci/security-scan.sh
+
+verify-pr-local: verify test-be deploy-check security-scan
+	@echo "✓ verify-pr-local passed (verify + backend test + deploy-check + security-scan, mirrors CI)"
 
 # ── PR CI gate: authoritative ──
 # CI .github/workflows/ci.yml is the source of truth for backend test results.
