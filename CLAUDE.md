@@ -153,7 +153,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 機敏設定僅放於 `.env.local` 或授權密鑰庫，依 `docs/3-Development-Plan/ci-secrets.md` 流程管理。
 - 新增服務時更新 `compose.*.yml` 與 FastAPI 設定，確保所有入口均由 API Gateway 控制；必要環境變數記錄於 `docs/3-Development-Plan/DEPLOYMENT-CHECKLIST.md`。
 - 本地整合測試建議透過 Docker Compose 啟動 Postgres／Redis，並確認健康檢查端點再提交 PR。
-- Cloud Run 部署必須使用專用 Service Account（由 `scripts/iam/bootstrap-service-accounts.sh` 建立，例如 `orderly-apigw-fastapi@PROJECT.iam.gserviceaccount.com`）。部署時務必指定這些帳戶（`scripts/deploy-cloud-run.sh` 會自動帶入），避免落回預設的 Compute Engine 帳戶。
+- Cloud Run 部署必須使用專用 Service Account（由 `scripts/iam/bootstrap-service-accounts.sh` 建立）。Monolith 部署由 `.github/workflows/cd.yml`（build-deploy / migrate job）自動帶入正確 SA（serving 用對應 service SA、migration 用 `orderly-migration@PROJECT.iam.gserviceaccount.com`），避免落回預設的 Compute Engine 帳戶。（舊的 per-service `scripts/deploy-cloud-run.sh` 已隨微服務退役而移除，部署一律走 cd.yml。）
 - 資料庫遷移／測試資料導入改以 Cloud Build / Cloud Run Job 執行：
   - Service Account：`orderly-migration@<project>.iam.gserviceaccount.com`，請先以 `gcloud iam service-accounts create orderly-migration` 建立並賦予 `cloudsql.client`、`secretmanager.secretAccessor`、`logging.logWriter`。
   - 遷移：`gcloud builds submit --config=scripts/cloudbuild/migration-job.yaml --substitutions=_INSTANCE=orderly-472413:asia-east1:orderly-db-v2,_SERVICE_ACCOUNT=orderly-migration@...`

@@ -89,3 +89,35 @@
 ## 8. 相關 harness 改善（已落地）
 
 `~/.claude/CLAUDE.md` 既有規則「刪檔前查引用」經 RCA 加寬涵蓋 **move/rename/re-root**（搬檔對引用的破壞性同刪檔）+ grep 範圍加 `Dockerfile*`/`compose*`/`workflows`/`COPY` + 收緊「done」定義 + 「目錄存在 ≠ build context 完整」——直擊本次 re-root drift 的生產端根因。
+
+## 9. Staging 部署完成（2026-06-08，已 ground-truth 驗證）
+
+**狀態更新：staging 已從「擱置」推進到「部署完成並驗證」。production 仍擱置。**
+
+整合 branch 推到 `staging` 後，經 4 輪 CD（每輪真根因 + 本機 repro/驗證 + 修，禁 blind redispatch）達成全綠：
+
+| 輪 | 失敗根因 | 修復 |
+|---|---|---|
+| R1 | jest 撈 Playwright e2e spec → CI gate fail | `jest.config` 排除 `e2e/` |
+| R2 | resolve 偵測無部署變更 → 全 skip | 改 `workflow_dispatch force_all` |
+| R3 | migrate Cloud Run Job：alembic ConfigParser 把真密碼 URL-encode 的 `%` 當插值 → `invalid interpolation syntax` | `backend/app/alembic/env.py` `%`→`%%` escape（repro 證明 round-trip）|
+| R4 | — | 全綠：monolith + frontend 部署、migration `0001→0003` 套用 |
+
+**ground-truth 驗證**（非僅 CD 綠）：
+- monolith `orderly-backend-staging-v2` `/health` → 200 `{"status":"ok","service":"orderly-monolith"}`；`/openapi.json` 395 路由；auth 路由 401。
+- frontend `orderly-frontend-staging-v2` `/` → 200。
+- DB `orderly-db-v2/orderly`：`alembic_version_monolith`=`0003_acceptance_order_fk`、44 base tables、7 cross-module FK。orphan 掃描證實空 DB → 0 orphan（migration 無 abort）。
+
+## 10. Re-root drift 收尾清理（2026-06-08）
+
+承 §10 owner 決策，已完成：
+- **ci.yml backend-test**：9 微服務殼 matrix → 單一 Backend Monolith job（裝 `backend/app` deps + fresh CI DB 跑 `alembic upgrade head` + 有測試才 pytest）。backend advisory 由 9 紅收斂為 1 綠。
+- **刪 9 個微服務殼** `backend/*-fastapi`（`app/` 早已 re-root 搬走）→ `backend/` 現純 monolith。
+- **刪 8 個 per-module alembic 鏈** `backend/app/modules/*/alembic`（D4 解鎖條件達成：orderly-db-v2 已切 `alembic_version_monolith`；canonical 鏈在 `backend/app/alembic`）。
+- **退役 `scripts/deploy-cloud-run.sh`**（per-service legacy，被 cd.yml 取代）+ 更新 CLAUDE.md / CI-CD-ARCHITECTURE.md / ci-secrets.md 引用。
+- **刪 4 個 0-ref dead script**（start-dev / start-all-services / cloudbuild Dockerfile.migration-{simple,fix}）。
+- **修 `scripts/database/database_manager.py`** sys.path + customer_hierarchy model import 路徑（re-root 後 `app.models.*` → `app.modules.customer_hierarchy.models.*`）。
+- **`make verify` test-fe 對齊 CI**：窄 testMatch → 全套 `jest --passWithNoTests`（殺 local-vs-CI divergence）。
+- `.jest-cache` untrack + gitignore。
+
+**仍開放**：cd.yml smoke job `if: always() && build-deploy.result != 'failure'` 會在 deploy 被 skip 時仍執行（應改為要求 build-deploy `== 'success'`）——目前服務已存在故無害，屬低優先 cosmetic 修正。production 部署（需先決定 prod DB target，`orderly-db` 不存在）。
