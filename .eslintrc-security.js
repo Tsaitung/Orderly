@@ -21,4 +21,4 @@ module.exports = {
     'security/detect-non-literal-fs-filename': 'warn',
     'security/detect-object-injection': 'off',
   },
-};
+}
