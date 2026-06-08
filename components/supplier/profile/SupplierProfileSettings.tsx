@@ -33,7 +33,11 @@ interface ProfileHeaderProps {
   completeness: number
 }
 
-function ProfileHeader({ status, verifiedAt, completeness }: ProfileHeaderProps): React.ReactElement {
+function ProfileHeader({
+  status,
+  verifiedAt,
+  completeness,
+}: ProfileHeaderProps): React.ReactElement {
   return (
     <Card>
       <CardHeader>

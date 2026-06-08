@@ -40,13 +40,7 @@ export function SkeletonAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 /**
  * Skeleton for text lines
  */
-export function SkeletonText({
-  lines = 1,
-  className,
-}: {
-  lines?: number
-  className?: string
-}) {
+export function SkeletonText({ lines = 1, className }: { lines?: number; className?: string }) {
   return (
     <div className={cn('space-y-2', className)}>
       {Array.from({ length: lines }).map((_, i) => (
@@ -123,13 +117,7 @@ export function SkeletonTableRow({ columns = 4 }: { columns?: number }) {
 /**
  * Skeleton for a full table
  */
-export function SkeletonTable({
-  rows = 5,
-  columns = 4,
-}: {
-  rows?: number
-  columns?: number
-}) {
+export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
     <div className="overflow-hidden rounded-lg border">
       <table className="w-full">
@@ -229,13 +217,7 @@ export function SkeletonFormField({ className }: { className?: string }) {
 /**
  * Skeleton for a complete form
  */
-export function SkeletonForm({
-  fields = 4,
-  columns = 2,
-}: {
-  fields?: number
-  columns?: 1 | 2
-}) {
+export function SkeletonForm({ fields = 4, columns = 2 }: { fields?: number; columns?: 1 | 2 }) {
   return (
     <div className={cn('space-y-4', columns === 2 && 'grid md:grid-cols-2 md:gap-6')}>
       {Array.from({ length: fields }).map((_, i) => (

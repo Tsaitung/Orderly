@@ -26,7 +26,14 @@ from .database import (
 from .unified_config import UnifiedSettings, get_settings
 
 # Import middleware after unified_config to avoid circular dependency
-from .middleware import AuthMiddleware, DEFAULT_PUBLIC_PATHS
+from .middleware import (
+    AuthMiddleware,
+    DEFAULT_PUBLIC_PATHS,
+    RedisRateLimiter,
+    RedisRateLimitMiddleware,
+    SecurityHeadersConfig,
+    SecurityHeadersMiddleware,
+)
 
 # Health check utilities
 from .health import (
@@ -87,6 +94,10 @@ __all__ = [
     # Middleware
     "AuthMiddleware",
     "DEFAULT_PUBLIC_PATHS",
+    "RedisRateLimiter",
+    "RedisRateLimitMiddleware",
+    "SecurityHeadersConfig",
+    "SecurityHeadersMiddleware",
     # Health
     "check_db_health",
     "get_db_info",

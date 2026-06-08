@@ -114,7 +114,7 @@ This document replaces ad-hoc CI/CD notes that were scattered across `plan.md`, 
 
 - **`check-names`** — Enforces the naming table above, applies automatic suffix normalization, and surfaces suggestions for long names.
 - **`check-database-port`** — Verifies `DATABASE_PORT` in config files and inspects service code for DSN usage.
-- **`check-cloudsql`** — Confirms Cloud SQL annotations in both the workflow and `deploy-cloud-run.sh` script.
+- **`check-cloudsql`** — Confirms Cloud SQL annotations in the `cd.yml` workflow (the legacy per-service `deploy-cloud-run.sh` was retired with the microservices; the monolith deploys via `cd.yml`).
 - **`all`** — Runs the full suite and generates a Markdown summary for GitHub step outputs.
 
 ### 6.2 Regression Tests

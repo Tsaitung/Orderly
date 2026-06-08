@@ -1,8 +1,7 @@
-name: Deploy Staging (Permanent)
+name: Deploy Staging (Permanent) (DEPRECATED — superseded by cd.yml)
 
+# DEPRECATED: superseded by cd.yml. Manual fallback only (workflow_dispatch).
 on:
-  push:
-    branches: [staging]
   workflow_dispatch:
     inputs:
       force_deploy:

@@ -1,3 +1,13 @@
+# superpowers brainstorm visual companion (local only)
+.superpowers/
+
+# playwright e2e artifacts
+test-results/
+playwright-report/
+
+# jest local cache (CI caches it via actions/cache)
+.jest-cache/
+
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -14,6 +24,17 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+# direnv local dev env — machine-specific (per-dev DB creds, personal ADC path, ~/.config/claude scripts)
+.envrc
+
+# Python venvs (host monolith venv + any stray service venvs)
+.venv/
+backend/.venv/
+**/venv/
+*.pyc
+
+# /restart runtime state (machine-written)
+.claude/restart.state.json
 
 # IDE
 .vscode/

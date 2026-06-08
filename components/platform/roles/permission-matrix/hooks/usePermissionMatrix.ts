@@ -446,9 +446,7 @@ export function usePermissionMatrix(
           if (existingChange.previousState === granted) {
             return prev.filter(c => c !== existingChange)
           }
-          return prev.map(change =>
-            change === existingChange ? { ...change, granted } : change
-          )
+          return prev.map(change => (change === existingChange ? { ...change, granted } : change))
         }
         return [...prev, { roleId, permissionId, granted, previousState }]
       })

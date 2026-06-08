@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_TC, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/components/ThemeProvider'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -145,11 +146,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
         suppressHydrationWarning
       >
-        <AuthProvider>
-          <div className="relative flex min-h-screen flex-col">
-            <div className="flex-1">{children}</div>
-          </div>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <div className="relative flex min-h-screen flex-col">
+              <div className="flex-1">{children}</div>
+            </div>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -1,0 +1,45 @@
+FROM python:3.11-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+FROM base AS deps
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY backend/app/requirements.txt ./requirements.txt
+RUN pip install --user --no-warn-script-location -r requirements.txt
+
+FROM base AS runtime
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    libpq5 \
+    --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=deps /root/.local /root/.local
+COPY backend/libs ./libs
+COPY backend/app ./app
+
+ENV PATH=/root/.local/bin:$PATH
+ENV PYTHONPATH=/app:/app/libs
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
+
+# Migration is DECOUPLED from boot (CD-DECOUPLE-MIGRATION). The serving container
+# only runs uvicorn; `alembic upgrade head` runs as a SEPARATE gated CD step
+# (see .github/workflows/cd.yml `migrate` job) BEFORE the serving deploy, so a
+# migration abort is observable/retryable instead of crash-looping the revision.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --workers 1"]

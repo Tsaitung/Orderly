@@ -206,7 +206,7 @@ export default function ProductImageUploadModal({
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
               {product.images.map(image => (
                 <div key={image.id} className="group relative">
-                  <div className="relative aspect-square overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                  <div className="aspect-square relative overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
                     <Image
                       src={image.url}
                       alt={image.alt_text || product.name}

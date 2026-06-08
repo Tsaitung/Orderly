@@ -87,19 +87,26 @@ export function NavigationHeader() {
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="sm" className="text-gray-700">
                   <UserCircle className="mr-1 h-4 w-4" />
-                  <span className="hidden sm:inline" title={user.name}>{user.name}</span>
+                  <span className="hidden sm:inline" title={user.name}>
+                    {user.name}
+                  </span>
                   {user.id === 'platform-admin-staging' && (
-                    <Badge variant="secondary" className="ml-1 bg-orange-100 text-xs text-orange-800">
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 bg-orange-100 text-xs text-orange-800"
+                    >
                       🚀 Staging
                     </Badge>
                   )}
                 </Button>
               </div>
             ) : (
-              <Button variant="ghost" size="sm" className="text-gray-700">
-                <UserCircle className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">登入</span>
-              </Button>
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="text-gray-700">
+                  <UserCircle className="mr-1 h-4 w-4" />
+                  <span className="hidden sm:inline">登入</span>
+                </Button>
+              </Link>
             )}
 
             {/* Mobile Menu Button */}
@@ -161,10 +168,12 @@ export function NavigationHeader() {
                   )}
                 </div>
               ) : (
-                <Button variant="outline" className="w-full justify-start" size="sm">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  登入
-                </Button>
+                <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" className="w-full justify-start" size="sm">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    登入
+                  </Button>
+                </Link>
               )}
             </div>
           </nav>

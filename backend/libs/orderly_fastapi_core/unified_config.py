@@ -104,14 +104,14 @@ class UnifiedSettings(BaseSettings):
     
     # === 服務發現配置 ===
     api_gateway_url: str = Field(default="http://localhost:8000", description="API Gateway URL")
-    user_service_url: str = Field(default="http://localhost:3001", description="用戶服務 URL")
-    order_service_url: str = Field(default="http://localhost:3002", description="訂單服務 URL")
-    product_service_url: str = Field(default="http://localhost:3003", description="產品服務 URL")
-    acceptance_service_url: str = Field(default="http://localhost:3004", description="驗收服務 URL")
-    billing_service_url: str = Field(default="http://localhost:3005", description="計費服務 URL")
-    notification_service_url: str = Field(default="http://localhost:3006", description="通知服務 URL")
-    customer_hierarchy_service_url: str = Field(default="http://localhost:3007", description="客戶層級服務 URL")
-    supplier_service_url: str = Field(default="http://localhost:3008", description="供應商服務 URL")
+    user_service_url: str = Field(default="http://localhost:8888", description="用戶服務 URL")
+    order_service_url: str = Field(default="http://localhost:8888", description="訂單服務 URL")
+    product_service_url: str = Field(default="http://localhost:8888", description="產品服務 URL")
+    acceptance_service_url: str = Field(default="http://localhost:8888", description="驗收服務 URL")
+    billing_service_url: str = Field(default="http://localhost:8888", description="計費服務 URL")
+    notification_service_url: str = Field(default="http://localhost:8888", description="通知服務 URL")
+    customer_hierarchy_service_url: str = Field(default="http://localhost:8888", description="客戶層級服務 URL")
+    supplier_service_url: str = Field(default="http://localhost:8888", description="供應商服務 URL")
     
     # === 安全配置 ===
     secret_key: str = Field(default="dev-app-secret-key-change-in-production", description="應用密鑰")

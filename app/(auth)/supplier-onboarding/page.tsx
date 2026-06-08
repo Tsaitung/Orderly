@@ -699,14 +699,16 @@ function SupplierOnboardingPageContent() {
 
 export default function SupplierOnboardingPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-          <p className="text-gray-600">載入中...</p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+            <p className="text-gray-600">載入中...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <SupplierOnboardingPageContent />
     </Suspense>
   )

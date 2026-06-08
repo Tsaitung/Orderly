@@ -1,13 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import {
-  Clock,
-  CheckCircle,
-  Truck,
-  Package,
-  AlertTriangle,
-} from 'lucide-react'
+import { Clock, CheckCircle, Truck, Package, AlertTriangle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import type { OrderStatus, PaymentStatus } from '../types'
 import { getStatusText, getStatusVariant } from '../utils'
@@ -97,10 +91,7 @@ interface CustomerRatingProps {
   maxRating?: number
 }
 
-export function CustomerRating({
-  rating,
-  maxRating = 5,
-}: CustomerRatingProps): React.ReactElement {
+export function CustomerRating({ rating, maxRating = 5 }: CustomerRatingProps): React.ReactElement {
   return (
     <div className="flex items-center">
       {[...Array(maxRating)].map((_, i) => (
@@ -108,7 +99,9 @@ export function CustomerRating({
           ★
         </span>
       ))}
-      <span className="ml-1 text-sm text-gray-600">({rating}/{maxRating})</span>
+      <span className="ml-1 text-sm text-gray-600">
+        ({rating}/{maxRating})
+      </span>
     </div>
   )
 }

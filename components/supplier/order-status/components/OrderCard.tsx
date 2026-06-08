@@ -1,23 +1,12 @@
 'use client'
 
 import * as React from 'react'
-import {
-  Eye,
-  CheckCircle,
-  Package,
-  MessageSquare,
-  Phone,
-  MapPin,
-} from 'lucide-react'
+import { Eye, CheckCircle, Package, MessageSquare, Phone, MapPin } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { SupplierOrder, OrderStatus } from '../types'
-import {
-  getPriorityColor,
-  getPriorityText,
-  formatDateTime,
-} from '../utils'
+import { getPriorityColor, getPriorityText, formatDateTime } from '../utils'
 import { OrderStatusBadge, PaymentStatusBadge } from './StatusBadge'
 
 interface OrderCardProps {
@@ -128,9 +117,7 @@ function OrderDetails({ order }: OrderDetailsProps): React.ReactElement {
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">總金額:</span>
-          <span className="font-bold text-green-600">
-            NT$ {order.totalAmount.toLocaleString()}
-          </span>
+          <span className="font-bold text-green-600">NT$ {order.totalAmount.toLocaleString()}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">付款狀態:</span>

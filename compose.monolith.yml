@@ -1,0 +1,75 @@
+# Self-contained postgres + redis for the modular-monolith local stack.
+#
+# Unlike compose.dev.yml (an overlay that needs compose.base.yml for the images),
+# this file is standalone so `.claude/restart.yaml` can bring the deps up with a
+# single `docker-compose -f compose.monolith.yml` invocation.
+#
+# Run from the repo root so the compose project name defaults to "orderly" and the
+# postgres_data / redis_data volumes resolve to the existing orderly_postgres_data /
+# orderly_redis_data volumes (i.e. the same data + containers as the current dev stack).
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.monolith
+    environment:
+      PORT: 8080
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-orderly}
+      DATABASE_USER: ${DATABASE_USER:-orderly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderly_dev_password}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-jwt-refresh-secret}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5566}
+    ports:
+      - "${BACKEND_PORT:-8888}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-orderly}
+      POSTGRES_USER: ${DATABASE_USER:-orderly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-orderly_dev_password}
+    ports:
+      - "${POSTGRES_PORT:?run direnv allow at repo root}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-orderly} -d ${DATABASE_NAME:-orderly}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${REDIS_PORT:?run direnv allow at repo root}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

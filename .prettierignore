@@ -1,0 +1,20 @@
+# Dependencies / build output
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+
+# Docs are reviewed as prose, not Prettier-gated
+**/*.md
+
+# Exported data fixtures (generated/real data snapshots, not hand-edited source)
+data/
+scripts/database/data/
+
+# Tooling bundles that ship their own templates/markdown
+.claude/
+.specify/

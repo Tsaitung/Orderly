@@ -1,0 +1,9 @@
+**Findings**
+
+1. **Must-fix, audit wording false:** `/api/contact` is PII-safe, but it does **not** only log `{ requestId, role, timestamp }`. Besides success `console.info` at [route.ts](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/app/api/contact/route.ts:75), it also logs non-PII warnings at [route.ts](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/app/api/contact/route.ts:48) and [route.ts](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/app/api/contact/route.ts:68). Revise audit line 370 to say failure logs include `{ requestId, timestamp }` and `{ requestId, timestamp, missing }`; no PII is logged.
+
+2. **Warning, missed verification gap:** `e2e/public-pages.spec.ts` still says it does **not** verify `/contact`, `/privacy`, or `/terms` at [public-pages.spec.ts](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/e2e/public-pages.spec.ts:9). The audit truthfully says the 8-test spec exists, but it should list Task 19 marketing-page E2E coverage as unverified if claiming post-execution completeness.
+
+Verified true: the three transitional components are absent; `components/landing` has 13 `.tsx` files; [app/page.tsx](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/app/page.tsx:24) composes the 12 named sections; hero image runtime source is local via [Hero.tsx](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/components/landing/Hero.tsx:107) and [landingData.ts](/Users/leeyude/Projects/_worktrees/Tsaitung-Orderly-72d17797/codex-public-pages-redesign/components/landing/landingData.ts:20). The Unsplash carve-out is sound for current code: the only two hits are block-comment provenance lines, and the filtered live-usage grep returns 0.
+
+VERDICT: REVISE

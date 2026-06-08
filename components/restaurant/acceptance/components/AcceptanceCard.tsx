@@ -34,7 +34,10 @@ export function AcceptanceCard({ record, onViewDetail }: AcceptanceCardProps): R
         <div className="space-y-2 lg:col-span-4">
           <div className="flex items-center space-x-3">
             <div className="font-bold text-primary-600">{record.orderNumber}</div>
-            <Badge variant={getStatusVariant(record.status)} className="flex items-center space-x-1">
+            <Badge
+              variant={getStatusVariant(record.status)}
+              className="flex items-center space-x-1"
+            >
               {getStatusIcon(record.status)}
               <span>{getStatusText(record.status)}</span>
             </Badge>

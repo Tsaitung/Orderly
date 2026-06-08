@@ -145,8 +145,7 @@ export function mapSupplierStats(stats: BackendSupplierStats): SupplierStatistic
   const computed: SupplierStatisticsComputed = {
     supplierUtilizationRate:
       totalSuppliers > 0 ? Math.round((stats.active_suppliers / totalSuppliers) * 100) : 0,
-    averageProductsPerSupplier:
-      totalSuppliers > 0 ? Math.round(totalProducts / totalSuppliers) : 0,
+    averageProductsPerSupplier: totalSuppliers > 0 ? Math.round(totalProducts / totalSuppliers) : 0,
     averageGMVPerSupplier:
       totalSuppliers > 0 ? Math.round((stats.monthly_gmv ?? 0) / totalSuppliers) : 0,
   }

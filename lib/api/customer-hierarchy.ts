@@ -76,8 +76,10 @@ function buildQuery(params?: PaginationParams & FilterParams & Record<string, un
   }
 
   if (params.isActive !== undefined) searchParams.set('is_active', String(params.isActive))
-  if (params.createdAfter instanceof Date) searchParams.set('created_after', params.createdAfter.toISOString())
-  if (params.createdBefore instanceof Date) searchParams.set('created_before', params.createdBefore.toISOString())
+  if (params.createdAfter instanceof Date)
+    searchParams.set('created_after', params.createdAfter.toISOString())
+  if (params.createdBefore instanceof Date)
+    searchParams.set('created_before', params.createdBefore.toISOString())
 
   const query = searchParams.toString()
   return query ? `?${query}` : ''
@@ -299,9 +301,7 @@ export const businessUnitsApi = {
         type?: BusinessUnitType
       }
   ): Promise<ListResponse<BusinessUnit>> => {
-    return api.get<ListResponse<BusinessUnit>>(
-      `/business-units${buildQuery(params)}`
-    )
+    return api.get<ListResponse<BusinessUnit>>(`/business-units${buildQuery(params)}`)
   },
 
   /**
@@ -343,9 +343,7 @@ export const businessUnitsApi = {
     const params = new URLSearchParams({ location_id: locationId, code })
     if (excludeId) params.set('exclude_id', excludeId)
 
-    return api.get<ApiResponse<{ isUnique: boolean }>>(
-      `/business-units/validate-code?${params}`
-    )
+    return api.get<ApiResponse<{ isUnique: boolean }>>(`/business-units/validate-code?${params}`)
   },
 }
 
@@ -375,9 +373,7 @@ export const hierarchyApi = {
     entityId: UUID,
     entityType: HierarchyNodeType
   ): Promise<ApiResponse<HierarchyPath>> => {
-    return api.get<ApiResponse<HierarchyPath>>(
-      `/hierarchy/path/${entityType}/${entityId}`
-    )
+    return api.get<ApiResponse<HierarchyPath>>(`/hierarchy/path/${entityType}/${entityId}`)
   },
 
   /**
@@ -522,9 +518,7 @@ export const migrationApi = {
    * Get migration status
    */
   getStatus: async (migrationId: UUID): Promise<ApiResponse<MigrationStatus>> => {
-    return api.get<ApiResponse<MigrationStatus>>(
-      `/migration/status/${migrationId}`
-    )
+    return api.get<ApiResponse<MigrationStatus>>(`/migration/status/${migrationId}`)
   },
 
   /**
@@ -556,9 +550,7 @@ export const migrationApi = {
    * Get migration history
    */
   getHistory: async (params?: PaginationParams): Promise<ListResponse<MigrationResponse>> => {
-    return api.get<ListResponse<MigrationResponse>>(
-      `/migration/history${buildQuery(params)}`
-    )
+    return api.get<ListResponse<MigrationResponse>>(`/migration/history${buildQuery(params)}`)
   },
 }
 
@@ -578,10 +570,7 @@ export const analyticsApi = {
     groupBy?: 'month' | 'week' | 'day'
     includeInactive?: boolean
   }): Promise<ApiResponse<CustomerInsights>> => {
-    return api.post<ApiResponse<CustomerInsights>>(
-      '/analytics/insights',
-      params || {}
-    )
+    return api.post<ApiResponse<CustomerInsights>>('/analytics/insights', params || {})
   },
 
   /**

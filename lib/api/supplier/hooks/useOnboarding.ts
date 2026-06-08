@@ -21,7 +21,9 @@ export function useSupplierOnboarding(organizationId?: string) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const fetchOnboarding = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -45,7 +47,9 @@ export function useSupplierOnboarding(organizationId?: string) {
 
   const updateStep = useCallback(
     async ({ stepName, data }: { stepName: string; data: Record<string, unknown> }) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsUpdatingStep(true)
       try {
@@ -69,7 +73,9 @@ export function useSupplierOnboarding(organizationId?: string) {
 
   const completeStep = useCallback(
     async (stepName: string) => {
-      if (!organizationId) {return}
+      if (!organizationId) {
+        return
+      }
 
       setIsCompletingStep(true)
       try {
@@ -89,7 +95,9 @@ export function useSupplierOnboarding(organizationId?: string) {
   )
 
   const submitForReview = useCallback(async () => {
-    if (!organizationId) {return}
+    if (!organizationId) {
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -108,7 +116,9 @@ export function useSupplierOnboarding(organizationId?: string) {
 
   // Helper computed values
   const completedSteps = useMemo(() => {
-    if (!onboarding) {return 0}
+    if (!onboarding) {
+      return 0
+    }
     return [
       onboarding.step_company_info,
       onboarding.step_business_documents,
@@ -119,13 +129,25 @@ export function useSupplierOnboarding(organizationId?: string) {
   }, [onboarding])
 
   const nextIncompleteStep = useMemo(() => {
-    if (!onboarding) {return null}
+    if (!onboarding) {
+      return null
+    }
 
-    if (!onboarding.step_company_info) {return 'company_info'}
-    if (!onboarding.step_business_documents) {return 'business_documents'}
-    if (!onboarding.step_delivery_setup) {return 'delivery_setup'}
-    if (!onboarding.step_product_categories) {return 'product_categories'}
-    if (!onboarding.step_verification) {return 'verification'}
+    if (!onboarding.step_company_info) {
+      return 'company_info'
+    }
+    if (!onboarding.step_business_documents) {
+      return 'business_documents'
+    }
+    if (!onboarding.step_delivery_setup) {
+      return 'delivery_setup'
+    }
+    if (!onboarding.step_product_categories) {
+      return 'product_categories'
+    }
+    if (!onboarding.step_verification) {
+      return 'verification'
+    }
 
     return null
   }, [onboarding])

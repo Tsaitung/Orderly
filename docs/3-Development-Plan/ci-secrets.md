@@ -311,9 +311,9 @@ gh workflow run "Deploy Staging (Permanent)" --ref staging -f force_deploy=false
 
 ## 📚 相關文檔
 
-- [deploy.yml工作流](../../.github/workflows/deploy.yml) - 主要部署工作流
+- [cd.yml 工作流](../../.github/workflows/cd.yml) - 主要部署工作流（取代已移除的 deploy.yml）
 - [deploy-staging-permanent.yml工作流](../../.github/workflows/deploy-staging-permanent.yml) - 永久配置部署工作流
-- [GCP部署腳本](../../scripts/deploy-cloud-run.sh) - Cloud Run 部署腳本
+- [CD 部署](../../.github/workflows/cd.yml) - Monolith Cloud Run 部署（取代已退役的 per-service deploy-cloud-run.sh）
 - [永久部署腳本](../../scripts/deploy-staging-permanent.sh) - 永久配置部署腳本
 - [Docker配置](../0-Design/docker-containerization-summary.md) - 容器化文檔
 

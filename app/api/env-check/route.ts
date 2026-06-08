@@ -29,12 +29,11 @@ export async function GET(req: Request) {
     process.env.ORDERLY_BACKEND_URL ||
     process.env.BACKEND_URL ||
     deriveBackendFromPublic(new URL(req.url)) ||
-    'http://localhost:8000'
-  
+    'http://localhost:8888'
+
   const nodeEnv = process.env.NODE_ENV || 'development'
-  const environment = nodeEnv === 'staging' ? 'staging' :
-                     nodeEnv === 'production' ? 'production' : 
-                     'development'
+  const environment =
+    nodeEnv === 'staging' ? 'staging' : nodeEnv === 'production' ? 'production' : 'development'
 
   return NextResponse.json({
     // 顯示原始環境變數
@@ -47,11 +46,12 @@ export async function GET(req: Request) {
     },
     // 顯示所有以 ORDERLY_ 或 BACKEND_ 開頭的環境變數
     debug_all_env: Object.fromEntries(
-      Object.entries(process.env).filter(([key]) => 
-        key.startsWith('ORDERLY_') || 
-        key.startsWith('BACKEND_') || 
-        key.startsWith('NODE_') ||
-        key.startsWith('NEXT_')
+      Object.entries(process.env).filter(
+        ([key]) =>
+          key.startsWith('ORDERLY_') ||
+          key.startsWith('BACKEND_') ||
+          key.startsWith('NODE_') ||
+          key.startsWith('NEXT_')
       )
     ),
     // 顯示計算後的配置
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
       backendUrl: BACKEND_URL,
       nodeEnv: nodeEnv,
       environment: environment,
-      debug: environment !== 'production'
+      debug: environment !== 'production',
     },
     // 驗證狀態
     validation: {
@@ -68,9 +68,9 @@ export async function GET(req: Request) {
         ORDERLY_BACKEND_URL: !!process.env.ORDERLY_BACKEND_URL,
         BACKEND_URL: !!process.env.BACKEND_URL,
       },
-      backend_url_resolved: BACKEND_URL !== 'http://localhost:8000',
+      backend_url_resolved: BACKEND_URL !== 'http://localhost:8888',
       environment_detected: environment,
       total_env_vars: Object.keys(process.env).length,
-    }
+    },
   })
 }

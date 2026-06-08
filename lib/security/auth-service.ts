@@ -147,7 +147,11 @@ class SecureAuthService {
       })
 
       // Call user service to authenticate
-      const baseUrl = process.env.USER_SERVICE_URL || 'http://localhost:3001'
+      const baseUrl =
+        process.env.USER_SERVICE_URL ||
+        process.env.ORDERLY_BACKEND_URL ||
+        process.env.BACKEND_URL ||
+        'http://localhost:8888'
       const response = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST',
         headers: {
@@ -242,7 +246,11 @@ class SecureAuthService {
       })
 
       // Call user service to register
-      const baseUrl = process.env.USER_SERVICE_URL || 'http://localhost:3001'
+      const baseUrl =
+        process.env.USER_SERVICE_URL ||
+        process.env.ORDERLY_BACKEND_URL ||
+        process.env.BACKEND_URL ||
+        'http://localhost:8888'
       const response = await fetch(`${baseUrl}/api/auth/register`, {
         method: 'POST',
         headers: {

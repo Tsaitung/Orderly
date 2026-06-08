@@ -127,10 +127,7 @@ export interface ApiClient {
  *   },
  * })
  */
-export function createApiClient(
-  baseUrl: string,
-  options: ApiClientOptions = {}
-): ApiClient {
+export function createApiClient(baseUrl: string, options: ApiClientOptions = {}): ApiClient {
   const {
     getAuthToken,
     includeCorrelationId = true,
@@ -165,16 +162,13 @@ export function createApiClient(
   /**
    * 執行請求
    */
-  const executeRequest = async <T>(
-    path: string,
-    init: RequestInit = {}
-  ): Promise<T> => {
+  const executeRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
     const correlationId = includeCorrelationId ? uuidv4() : undefined
 
     // 合併 headers
     const headers = {
       ...buildHeaders(),
-      ...(init.headers as Record<string, string> || {}),
+      ...((init.headers as Record<string, string>) || {}),
     }
 
     if (correlationId) {
@@ -258,8 +252,7 @@ export function createApiClient(
         body: body ? JSON.stringify(body) : undefined,
       }),
 
-    delete: <T>(path: string) =>
-      executeRequest<T>(path, { method: 'DELETE' }),
+    delete: <T>(path: string) => executeRequest<T>(path, { method: 'DELETE' }),
 
     request: executeRequest,
   }

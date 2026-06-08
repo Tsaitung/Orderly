@@ -3,10 +3,11 @@
 """
 
 import logging
-from typing import Optional, Dict, Any, Iterable, Set
+from typing import Optional, Dict, Any, Iterable, Mapping, Set
 from fastapi import Request, HTTPException, status
 from fastapi.security import HTTPBearer
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 from jose import jwt, JWTError, ExpiredSignatureError
 
 from orderly_fastapi_core import UnifiedSettings, get_settings
@@ -50,10 +51,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
         app,
         settings: Optional[UnifiedSettings] = None,
         public_paths: Optional[Iterable[str]] = None,
+        verification_requirements: Optional[Mapping[str, int]] = None,
     ):
         super().__init__(app)
         self.settings = settings or get_settings()
         self.public_paths: Set[str] = set(public_paths) if public_paths else set(DEFAULT_PUBLIC_PATHS)
+        self.verification_requirements = dict(verification_requirements or {})
 
     def _is_public(self, path: str) -> bool:
         if path in self.public_paths:
@@ -68,6 +71,23 @@ class AuthMiddleware(BaseHTTPMiddleware):
             or path.endswith("/api/openapi.json")
         )
 
+    def _required_verification_level(self, path: str) -> Optional[int]:
+        required_level: Optional[int] = None
+        matched_prefix_length = -1
+        for prefix, level in self.verification_requirements.items():
+            if path == prefix or path.startswith(prefix.rstrip("/") + "/"):
+                if len(prefix) > matched_prefix_length:
+                    matched_prefix_length = len(prefix)
+                    required_level = level
+        return required_level
+
+    def _payload_verification_level(self, payload: Dict[str, Any]) -> int:
+        value = payload.get("verification_level", payload.get("verificationLevel", 0))
+        try:
+            return int(value or 0)
+        except (TypeError, ValueError):
+            return 0
+
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
 
@@ -77,9 +97,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         credentials = await bearer_scheme(request)
         if credentials is None or credentials.scheme.lower() != "bearer":
-            raise HTTPException(
+            # MUST return, not raise: an HTTPException raised inside a
+            # BaseHTTPMiddleware.dispatch is not handled by FastAPI's exception
+            # handlers and surfaces as a 500. Returning yields a proper 401.
+            return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Missing bearer token",
+                content={"success": False, "error": {"code": 401, "message": "Missing bearer token"}},
             )
 
         token = credentials.credentials
@@ -91,14 +114,33 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 options={"verify_exp": True},
             )
         except ExpiredSignatureError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"success": False, "error": {"code": 401, "message": "Token has expired"}},
+            )
         except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"success": False, "error": {"code": 401, "message": "Invalid token"}},
+            )
 
         # Attach user context to request.state
         request.state.user = payload
         request.state.user_id = payload.get("sub")
         request.state.tenant_id = payload.get("tenant_id") or payload.get("org_id")
         request.state.permissions = payload.get("permissions", [])
+
+        required_level = self._required_verification_level(path)
+        if required_level is not None and self._payload_verification_level(payload) < required_level:
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "success": False,
+                    "error": {
+                        "code": 403,
+                        "message": f"Verification level {required_level} required",
+                    },
+                },
+            )
 
         return await call_next(request)

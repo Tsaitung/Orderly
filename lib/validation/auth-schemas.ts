@@ -13,7 +13,11 @@ const PASSWORD_RULES = [
   { pattern: /[A-Z]/, message: '密碼必須包含至少一個大寫字母', feedbackMsg: '需要大寫字母' },
   { pattern: /[a-z]/, message: '密碼必須包含至少一個小寫字母', feedbackMsg: '需要小寫字母' },
   { pattern: /\d/, message: '密碼必須包含至少一個數字', feedbackMsg: '需要數字' },
-  { pattern: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, message: '密碼必須包含至少一個特殊字元', feedbackMsg: '需要特殊字元' },
+  {
+    pattern: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/,
+    message: '密碼必須包含至少一個特殊字元',
+    feedbackMsg: '需要特殊字元',
+  },
 ] as const
 
 // Email validation with Taiwan business email patterns
