@@ -1,0 +1,56 @@
+# Handoff — Auth Line/Google 登入模型
+
+> Dev-reference 指引（非 FSM authority）。需求文檔已同步完成；本檔指引開發者從何處接手。
+
+## 涉及的 User Stories
+
+| ID | 標題 | 狀態 |
+|----|------|------|
+| US-AUTH-001 | 餐廳快速註冊 | modified（僅 Line）|
+| US-AUTH-002 | 供應商完整註冊 | modified（僅 Line）|
+| US-AUTH-003 | 標準登入流程 | modified（Line 主 / Google 次）|
+| US-AUTH-004 | 密碼重設 | **Deprecated** |
+| US-AUTH-005 | 帳戶驗證等級 | modified（Level 1 → Line）|
+| US-AUTH-006 | Line 主要登入與 Google 次要綁定 | renamed+modified |
+| US-AUTH-007 | MFA 雙因素驗證 | modified（移除 Email OTP）|
+| US-AUTH-008 | Google 綁定與次要登入 | renamed+modified |
+| US-AUTH-010 | 組織用戶管理 | modified（綁定狀態 Line/Google）|
+| US-AUTH-014 | 行動裝置生物辨識 | modified（回退社群）|
+| US-AUTH-016 | 平台用戶登入（Line/Google + 強制 MFA）| renamed+modified |
+| US-AUTH-021 | 受邀加入並確認合作關係 | modified |
+| US-AUTH-022 | 社群帳號恢復（取代密碼重設）| **added** |
+
+## 需求與規格文件路徑
+
+- US（主）：`docs/1-User-Story/by-module/01-auth-user-management.md`
+- PRD（主，§0 權威）：`docs/2-PRD/PRD-Auth-Module.md`
+- Specs（§0 權威）：`docs/0-Design/technical-architecture-auth.md`
+- API（runtime-derived contract）：`docs/0-Design/API-Endpoints-Essential.md`（登入段已改 OAuth）
+
+## 測試與追溯文件路徑
+
+- Test Plan：`docs/4-Test/smoke-tests.md`（Auth Test Plan 段）
+- 落差盤點：`docs/3-Development-Plan/PRD-US-GAP-REPORT.md`（GAP-AUTH-003/004/005 相關）
+- 衍生計數：`docs/1-User-Story/INDEX.md`、`docs/2-PRD/INDEX.md`（AUTH 22 / 總計 106）
+- Diff manifest：本 packet `diff-manifest.md`
+
+## 已存在 code 位置
+
+- 後端 OAuth（已部分有 line/google）：`backend/app/modules/users/api/v1/oauth.py`（initiate/callback/unlink/providers）
+- 後端密碼/登入（待移除）：`backend/app/modules/users/api/v1/auth.py`、`.../password.py`
+- 前端登入頁（待重構）：`app/(auth)/login/page.tsx`（目前 email/password 表單）
+
+## 待實作 code 位置（新增）
+
+- social-bindings 綁定/解綁（保留至少一）：`backend/app/modules/users/api/v1/`（新端點）（待實作）
+- account-recovery 人工恢復：`backend/app/modules/users/api/v1/`（新端點）（待實作）
+- 平台供裝允許名單 + 強制 MFA：user-service auth/oauth 邏輯（待實作）
+- 前端設定頁 Google 綁定 + onboarding 引導（待實作）
+
+## 已知 runtime/doc drift 與下一步 exact start
+
+1. 登入頁仍 email/password（`app/(auth)/login/page.tsx`）↔ 文檔已改 Line/Google → **下一步**：先做 `tasks.md` T0.1 plan-review + T0.2 production 密碼帳號盤點，再 T1 RED 測試。
+2. 後端仍有 password 端點 ↔ 文檔停用 → T2.3 移除。
+3. OAuth token claims 與 auth claims 可能不一致（GAP-AUTH-004）→ T2.1 統一 claims。
+
+**Exact start**：執行 `tasks.md` T0.1（plan-review，auth 高風險），不得跳過。
