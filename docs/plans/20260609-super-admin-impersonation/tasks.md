@@ -41,6 +41,7 @@
 - **T2.4** 跨租戶隔離（INV-auth-003）+ header tenant 調和
   - 依賴：T2.3
   - 產出：effective tenant = 目標租戶；不可讀其他租戶。**header 調和**：orders/products/billing 的 tenant helper（`get_tenant_id` 讀 client `X-Tenant-Id`/`X-Org-Id`：orders.py:37、products.py:252、billing/fee_configs.py:27、customer_prices.py:88）impersonation 下改以 `request.state.tenant_id`(effective) 為準；若 client header 存在且與 effective 不符 → 403（防 client 竄改 header 跨租戶）
+  - **全掃 note**：讀 client `X-Tenant-Id`/`X-Org-Id` 的 endpoint **不止列舉 4 個**——實作時 `grep -rl "X-Tenant-Id\|X-Org-Id" backend/app/modules/` 全掃（現 10 檔：billing 3 + orders 1 + products 6），逐一調和，勿只改範例
   - 驗收：T0.2 轉綠；**≥1 條 orders/products/billing route 整合測試**：act-as 帶 effective=B 但送 `X-Tenant-Id=A` → 回 403（不外洩 A）；不送 header 時用 effective=B
 - **T2.5** impersonation audit（不可關閉，複用既有 `AuditLog`）
   - 依賴：T2.3
