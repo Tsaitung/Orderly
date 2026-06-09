@@ -18,7 +18,7 @@
 |------|------|------|
 | `naming-canonical` | 專案代號 / service name / route / domain / package / table 命名規則 | `docs/references/canonical-vocabulary.md` 或 `docs/references/doc-governance-vocabulary.yaml`；缺對應 home 時建議新建 `docs/references/canonical-vocabulary.md`（on demand；Orderly 尚未建立）|
 | `architectural-decision-frozen` | 架構抉擇（凍結後）— 例：authority chain 變更、cross-module pattern、storage backend、auth model | `docs/adr/ADR-NNN-*.md`（NNN = 既有最大流水號 + 1）|
-| `tech-debt-with-exit-trigger` | legacy code / workaround / deprecated surface + 明確 exit trigger | `docs/governance/deprecation-roadmap.md` 或 `docs/plans/todo.md`（Orderly 無專屬 legacy-debt-ledger；4 種 disposition：execute-now / defer-once / permanent-compatibility / retire）|
+| `tech-debt-with-exit-trigger` | legacy code / workaround / deprecated surface + 明確 exit trigger | `docs/governance/deprecation-roadmap.md` 或 `docs/3-Development-Plan/todo.md`（Orderly 無專屬 legacy-debt-ledger；4 種 disposition：execute-now / defer-once / permanent-compatibility / retire）|
 | `operator-procedure` | 部署 rollout / migration / incident response 步驟 | `docs/plans/runbooks/*.md` |
 | `incident-postmortem` | 故障還原、根因、修復後保留的 historical evidence | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
 | `business-requirement` | 新 / 變更的 US / FR / Spec 條款 | `docs/1-User-Story/by-module/NN-*.md` + `docs/2-PRD/PRD-*.md` + `docs/0-Design/*.md`（**禁止本 skill 直接寫**；走 `us-edit` skill handoff）|
@@ -143,7 +143,7 @@ verification 結果**必須持久化**到 harvest extraction-report 內 `§0 Ver
 
 - naming canonical → patch `docs/references/canonical-vocabulary.md` 或 `docs/references/doc-governance-vocabulary.yaml`
 - architectural decision → 新建 `docs/adr/ADR-NNN-*.md`（流水號 = 既有最大 + 1）
-- tech debt → append 列至 `docs/governance/deprecation-roadmap.md` 或 `docs/plans/todo.md`（需 disposition + exit trigger）
+- tech debt → append 列至 `docs/governance/deprecation-roadmap.md` 或 `docs/3-Development-Plan/todo.md`（需 disposition + exit trigger）
 - operator procedure → 新建或更新 `docs/plans/runbooks/*.md`
 - incident postmortem → 新建 `docs/incidents/{YYYY-MM-DD}-{slug}.md`
 - business requirement → **不直接寫**；輸出 `us-edit` handoff brief 給使用者，明列要動哪幾條 US / FR / Spec

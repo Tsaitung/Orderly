@@ -6,7 +6,7 @@
     {
       "id": "smoke-01",
       "name": "hold-draft-terminate",
-      "prompt": "幫我對 docs/plans/CI-CD-ARCHITECTURE.md 跑 health-check。如果所有項目都是 Hold/Draft 且沒有 actionable drift，產出 completion summary 後就終止。",
+      "prompt": "幫我對 docs/3-Development-Plan/CI-CD-ARCHITECTURE.md 跑 health-check。如果所有項目都是 Hold/Draft 且沒有 actionable drift，產出 completion summary 後就終止。",
       "expected_output": "A scoped health-check that terminates without human pause, producing a Completion Summary.",
       "intent": "inspect-only",
       "fsm_path": "inspecting → closed",

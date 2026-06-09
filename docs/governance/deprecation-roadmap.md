@@ -14,4 +14,4 @@
 |----|------|------|--------------------------|-------------|-------------|
 | _（尚無登錄項；新增 tech-debt 時填此表，勿留在 plan packet / handoff）_ | | | | | |
 
-> 候選（待確認後登錄，非保證為 debt）：`docs/plans/CI-CD-TROUBLESHOOTING-GUIDE.md` dangling 引用（`plan.md` / `DEVELOPMENT-PLAN.md` 指向不存在檔，真實檔為 `DEPLOYMENT-TROUBLESHOOTING.md`）。
+> 候選（待確認後登錄，非保證為 debt）：`docs/3-Development-Plan/CI-CD-TROUBLESHOOTING-GUIDE.md` dangling 引用（`plan.md` / `DEVELOPMENT-PLAN.md` 指向不存在檔，真實檔為 `DEPLOYMENT-TROUBLESHOOTING.md`）。

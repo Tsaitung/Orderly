@@ -2,9 +2,11 @@
 
 Orderly-specific 路徑、命名規則、scope 定義。
 
-> 背景：Orderly `docs/` 在 2026-06-06 由編號式（`0-Design` / `1-User-Story` / `2-PRD` /
-> `3-Development-Plan` / `4-Test`）改名為與 sibling repo HelloGlow 一致的扁平命名
-> （`system-spec` / `user-stories` / `prd` / `plans` / `testing` + 新增 `adr`）。
+> 背景：Orderly `docs/` 採**編號式**頂層命名（`0-Design` / `1-User-Story` / `2-PRD` /
+> `3-Development-Plan` / `4-Test` + `docs/plans/` 治理 run-state + 新增 `adr` / `governance` /
+> `references` / `incidents`）。本 skill 由 sibling repo `helloglow-doc-governance` 移植，
+> 原本對應 HelloGlow 的扁平命名（`system-spec` / `user-stories` / `prd` / `testing`），已全數
+> re-point 為 Orderly 的編號 taxonomy；HelloGlow 那套扁平改名在 Orderly **未採用**。
 
 ## Paths
 
@@ -65,20 +67,22 @@ Orderly-specific 路徑、命名規則、scope 定義。
 - `promoted-durable-knowledge`
   - `docs/references/` — active promoted knowledge（on demand；Orderly 尚未建立）
   - `docs/references/history/` — archived residue from completed governance runs（historical-only）
-  - `docs/plans/runbooks/`（Orderly 目前 `docs/plans/Infra-Runbook.md` 在根層；新 runbook 進 `runbooks/`）
+  - `docs/plans/runbooks/`（Orderly 目前 `docs/3-Development-Plan/Infra-Runbook.md` 在 dev-plan 區；新 runbook 進 `docs/plans/runbooks/`）
   - `docs/plans/governance-ledger.md`
 - `curated-durable-doc`（Orderly-specific）
-  - `docs/plans/` 根層的開發計畫文件（`CI-CD-ARCHITECTURE.md`、`DEPLOYMENT-*.md`、`DEVELOPMENT-PLAN.md`、`ci-secrets.md`、`PERFORMANCE-OPTIMIZATION-SUMMARY.md`、`PRD-US-GAP-REPORT.md` 等）
-  - 這些是**長存 curated 文件**，不是 ephemeral governance run；治理 run-state 只住在 dated `{run-id}/` 子目錄 + `health-check-*.md` + `governance-ledger.md`
+  - `docs/3-Development-Plan/` 的開發計畫文件（`CI-CD-ARCHITECTURE.md`、`DEPLOYMENT-*.md`、`DEVELOPMENT-PLAN.md`、`ci-secrets.md`、`PERFORMANCE-OPTIMIZATION-SUMMARY.md`、`PRD-US-GAP-REPORT.md`、`Infra-Runbook.md` 等）
+  - 這些是**長存 curated 文件**，住在 `docs/3-Development-Plan/`，不是 ephemeral governance run；治理 run-state 住在 `docs/plans/` 的 dated `{run-id}/` 子目錄 + `health-check-*.md` + `governance-ledger.md`
 - `transient-work-artifact`
   - `docs/plans/{date}-*/compact/*.md`
   - `docs/plans/{date}-*/*packet*.md`
   - scoped review / rewrite artifacts under `docs/plans/{date}-*/`
   - raw audit / verification artifacts before promotion
 
-> **重要分界**：HelloGlow `docs/plans/` 幾乎全是 ephemeral run packet。Orderly `docs/plans/`
-> 根層同時放**長存的開發計畫 curated 文件**。Content Residency / harvest 規則只針對 dated
-> `{run-id}/` 子目錄與治理產物，**不得**把根層 curated 開發文件當成 plan packet 來瘦身或刪除。
+> **重要分界**：HelloGlow `docs/plans/` 幾乎全是 ephemeral run packet。Orderly 把**長存的開發
+> 計畫 curated 文件**放在 `docs/3-Development-Plan/`，`docs/plans/` 只放 governance run-state
+> （dated `{run-id}/` 子目錄、`governance-ledger.md`、`runbooks/`、`health-check-*.md`、`README.md`）。
+> Content Residency / harvest 規則只針對 `docs/plans/` 的 dated `{run-id}/` 子目錄與治理產物，
+> **不得**把 `docs/3-Development-Plan/` 的 curated 開發文件當成 plan packet 來瘦身或刪除。
 
 ## Knowledge Ownership Types
 
@@ -132,7 +136,7 @@ Orderly 後端為微服務；`wire-contract` class 的 source of truth 依服務
 folder 只提供 discovery prior，不提供最終 authority。
 
 - `docs/plans/{date}-*/` 預設應以 `execution-sequencing` 為主
-- `docs/plans/` 根層 curated 開發文件預設為 `reusable-operational-rule` / `curated-durable-doc`
+- `docs/3-Development-Plan/` curated 開發文件預設為 `reusable-operational-rule` / `curated-durable-doc`
 - `docs/references/` 預設應以 stable truth / reference 為主
 - `docs/references/history/` 預設應以 archived historical residue 為主（不作為 active reference）
 - `docs/0-Design/` 預設應以 technical contract / design 為主

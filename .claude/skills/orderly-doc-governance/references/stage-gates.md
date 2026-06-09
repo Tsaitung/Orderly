@@ -100,7 +100,7 @@ health-check 完成後，依 Guard Result 分流：
   |---|---|
   | `naming-canonical` | `docs/references/canonical-vocabulary.md` / `doc-governance-vocabulary.yaml` |
   | `architectural-decision-frozen` | `docs/adr/ADR-NNN-*.md`（必須有真正 trade-off；外部平台限制不算 ADR-worthy）|
-  | `tech-debt-with-exit-trigger` | `docs/governance/deprecation-roadmap.md` 或 `docs/plans/todo.md` |
+  | `tech-debt-with-exit-trigger` | `docs/governance/deprecation-roadmap.md` 或 `docs/3-Development-Plan/todo.md` |
   | `operator-procedure` | `docs/plans/runbooks/*.md` |
   | `incident-postmortem` | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
   | `business-requirement` | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
