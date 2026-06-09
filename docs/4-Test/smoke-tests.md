@@ -18,6 +18,35 @@ Quick checks for user endpoints via the API Gateway and directly against the use
 
 > **⚠️ 已停用**：下方 forgot-password / reset-password smoke 隨密碼廢除而停用，保留作歷史對照。
 
+## Auth Test Plan — Impersonation / Act-as（超管模擬登入，2026-06-09）
+
+> 對應 US-AUTH-023/024、PRD Section 2.5、`docs/0-Design/technical-architecture-auth.md` §10.3、ADR-0005、INV-auth-003。design-stage Test Plan，待 impersonation 端點實作後轉為 `tests/integration` 可執行測試。
+
+**化身權限（act-as 目標角色，非 God mode）**
+- [ ] `super_admin` 對某 `restaurant_operator` 發起模擬 → effective `role`/`permissions` 等於該 operator；嘗試該 operator 不可做的操作（如改價目）回 403
+- [ ] 模擬 token **不**含 `super_user` override/bypass；嘗試 override 業務規則被拒
+- [ ] 非 `super_admin` 呼叫 `POST /auth/impersonation/start` 回 403
+
+**租戶 context 與隔離（INV-auth-003）**
+- [ ] 模擬 session 的 effective `tenant_id` = 目標帳號租戶；下游查詢仍帶 `tenant_id`（INV-auth-001 不破）
+- [ ] 模擬 A 租戶帳號時，讀不到 B 租戶資料（跨租戶隔離仍成立，只是 effective tenant 改為目標）
+- [ ] token / 每筆 audit 同時含 `actor_id`（超管）與 `impersonated_user_id`（雙 context 可回溯真實發起者）
+
+**Session 生命週期與入口**
+- [ ] `POST /auth/impersonation/start { target_user_id }` 簽發帶 `act_as` claim 的 token；`GET /auth/impersonation/current` 回正確 actor/impersonated/tenant/expires
+- [ ] `POST /auth/impersonation/stop` 還原超管原 session
+- [ ] 模擬 session 逾 TTL 自動失效，需重新發起
+- [ ] 使用者清單（US-AUTH-009）每列「切換到此帳號」可發起模擬；非 super_admin 不顯示該入口
+- [ ] 發起模擬要求超管 MFA 已通過
+
+**角色切換預覽（view-as，US-AUTH-024）**
+- [ ] `POST /auth/role-switch { preview_role }` 改變介面導航/可見功能分區，但不授予特定租戶寫入權
+- [ ] 切換與還原皆記錄審計（`actor_id` + 預覽角色 + `timestamp`）
+
+**審計不可關閉**
+- [ ] 模擬期間所有寫入操作 → `audit_logs` 出現 `impersonation`（actor + impersonated + tenant），欄位非空
+- [ ] `start` / `stop` 本身亦寫入審計
+
 ## Prerequisites
 
 - Services running locally (user-service default `:3001`, api-gateway default `:3000`).

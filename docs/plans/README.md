@@ -4,7 +4,7 @@
 
 | Packet | 主題 | 狀態 | KEEP-until | 入口 |
 |--------|------|------|------------|------|
-| _（無 active design packet；全部已 harvest 退役，見下方退役清單）_ | | | | |
+| [20260609-super-admin-impersonation](./20260609-super-admin-impersonation/) | Super Admin 帳號模擬登入（act-as 化身目標角色）+ 角色切換 | ready_for_review（design complete → ready_for_implementation）| 2026-06-16 | [run](./20260609-super-admin-impersonation/run.md) · [handoff](./20260609-super-admin-impersonation/handoff.md) |
 
 > 已退役（2026-06-09 harvest，promote-then-delete）：
 > - `20260607-backend-monolith-step0-3/` → [ADR-0003](../adr/ADR-0003-backend-modular-monolith-consolidation.md)；審計軌 `docs/references/history/20260607-backend-monolith-step0-3-harvest.md`

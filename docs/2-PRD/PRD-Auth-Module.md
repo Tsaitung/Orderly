@@ -150,6 +150,45 @@ Based on current system analysis:
 4. Refresh：`/auth/refresh` 以 Refresh Token 交換新 Access Token，可於 Redis/DB 吊銷。
 5. MFA（可選 / 平台端強制）：支援 TOTP、SMS（**不含 Email OTP**），啟用後登入需額外通過 MFA。
 
+### 2.5 Impersonation / Act-as（模擬登入與角色切換）
+
+> **新增（2026-06-09）**：定義 `super_admin` 充當任何帳號/角色、進入任意租戶（餐廳或供應商）操作的能力。架構決策凍結於 [ADR-0005](../adr/ADR-0005-auth-super-admin-impersonation.md)；租戶隔離例外見 `docs/0-Design/business-invariants.md` INV-auth-003。技術規格見 `docs/0-Design/technical-architecture-auth.md` §10.3。對應 US：US-AUTH-023、US-AUTH-024。
+
+**動機**：`super_admin` 需能以平台維運者身分，從使用者清單為起點，切換進任一公司/供應商帳號，提供支援、重現使用者問題並驗證跨租戶流程。
+
+**權限模型決策（化身目標角色，非 God mode）**：
+
+- 模擬（impersonation / act-as）期間，`super_admin` 以**被模擬帳號的實際 `role` + `permissions`** 在其 `tenant_id` 內運作；**不**獲得超出該角色的權限。
+- 此模型與 [§2.2 `super_user` 緊急跨組織存取](#22-new-super-user-permission) 為**兩種獨立機制**：
+  - `super_user`：緊急 break-glass，附加權限標記，跨租戶 override/bypass，24h 過期，>1h 雙人核准。
+  - impersonation：日常支援/維運，化身單一帳號、受目標角色約束、不 override，session 時限自動到期。
+  - 兩者不混用、不互相繼承權限；impersonation **不**繼承 `super_user` 的 override/bypass。
+- 角色切換（view-as role，US-AUTH-024）為**介面預覽**用途；要在特定租戶實際寫入須走帳號模擬（US-AUTH-023）。
+
+**租戶隔離調和（INV-auth-003）**：
+
+- 模擬 session 的 effective `tenant_id` = 目標帳號租戶；後端查詢據此正常帶租戶條件（不破壞 INV-auth-001 的「查詢必帶 tenant_id」）。
+- token 與 audit 同時記錄**真實 actor**（`super_admin` id）與**被模擬 user**（`impersonated_user_id`），形成雙 context；任一操作可回溯真實發起者。
+
+**Impersonation 權限矩陣**：
+
+| 能力 | `super_user`（緊急） | Impersonation（化身） | Role Switch（預覽） |
+|------|:--------------------:|:---------------------:|:-------------------:|
+| 進入他人租戶 | ✓（跨租戶同時可見）| ✓（化身單一帳號，effective tenant=目標）| ✗（僅介面視角）|
+| 權限範圍 | 超集 + override/bypass | 等同目標角色，受其約束 | 等同預覽角色（檢視）|
+| Override 業務規則 | ✓（with justification）| ✗ | ✗ |
+| 時限 | 24h 預設 | session 時限自動到期 | 即時切換/還原 |
+| 啟用前置 | MFA + 原因 +（>1h 雙核准）| MFA 已通過 +（可選原因）| 超管身分即可 |
+| 審計 | 完整（actor）| 完整（actor + impersonated + tenant）| 切換事件記錄 |
+| 顯著標示 | — | 全程橫幅 + 一鍵退出 | 預覽角色標示 + 還原 |
+
+**API（規格層，狀態：planned；實作後由 OpenAPI 同步）**：
+
+- `POST /auth/impersonation/start`：body `{ target_user_id, reason? }` → 簽發帶 `act_as` claim 的模擬 token（effective tenant = 目標租戶）。
+- `POST /auth/impersonation/stop`：結束模擬，還原超管原 session。
+- `GET /auth/impersonation/current`：回傳目前模擬狀態（actor、impersonated、tenant、到期時間）。
+- `POST /auth/role-switch`（view-as）：body `{ preview_role }` → 以該角色視角呈現介面（不綁特定租戶寫入權）。
+
 ---
 
 ## 3. 用戶註冊流程（全中文）

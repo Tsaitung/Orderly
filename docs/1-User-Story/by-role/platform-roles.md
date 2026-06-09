@@ -1,6 +1,6 @@
 # 平台端角色 User Story 索引
 
-> 最後更新: 2025-12-16
+> 最後更新: 2026-06-09
 > 狀態: Active
 
 本文件彙整所有與平台端角色相關的 User Story 連結索引。
@@ -12,9 +12,9 @@
 平台設定、租戶審核、跨租戶稽核。
 
 ### 身份驗證與用戶管理
-- [US-AUTH-008: 使用者清單管理](../by-module/01-auth-user-management.md#us-auth-008-使用者清單管理)
-- [US-AUTH-011: Super User 跨組織存取](../by-module/01-auth-user-management.md#us-auth-011-super-user-跨組織存取)
-- [US-AUTH-012: 進階安全設定](../by-module/01-auth-user-management.md#us-auth-012-進階安全設定)
+- [US-AUTH-009: 使用者清單管理](../by-module/01-auth-user-management.md#us-auth-009-使用者清單管理)
+- [US-AUTH-012: Super User 跨組織存取](../by-module/01-auth-user-management.md#us-auth-012-super-user-跨組織存取)
+- [US-AUTH-013: 進階安全設定](../by-module/01-auth-user-management.md#us-auth-013-進階安全設定)
 
 ### 商品與 SKU 管理
 - [US-PRD-009: 維護標準化分類樹](../by-module/02-product-sku-management.md#us-prd-009-維護標準化分類樹)
@@ -60,8 +60,10 @@
 全系統控制、緊急存取。
 
 ### 身份驗證與權限
-- [US-AUTH-011: Super User 跨組織存取](../by-module/01-auth-user-management.md#us-auth-011-super-user-跨組織存取)
-- [US-AUTH-012: 進階安全設定](../by-module/01-auth-user-management.md#us-auth-012-進階安全設定)
+- [US-AUTH-012: Super User 跨組織存取（緊急 break-glass）](../by-module/01-auth-user-management.md#us-auth-012-super-user-跨組織存取)
+- [US-AUTH-013: 進階安全設定](../by-module/01-auth-user-management.md#us-auth-013-進階安全設定)
+- [US-AUTH-023: 超管帳號模擬登入（Impersonation / Act-as）](../by-module/01-auth-user-management.md#us-auth-023-超管帳號模擬登入impersonation--act-as)
+- [US-AUTH-024: 超管角色切換預覽（Role Switch / View-as）](../by-module/01-auth-user-management.md#us-auth-024-超管角色切換預覽role-switch--view-as-role)
 
 ### 系統管理
 - [US-HIER-006: 資料遷移管理](../by-module/06-customer-hierarchy.md#us-hier-006-資料遷移管理)
@@ -75,7 +77,7 @@
 |------|---------|---------|------|
 | platform_admin | 強制 (TOTP) | 跨租戶 | 平台設定、租戶審核 |
 | platform_support | 強制 | 受限跨租戶 | 客服、營運支援 |
-| super_admin | 強制 (TOTP + Biometric) | 全系統 | 緊急存取、系統控制 |
+| super_admin | 強制 (TOTP + Biometric) | 全系統 | 緊急存取（`super_user` break-glass）、系統控制、帳號模擬登入（act-as，化身目標角色，US-AUTH-023）|
 
 ---
 

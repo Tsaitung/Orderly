@@ -263,6 +263,7 @@
 - [ ] 清單載入 <1 秒，搜尋 <500ms
 - [ ] 支援批量啟用/停用/角色指派
 - [ ] 顯示使用者總數、活躍數、停用數
+- [ ] 每列提供「切換到此帳號」動作（限 super_admin），作為帳號模擬登入起點（見 US-AUTH-023）
 
 **來源**: [PRD-Auth-Module.md](../../2-PRD/PRD-Auth-Module.md) Section 9.1
 
@@ -453,6 +454,49 @@
 
 ---
 
+## 平台超管：模擬登入與角色切換
+
+### US-AUTH-023: 超管帳號模擬登入（Impersonation / Act-as）
+**角色**: super_admin（系統超管）
+**優先級**: P1
+**狀態**: Active（本次新增）
+
+> **設計決策（2026-06-09）**：採「化身目標帳號角色」模型——模擬時以**目標帳號的實際角色權限集**在其租戶內操作，而非超管全權超集（God mode）。與既有 US-AUTH-012（緊急 break-glass `super_user`）為**兩種不同機制**，不混用。授權邊界凍結於 [ADR-0005](../../adr/ADR-0005-auth-super-admin-impersonation.md)，租戶隔離例外見 `docs/0-Design/business-invariants.md` INV-auth-003。
+
+**故事**: 作為系統超管，我希望能從使用者清單選任一帳號「切換到此帳號」並以其身分進入所屬公司或供應商操作，以便提供支援、重現問題與驗證跨租戶流程
+
+**驗收標準**:
+- [ ] 入口：使用者清單（US-AUTH-009）每列提供「切換到此帳號」動作；帳號選單亦提供切換入口（角色切換起始點）
+- [ ] 化身權限：模擬 session 以**目標帳號的實際 role + permissions** 在其 `tenant_id` 內運作；超管不獲得超出目標角色的權限
+- [ ] 租戶 context：effective `tenant_id` = 目標租戶；token 同時攜帶真實 actor（super_admin id）與被模擬 user id（雙 context，見 INV-auth-003）
+- [ ] 顯著標示：全程顯示「正在以 {帳號} 身分操作」橫幅 + 一鍵退出回超管身分
+- [ ] 時限：模擬 session 有最長存活時間並自動到期；逾時需重新發起
+- [ ] 完整審計：每筆操作記錄 `actor_id`（超管）、`impersonated_user_id`、`tenant_id`、`action`、`timestamp`；審計不可關閉
+- [ ] 不繞過約束：模擬期間仍受目標角色權限與業務規則約束，**不繼承** `super_user` 的 override/bypass 能力
+- [ ] 安全前置：發起模擬需超管 MFA 已通過；可選填發起原因
+
+**來源**: [PRD-Auth-Module.md](../../2-PRD/PRD-Auth-Module.md) Section 2.5、[ADR-0005](../../adr/ADR-0005-auth-super-admin-impersonation.md)
+
+---
+
+### US-AUTH-024: 超管角色切換預覽（Role Switch / View-as Role）
+**角色**: super_admin（系統超管）
+**優先級**: P2
+**狀態**: Active（本次新增）
+
+**故事**: 作為系統超管，我希望能從帳號選單切換為某「角色視角」預覽平台介面與權限分區，以便檢視各角色實際看到的導航與功能
+
+**驗收標準**:
+- [ ] 帳號選單提供「切換角色」清單（restaurant_* / supplier_* / platform_* 各角色視角）
+- [ ] 切換後以該角色的權限分區呈現導航與可見功能（預覽導向）
+- [ ] 顯著標示目前預覽角色 + 可一鍵還原超管視角
+- [ ] 預覽 vs 實際操作界線：角色切換用於檢視；要在特定租戶實際操作須走帳號模擬（US-AUTH-023）
+- [ ] 角色切換行為記錄審計（`actor_id` + 預覽角色 + `timestamp`）
+
+**來源**: [PRD-Auth-Module.md](../../2-PRD/PRD-Auth-Module.md) Section 2.5
+
+---
+
 ## 功能需求對照表
 
 | 功能 | 餐廳端 | 供應端 | 平台端 | User Story |
@@ -476,8 +520,11 @@
 | **平台登入（Line/Google + 強制 MFA）** | ❌ | ❌ | 🔒 | US-AUTH-016 |
 | **行動瀏覽器支援** | ✅ | ✅ | 📱 | US-AUTH-017 |
 | **原生 App（iOS/Android）** | ✅ | ✅ | ❌ | US-AUTH-018 |
+| **超管帳號模擬登入（Act-as）** | ❌ | ❌ | 🔒 | US-AUTH-023 |
+| **超管角色切換預覽（View-as）** | ❌ | ❌ | 🔒 | US-AUTH-024 |
 
 > 圖例: ✅ 完整功能 | 👁️ 僅檢視 | ❌ 不適用 | 🔒 強制啟用 | ⚙️ 可選啟用 | 📱 限 Web 管理後台
+> 註：超管模擬/切換（US-AUTH-023/024）為 `super_admin` 專屬，平台端欄位以 🔒 表示僅超管可用。
 
 ---
 

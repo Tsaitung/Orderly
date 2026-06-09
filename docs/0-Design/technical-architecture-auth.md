@@ -1346,6 +1346,89 @@ class SuperUserAuditLogger {
 
 ---
 
+### 10.3 Impersonation / Act-as Session System (2026-06-09)
+
+> Distinct from §10.1–10.2 `super_user` emergency break-glass. Impersonation lets a
+> `super_admin` *become* a single target account and operate **constrained to that
+> account's role**, inside that account's tenant. Frozen in
+> [ADR-0005](adr/ADR-0005-auth-super-admin-impersonation.md); tenant-isolation
+> exception is `INV-auth-003` in [business-invariants.md](business-invariants.md).
+> User stories: US-AUTH-023 (impersonation), US-AUTH-024 (role switch / view-as).
+
+#### 10.3.1 Model — Act-as Target Role (not God mode)
+
+- During impersonation the effective authorization context is the **target user's
+  actual `role` + `permissions`**, NOT a union/superset of all roles.
+- Impersonation does **not** grant, and does **not** inherit, the `super_user`
+  override/bypass capabilities (§2.2 matrix). A super_admin acting-as a
+  `restaurant_operator` can only do what that operator could do, within that tenant.
+- `role-switch` (view-as, US-AUTH-024) is a UI preview lens only; it scopes navigation
+  to a role's permission partition and does not by itself grant write access to any
+  specific tenant. Real writes into a tenant go through account impersonation.
+
+#### 10.3.2 Impersonation Token & Tenant Context
+
+```typescript
+interface ImpersonationClaims {
+  // Standard subject = the EFFECTIVE identity used for authorization
+  sub: string                 // impersonated_user_id (effective principal)
+  tenant_id: string           // EFFECTIVE tenant = target account's tenant
+  role: string                // EFFECTIVE role = target account's role
+  permissions: string[]       // EFFECTIVE permissions = target account's permissions
+
+  // Dual-context: who is REALLY driving this session (INV-auth-003)
+  act_as: {
+    actor_id: string          // real super_admin user id
+    actor_role: 'super_admin'
+    started_at: string        // ISO8601
+    expires_at: string        // session TTL — auto-expires
+    reason?: string           // optional justification captured at start
+  }
+}
+```
+
+Authorization rule: downstream services authorize using `sub` / `tenant_id` / `role` /
+`permissions` exactly as for a normal session, so tenant-scoped queries keep carrying a
+`tenant_id` (INV-auth-001 holds). The `act_as` block is **not** used for authorization —
+only for audit attribution and the UI banner. There is no code path where `act_as`
+widens `permissions` beyond the target role.
+
+#### 10.3.3 API Endpoints (status: planned — synced to OpenAPI after implementation)
+
+```
+POST /auth/impersonation/start    { target_user_id, reason? } -> { impersonation_token, expires_at }
+POST /auth/impersonation/stop     {}                          -> { restored: true }
+GET  /auth/impersonation/current  {}                          -> { actor_id, impersonated_user_id, tenant_id, expires_at } | null
+POST /auth/role-switch            { preview_role }            -> { preview_role }   // view-as, no tenant write grant
+```
+
+Guards on `/auth/impersonation/start`:
+- caller must be `super_admin` with a valid, MFA-passed session
+- `target_user_id` must resolve to an active account; resolve its `tenant_id` / `role` / `permissions`
+- issue a short-TTL impersonation token; original super_admin session is retained server-side for `stop`
+
+#### 10.3.4 Impersonation Audit (always-on)
+
+Every request made under an impersonation token MUST emit an audit event carrying both
+identities, so actions are traceable to the real actor:
+
+```typescript
+interface ImpersonationAuditEvent extends AuditEvent {
+  impersonation: {
+    actor_id: string            // real super_admin
+    impersonated_user_id: string
+    tenant_id: string           // effective tenant
+    session_started_at: string
+  }
+}
+```
+
+Audit cannot be disabled for impersonated sessions. `start` / `stop` themselves are
+audited. This satisfies US-AUTH-023 acceptance (`actor_id` + `impersonated_user_id` +
+`tenant_id` + `action` + `timestamp`).
+
+---
+
 ## 11. Audit Logging Architecture
 
 ### 11.1 Audit Event Structure
