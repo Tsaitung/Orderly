@@ -19,3 +19,13 @@
 
 ## 4. Test
 - `docs/4-Test/INDEX.md`
+
+## Governance & References
+> 由 `orderly-doc-governance` skill 治理；canonical homes 見各檔。
+- `docs/adr/` — Architecture Decision Records（`ADR-NNN-*.md`）
+- `docs/governance/deprecation-roadmap.md` — tech-debt exit-trigger roadmap
+- `docs/references/canonical-vocabulary.md` — canonical naming vocabulary
+- `docs/references/doc-governance-vocabulary.yaml` — vocabulary schema
+- `docs/incidents/` — incident postmortems（`{YYYY-MM-DD}-{slug}.md`）
+- `docs/plans/governance-ledger.md` — governance run closeout ledger
+- `docs/0-Design/business-invariants.md` — cross-module business invariants（`INV-*`）
