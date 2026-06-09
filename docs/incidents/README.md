@@ -16,4 +16,4 @@
 ## Ledger
 | Date | Slug | Severity | Module | Root cause（摘要） |
 |------|------|----------|--------|--------------------|
-| _（尚無事故登錄）_ | | | | |
+| 2026-06-08 | [monolith-reroot-drift](2026-06-08-monolith-reroot-drift.md) | medium (averted) | backend 部署層 | re-root 搬走 `app/` 但 `cd.yml` `COPY ${SERVICE_PATH}/app` + 8-service matrix 未同步 → CD 將部署空殼；部署前守衛攔截 |

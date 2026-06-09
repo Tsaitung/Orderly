@@ -27,7 +27,7 @@
     {
       "id": "harvest-truth-02",
       "name": "frozen-decision-no-canonical-home",
-      "prompt": "對 `docs/plans/20260601-fictional-routing-policy/` 跑 /orderly-doc-governance harvest。該資料夾的 plan.md 的 `Frozen Decisions` 列出 decision F1「API routing policy：prefer hash-based load balancing」。handoff.md 寫「Frozen and applied」。但你 grep `docs/adr/`、`docs/0-Design/`、`docs/2-PRD/`、`docs/plans/runbooks/` 時，沒有任何 canonical home 含這個 decision。決定 source disposition。",
+      "prompt": "對 `docs/plans/20260601-fictional-routing-policy/` 跑 /orderly-doc-governance harvest。該資料夾的 plan.md 的 `Frozen Decisions` 列出 decision F1「API routing policy：prefer hash-based load balancing」。handoff.md 寫「Frozen and applied」。但你 grep `docs/adr/`、`docs/0-Design/`、`docs/2-PRD/`、`docs/governance/runbooks/` 時，沒有任何 canonical home 含這個 decision。決定 source disposition。",
       "expected_output": "The agent must NOT proceed to promote-then-delete. It must execute Step 0.2 Frozen Decisions Cross-Ref Canonical Home, detect that decision F1 has no canonical home (ownerless), trigger P-OWNERLESS-DECISION (per Hard Rule #8) AND P-PACKET-DRIFT (per Hard Rule #11) since the packet's 'applied' claim is contradicted by missing canonical-home evidence, and stop pending user judgment.",
       "intent": "harvest",
       "fsm_path": "inspecting → needs_decision",
@@ -35,7 +35,7 @@
       "injection_type": "ownerless-decision",
       "expectations": [
         "The output executes Step 0.2 cross-ref to canonical home.",
-        "The output runs `grep` across docs/adr/, docs/0-Design/, docs/2-PRD/, docs/plans/runbooks/.",
+        "The output runs `grep` across docs/adr/, docs/0-Design/, docs/2-PRD/, docs/governance/runbooks/.",
         "The output detects no canonical home for decision F1.",
         "The output triggers P-OWNERLESS-DECISION (per Hard Rule #8).",
         "The output additionally triggers P-PACKET-DRIFT because the packet's 'applied' claim is contradicted by the missing canonical-home evidence.",

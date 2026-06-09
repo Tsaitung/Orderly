@@ -27,5 +27,5 @@
 - `docs/references/canonical-vocabulary.md` — canonical naming vocabulary
 - `docs/references/doc-governance-vocabulary.yaml` — vocabulary schema
 - `docs/incidents/` — incident postmortems（`{YYYY-MM-DD}-{slug}.md`）
-- `docs/plans/governance-ledger.md` — governance run closeout ledger
+- `docs/governance/governance-ledger.md` — governance run closeout ledger
 - `docs/0-Design/business-invariants.md` — cross-module business invariants（`INV-*`）

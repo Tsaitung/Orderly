@@ -5,7 +5,7 @@
 > 程式碼引用已對照 repo 原始碼驗證（commit `fd9d852`，branch `refactor`）；其中 `HeroSection.tsx` L148-164 杜撰客戶名一項由主 thread 親自複驗屬實。
 > 紀律對齊：示意數據必明標、不捏造真實客戶名/假精度、定價用真實級距、按鈕都要有對照頁。
 
----
+> **實作狀態（2026-06-09 harvest 更新）**：**§7 P0 全部已實作**——v1 premium landing（12 區塊）+ `/contact`/`/privacy`/`/terms` 已交付，杜撰客戶名/demo 帳密/死按鈕/SystemStatus/hardcoded Unsplash 全清除（PUBLIC_SCOPE grep 0 hit 驗證）。**注意**：§6/§7/§相關檔案 的舊路徑引用（`components/HeroSection.tsx`、`RoleSelector.tsx`、`app/page.tsx` 等）為**實作前狀態**——`HeroSection`/`RoleSelector`/`HeroBackground` 已刪除、前端已搬入 `src/`（file-reorg PR #13），現行 landing 在 `src/components/landing/`（13 元件 + `landingData.ts`）。**P1/P2 仍為 backlog**。post-v1 設計 polish backlog 見 §9。實作決策脈絡見 plan packet harvest 審計軌 `docs/references/history/20260607-public-pages-redesign-harvest.md`。
 
 ## 1. 競品概覽
 
@@ -173,3 +173,23 @@ CocoMart 有、但 Orderly **絕不可照抄**：
 - `components/RoleSelector.tsx`（L42-70 功能卡、L152-159/229-236 demo 帳密、L244-247 死按鈕）
 - `components/NavigationHeader.tsx`（L18-23 nav 指 dashboard、L99-103 登入無 href）
 - `components/ReconciliationDemo.tsx`（招牌互動展示資產）
+
+> 註：上列路徑為實作前（pre-reorg）參照；現行對應檔在 `src/components/`、`src/app/`。
+
+---
+
+## 9. Post-v1 設計 polish backlog（R1-R7）
+
+> 來源：v1 landing 交付後一次「頂級挑剔」逐頁實截 critique（harvest 2026-06-09 從退役 packet `20260607-public-pages-redesign/revision-and-codex-handoff.md` 升格）。paste-ready Codex 執行 prompt 保留於 git history（同 packet）。執行前須先對現行 `src/components/landing/*` 重新核對（critique 基準為實作當時狀態）。
+
+| ID | 項目 | 內容 | 狀態（2026-06-09 git 驗證）|
+|----|------|------|------|
+| R1 | Hero rework — product-as-hero | 降低 stock photo 支配感、把 `ReconciliationCard` 升為視覺主角（8h→30min 的證據）、`30 分鐘` payoff 加重、HERO_STATS 留白 | **open**（`Hero.tsx`/`ReconciliationCard.tsx` 初版後無 rework commit）|
+| R2 | Motion robustness + count-up | reveal 不停在 `opacity:0`（translate-only 或提前觸發 + no-JS/SSR fallback）、`useReducedMotion` 顯終態、count-up ~0.8s | **done**（whileInView 初始 `opacity:1` 已修，commit `17bffd8`；`dark-mode-visual.spec.ts` 驗）|
+| R3 | Vertical rhythm pass | section padding 一致化（py-14/16，砍死白）、heading spacing 用 8px scale、提內容密度 | **open** |
+| R4 | RoleTabs mock + accent toning | 「{角色} Dashboard 縮影」空框換成 structured mini product mock；餐廳 accent `#ff6b35` 降飽和（小標記而非整顆填滿）| **open** |
+| R5 | Contact 版面填滿 | `/contact` 表單下方巨大空帶 → 補 footer + flex 填滿或表單垂直置中 | **open**（部分 dark footer 修正已做，整體 layout fill 未驗）|
+| R6 | Auth 頁設計系統一致（P2）| `login`/`register` 套新設計系統 token + 加 dark mode（next-themes class）；**僅視覺、不改 auth 行為/API** | **open**（`src/app/(auth)/{login,register}` 無 redesign commit）|
+| R7 | 真實實拍 hero（P3，需素材）| 換掉 `public/hero/restaurant-hero.jpg`（現為 free-license Unsplash stock）為真實品牌/實拍；**禁捏造或暗示特定真實客戶** | **blocked-on-asset** |
+
+硬約束（每項都守）：示意數據標「（示意）」、禁捏造客戶名/假精度、定價真實級距、按鈕零死連結、dark variants、繁中、相對 baseline 零新增 tsc error + Playwright `tests/e2e/public-pages.spec.ts` 全綠。

@@ -107,7 +107,7 @@ execution 相關狀態固定使用：
 
 closed run 不再保留 local run workspace 作為長留記錄。
 
-必須在 `docs/plans/governance-ledger.md` 留一筆 closeout entry，至少包含：
+必須在 `docs/governance/governance-ledger.md` 留一筆 closeout entry，至少包含：
 
 - `run_id`
 - `closed_at`
@@ -120,7 +120,7 @@ closed run 不再保留 local run workspace 作為長留記錄。
 ## Skill-Level Governance
 
 - active run-local state must live under `docs/plans/<run-id>/`
-- closed-run summaries belong in `docs/plans/governance-ledger.md`
+- closed-run summaries belong in `docs/governance/governance-ledger.md`
 - stable skill governance rules belong in `.claude/skills/orderly-doc-governance/references/`
 - repo-level skill plan/handoff files are migration-period compatibility artifacts only and must not be recreated after migration
 

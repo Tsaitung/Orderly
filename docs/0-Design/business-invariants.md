@@ -35,4 +35,4 @@
 
 ## 維護
 - 每次 schema migration / 報表 / 結算邏輯變更，對照本檔驗至少一條相關 invariant（CLAUDE.md 規則）。
-- 候選升 confirmed：補來源 + formal 條件 + 驗證方式，移入上表，並於 `docs/plans/governance-ledger.md` 記一條。
+- 候選升 confirmed：補來源 + formal 條件 + 驗證方式，移入上表，並於 `docs/governance/governance-ledger.md` 記一條。

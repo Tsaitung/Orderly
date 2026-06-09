@@ -252,7 +252,7 @@ Health-check / inspect-only 不產生 primary-doc write set，也不得修改 so
   4. `≥ 1 non-grep verification`（cross-tool — plan packets reference external state, grep on internal docs cannot prove）
   5. `≥ 2 unique target dimensions`
 
-  任一不過 → hook block `Bash rm -rf docs/plans/*` 與 `Edit docs/plans/governance-ledger.md`。
+  任一不過 → hook block `Bash rm -rf docs/plans/*` 與 `Edit docs/governance/governance-ledger.md`。
 
 缺任何一項 → 補齊後再輸出。違反 → `P-PACKET-DRIFT`。
 
@@ -282,5 +282,5 @@ Health-check / inspect-only 不產生 primary-doc write set，也不得修改 so
 | decision-intake queue | `docs/plans/<run-id>/decisions-pending.md` |
 | knowledge-harvest report | `docs/plans/<run-id>/extraction-report.md` |
 | pause recovery state | `docs/plans/<run-id>/stop-recovery.md` |
-| closed run closeout | `docs/plans/governance-ledger.md` |
+| closed run closeout | `docs/governance/governance-ledger.md` |
 | stable skill rules | `references/skill-governance.md` |

@@ -30,7 +30,7 @@ stage gates、harvest plan-residency、hook enforcement），但**不犧牲** Or
    （1 SKILL + 9 references + 6 templates + 4 evals），所有路徑 / 詞彙 / 模組編號 re-point 為
    Orderly 的**編號** taxonomy 與**模組化單體**後端（`backend/app/modules/<svc>/`）。
 3. 新增治理 canonical homes：`docs/adr/`、`docs/governance/`、`docs/references/`、
-   `docs/incidents/`、`docs/plans/governance-ledger.md`，並把 `business-invariants.md` 收於
+   `docs/incidents/`、`docs/governance/governance-ledger.md`，並把 `business-invariants.md` 收於
    `docs/0-Design/`。
 4. 加入三個治理 hook（`harvest-evidence-gate.sh`、`gov-healthcheck-gate.sh`、
    `gov-healthcheck-validate.sh`）於 `.claude/hooks/`，並於 **`.claude/settings.json`**（repo-shared）

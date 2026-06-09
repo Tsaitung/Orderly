@@ -101,11 +101,11 @@ health-check 完成後，依 Guard Result 分流：
   | `naming-canonical` | `docs/references/canonical-vocabulary.md` / `doc-governance-vocabulary.yaml` |
   | `architectural-decision-frozen` | `docs/adr/ADR-NNN-*.md`（必須有真正 trade-off；外部平台限制不算 ADR-worthy）|
   | `tech-debt-with-exit-trigger` | `docs/governance/deprecation-roadmap.md` 或 `docs/3-Development-Plan/todo.md` |
-  | `operator-procedure` | `docs/plans/runbooks/*.md` |
+  | `operator-procedure` | `docs/governance/runbooks/*.md` |
   | `incident-postmortem` | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
   | `business-requirement` | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
   | `wire-contract` | `backend/app/modules/<svc>/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
-  | `closeout-summary` | `docs/plans/governance-ledger.md` |
+  | `closeout-summary` | `docs/governance/governance-ledger.md` |
   | `transient-execution-state` | DELETE（不 promote）|
 
 - Broader category routing（legacy 5-class，保留為 high-level lens；harvest mode 強制使用上面 9-class）：
@@ -114,13 +114,13 @@ health-check 完成後，依 Guard Result 分流：
   |---|---|---|
   | Active / Hold | canonical-business-truth | `docs/2-PRD/`, `docs/adr/`, `docs/references/` |
   | Active / Hold | technical-contract-truth | `docs/0-Design/` |
-  | Active / Hold | reusable-operational-rule | `docs/plans/runbooks/` 或 skill `references/` |
+  | Active / Hold | reusable-operational-rule | `docs/governance/runbooks/` 或 skill `references/` |
   | Reference / historical-only | 任何 | `docs/references/history/` |
 
 - 檔案搬遷 Cross-Reference Cascade Checklist：
   - [ ] `grep -r "filename"` 跨 `docs/` 找所有引用
   - [ ] 更新 `docs/plans/README.md`（index）
-  - [ ] 更新 `docs/plans/governance-ledger.md`（若檔案出現在 closeout entry）
+  - [ ] 更新 `docs/governance/governance-ledger.md`（若檔案出現在 closeout entry）
   - [ ] 更新 navigation index（`docs/INDEX.md` / 各區 `INDEX.md`）中的 reference（若有）
   - [ ] 更新新 reference 檔案自身的 `Source` metadata
   - [ ] 驗證無 broken link（`grep` 舊路徑應回傳 0 結果）
@@ -133,7 +133,7 @@ Active / Hold:In-Progress plans:
 - execution-sequencing / execution-state / residual follow-ups: keep
 - canonical-business-truth: must promote to docs/2-PRD/, docs/adr/, docs/references/
 - technical-contract-truth: must promote to docs/0-Design/
-- reusable-operational-rule: must promote to docs/plans/runbooks/ or skill references/
+- reusable-operational-rule: must promote to docs/governance/runbooks/ or skill references/
 
 Reference plans (frozen historical):
 - historical-evidence: keep (carve-out)
