@@ -27,11 +27,10 @@ services:
 infrastructure:
   triggers:
     - .github/workflows/**
-    - infrastructure/**
+    - infra/**
     - docker-compose*.yml
     - scripts/deploy*.sh
     - scripts/iam/**
-    - ci/**
 
 # Frontend configuration
 frontend:

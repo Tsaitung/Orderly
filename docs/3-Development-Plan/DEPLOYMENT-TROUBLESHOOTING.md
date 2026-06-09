@@ -46,11 +46,11 @@ curl https://api.orderly.com/service-map
 curl -s "https://orderly-api-gateway-fastapi-staging-usg6y7o2ba-de.a.run.app/service-map"
 
 # 修正配置文件中的 URL
-vim configs/staging/api-gateway.yaml
+vim infra/staging/api-gateway.yaml
 # 確保 CUSTOMER_HIERARCHY_SERVICE_URL 指向正確的 Cloud Run URL
 
 # 重新部署
-gcloud run services replace configs/staging/api-gateway.yaml --region=asia-east1
+gcloud run services replace infra/staging/api-gateway.yaml --region=asia-east1
 ```
 
 #### 步驟 2：配置 Redis 連接
@@ -59,11 +59,11 @@ gcloud run services replace configs/staging/api-gateway.yaml --region=asia-east1
 gcloud redis instances list --region=asia-east1
 
 # 在 Customer Hierarchy Service 配置中添加 REDIS_URL
-vim configs/staging/customer-hierarchy.yaml
+vim infra/staging/customer-hierarchy.yaml
 # 添加：REDIS_URL: redis://REDIS_IP:6379
 
 # 重新部署服務
-gcloud run services replace configs/staging/customer-hierarchy.yaml --region=asia-east1
+gcloud run services replace infra/staging/customer-hierarchy.yaml --region=asia-east1
 ```
 
 #### 步驟 3：實現 Redis 連接優雅降級
@@ -184,7 +184,7 @@ gcloud sql instances describe orderly-db-v2 --project=orderly-472413 \
 ```
 
 **快速修復**：
-1. 確認每個 Cloud Run 服務皆有 `DATABASE_PORT=5432`（可套用 `configs/staging/env-vars.yaml` 共用設定）
+1. 確認每個 Cloud Run 服務皆有 `DATABASE_PORT=5432`（可套用 `infra/staging/env-vars.yaml` 共用設定）
 2. 若網址被截斷為 `-stagid`，重新部署服務（`staging` 使用 `orderly-customer-hierarchy-staging`，`staging-v2` 使用 `orderly-custhier-staging-v2`）並同步更新 API Gateway `CUSTOMER_HIERARCHY_SERVICE_URL`
 3. 偵測 sidecar 尚未啟動時，可先調高 CPU/記憶體或延後健康檢查，再重建最新 revision
 4. **2025-09-29 架構升級**：系統已完全遷移至分離式環境變數架構：

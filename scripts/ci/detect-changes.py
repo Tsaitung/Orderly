@@ -14,7 +14,7 @@ from typing import Set, List, Dict, Any
 
 def load_manifest() -> Dict[str, Any]:
     """Load the service manifest file"""
-    manifest_path = Path(__file__).parent.parent.parent / "ci" / "service-manifest.yaml"
+    manifest_path = Path(__file__).parent.parent.parent / "infra" / "service-manifest.yaml"
     if not manifest_path.exists():
         print(f"Error: Service manifest not found at {manifest_path}", file=sys.stderr)
         sys.exit(1)

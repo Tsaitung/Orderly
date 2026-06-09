@@ -30,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `backend/` - Microservices (each with own Dockerfile, package.json, TypeScript)
 - `frontend/` - Next.js App Router application
 - `shared/types/` - TypeScript type definitions shared across services
-- `infrastructure/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
+- `infra/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
 - `.github/workflows/` - 8 advanced CI/CD workflows including ML-powered quality gates
 - `scripts/` - Automation scripts for deployment, monitoring, security, and database management
 - `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
@@ -217,7 +217,7 @@ docker-compose down
 
 ```bash
 # Initialize Terraform
-cd infrastructure/terraform
+cd infra/terraform
 terraform init
 
 # Plan infrastructure changes

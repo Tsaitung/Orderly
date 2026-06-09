@@ -104,7 +104,7 @@ This document replaces ad-hoc CI/CD notes that were scattered across `plan.md`, 
 
 ### 5.3 Environment Variables
 
-- Shared environment config resides in `configs/<environment>/env-vars.yaml`.
+- Shared environment config resides in `infra/<environment>/env-vars.yaml`.
 - Critical variables: `DATABASE_HOST`, `DATABASE_PORT` (must be `5432`), `DATABASE_USER`, `DATABASE_NAME`, `POSTGRES_PASSWORD`.
 - FastAPI services construct DSNs from split variables to avoid URL encoding drift. Hard-coded `DATABASE_URL` values were removed from manifests and docs.
 

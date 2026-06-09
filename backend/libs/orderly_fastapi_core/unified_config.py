@@ -35,8 +35,8 @@ class UnifiedSettings(BaseSettings):
     
     自動載入配置的優先級：
     1. 環境變數
-    2. 環境特定配置文件 (configs/{environment}.env)
-    3. 基礎配置文件 (configs/base.env)
+    2. 環境特定配置文件 (infra/env/{environment}.env)
+    3. 基礎配置文件 (infra/env/base.env)
     4. 代碼中的默認值
     """
     

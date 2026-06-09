@@ -208,7 +208,7 @@ chmod +x scripts/deploy-cloud-run.sh
 ./scripts/deploy-cloud-run.sh
 
 # 或使用 Terraform
-cd infrastructure/terraform
+cd infra/terraform
 terraform init
 terraform plan -var-file="production.tfvars"
 terraform apply

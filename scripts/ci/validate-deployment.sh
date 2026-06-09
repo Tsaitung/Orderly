@@ -124,7 +124,7 @@ check_service_names() {
 # Check DATABASE_PORT configuration
 check_database_port() {
   local environment="${1:-staging}"
-  local config_file="configs/${environment}/env-vars.yaml"
+  local config_file="infra/${environment}/env-vars.yaml"
   local failed=0
   
   echo "🔍 Checking DATABASE_PORT configuration for environment: ${environment}"
