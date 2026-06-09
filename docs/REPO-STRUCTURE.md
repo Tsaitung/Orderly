@@ -66,11 +66,12 @@
 
 由散落整併（git mv 保留 history，所有引用同步更新）：
 
-- 孤兒 root 檔歸位：`CICD-init-guide.md`、`plan.md`→`docs/3-Development-Plan/STATUS-SUMMARY.md`、
+- 孤兒 root 檔歸位：`plan.md`→`docs/3-Development-Plan/STATUS-SUMMARY.md`、
   `test-super-admin.js`→`tests/dev-utils/`、`cleanup-validate.sh`→`scripts/validation/`、
   `scripts/performance-*.js`→`scripts/perf/`。
-- 刪 dead shell：`frontend/`（僅含廢棄 cloudbuild.yaml）、`specs/.workflow-confirmations.json`、
-  obsolete `scripts/*.sql`（已被 Alembic + seed_from_real_data.py 取代）。
+- 刪 dead shell / 過時文件：`frontend/`（僅含廢棄 cloudbuild.yaml）、`specs/.workflow-confirmations.json`、
+  obsolete `scripts/*.sql`（已被 Alembic + seed_from_real_data.py 取代）、deprecated `CICD-init-guide.md`
+  （已被 `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md` 取代）。
 - 15 支一次性腳本 → `scripts/dev/`。
 - `package.json` workspaces 清掉 9 個已不存在的 `backend/*-service-fastapi`（backend 已 re-root 成 monolith）。
 - infra 整併：`infrastructure/` + `deploy/` + `ci/` + `configs/staging/` → 單一 `infra/`。

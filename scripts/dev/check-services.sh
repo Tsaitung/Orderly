@@ -88,7 +88,6 @@ check_ports
 
 echo ""
 echo "💡 有用的指令："
-echo "  • 啟動所有服務: ./scripts/start-all-services.sh"
 echo "  • 停止所有服務: ./scripts/dev/stop-all-services.sh"
 echo "  • 前端開發服務: npm run dev"
 echo "  • 查看端口使用: lsof -i :PORT"
