@@ -1,0 +1,144 @@
+{
+  "skill_name": "orderly-doc-governance",
+  "eval_set": "smoke",
+  "description": "6 critical-path smoke prompts covering 4 of 5 intents. Harvest is covered by regression eval 25. Measures token consumption, human pause count, and unnecessary reference loads.",
+  "evals": [
+    {
+      "id": "smoke-01",
+      "name": "hold-draft-terminate",
+      "prompt": "幫我對 docs/plans/CI-CD-ARCHITECTURE.md 跑 health-check。如果所有項目都是 Hold/Draft 且沒有 actionable drift，產出 completion summary 後就終止。",
+      "expected_output": "A scoped health-check that terminates without human pause, producing a Completion Summary.",
+      "intent": "inspect-only",
+      "fsm_path": "inspecting → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as inspect-only.",
+        "The output does NOT load execution-rules references.",
+        "The output includes a Content Residency line in the Completion Summary showing the docs/plans/ file with pass/fail/carve-out result and ownership breakdown.",
+        "The output terminates without human pause.",
+        "The output produces a Completion Summary matching the Mode Completion Protocol.",
+        "The FSM state transitions directly from inspecting to closed."
+      ],
+      "anti_expectations": [
+        "The output loads all references regardless of intent.",
+        "The output opens a rewrite packet or decision packet.",
+        "The output stops to ask the user for scope clarification."
+      ]
+    },
+    {
+      "id": "smoke-02",
+      "name": "decision-intake-stop",
+      "prompt": "檢查 05 billing 對帳結算語意。差異是公式層級的（對帳金額分攤位置在文檔與 runtime 不一致）。開一個 decision packet 然後停下來。",
+      "expected_output": "A 05 billing decision packet with P-DESIGN-FORMULA pause, concrete human question, and recommended default.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-DESIGN-FORMULA"],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output opens a decision packet, NOT a rewrite packet.",
+        "The output emits PAUSE: P-DESIGN-FORMULA.",
+        "The output asks a concrete human question with a recommended default.",
+        "The output stops before execution.",
+        "The FSM state transitions to needs_decision."
+      ],
+      "anti_expectations": [
+        "The output produces a rewrite packet for the formula conflict.",
+        "The output auto-defaults the formula semantics.",
+        "The output continues past the decision point without human input."
+      ]
+    },
+    {
+      "id": "smoke-03",
+      "name": "incremental-packet",
+      "prompt": "盤點 03 order 模組在 user stories、PRD、system specs、API contract，以及相關 ADR references 之間的 drift。只產出一個 low-risk 的 rewrite packet。",
+      "expected_output": "A low-risk rewrite packet for 03 order with separated primary-doc and derived-surface write sets.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output uses incremental mode.",
+        "The output separates primary-doc and derived-surface write sets.",
+        "The output does NOT enter execution.",
+        "The output cites evidence from user story, PRD, specs, or API contract files.",
+        "The FSM state transitions to ready_for_review."
+      ],
+      "anti_expectations": [
+        "The output attempts to execute changes.",
+        "The output mixes primary and derived write sets together.",
+        "The output opens a decision packet for non-conflicting drift."
+      ]
+    },
+    {
+      "id": "smoke-04",
+      "name": "execution-start-gate",
+      "prompt": "使用者說「Approved: Execute Cleanup Packet B, hold notification-service」。記錄 approval receipt，跨 run.md/handoff/compact/README 做 operating state reconciliation，然後宣告 execution 可以開始。",
+      "expected_output": "An execution-start response that records exact approval wording, reconciles operating state, and preserves hold boundary.",
+      "intent": "execute-within-approval",
+      "fsm_path": "ready_for_execution_approval → executing",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output records the exact approval wording including the hold.",
+        "The output updates all operating-state artifacts (run.md frontmatter + body, handoff, compact, README) before patching.",
+        "The output preserves the hold boundary (notification-service) in the execution receipt.",
+        "The output performs double-write (frontmatter + Markdown body).",
+        "The FSM state transitions to executing."
+      ],
+      "anti_expectations": [
+        "The output starts patching before reconciling operating state.",
+        "The output ignores the hold boundary.",
+        "The output treats draft approval as execution approval."
+      ]
+    },
+    {
+      "id": "smoke-05",
+      "name": "closeout-zero-residue",
+      "prompt": "這個 run 已經 closed。剩下的檔案：run.md、handoff.md、stage-0-audit.md。把可重用的 compatibility strategy promote 進 runbook，寫一筆 governance-ledger closeout entry，移除 run-local 檔案，並清掉 README 的 active link。",
+      "expected_output": "A zero-residue closeout that promotes durable knowledge, writes ledger entry, deletes run-local files, and clears README.",
+      "intent": "closeout-only",
+      "fsm_path": "closeout_ready → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as closeout-only.",
+        "The output promotes durable knowledge before deletion.",
+        "The output deletes all run-local artifacts (run.md, handoff.md, stage-0-audit.md).",
+        "The output writes a governance-ledger closeout entry.",
+        "The output clears the README active link.",
+        "The FSM state transitions to closed."
+      ],
+      "anti_expectations": [
+        "The output keeps run.md or handoff.md as long-term artifacts.",
+        "The output deletes files without first promoting reusable knowledge.",
+        "The output leaves the README still pointing to the closed run."
+      ]
+    },
+    {
+      "id": "smoke-06",
+      "name": "state-reconcile",
+      "prompt": "README 還指向 cc25，但 run.md 與 handoff.md 都寫 cc27 而且 Packet B 是 current gate。在起草任何新 packet 之前，先修掉這個 operating-state drift。",
+      "expected_output": "A reconciliation response that applies operating-state precedence, fixes the active path mismatch, and blocks new packet creation until consistency is achieved.",
+      "intent": "execute-within-approval",
+      "fsm_path": "execution_gate_blocked → ready_for_execution_approval",
+      "p_codes": [],
+      "expectations": [
+        "The output applies operating-state precedence (run.md frontmatter > handoff > compact > README).",
+        "The output fixes the active path mismatch before creating any new packet.",
+        "The output names the reconciled latest compact and current gate explicitly.",
+        "The output updates README to match run.md/handoff.",
+        "The FSM state transitions from execution_gate_blocked to ready_for_execution_approval."
+      ],
+      "anti_expectations": [
+        "The output trusts README over run.md.",
+        "The output drafts a new packet without fixing the mismatch first.",
+        "The output ignores the operating-state precedence hierarchy."
+      ]
+    }
+  ],
+  "coverage": {
+    "intents": ["inspect-only", "prepare-packet", "execute-within-approval", "closeout-only"],
+    "fsm_states": ["inspecting", "needs_decision", "ready_for_review", "ready_for_execution_approval", "execution_gate_blocked", "executing", "closeout_ready", "closed"],
+    "p_codes": ["P-DESIGN-FORMULA"],
+    "note": "harvest intent not covered in smoke set; covered by regression eval 25. Remaining P-codes covered by regression and failure-injection sets."
+  }
+}
