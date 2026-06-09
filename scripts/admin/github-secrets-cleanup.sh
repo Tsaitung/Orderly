@@ -129,8 +129,8 @@ test_deployment() {
         
         # Create a test commit
         git checkout -b test-secrets-cleanup-$(date +%s)
-        echo "# Test: Verify DATABASE_URL cleanup - $(date)" >> plan.md
-        git add plan.md
+        echo "# Test: Verify DATABASE_URL cleanup - $(date)" >> docs/3-Development-Plan/STATUS-SUMMARY.md
+        git add docs/3-Development-Plan/STATUS-SUMMARY.md
         git commit -m "test: Verify DATABASE_URL cleanup works correctly"
         git push origin HEAD
         

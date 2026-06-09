@@ -178,41 +178,39 @@ echo ""
 echo -e "${BLUE}🚀 啟動開發環境...${NC}"
 
 # Start Docker Compose services
-if [ -f "compose.dev.yml" ]; then
-    echo "啟動後端服務..."
-    docker-compose -f compose.dev.yml up -d postgres redis
-    
+if [ -f "compose.monolith.yml" ]; then
+    echo "啟動後端 monolith + 依賴（Postgres/Redis）..."
+    docker-compose -f compose.monolith.yml up -d
+
     # Wait for databases to be ready
     echo "等待資料庫啟動..."
     sleep 10
-    
-    print_status "基礎服務已啟動"
-    
+
+    print_status "後端 monolith + 基礎服務已啟動"
+
     echo ""
     echo -e "${YELLOW}📝 下一步操作：${NC}"
-    echo "1. 啟動所有後端服務: docker-compose -f compose.dev.yml up -d"
-    echo "2. 啟動前端開發服務: npm run dev"
-    echo "3. 查看服務狀態: docker-compose -f compose.dev.yml ps"
-    echo "4. 查看服務日誌: docker-compose -f compose.dev.yml logs -f [服務名稱]"
+    echo "1. 啟動前端開發服務: npm run dev"
+    echo "2. 查看服務狀態: docker-compose -f compose.monolith.yml ps"
+    echo "3. 查看後端日誌: docker-compose -f compose.monolith.yml logs -f backend"
 else
-    print_warning "compose.dev.yml 文件未找到，請手動啟動服務"
+    print_warning "compose.monolith.yml 文件未找到，請手動啟動服務"
 fi
 
 echo ""
 echo -e "${BLUE}🌐 服務 URLs：${NC}"
 echo "• 前端應用: http://localhost:3000"
-echo "• API Gateway: http://localhost:8000"
-echo "• API 文檔: http://localhost:8000/docs"
-echo "• PostgreSQL: localhost:5432"
-echo "• Redis: localhost:6379"
+echo "• 後端 monolith: http://localhost:${BACKEND_PORT:-8888}"
+echo "• 後端 API 文檔: http://localhost:${BACKEND_PORT:-8888}/docs"
+echo "• PostgreSQL / Redis: 端口由 direnv 提供（POSTGRES_PORT / REDIS_PORT）"
 
 echo ""
 echo -e "${BLUE}🛠 有用的命令：${NC}"
-echo "• 重啟服務: docker-compose -f compose.dev.yml restart [服務名稱]"
-echo "• 查看日誌: docker-compose -f compose.dev.yml logs -f [服務名稱]"
-echo "• 進入容器: docker-compose -f compose.dev.yml exec [服務名稱] bash"
-echo "• 停止所有服務: docker-compose -f compose.dev.yml down"
-echo "• 清理資料: docker-compose -f compose.dev.yml down -v"
+echo "• 重啟後端: docker-compose -f compose.monolith.yml restart backend"
+echo "• 查看日誌: docker-compose -f compose.monolith.yml logs -f backend"
+echo "• 進入容器: docker-compose -f compose.monolith.yml exec backend bash"
+echo "• 停止所有服務: docker-compose -f compose.monolith.yml down"
+echo "• 清理資料: docker-compose -f compose.monolith.yml down -v"
 
 echo ""
 print_status "開發環境設置完成！"

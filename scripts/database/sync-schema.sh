@@ -28,7 +28,7 @@ log_section() {
 LOCAL_PORT="${1:-5433}"
 DB_NAME="${2:-orderly}"
 DB_USER="${3:-orderly}"
-BASELINE_DIR="configs/staging"
+BASELINE_DIR="infra/staging"
 
 log_section "🗄️ Starting database schema synchronization"
 echo "Database: $DB_NAME on localhost:$LOCAL_PORT"

@@ -30,7 +30,7 @@ log_section() {
 PROJECT_ID="orderly-472413"
 REGION="asia-east1"
 CLOUD_SQL_INSTANCE="orderly-472413:asia-east1:orderly-db-v2"
-CONFIG_DIR="configs/staging"
+CONFIG_DIR="infra/staging"
 
 # Check prerequisites
 if [ ! -d "$CONFIG_DIR" ]; then

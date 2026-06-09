@@ -20,15 +20,15 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@/components/*": ["./components/*"],
-      "@/lib/*": ["./lib/*"],
-      "@/app/*": ["./app/*"],
-      "@/types/*": ["./types/*"],
-      "@/styles/*": ["./styles/*"],
       "@/public/*": ["./public/*"],
       "@/shared/*": ["./shared/*"],
-      "lib/*": ["./lib/*"]
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/styles/*": ["./src/styles/*"],
+      "@/*": ["./src/*"],
+      "lib/*": ["./src/lib/*"]
     },
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
@@ -53,11 +53,11 @@
     "**/*.stories.tsx",
     "**/*.stories.ts",
     "stories/**/*",
-    "components/design-system/**/*",
-    "components/ui/accessible-*",
-    "hooks/use-accessibility.ts",
-    "lib/accessibility/**/*",
-    "lib/erp/**/*",
-    "lib/orders/**/*"
+    "src/components/design-system/**/*",
+    "src/components/ui/accessible-*",
+    "src/hooks/use-accessibility.ts",
+    "src/lib/accessibility/**/*",
+    "src/lib/erp/**/*",
+    "src/lib/orders/**/*"
   ]
 }

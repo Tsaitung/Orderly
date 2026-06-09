@@ -15,7 +15,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DOCKER_COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
 OVERRIDE_FILE="${PROJECT_ROOT}/docker-compose.override.yml"
 

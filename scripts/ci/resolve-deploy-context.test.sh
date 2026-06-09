@@ -34,7 +34,7 @@ check "backend change services" 'services=["backend-monolith"]' "$out"
 check "backend change frontend" "frontend=true"                  "$out"
 
 # frontend-only change => no backend, frontend=true
-out=$(REF=refs/heads/staging CHANGED_FILES="app/page.tsx" bash "$SCRIPT")
+out=$(REF=refs/heads/staging CHANGED_FILES="src/app/page.tsx" bash "$SCRIPT")
 check "fe-only services" "services=[]"    "$out"
 check "fe-only frontend" "frontend=true"  "$out"
 

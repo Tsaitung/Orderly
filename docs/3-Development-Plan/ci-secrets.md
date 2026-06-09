@@ -296,17 +296,17 @@ gh workflow run "Deploy Staging (Permanent)" --ref staging -f force_deploy=false
 
 ### 配置文件位置
 
-永久部署使用 `configs/staging/` 目錄中的YAML配置文件：
+永久部署使用 `infra/staging/` 目錄中的YAML配置文件：
 
-- `configs/staging/api-gateway.yaml` - API閘道配置
-- `configs/staging/user.yaml` - 用戶服務配置
-- `configs/staging/product.yaml` - 產品服務配置
+- `infra/staging/api-gateway.yaml` - API閘道配置
+- `infra/staging/user.yaml` - 用戶服務配置
+- `infra/staging/product.yaml` - 產品服務配置
 - 等等...
 
 ### 故障排除
 
 **認證問題**: 確保已正確設置 `GCP_SA_KEY` 和 `GCP_PROJECT_ID` secrets
-**配置缺失**: 檢查 `configs/staging/` 目錄中是否存在所有必需的YAML文件
+**配置缺失**: 檢查 `infra/staging/` 目錄中是否存在所有必需的YAML文件
 **權限不足**: 確保Service Account具有Cloud Run Admin權限
 
 ## 📚 相關文檔

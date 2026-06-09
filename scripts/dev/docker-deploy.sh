@@ -14,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 DOCKER_REGISTRY="${DOCKER_REGISTRY:-gcr.io/orderly-platform}"
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # Print colored output
 print_status() {

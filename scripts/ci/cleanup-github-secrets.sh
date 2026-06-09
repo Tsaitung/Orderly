@@ -209,7 +209,7 @@ verify_separated_config() {
   print_info "Checking environment variable configuration files..."
   
   # Check staging environment config
-  local config_file="configs/staging/env-vars.yaml"
+  local config_file="infra/staging/env-vars.yaml"
   if [[ -f "$config_file" ]]; then
     echo "📁 Checking $config_file:"
     

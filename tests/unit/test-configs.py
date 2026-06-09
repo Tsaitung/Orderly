@@ -80,9 +80,8 @@ def test_environment_configs():
     
     env_files = [
         ".env.local",
-        "configs/local.env",
-        "configs/staging.env", 
-        "configs/production.env",
+        "infra/env/staging.env",
+        "infra/env/production.env",
     ]
     
     success_count = 0

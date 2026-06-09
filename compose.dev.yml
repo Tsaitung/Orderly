@@ -1,5 +1,13 @@
 version: '3.8'
 
+# Dev overlay on top of compose.base.yml: exposes Postgres/Redis on host ports
+# and provides optional admin tools (pgAdmin / redis-commander).
+#
+# Backend runs as a modular monolith — use compose.monolith.yml
+# (`npm run dev:backend`) to build/run the backend image. The old per-service
+# build contexts (./backend/<svc>-fastapi) were removed when the backend was
+# re-rooted into backend/app/modules/, so they no longer live here.
+
 services:
   postgres:
     ports:
@@ -8,72 +16,6 @@ services:
   redis:
     ports:
       - "${REDIS_PORT:?run direnv allow at repo root}:6379"
-
-  api-gateway:
-    build:
-      context: ./backend/api-gateway-fastapi
-      dockerfile: Dockerfile
-    ports:
-      - "${BACKEND_PORT:?run direnv allow at repo root}:8000"
-    environment:
-      ENVIRONMENT: development
-      PORT: 8000
-
-  user-service:
-    build:
-      context: ./backend/user-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3001
-
-  order-service:
-    build:
-      context: ./backend/order-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3002
-
-  product-service:
-    build:
-      context: ./backend/product-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3003
-
-  acceptance-service:
-    build:
-      context: ./backend/acceptance-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3004
-
-  notification-service:
-    build:
-      context: ./backend/notification-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3006
-
-  customer-hierarchy-service:
-    build:
-      context: ./backend/customer-hierarchy-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3007
-
-  supplier-service:
-    build:
-      context: ./backend/supplier-service-fastapi
-      dockerfile: Dockerfile
-    environment:
-      ENVIRONMENT: development
-      PORT: 3008
 
   # Admin tools (optional)
   pgadmin:
@@ -113,4 +55,3 @@ services:
 
 volumes:
   pgadmin_data:
-

@@ -149,7 +149,7 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "Workflow: ${{ github.workflow }}"
           echo ""
-          echo "Services deployed using permanent configuration from configs/staging/"
+          echo "Services deployed using permanent configuration from infra/staging/"
           echo ""
           echo "🔗 Staging URLs:"
           echo "- API Gateway: https://orderly-api-gateway-fastapi-staging-655602747430.asia-east1.run.app"

@@ -27,14 +27,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Key Directories
 
-- `backend/` - Microservices (each with own Dockerfile, package.json, TypeScript)
-- `frontend/` - Next.js App Router application
-- `shared/types/` - TypeScript type definitions shared across services
-- `infrastructure/terraform/` - Complete IaC with modules for networking, compute, database, security, monitoring, redis
-- `.github/workflows/` - 8 advanced CI/CD workflows including ML-powered quality gates
-- `scripts/` - Automation scripts for deployment, monitoring, security, and database management
+> 完整目錄地圖與「為何前端釘在 repo root（不可移）」的設計理由，見單一事實來源 `docs/REPO-STRUCTURE.md`。
+
+- `src/` - Next.js App Router 前端全部收在此（`app/ components/ lib/ contexts/ hooks/ types/ middleware.ts`），採 Next.js 官方 `src/` 慣例。改路徑須同步 tsconfig paths、next.config alias、tailwind content、jest mapper、ci.yml filter、`resolve-deploy-context.sh` glob（見 `docs/REPO-STRUCTURE.md`）。
+- `public/` - 靜態資源，**依 Next 規定留在 repo root**（不可進 src/）。
+- `backend/` - FastAPI modular monolith（`backend/app/modules/<svc>` + 共用 `backend/libs/`，單一 `backend/Dockerfile.monolith`）
+- `shared/types/` - 跨服務 TypeScript 型別契約（唯一仍存在的 npm workspace 成員）
+- `infra/` - 部署與基礎設施單一根：`terraform/`（IaC）、`env/`（部署 env 檔）、`staging/`（Cloud Run 服務設定 + schema baseline）、`service-manifest.yaml`（CI 服務相依宣告）
+- `.github/workflows/` - CI/CD workflows（`ci.yml`、`cd.yml`、`deploy-staging-permanent.yml` 等）
+- `scripts/` - 自動化腳本，依用途分目錄：root 只放 load-bearing 入口；`dev/`（一次性開發便利腳本）、`validation/`（設定驗證工具）、`perf/`（效能測試）、`ci/`、`database/`、`iam/`、`cloudbuild/` 等
 - `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
 - `scripts/database/seed_from_real_data.py` - 基於真實資料的完整測試腳本
+- `tests/` - 所有測試集中：`tests/unit/`、`tests/integration/`、`tests/dev-utils/`、`tests/e2e/`（Playwright，`testDir: ./tests/e2e`）
+- `docs/` - 文件單一事實來源（見 `docs/INDEX.md`）
 
 ## 當前開發優先順序（2025-12-07）
 1. 身分／租戶／權限：先鎖定 `backend/user-service-fastapi` 與 `shared/types` 權限模型，確保 JWT、API Gateway 授權一致。
@@ -217,7 +222,7 @@ docker-compose down
 
 ```bash
 # Initialize Terraform
-cd infrastructure/terraform
+cd infra/terraform
 terraform init
 
 # Plan infrastructure changes

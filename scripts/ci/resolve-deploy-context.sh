@@ -67,7 +67,7 @@ else
   echo "services=[$(IFS=,; echo "${svcs[*]}")]"
 fi
 
-if echo "$changed" | grep -qE '(app/|components/|lib/|contexts/|hooks/|stores/|public/|next\.config\.js|middleware\.ts|tailwind\.config\.ts|package(-lock)?\.json)'; then
+if echo "$changed" | grep -qE '(src/app/|src/components/|src/lib/|src/contexts/|src/hooks/|src/stores/|src/middleware\.ts|public/|next\.config\.js|tailwind\.config\.ts|package(-lock)?\.json)'; then
   echo "frontend=true"
 else
   echo "frontend=false"

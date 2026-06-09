@@ -131,3 +131,6 @@ gcloud-service-key.json
 # Backup files
 *.bak
 *.backup
+
+# Workflow orchestration state (transient, regenerated; not a config file)
+.workflow-confirmations.json

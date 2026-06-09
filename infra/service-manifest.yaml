@@ -27,22 +27,20 @@ services:
 infrastructure:
   triggers:
     - .github/workflows/**
-    - infrastructure/**
+    - infra/**
     - docker-compose*.yml
     - scripts/deploy*.sh
     - scripts/iam/**
-    - ci/**
 
 # Frontend configuration
 frontend:
   path: .
-  cloud_build: frontend/cloudbuild.yaml
+  cloud_build: cloudbuild-frontend.yaml
   health_check: /
   port: 8080
   triggers:
     - app/**
     - components/**
-    - frontend/**
     - lib/**
     - public/**
     - styles/**

@@ -101,17 +101,13 @@ fi
 echo ""
 echo "=== 🐳 容器配置驗證 ==="
 
-# 10. Docker Compose 語法
-((total++))
-if validate_step "docker-compose.yml 語法" "python3 -c \"import yaml; yaml.safe_load(open('docker-compose.yml'))\""; then
-    ((passed++))
-fi
-
-# 11. 生產環境 Docker Compose
-((total++))
-if validate_step "docker-compose.production.yml 語法" "python3 -c \"import yaml; yaml.safe_load(open('docker-compose.production.yml'))\""; then
-    ((passed++))
-fi
+# 10. Compose 語法（base + dev + monolith = 現行真實集合）
+for cf in compose.base.yml compose.dev.yml compose.monolith.yml; do
+    ((total++))
+    if validate_step "$cf 語法" "python3 -c \"import yaml; yaml.safe_load(open('$cf'))\""; then
+        ((passed++))
+    fi
+done
 
 echo ""
 echo "=== 📊 驗證結果 ==="

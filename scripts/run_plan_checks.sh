@@ -4,7 +4,7 @@ set -euo pipefail
 # Enhanced Post-Deployment Validation Script
 # Automatically detects anomalies after deployment rather than requiring manual troubleshooting
 
-PLAN_FILE=${PLAN_FILE:-plan.md}
+PLAN_FILE=${PLAN_FILE:-docs/3-Development-Plan/STATUS-SUMMARY.md}
 PROJECT_ID=${PROJECT_ID:-orderly-472413}
 REGION=${REGION:-asia-east1}
 ENVIRONMENT=${ENV:-staging}

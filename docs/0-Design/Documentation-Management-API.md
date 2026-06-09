@@ -6,7 +6,7 @@
 - 服務對象涵蓋餐廳、供應商、平台管理與超管四大角色，需支援角色導向的可見性與審計。
 
 ## 核心原則
-- **Single Source of Truth**：文件實體仍以 Git 儲存（`docs/`、`plan.md` 等），API 只管理「中繼資料＋端口登記」並回傳可追蹤的存取位址。
+- **Single Source of Truth**：文件實體仍以 Git 儲存（`docs/` 等），API 只管理「中繼資料＋端口登記」並回傳可追蹤的存取位址。
 - **Gateway First**：所有存取經 API Gateway，統一身份驗證（JWT/RBAC）與審計。
 - **共享型別**：DTO 必須放在 `shared/types/`，後端服務引用同一型別契約，避免重複定義。
 - **可觀測性**：每個 API 須內建 request id、審計欄位與健康檢查路由。
