@@ -9,8 +9,11 @@
 
 ```
 .
-├── app/  components/  lib/  contexts/  hooks/  types/  public/  middleware.ts
-│        # Next.js App Router 前端 —— [釘在 ROOT，不可移] 見下方「為何前端釘 root」
+├── src/                  # Next.js App Router 前端全部收在此（官方 src/ 慣例）
+│   ├── app/              #   App Router（路由、layout、API/BFF）
+│   ├── components/  lib/  contexts/  hooks/  types/
+│   └── middleware.ts     #   Next.js middleware（src/ 慣例）
+├── public/               # 靜態資源 —— [Next 規定必須在 repo root，不可進 src/]
 ├── backend/              # FastAPI modular monolith
 │   ├── app/              #   應用本體（app/modules/<svc>、app/requirements.txt）
 │   ├── libs/             #   共用 orderly_fastapi_core
@@ -34,19 +37,23 @@
                         # Dockerfile.frontend*, cloudbuild-frontend.yaml —— 全部 [釘 root]
 ```
 
-## 為何前端釘在 ROOT（不可移）
+## 前端在 src/（Next.js 官方慣例）+ 兩個硬約束
 
-前端 runtime 目錄與根設定檔被四方同時釘死，硬搬會斷 build，收益低：
+前端 runtime 全收在 `src/`（2026-06-09 由 repo root 搬入，採 Next.js 官方 `src/` 慣例）。**Next.js 規定 App Router 只能在 repo root `app/` 或 `src/app/`；`public/` 只能在 repo root**——所以 `public/` 沒進 `src/`。
 
-| 釘死來源 | 釘住什麼 |
+搬動 `src/` 或改前端路徑時，這些設定彼此釘死、必須同步改（grep 後逐一更新）：
+
+| 設定 | 釘住什麼 |
 |---|---|
-| `tsconfig.json` `paths`（`@/* -> ./*`、`lib/*`） | `app/ components/ lib/ contexts/ hooks/ types/` |
-| `next.config.js` webpack alias（`path.resolve(__dirname,…)`） | `lib/`、`@/` 解析 |
-| `Dockerfile.frontend` `COPY . .` / `COPY public ./public` / `COPY app/apple-icon.png` | `app/ public/ package.json` |
-| `.github/workflows/ci.yml` `dorny/paths-filter` | `app/** components/** lib/** middleware.ts tsconfig*.json …` |
-| `cd.yml:453` `file: Dockerfile.frontend`、`cloudbuild-frontend.yaml`（root build context） | 前端 image 建置 |
+| `tsconfig.json` `paths`（`@/* -> ./src/*`、`@/public/* -> ./public/*`、`@/shared/* -> ./shared/*`、`lib/* -> ./src/lib/*`） | `@/` 別名解析 |
+| `next.config.js` webpack alias（`'@' -> __dirname/src`、`lib -> __dirname/src/lib`） | build 時 `@/`、`lib` 解析 |
+| `tailwind.config.ts` `content`（`./src/app ./src/components ./src/lib`）+ `import './src/lib/theme/tokens'` | CSS purge 掃描 |
+| `jest.config.js` `moduleNameMapper`（`@/shared`、`@/public` 例外在前，catch-all `@/* -> <rootDir>/src/$1`）+ `collectCoverageFrom` | 測試解析 |
+| `Dockerfile.frontend`：`COPY . .`（含 src/，不變）+ `COPY src/app/apple-icon.png ./app/apple-icon.png` + `COPY public ./public`（不變） | 前端 image |
+| `.github/workflows/ci.yml` `dorny/paths-filter`（`src/app/** src/components/** …`、`public/**`） | 前端變更偵測 |
+| `scripts/ci/resolve-deploy-context.sh:70` 前端 glob（`src/app/ src/components/ … public/`）+ 其 `*.test.sh` | CD 變更偵測 |
 
-要移動前端，必須**同步**改上述每一處 alias / COPY / filter，屬高風險，預設不做。
+> build context 仍是 repo root（`COPY . .` 不變），所以 `cloudbuild-frontend.yaml` / `cd.yml` 的前端 build 不需改 context；只有上表的 alias / glob / 一行 COPY 來源需同步。
 
 ## scripts 規約
 
@@ -75,3 +82,5 @@
 - 15 支一次性腳本 → `scripts/dev/`。
 - `package.json` workspaces 清掉 9 個已不存在的 `backend/*-service-fastapi`（backend 已 re-root 成 monolith）。
 - infra 整併：`infrastructure/` + `deploy/` + `ci/` + `configs/staging/` → 單一 `infra/`。
+- 退役 per-service compose 子系統（backend monolith 化後遺留）：刪 `compose.services.yml`、`compose.staging.yml`、`compose.prod.yml` 及對應 validator；現行 compose 集合 = `base` + `dev` + `monolith`。
+- **前端收進 `src/`**（Next.js 官方慣例）：`app/ components/ lib/ contexts/ hooks/ types/ middleware.ts` → `src/`；`public/` 依 Next 規定留 root。同步改 tsconfig/next.config/tailwind/jest/Dockerfile.frontend/ci.yml/resolve-deploy-context。最終 `next build` 正確性由 GCP build + CI 證實（本機無 node_modules 無法 build）。

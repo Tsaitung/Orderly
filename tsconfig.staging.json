@@ -4,25 +4,24 @@
     "noEmit": true
   },
   "include": [
-    "hooks/use-accessibility.ts",
-    "lib/accessibility/**/*.ts",
-    "lib/orders/order-service.ts",
-    "types/**/*.d.ts"
+    "src/hooks/use-accessibility.ts",
+    "src/lib/accessibility/**/*.ts",
+    "src/lib/orders/order-service.ts",
+    "src/types/**/*.d.ts"
   ],
   "exclude": [
     "**/*.stories.tsx",
     "**/*.stories.ts",
     "stories/**/*",
-    "components/design-system/**/*",
-    "lib/erp/**/*",
-    "lib/reconciliation/**/*",
-    "lib/redis.ts",
-    "lib/services/**/*",
-    "lib/erp/**/*",
+    "src/components/design-system/**/*",
+    "src/lib/erp/**/*",
+    "src/lib/reconciliation/**/*",
+    "src/lib/redis.ts",
+    "src/lib/services/**/*",
     "backend/**/*",
-    "components/**/*",
-    "app/**/*",
-    "contexts/**/*",
+    "src/components/**/*",
+    "src/app/**/*",
+    "src/contexts/**/*",
     "node_modules"
   ]
 }

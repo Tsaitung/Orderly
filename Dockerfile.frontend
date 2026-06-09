@@ -34,8 +34,8 @@ COPY --from=builder /app/.next/static ./.next/static
 # Copy public folder from source (not builder) since standalone doesn't include it
 COPY public ./public
 # App Router icons: favicon.ico + icon.svg are served from public/ (copied above).
-# Only apple-icon.png lives under app/, so copy just that one.
-COPY app/apple-icon.png ./app/apple-icon.png
+# Only apple-icon.png lives under src/app/, so copy just that one.
+COPY src/app/apple-icon.png ./app/apple-icon.png
 
 # Cloud Run provides PORT automatically; listen on dynamic port
 ENV PORT=8080

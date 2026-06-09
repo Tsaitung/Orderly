@@ -29,7 +29,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > 完整目錄地圖與「為何前端釘在 repo root（不可移）」的設計理由，見單一事實來源 `docs/REPO-STRUCTURE.md`。
 
-- `app/` `components/` `lib/` `contexts/` `hooks/` `types/` `public/` `middleware.ts` - Next.js App Router 前端，**釘在 repo root**（由 tsconfig paths、next.config webpack alias、Dockerfile.frontend、ci.yml path filter 共同釘死，移動會斷 build，故不可移）
+- `src/` - Next.js App Router 前端全部收在此（`app/ components/ lib/ contexts/ hooks/ types/ middleware.ts`），採 Next.js 官方 `src/` 慣例。改路徑須同步 tsconfig paths、next.config alias、tailwind content、jest mapper、ci.yml filter、`resolve-deploy-context.sh` glob（見 `docs/REPO-STRUCTURE.md`）。
+- `public/` - 靜態資源，**依 Next 規定留在 repo root**（不可進 src/）。
 - `backend/` - FastAPI modular monolith（`backend/app/modules/<svc>` + 共用 `backend/libs/`，單一 `backend/Dockerfile.monolith`）
 - `shared/types/` - 跨服務 TypeScript 型別契約（唯一仍存在的 npm workspace 成員）
 - `infra/` - 部署與基礎設施單一根：`terraform/`（IaC）、`env/`（部署 env 檔）、`staging/`（Cloud Run 服務設定 + schema baseline）、`service-manifest.yaml`（CI 服務相依宣告）

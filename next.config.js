@@ -58,7 +58,7 @@ const nextConfig = {
     return [
       // Keep legacy alias for internal use
       { source: '/api/v1/:path*', destination: '/api/:path*' },
-      // Prefer BFF proxy (handled by app/api/bff)
+      // Prefer BFF proxy (handled by src/app/api/bff)
       // No direct rewrite to gateway required
     ]
   },
@@ -82,9 +82,9 @@ const nextConfig = {
   webpack: (config, { isServer, webpack }) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      '@': path.resolve(__dirname),
-      lib: path.resolve(__dirname, 'lib'),
-      '@/lib': path.resolve(__dirname, 'lib'),
+      '@': path.resolve(__dirname, 'src'),
+      lib: path.resolve(__dirname, 'src/lib'),
+      '@/lib': path.resolve(__dirname, 'src/lib'),
     }
 
     // 僅在瀏覽器端加入 process polyfill，避免覆蓋伺服端的 Node.js process 環境
