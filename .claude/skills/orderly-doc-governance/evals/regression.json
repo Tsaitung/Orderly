@@ -1,0 +1,459 @@
+{
+  "skill_name": "orderly-doc-governance",
+  "eval_set": "regression",
+  "description": "24 regression prompts migrated from evals.json with FSM state paths, intent classification, and P-code annotations.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "health-check-09-erp",
+      "prompt": "只對 09 erp 跑 health-check。產出 governance stage 1 freeze summary 與 scoped health dashboard，不要任何 write set。",
+      "expected_output": "A scoped health-check packet for 09 erp that does not propose repository edits.",
+      "intent": "inspect-only",
+      "fsm_path": "inspecting → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as inspect-only.",
+        "The output scopes itself to 09 erp instead of reading the whole repo.",
+        "The output does not include a primary-doc write set.",
+        "The FSM state transitions from inspecting to closed."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "order-drift-audit",
+      "prompt": "盤點 03 order 在 user stories、PRD、system specs、API contract、tests 與相關 ADR references 之間的 drift。準備一個 low-risk rewrite packet only。",
+      "expected_output": "A low-risk incremental rewrite packet for 03 order with separated primary and derived write sets.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The rewrite packet separates primary-doc and derived-surface write sets.",
+        "The output cites evidence from user story, PRD, specs, or API contract files.",
+        "The FSM state transitions to ready_for_review."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "billing-formula-conflict",
+      "prompt": "比對 05 billing 的對帳結算語意與文檔/code/tests。如果差異是公式層級而非僅是改名，開一個 decision packet 並在 rewrite 前停下。",
+      "expected_output": "A 05 billing decision-intake packet that classifies the issue as a formula or docs-vs-runtime conflict and stops before execution.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-DESIGN-FORMULA"],
+      "expectations": [
+        "The output opens a decision packet instead of a rewrite packet if formula semantics differ.",
+        "The output classifies the issue as formula-or-logic or docs-vs-runtime.",
+        "The output emits PAUSE: P-DESIGN-FORMULA.",
+        "The output asks a concrete human question with a recommended default.",
+        "The output stops before repository execution."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "fee-rate-unit-conflict",
+      "prompt": "盤點 reconciliation_fee_rate 欄位語意，橫跨 05 billing 的後台對帳政策文檔與 02 product 的價格表 runtime surfaces。如果單位或 compatibility boundary 還沒凍結，在任何 rewrite 前產出 decision packet。",
+      "expected_output": "A preflight packet that detects unit-contract or lifecycle/compatibility drift and proposes a concrete freeze question.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-DESIGN-UNIT"],
+      "expectations": [
+        "The output identifies a unit-contract or lifecycle-or-compatibility conflict.",
+        "The output emits PAUSE: P-DESIGN-UNIT.",
+        "The output distinguishes setup-time semantics from settlement-time semantics.",
+        "The output recommends a boundary such as dual-read/write-new or compatibility-only."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "acceptance-adr-high-risk",
+      "prompt": "準備一個 acceptance ADR cluster review，涵蓋 04 acceptance 加上 ADR-008 與 ADR-027。把這當作 high-risk governance run，產出 review packet。",
+      "expected_output": "A high-risk review packet that requires external Claude review before execution.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "p_codes_conditional": ["P-REVIEW-MISSING"],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output marks the run as high-risk.",
+        "The output generates a review packet suitable for external Claude review.",
+        "The output does not execute changes without approval.",
+        "If review artifact is missing, emits PAUSE: P-REVIEW-MISSING."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "erp-ownership-conflict",
+      "prompt": "檢視 09 erp 的 export references，判斷 /admin/exports 是否仍是 09 erp 的 active scope。如果 ownership 尚未凍結，在 rewrite 前先問裁決。",
+      "expected_output": "A scope-or-ownership decision packet with a concrete question, options, and a recommended default.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-DESIGN-OWNERSHIP"],
+      "expectations": [
+        "The output classifies the issue as scope-or-ownership.",
+        "The output emits PAUSE: P-DESIGN-OWNERSHIP.",
+        "The output asks whether the capability stays in active scope or is removed/relocated.",
+        "The output provides execution impact for each option."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "billing-adr-cluster",
+      "prompt": "解決 billing ADR cluster，涉及 ADR-023、ADR-025、ADR-026、ADR-028 與 02 product 的 references，假設 canonical 對帳費率階梯（fee ladder）已核准。產出含 ADR impacts 與 vocabulary checks 的 rewrite packet。",
+      "expected_output": "A billing cluster rewrite packet that identifies ADR relationships, deprecated aliases, and resolved decision dependencies.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output treats billing as an ADR cluster scope.",
+        "The output lists ADR impacts.",
+        "The output identifies deprecated rate terminology without reopening already-frozen decisions.",
+        "The FSM state transitions to ready_for_review."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "full-governance-dry-run",
+      "prompt": "幫 03 order、05 billing、04 acceptance、02 product 起草一個 full-governance dry run。把工作切成 scoped packets 並描述各 stage gates，但不執行。",
+      "expected_output": "A full-governance dry run that partitions work into multiple scopes and does not attempt a single full-repo scan.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output segments the work into multiple scoped packets.",
+        "The output marks the run as high-risk.",
+        "The output includes a preflight decision queue before any rewrite scope.",
+        "The output stops at the planning/review stage.",
+        "The FSM state transitions to ready_for_review (multi-scope)."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "docs-vs-runtime-boundary",
+      "prompt": "比對目前 05 billing 對帳單 snapshot 文檔與 runtime 欄位。如果文檔已經 canonical 但 runtime 還在寫舊 keys，產出一個帶 compatibility boundary 的 docs-vs-runtime packet，而不是把所有東西全部重寫。",
+      "expected_output": "A docs-vs-runtime preflight packet that freezes a compatibility boundary such as dual-read/write-new.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-COMPAT-BOUNDARY"],
+      "expectations": [
+        "The output classifies the conflict as docs-vs-runtime.",
+        "The output emits PAUSE: P-COMPAT-BOUNDARY.",
+        "The output distinguishes truth-layer hardening from runtime migration.",
+        "The output fences legacy keys behind an explicit compatibility rule."
+      ]
+    },
+    {
+      "id": 10,
+      "name": "execution-packet-draft",
+      "prompt": "假設 cleanup packet 已經 reviewed、沒有殘留 product blockers，而且 Family A.1 加 Family B 都有明確的 file targets。起草一個 execution packet，而不是再一份 review artifact。",
+      "expected_output": "An execution packet with exact write set, verification commands, rollback steps, and explicit approval text.",
+      "intent": "execute-within-approval",
+      "fsm_path": "ready_for_review → ready_for_execution_approval",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output produces an execution packet rather than another review-only packet.",
+        "The output includes exact write sets and rollback or downgrade steps.",
+        "The output distinguishes draft approval from execution approval.",
+        "The FSM state transitions to ready_for_execution_approval."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "approved-execution-proceed",
+      "prompt": "你已經有 Cleanup Packet A 的 approved execution packet。在核准的 family boundary 內推進，除非出現新 blocker，否則不要重開 planning。",
+      "expected_output": "A response that executes or clearly enters execution mode, without creating a new plan or review artifact unless it identifies a genuinely new blocker.",
+      "intent": "execute-within-approval",
+      "fsm_path": "ready_for_execution_approval → executing",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output does not reopen a new planning loop without a new blocker.",
+        "The output respects the existing approved execution boundary.",
+        "The output only stops if it identifies a new blocker and names it concretely.",
+        "The FSM state transitions to executing."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "closeout-cleanup",
+      "prompt": "這個 run 已 closed，review comments 已吸收進 run.md 與 handoff.md，compact checkpoint 也更新了。把過時的 review packets 從 HEAD 清掉，而不是保留它們當 archive。",
+      "expected_output": "A closeout response that collapses conclusions into canonical docs and deletes absorbed transient packets from HEAD.",
+      "intent": "closeout-only",
+      "fsm_path": "closeout_ready → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as closeout-only.",
+        "The output treats git history as the archive layer rather than keeping all packets in HEAD.",
+        "The output deletes or marks for deletion absorbed transient packets.",
+        "The output keeps only the minimal active artifact set after closeout.",
+        "The FSM state transitions to closed."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "double-defer-legacy",
+      "prompt": "legacy 欄位 `commission_rate` 在上一個 packet 被 deferred，新 packet 又寫「keep for now」。停掉這個迴圈，強制一個明確的 disposition，含 owner、next packet 與 exit trigger。",
+      "expected_output": "A response that refuses a second vague defer and forces execute-now, permanent-compatibility, retire, or a decision packet.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → needs_decision",
+      "p_codes": ["P-LEGACY-VAGUE-DEFER"],
+      "expectations": [
+        "The output does not allow a second vague defer.",
+        "The output emits PAUSE: P-LEGACY-VAGUE-DEFER.",
+        "The output requires an explicit legacy disposition and exit trigger.",
+        "The output names the next packet or owner if defer-once is used.",
+        "The FSM state transitions to needs_decision."
+      ]
+    },
+    {
+      "id": 14,
+      "name": "patch-failure-reread",
+      "prompt": "你預期 `backend/app/modules/billing/services/reconciliation_service.py` 內含某個 alias path，但 apply_patch 失敗了。重新讀實際檔案，依當前 repo state 更新 execution packet，再 patch。",
+      "expected_output": "A repo-state-first response that re-reads the file, updates assumptions, and avoids reasoning from expectation alone.",
+      "intent": "execute-within-approval",
+      "fsm_path": "executing → execution_gate_blocked",
+      "p_codes": ["P-STATE-EXPECTED"],
+      "expectations": [
+        "The output re-reads actual repo state after patch mismatch.",
+        "The output emits PAUSE: P-STATE-EXPECTED.",
+        "The output updates the write set or packet assumptions based on observed code.",
+        "The output does not continue from the original incorrect expectation.",
+        "The FSM state transitions to execution_gate_blocked."
+      ]
+    },
+    {
+      "id": 15,
+      "name": "compact-triage",
+      "prompt": "重疊 scope 內有 `plan.md`、`handoff.md` 與兩個 compact checkpoints。全部讀過，把每個 artifact 分類為 in-progress、completed-integrate-then-delete、completed-stale-delete 或 todo-merge-forward，如果 run 還 active 就只保留最新的 compact。",
+      "expected_output": "A lifecycle-aware governance response that treats compacts as required intake, merges unfinished items forward, and prunes older checkpoints from HEAD.",
+      "intent": "execute-within-approval",
+      "fsm_path": "inspecting → executing",
+      "p_codes": [],
+      "expectations": [
+        "The output reads prior compacts as intake instead of ignoring them.",
+        "The output classifies artifacts into the four lifecycle action classes.",
+        "The output keeps at most one latest compact for an active run.",
+        "The output merges still-open items from older compacts into the latest compact."
+      ]
+    },
+    {
+      "id": 16,
+      "name": "final-compact-removal",
+      "prompt": "這個 run 已完全 closed，所有 completed 資訊都已吸收進 canonical docs，最後一個 compact 只是重複 current gate。把最後這個 compact 移除，不要留在 HEAD。",
+      "expected_output": "A closeout response that leaves the run with zero retained compacts after final absorption.",
+      "intent": "closeout-only",
+      "fsm_path": "closeout_ready → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as closeout-only.",
+        "The output recognizes that a closed run should retain zero compacts.",
+        "The output deletes the final compact after absorption.",
+        "The output keeps canonical docs as the only durable source in HEAD.",
+        "The FSM state transitions to closed."
+      ]
+    },
+    {
+      "id": 17,
+      "name": "retention-rules",
+      "prompt": "為整個 governance repo 設計 retention rules。在決定保留或刪除之前，先區分 canonical docs、run state docs、transient packets 與 durable evidence。",
+      "expected_output": "A repo-level governance response that classifies artifacts by role first, but only allows run-local operating state while a run is active and forces promotion or deletion at closeout.",
+      "intent": "inspect-only",
+      "fsm_path": "inspecting → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as inspect-only.",
+        "The output distinguishes artifact role from lifecycle action.",
+        "The output does not apply packet deletion rules directly to canonical docs.",
+        "The output defines stricter retention limits for transient work artifacts than for active operating-state docs.",
+        "The output does not preserve closed-run local run.md or handoff.md as long-term residue.",
+        "The output mentions content residency as part of the retention classification framework.",
+        "The FSM state transitions to closed."
+      ]
+    },
+    {
+      "id": 18,
+      "name": "artifact-metadata",
+      "prompt": "新建一個 cleanup execution packet。包含必要的 artifact metadata，讓後續 run 能在無需猜測下決定 retain、absorb-delete、merge-forward 或 delete。",
+      "expected_output": "An execution packet draft that includes the required artifact metadata contract fields.",
+      "intent": "prepare-packet",
+      "fsm_path": "inspecting → ready_for_review",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as prepare-packet.",
+        "The output includes artifact_role, run_id, status, lifecycle_action, owner, and source_of_truth.",
+        "The output uses lifecycle action values that match the skill contract.",
+        "The output makes later closeout decisions easier rather than leaving retention ambiguous.",
+        "The FSM state transitions to ready_for_review."
+      ]
+    },
+    {
+      "id": 19,
+      "name": "operating-state-drift",
+      "prompt": "README 還指向 `cc25`，但 run 與 handoff 已經寫 `cc27` 而且 Packet B 是 current gate。在起草任何新 packet 前先 reconcile operating state。",
+      "expected_output": "A governance response that treats this as an operating-state drift, updates the active path, and blocks new packet drafting until README, run, handoff, and retained compact agree.",
+      "intent": "execute-within-approval",
+      "fsm_path": "execution_gate_blocked → ready_for_execution_approval",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output applies operating-state precedence (run.md frontmatter > handoff > compact > README).",
+        "The output fixes the active path mismatch before creating a new packet.",
+        "The output names the reconciled latest compact and current gate explicitly.",
+        "The FSM state transitions from execution_gate_blocked to ready_for_execution_approval."
+      ]
+    },
+    {
+      "id": 20,
+      "name": "closed-run-cleanup",
+      "prompt": "一個 closed run 還留著 rewrite.md、review.md、claude-review-packet.md 與指向舊 compacts 的 active links。執行 closeout：吸收任何剩餘的 durable knowledge、刪除 transient artifacts、清掃 stale references。",
+      "expected_output": "A closeout response that promotes any durable knowledge out of the run-local workspace, deletes run-local artifacts, sweeps stale references, and leaves a governance-ledger entry as the closeout record.",
+      "intent": "closeout-only",
+      "fsm_path": "closeout_ready → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as closeout-only.",
+        "The output does not leave closed-run transient artifacts in HEAD.",
+        "The output sweeps stale active references before declaring closeout complete.",
+        "The output distinguishes promotable durable knowledge from transient work artifacts.",
+        "The output does not leave closed-run run.md or handoff.md in HEAD.",
+        "The FSM state transitions to closed."
+      ]
+    },
+    {
+      "id": 21,
+      "name": "execution-start-gate",
+      "prompt": "使用者說了 `Approved: Commercial Cleanup Execution Packet B`，但 packet、handoff、compact 與 README 都還寫 `review-ready`。先不要 patch。記錄 approval receipt、reconcile state、更新 active path，然後才宣告 execution 可以開始。",
+      "expected_output": "An execution-start response that records the approval in-repo, updates operating-state artifacts, and treats execution as blocked until that work is done.",
+      "intent": "execute-within-approval",
+      "fsm_path": "ready_for_execution_approval → executing",
+      "p_codes": [],
+      "p_codes_conditional": ["P-WRITE-UNAPPROVED"],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output records the exact execution approval wording instead of relying on conversation memory.",
+        "The output updates run/handoff/latest compact/README before patching.",
+        "The output performs double-write (frontmatter + Markdown body).",
+        "The output changes status away from review-ready before execution starts.",
+        "The FSM state transitions to executing.",
+        "If approval receipt is missing, emits PAUSE: P-WRITE-UNAPPROVED."
+      ]
+    },
+    {
+      "id": 22,
+      "name": "approval-with-hold",
+      "prompt": "execution approval 帶一個 hold boundary：`Approved: Execute Cleanup Packet B, hold notification-service`。記錄 approval receipt，並在 execution-start update 中讓 hold 明確化，使 write set 不能 silently 擴張。",
+      "expected_output": "An execution-start update that captures exact approval text, hold scope, active-path reconciliation, and execution boundary before implementation begins.",
+      "intent": "execute-within-approval",
+      "fsm_path": "ready_for_execution_approval → executing",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as execute-within-approval.",
+        "The output preserves the exact approval wording including the hold.",
+        "The output records the approved hold in the execution-start receipt.",
+        "The output narrows the executable write set to match the recorded approval.",
+        "The output performs double-write (frontmatter + Markdown body).",
+        "The FSM state transitions to executing."
+      ]
+    },
+    {
+      "id": 23,
+      "name": "zero-residue-closeout",
+      "prompt": "這個 run 已 closed。它的資料夾裡只剩 run.md、handoff.md 與 stage-0-audit.md。把可重用的 compatibility strategy promote 進 runbook，寫一筆 governance-ledger closeout entry，移除 run-local 檔案，並清掉 README 的 active link。",
+      "expected_output": "A zero-residue closeout response that leaves no run-local residue for the closed run and keeps only promoted knowledge plus the governance ledger.",
+      "intent": "closeout-only",
+      "fsm_path": "closeout_ready → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as closeout-only.",
+        "The output promotes durable knowledge out of the closed run directory before deletion.",
+        "The output deletes closed-run run.md and handoff.md instead of preserving them as long-term operating-state.",
+        "The output updates README and governance-ledger rather than keeping the closed run as an active path.",
+        "The FSM state transitions to closed."
+      ]
+    },
+    {
+      "id": 24,
+      "name": "content-residency-active-plan",
+      "prompt": "對 docs/plans/20260606-billing-reconciliation/run.md 跑 health-check。它是一個 Active plan，約 920 行，大約 85% 是 canonical-business-truth 與 technical-contract-truth 內容。",
+      "expected_output": "A health-check that performs section-level classification, finds ≥30% non-plan content, reclassifies as actionable-drift (content-residency), and recommends harvest instead of closing.",
+      "intent": "inspect-only",
+      "fsm_path": "inspecting → inspecting",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as inspect-only.",
+        "The output performs section-level ownership classification on the docs/plans/ file.",
+        "The output identifies ≥30% non-execution-sequencing content (canonical-business-truth / technical-contract-truth).",
+        "The output reclassifies the file as actionable-drift with content-residency subtype.",
+        "The output recommends knowledge-harvest mode as next step.",
+        "The output does NOT transition to closed.",
+        "The output outputs a section-level disposition table with candidate canonical homes.",
+        "The output includes a per-section ownership breakdown table showing the non-plan-content ratio exceeds 30%."
+      ],
+      "anti_expectations": [
+        "The output classifies the file as healthy.",
+        "The output transitions FSM to closed.",
+        "The output skips content residency check for the docs/plans/ file.",
+        "The output produces a write set or modifies any files."
+      ]
+    },
+    {
+      "id": 25,
+      "name": "harvest-source-disposition",
+      "prompt": "對 docs/plans/20260520-order-statemachine/extraction-report.md 跑的 health-check 結果是 fail（35% non-plan）。使用者說「清乾淨」。轉成 knowledge-harvest mode。該檔是 Reference + historical-only。產出 section-disposition table、promotion-target-map、執行 source disposition，並更新所有 cross-references。",
+      "expected_output": "A knowledge-harvest response that produces section-disposition table, moves the source file to docs/references/history/, updates all cross-references, and outputs Completion Summary.",
+      "intent": "harvest",
+      "fsm_path": "inspecting → closed",
+      "p_codes": [],
+      "expectations": [
+        "The output classifies intent as harvest.",
+        "The output produces a section-disposition table with retain/promote/absorb+delete per section.",
+        "The output produces a promotion-target-map with concrete destination paths.",
+        "The output applies source disposition: Reference + historical-only → git mv to docs/references/history/.",
+        "The output executes cross-reference cascade: updates README, governance-ledger, task docs, and verifies no broken links.",
+        "The output does NOT leave the source file in docs/plans/ after harvest.",
+        "The FSM state transitions to closed.",
+        "The output produces a Completion Summary matching Mode Completion Protocol."
+      ],
+      "anti_expectations": [
+        "The output only extracts content without moving the source file.",
+        "The output moves the file without updating cross-references.",
+        "The output skips the promotion-target-map.",
+        "The output leaves the source file in docs/plans/."
+      ]
+    }
+  ],
+  "coverage": {
+    "intents": {
+      "inspect-only": [1, 17, 24],
+      "prepare-packet": [2, 3, 4, 5, 6, 7, 8, 9, 13, 18],
+      "harvest": [25],
+      "execute-within-approval": [10, 11, 14, 15, 19, 21, 22],
+      "closeout-only": [12, 16, 20, 23]
+    },
+    "fsm_states": {
+      "inspecting": [1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 15, 17, 18, 24, 25],
+      "needs_scope": [],
+      "needs_decision": [3, 4, 6, 9, 13],
+      "ready_for_review": [2, 5, 7, 8, 10, 18],
+      "ready_for_execution_approval": [10, 11, 19, 21, 22],
+      "execution_gate_blocked": [14, 19],
+      "executing": [11, 14, 15, 21, 22],
+      "closeout_ready": [12, 16, 20, 23],
+      "closed": [1, 12, 16, 17, 20, 23, 25]
+    },
+    "p_codes": {
+      "P-DESIGN-FORMULA": [3],
+      "P-DESIGN-UNIT": [4],
+      "P-REVIEW-MISSING": [5],
+      "P-DESIGN-OWNERSHIP": [6],
+      "P-COMPAT-BOUNDARY": [9],
+      "P-LEGACY-VAGUE-DEFER": [13],
+      "P-STATE-EXPECTED": [14],
+      "P-WRITE-UNAPPROVED": [21]
+    },
+    "note": "Eval 25 covers harvest intent with source disposition and cross-reference cascade. needs_scope state is covered by failure-injection fail-07 and fail-08. Eval 24 covers content-residency guard for Active plans in docs/plans/."
+  }
+}

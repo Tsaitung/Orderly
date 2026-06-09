@@ -1,0 +1,57 @@
+# Orderly controlled vocabulary (machine-readable)
+# naming-canonical SSOT；人類可讀版 docs/references/canonical-vocabulary.md
+# 由 orderly-doc-governance 治理。drift 偵測時以此檔的 canonical/banned 為準。
+version: 1
+updated: "2026-06-06"
+
+terms:
+  - canonical: 訂單
+    identifier: order
+    banned: [採購單]
+  - canonical: 驗收
+    identifier: acceptance
+    banned: [收貨, 點收]
+  - canonical: 對帳
+    identifier: reconciliation
+    banned: [核帳]
+  - canonical: 對帳對照表
+    identifier: statement
+    banned: [帳單, 發票]
+  - canonical: 結算
+    identifier: settlement
+    banned: [清算]
+  - canonical: 開票
+    identifier: invoicing
+    banned: []
+    note: Orderly 預設不開發票（INV-billing-002），僅明確啟用時使用
+  - canonical: 平台抽成
+    identifier: platform_share_pct
+    banned: [手續費]
+    note: commission 限程式內部用詞
+  - canonical: SKU
+    identifier: sku
+    banned: [貨號]
+  - canonical: 品類
+    identifier: category
+    banned: []
+  - canonical: 供應商
+    identifier: supplier
+    banned: [廠商, 賣家]
+  - canonical: 餐廳
+    identifier: restaurant
+    banned: [買家]
+  - canonical: 租戶
+    identifier: tenant_id
+    banned: []
+    note: organizationId 為相容別名；新碼用 tenant_id
+
+modules:
+  "01": auth
+  "02": product
+  "03": order
+  "04": acceptance
+  "05": billing
+  "06": customer-hierarchy
+  "07": onboarding
+  "08": referral
+  "09": erp
