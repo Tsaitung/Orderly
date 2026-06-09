@@ -50,10 +50,14 @@ Four greps over `.claude/skills/orderly-doc-governance .claude/hooks docs/{gover
 - `docs/plans/` bare is legit on main (run packets / governance-ledger / runbooks / health-check) — only the curated-doc *filenames* move to `docs/3-Development-Plan/`.
 - T9: do NOT push without explicit user go-ahead.
 
-## Verification log (fill during execution)
+## Verification log (filled during execution)
 
-- T8 Class A: _pending_
-- T8 Class B: _pending_
-- T8 Class C: _pending_
-- T8 ADR-0001: _pending_
-- T7 hook fire-test exit codes: _pending_
+- T8 Class A (docs flat taxonomy): **0** ✓
+- T8 Class B (curated-doc filenames): **0** ✓
+- T8 Class C (`-fastapi`): **0** ✓ (T8 oracle caught 2 residuals in `docs/0-Design/business-invariants.md` lines 30/34 missed by Task-5's skill-only file list → fixed in commit after Task 8)
+- T8 ADR-0001 stale-assert + bare flat tokens: **0** ✓
+- T8 frontmatter: valid (name + description) ✓ · evals parse 4/4 ✓
+- T8 dangling-link triage: 8 absent paths, ALL intentional (HelloGlow noted-absent / on-demand alt-home / fictional eval examples / template YYYY-MM-DD pattern) — no real bug
+- T7 hook fire-tests: harvest-gate BLOCK exit 2 (rm dated plan dir w/o evidence) ✓ + benign PASS 0 ✓ · validate BLOCK exit 2 (incomplete health-check) ✓ + non-hc PASS 0 ✓ · stop-gate no-marker PASS 0 ✓ · LIVE-confirmed: registered PreToolUse hook fired + blocked a real Bash call
+
+## Status: implementation complete (Tasks 1-8). Task 9 (PR) pending user go-ahead to push.
