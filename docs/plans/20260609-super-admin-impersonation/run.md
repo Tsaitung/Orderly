@@ -1,12 +1,12 @@
 ---
 run_id: "20260609-super-admin-impersonation"
-state: ready_for_review
+state: changes_requested
 intent: "execute-within-approval"
 mode: "prepare-packet+freeze"
 scope: ["01", "auth"]
 risk_level: "high-risk"
-current_stage: "Stage 2 (packet assembled, decisions frozen, primary docs landed)"
-pause_reason: null
+current_stage: "Stage 2.5 (implementation-vs-plan gap review done; rework required before dev)"
+pause_reason: "Round-5 gap review found 3 MUST-FIX (G1 TTL-by-exp, G2 no-refresh, G3 audit-enforcement) + 2 SHOULD-FIX (G4 audit-nullable, G5 view-as-write) + 1 VERIFY (G6 MFA-signal); plan edited, awaiting CLAUDE/CODEX rework + re-review"
 missing_inputs: []
 safe_progress:
   - "US-AUTH-023/024 + US-AUTH-009 mod applied (us-edit)"
@@ -19,8 +19,8 @@ approval_status: draft_approved
 
 # Governance Run State — Super Admin Impersonation / Act-as
 
-> Design-completion marker: **ready_for_implementation**（us-edit marker；非 FSM state）。
-> FSM frontmatter state = `ready_for_review`（packet 組裝完成、決策已 freeze、primary docs 已落盤，等實作/review）。
+> Design-completion marker: **needs_rework**（2026-06-09 Round-5 implementation-vs-plan gap review；先前為 `ready_for_implementation`）。
+> FSM frontmatter state = `changes_requested`（packet 組裝完成、決策已 freeze、primary docs 已落盤，但 Round-5 gap review 發現 6 項須修，plan 已編輯回 gap，等 CLAUDE/CODEX 重工後重審）。
 
 ## Run Metadata
 
@@ -113,9 +113,28 @@ approval_status: draft_approved
 - KEEP-until: 2026-06-16
 - Ledger closeout entry: 延後至 run 真正 closed（實作完成後）；目前 packet active，不寫 closeout、不 harvest、不 delete
 
+## Round-5 Gap Review（2026-06-09，implementation-vs-plan）
+
+- 觸發：使用者要求審 implementation vs plan，找 gap 編回 plan、更新狀態，交 CLAUDE 或 CODEX 重工。
+- 現況確認：**impersonation code 零實作**（`git ls-files` 僅 docs）；review 對象 = plan 的 code 錨點 vs 實際 repo。
+- 錨點驗證：14 個技術錨點逐一對實 repo 重驗 → **準確度高**（gateway_compat 死殼空、X-Tenant-Id 10 檔[products6/orders1/billing3]、audit_service.log keyword 簽名、AuditLog 雙 id 欄位、user model FK 語意、AuthMiddleware request.state 推導、super_admin role 皆證實）；唯 session_service 行號輕微漂移（is_token_blacklisted 實為 :372、plan 寫 :377），function 存在、不阻擋。
+- 新發現（codex 4 輪全漏，源於「活的 auth 路徑只查 `exp`+blacklist」主軸盲點）：
+
+| ID | 嚴重度 | Gap | 修在 |
+|----|--------|-----|------|
+| G1 | MUST-FIX | session TTL < token `exp` 時，自然到期（無 stop→無 blacklist）的 act-as token 仍能打 protected route；middleware 不查 Redis session 存在性 | T2.8 新增；技術選型 session 失效段；釘 `exp == TTL` |
+| G2 | MUST-FIX | act-as 可 refresh → 短效 TTL 被繞過 | T2.9 新增；start 不簽 refresh、refresh 拒 `act_as` |
+| G3 | MUST-FIX/scope | 「全程審計不可關閉」靠不存在的「audit 中介層」；跨模組端點不呼叫 audit_service | T2.5 改寫；二選一（加 middleware 或收斂範圍）+ 落 PRD/spec |
+| G4 | SHOULD-FIX | AuditLog actor/target/org 欄位 nullable=True，「非空」僅 app 層 | T2.5 加 app 斷言 + 測試 |
+| G5 | SHOULD-FIX | view-as「不授寫入」後端強制機制未定義 | T2.6 改寫；定機制 + 拒寫驗收 |
+| G6 | VERIFY | start guard「MFA-passed」信號來源未錨 | T2.2 note；實作前先驗信號存在 |
+
+- Approval 影響：**設計決策 D1/D2/D3 仍 FROZEN、未動**；本次只動 implementation plan/tasks 的技術 gap，不改已核准的需求決策。
+- 重工指派：CLAUDE 或 CODEX 修 G1-G6（G1/G2/G3 必修）後 re-review → 通過才 `ready_for_implementation`。
+
 ## Notes
 
-- Open ambiguities that do not block: 模擬 session TTL 具體分鐘數 → 留 dev/PRD 細化（不阻擋設計完成）
-- Blockers: none
-- Next gate: dev 從 tasks.md T0.1（RED 整合測試）開始；上線前驗 INV-auth-003 / INV-auth-001
-- Governance Gate: **pass**
+- Open ambiguities that do not block: 模擬 session TTL 具體分鐘數 → 留 dev/PRD 細化（但 G1 要求 token `exp` 必須綁定該 TTL，故定 TTL 時同步定 `exp`）
+- Blockers: **Round-5 G1/G2/G3 為進實作前 MUST-FIX**（safety 紅線：TTL/refresh 失效契約 + 審計強制機制）
+- Next gate: **CLAUDE/CODEX 修 G1-G6 → re-review**；通過後才從 tasks.md T0.1（RED 整合測試）開始；上線前驗 INV-auth-003 / INV-auth-001
+- Governance Gate: **pass（設計治理）**；Implementation-readiness Gate: **changes_requested（Round-5 gap）**

@@ -36,7 +36,7 @@
 
 - `backend/app/modules/users/api/v1/auth/`：impersonation start/stop/current + role-switch router；`core.py` 簽發帶 `act_as` 的 token（effective claims=target）；authz 化身；impersonation audit（待實作）
 - `shared/types`：impersonation DTO + `act_as` claim 型別（待實作）
-- Auth 中介層：既有 `AuthMiddleware` 解 act_as token 後 `request.state` 即反映 effective target（對 request.state 消費者自動透傳，不需重造 gateway middleware）。**但須補兩處**：(a) auth validator 加 `is_token_blacklisted(jti)` 檢查（現 dispatch 不查 blacklist → stop 不生效）；(b) orders/products/billing 讀 client `X-Tenant-Id` 的 tenant helper 以 effective `request.state.tenant_id` 為準、mismatch 回 403。effective-only context（不繼承 actor `is_super_user`）（待實作）
+- Auth 中介層：既有 `AuthMiddleware` 解 act_as token 後 `request.state` 即反映 effective target（對 request.state 消費者自動透傳，不需重造 gateway middleware）。**但須補四處**：(a) auth validator 加 `is_token_blacklisted(jti)` 檢查（現 dispatch 不查 blacklist → stop 不生效，C3）；(b) orders/products/billing 讀 client `X-Tenant-Id` 的 tenant helper 以 effective `request.state.tenant_id` 為準、mismatch 回 403（C4）；(c) **act-as token `exp` == session TTL**（middleware 不查 Redis session，TTL 須由 `exp` 強制，Round-5 G1）；(d) **start 不簽 refresh token、refresh 端點拒 `act_as`**（防短效被繞，Round-5 G2）。effective-only context（不繼承 actor `is_super_user`）（待實作）
 - frontend：使用者清單列入口 + 全域橫幅 + 角色切換選單 + Playwright E2E 旅程（T3.0）（待實作）
 - Alembic：**預設 N/A** —— audit_logs 既有欄位（user_id/target_user_id/organization_id/event_metadata）已足；僅當 act_as 需 User/AuditLog 專屬持久欄位才遷移（待確認）
 
@@ -47,8 +47,17 @@
 
 ## 下一步 exact start
 
-1. Governance：建立 ADR-0005、落 INV-auth-003、凍結 3 項決策於 `run.md`、render Governance Gate。
-2. Dev：從 `tasks.md` T0.1（RED 整合測試）開始 → T1.1 contract → T2.* backend。
+> **⚠ 2026-06-09 Round-5 gap review：狀態 = `changes_requested`，dev 暫不開工。** 先由 CLAUDE 或 CODEX 修以下 gap（詳見 `run.md` Round-5 表 + `tasks.md` T2.8/T2.9/改寫的 T2.2/T2.5/T2.6），re-review 通過才回到 `ready_for_implementation`：
+> - **G1（MUST）** act-as token `exp` == session TTL（T2.8）；middleware 不查 Redis session，TTL 須由 `exp` 強制
+> - **G2（MUST）** start 不簽 refresh、refresh 拒 `act_as`（T2.9）
+> - **G3（MUST）** 審計強制機制二選一（加 act-as audit middleware 或收斂「不可關閉」範圍），落 PRD/spec（T2.5）
+> - **G4（SHOULD）** AuditLog actor/target/org 欄位 nullable → app 層斷言非空 + 測試（T2.5）
+> - **G5（SHOULD）** view-as 後端拒寫機制 + 驗收（T2.6）
+> - **G6（VERIFY）** 確認「MFA-passed」信號既有來源（T2.2）
+
+1. Governance：建立 ADR-0005、落 INV-auth-003、凍結 3 項決策於 `run.md`、render Governance Gate。（已完成）
+2. **Rework（本次）**：CLAUDE/CODEX 修 G1-G6 → re-review。
+3. Dev（重審通過後）：從 `tasks.md` T0.1（RED 整合測試）開始 → T1.1 contract → T2.* backend。
 
 ## 設計決策（provenance 由 governance 凍結，本檔僅引用）
 
