@@ -23,7 +23,7 @@ A naive copy would install a skill that tells every future agent to `grep docs/p
 1. Extract the skill folder (20 files) + 3 hooks + 7 net-new canonical-home docs (incl. ADR set) from the stale branch via file-level `git checkout`.
 2. Re-point **all three classes** of dangling references to `main`'s structure:
    - **Class A** — docs flat taxonomy → numbered (37 refs in 7 skill files + 8 refs in 3 ported docs).
-   - **Class B** — curated-dev-doc home (`docs/plans/` root → `docs/3-Development-Plan/`) + remove/rewrite the inverted-history note that claims `main` renamed numbered→flat.
+   - **Class B** — curated-dev-doc home (`docs/plans/<curated>.md` → `docs/3-Development-Plan/`) across 6 files (project-paths/stage-gates/plan-residency/smoke.json/deprecation-roadmap) + rewrite the inverted-history note + **rewrite ADR-0001** (an `accepted` ADR recording the false flat-rename decision + `settings.local.json` wiring) to record main's actual choice.
    - **Class C** — backend microservice paths (`backend/<svc>-fastapi/app/{api,schemas,models}/` → `backend/app/modules/<svc>/`) (8 refs in 3 skill files + 1 hook comment).
 3. Re-home `business-invariants.md` to `docs/0-Design/business-invariants.md`; create net-new homes `docs/governance/`, `docs/references/`, `docs/incidents/`, `docs/adr/`, `docs/plans/governance-ledger.md`.
 4. Hand-merge new doc entries into `main`'s existing `docs/INDEX.md`.
@@ -230,41 +230,57 @@ git add .claude/skills/orderly-doc-governance docs/adr/ADR-template.md docs/plan
 git commit -m "fix(doc-governance): re-point docs flat taxonomy -> numbered (Class A)"
 ```
 
-### Task 4: Re-point Class B (curated-dev-doc home) + fix inverted-history note
+### Task 4: Re-point Class B (curated-dev-doc home) + fix inverted-history note + rewrite ADR-0001
 
-**Files:** `.claude/skills/orderly-doc-governance/references/project-paths.md` (and any other file referencing `docs/plans/` curated dev docs)
+**Files:** `.claude/skills/orderly-doc-governance/references/project-paths.md`, `references/stage-gates.md`, `references/plan-residency.md`, `evals/smoke.json`, `docs/governance/deprecation-roadmap.md`, `docs/adr/ADR-0001-docs-structure-and-governance-alignment.md`
 
-- [ ] **Step 1:** In `project-paths.md`, the `curated-durable-doc` section lists `docs/plans/` 根層 holding `CI-CD-ARCHITECTURE.md`, `DEPLOYMENT-*.md`, `DEVELOPMENT-PLAN.md`, `ci-secrets.md`, `PERFORMANCE-OPTIMIZATION-SUMMARY.md`, `PRD-US-GAP-REPORT.md`. Re-point this curated-doc home to `docs/3-Development-Plan/`. Also `docs/plans/Infra-Runbook.md` → `docs/3-Development-Plan/Infra-Runbook.md`. Keep `docs/plans/{run-id}/`, `governance-ledger.md`, `runbooks/`, `health-check-*.md` under `docs/plans/` (correct on main).
-- [ ] **Step 2:** Rewrite the inverted-history background note (project-paths.md:5-6). Replace the false "2026-06-06 改名為扁平命名" claim with an accurate statement: `main` uses a numbered taxonomy (`0-Design`/`1-User-Story`/`2-PRD`/`3-Development-Plan`/`4-Test`); this skill was originally authored against a flat taxonomy on a sibling branch and re-pointed to match `main`.
-- [ ] **Step 3:** Grep-confirm no skill file still treats `docs/plans/` root as the curated-dev-doc home.
+> **Codex Round-1 M3 + M1:** Class-B refs are NOT confined to `project-paths.md`. Full set (verified): `project-paths.md:68` (`docs/plans/Infra-Runbook.md`, `docs/plans/runbooks/`), `stage-gates.md:103` + `plan-residency.md:21,146` (`docs/plans/todo.md` alt-home), `evals/smoke.json:9` (`docs/plans/CI-CD-ARCHITECTURE.md`), `docs/governance/deprecation-roadmap.md:17` (`docs/plans/CI-CD-TROUBLESHOOTING-GUIDE.md` / `DEVELOPMENT-PLAN.md` / `DEPLOYMENT-TROUBLESHOOTING.md`). **`docs/plans/` itself is legit on main** (run packets, governance-ledger, runbooks/, health-check), so the Class-B oracle targets the *specific 3-Development-Plan filenames*, not the bare dir.
+
+Class-B mapping: a curated dev-doc filename under `docs/plans/` → `docs/3-Development-Plan/`. The real resident set on main is `{CI-CD-ARCHITECTURE, CI-CD-PARITY, ci-secrets, DEPLOYMENT-CHECKLIST, DEPLOYMENT-ENVIRONMENTS, DEPLOYMENT-TROUBLESHOOTING, DEVELOPMENT-PLAN, docker-deployment-guide, Infra-Runbook, PERFORMANCE-OPTIMIZATION-SUMMARY, PRD-US-GAP-REPORT, STATUS-SUMMARY}`. `docs/plans/todo.md` does not exist on either branch (illustrative alt-home) — re-point its prefix to `docs/3-Development-Plan/todo.md` for consistency. `docs/plans/runbooks/` stays under `docs/plans/` (net-new runbook home, correct on main).
+
+- [ ] **Step 1:** In `project-paths.md`, re-point the `curated-durable-doc` section so the curated dev-doc home is `docs/3-Development-Plan/` (CI-CD-ARCHITECTURE.md, DEPLOYMENT-*.md, DEVELOPMENT-PLAN.md, ci-secrets.md, PERFORMANCE-OPTIMIZATION-SUMMARY.md, PRD-US-GAP-REPORT.md). Re-point `docs/plans/Infra-Runbook.md` → `docs/3-Development-Plan/Infra-Runbook.md` (line 68). Keep `docs/plans/{run-id}/`, `governance-ledger.md`, `runbooks/`, `health-check-*.md` under `docs/plans/`.
+- [ ] **Step 2:** Re-point `docs/plans/todo.md` → `docs/3-Development-Plan/todo.md` in `stage-gates.md:103` and `plan-residency.md:21,146`.
+- [ ] **Step 3:** Re-point `evals/smoke.json:9` `docs/plans/CI-CD-ARCHITECTURE.md` → `docs/3-Development-Plan/CI-CD-ARCHITECTURE.md`.
+- [ ] **Step 4:** Re-point the curated-doc names in `docs/governance/deprecation-roadmap.md:17` (`docs/plans/DEVELOPMENT-PLAN.md` → `docs/3-Development-Plan/DEVELOPMENT-PLAN.md`, `docs/plans/DEPLOYMENT-TROUBLESHOOTING.md` → `docs/3-Development-Plan/DEPLOYMENT-TROUBLESHOOTING.md`; `CI-CD-TROUBLESHOOTING-GUIDE.md` is a fictional dangling-ref example — keep its prefix as `docs/3-Development-Plan/` for consistency or neutralize the candidate note since it describes a stale-branch-specific observation, not a main fact).
+- [ ] **Step 5:** Rewrite the inverted-history background note (project-paths.md:5-6). Replace the false "2026-06-06 改名為扁平命名" claim with an accurate statement: `main` uses a numbered taxonomy (`0-Design`/`1-User-Story`/`2-PRD`/`3-Development-Plan`/`4-Test`); this skill was ported from sibling repo `helloglow-doc-governance` and re-pointed to match `main`'s numbered structure (the flat rename described on the sibling branch was NOT adopted on `main`).
+- [ ] **Step 6 (M1):** Rewrite `docs/adr/ADR-0001-docs-structure-and-governance-alignment.md` to record the decision **`main` actually took**, not the stale branch's. The stale ADR (`Lifecycle Status: accepted`) records "rename `0-Design → system-spec` … 228 處引用" + "hooks 於 `.claude/settings.local.json` 接線" — both false on `main` and contradicting D-1. Rewrite Decision to: (1) **keep** numbered taxonomy (`main` chose the ADR's own "Alternative A" naming); (2) port `helloglow-doc-governance` → `orderly-doc-governance` adapted to numbered paths; (3) register the 3 hooks in **`.claude/settings.json`** (not settings.local.json); (4) global `doc-governance` stays router/fallback. Update Context/Consequences/Alternatives to match (numbered taxonomy retained; no 228-ref rename happened). Keep ADR metadata (`accepted`, date) but correct the body.
+- [ ] **Step 7:** Verify Class-B oracle → 0 across skill + ported docs (run targeted filename set, since bare `docs/plans/` is legit).
 ```bash
-grep -rnE 'docs/plans/(CI-CD|DEPLOYMENT|DEVELOPMENT-PLAN|ci-secrets|PERFORMANCE-OPTIMIZATION|PRD-US-GAP|Infra-Runbook)' .claude/skills/orderly-doc-governance
+grep -rnE 'docs/plans/(CI-CD-ARCHITECTURE|CI-CD-PARITY|ci-secrets|DEPLOYMENT-CHECKLIST|DEPLOYMENT-ENVIRONMENTS|DEPLOYMENT-TROUBLESHOOTING|DEVELOPMENT-PLAN|docker-deployment-guide|Infra-Runbook|PERFORMANCE-OPTIMIZATION-SUMMARY|PRD-US-GAP-REPORT|STATUS-SUMMARY|todo|CI-CD-TROUBLESHOOTING-GUIDE)' \
+  .claude/skills/orderly-doc-governance docs/governance docs/references docs/incidents docs/adr docs/plans/governance-ledger.md docs/0-Design/business-invariants.md
 # Expected: NO output.
+# Also confirm ADR-0001 no longer asserts the flat rename:
+grep -nE 'system-spec|settings\.local\.json|228 處' docs/adr/ADR-0001-docs-structure-and-governance-alignment.md
+# Expected: NO output (rewritten to numbered reality).
 ```
-- [ ] **Step 4:** Commit.
+- [ ] **Step 8:** Commit.
 ```bash
-git add .claude/skills/orderly-doc-governance/references/project-paths.md
-git commit -m "fix(doc-governance): re-point curated-dev-doc home to 3-Development-Plan + correct inverted-history note (Class B)"
+git add .claude/skills/orderly-doc-governance docs/governance/deprecation-roadmap.md docs/adr/ADR-0001-docs-structure-and-governance-alignment.md
+git commit -m "fix(doc-governance): re-point curated-dev-doc home to 3-Development-Plan, correct inverted-history note, rewrite ADR-0001 to main reality (Class B + M1)"
 ```
 
 ### Task 5: Re-point Class C (backend microservice → modular monolith)
 
-**Files:** `.claude/skills/orderly-doc-governance/evals/harvest-truth-verification.json`, `evals/regression.json`, `references/plan-residency.md`, `references/project-paths.md` (Backend Microservice 落點 section), `.claude/hooks/harvest-evidence-gate.sh` (comment line 25)
+**Files (verified full set — Codex Round-1 M2):** `.claude/skills/orderly-doc-governance/evals/harvest-truth-verification.json` (lines 5,10,11,71,79), `evals/regression.json` (214), `references/plan-residency.md` (25,83,97,150), `references/project-paths.md` (116,126), **`references/stage-gates.md` (107)** ← was missing from Round-1, and `.claude/hooks/harvest-evidence-gate.sh` (comment line 25)
 
-Mapping: `backend/<svc>-fastapi/app/{api,schemas,models}/` → `backend/app/modules/<svc>/` with svc name normalization (user→users, order→orders, product→products, notification→notifications, customer-hierarchy→customer_hierarchy; acceptance/billing/suppliers unchanged as plural where applicable — verify against actual module dir names).
+Mapping: `backend/<svc>-fastapi/app/{api,schemas,models}/` → `backend/app/modules/<svc>/` with svc name normalization (user→users, order→orders, product→products, notification→notifications, customer-hierarchy→customer_hierarchy; acceptance/billing unchanged; supplier→suppliers — verify against actual module dir names). **`api-gateway` has NO monolith module** (gateway folded into the monolith) — where the stale `<svc>` set lists `api-gateway`, drop it from the module enumeration.
+
+> **Alembic/migration nuance:** the evals contain illustrative drift scenarios like `cd backend/billing-service-fastapi && python3.11 -m alembic heads`. The monolith has a **single** alembic root (not per-service). Re-point these to the monolith's alembic location (`cd backend && … alembic heads`, or `backend/app/...`), not `backend/app/modules/billing/`. These are *illustrative* ("示意"/"fictional") examples — keep them monolith-shaped so they don't teach the dead microservice layout.
 
 - [ ] **Step 1:** Re-point each occurrence. Update `project-paths.md` "Backend Microservice 落點" prose from "後端為微服務；source of truth 依服務分散 `backend/<svc>-fastapi/app/...`" to the monolith reality: `backend/app/modules/<svc>/` (modules: users/orders/products/acceptance/billing/notifications/customer_hierarchy/suppliers), shared DTO in `shared/types/`, OpenAPI derived from `docs/0-Design/api-specification.yaml`.
-- [ ] **Step 2:** Update the `harvest-evidence-gate.sh:25` comment example `backend/billing-service-fastapi/app/models/...` → `backend/app/modules/billing/...`.
-- [ ] **Step 3:** Verify Class C grep oracle → 0.
+- [ ] **Step 2:** Re-point `stage-gates.md:107` wire-contract row (`backend/<svc>-fastapi/app/{api,schemas,models}/` → `backend/app/modules/<svc>/`).
+- [ ] **Step 3:** Re-point the illustrative concrete refs in `evals/harvest-truth-verification.json` (billing-service-fastapi, order-service-fastapi → `backend/app/modules/billing`, `backend/app/modules/orders`; alembic refs → single monolith alembic) + `evals/regression.json:214` + `plan-residency.md` (placeholder + concrete + alembic).
+- [ ] **Step 4:** Update the `harvest-evidence-gate.sh:25` comment example `backend/billing-service-fastapi/app/models/...` → `backend/app/modules/billing/models/...`.
+- [ ] **Step 5:** Verify Class C grep oracle → 0. **Oracle fixed (M2):** `[a-z-]+-fastapi` does NOT match the placeholder `backend/<svc>-fastapi`; use a `-fastapi`-suffix oracle that catches both placeholder and concrete spellings.
 ```bash
-grep -rnE 'backend/[a-z-]+-fastapi' .claude/skills/orderly-doc-governance .claude/hooks
-# Expected: NO output.
+grep -rnE '\-fastapi' .claude/skills/orderly-doc-governance .claude/hooks
+# Expected: NO output. (Catches backend/<svc>-fastapi, billing-service-fastapi, order-service-fastapi alike.)
 ```
-- [ ] **Step 4:** Spot-check monolith module paths resolve (e.g. `ls -d backend/app/modules/billing backend/app/modules/orders`).
-- [ ] **Step 5:** Commit.
+- [ ] **Step 6:** Spot-check monolith module paths resolve (e.g. `ls -d backend/app/modules/billing backend/app/modules/orders backend/app/modules/users`).
+- [ ] **Step 7:** Commit.
 ```bash
 git add .claude/skills/orderly-doc-governance .claude/hooks/harvest-evidence-gate.sh
-git commit -m "fix(doc-governance): re-point backend microservice paths -> modular monolith (Class C)"
+git commit -m "fix(doc-governance): re-point backend microservice paths -> modular monolith (Class C, incl stage-gates.md + alembic)"
 ```
 
 ### Task 6: Hand-merge new entries into docs/INDEX.md
@@ -362,11 +378,18 @@ grep -rhoE 'docs/[0-9A-Za-z._/-]+\.(md|yaml)' .claude/skills/orderly-doc-governa
 ```bash
 for f in .claude/skills/orderly-doc-governance/evals/*.json; do jq -e . "$f" >/dev/null && echo "OK $f" || echo "BAD $f"; done
 ```
-- [ ] **Step 4:** Combined grep oracle (Class A + Class C) → 0 across the whole skill + ported docs.
+- [ ] **Step 4:** Combined grep oracle (Class A + Class B + Class C) → 0 across the whole skill + hooks + ported docs. This is the DONE oracle.
 ```bash
-grep -rnE 'docs/system-spec|docs/prd|docs/user-stories|docs/testing|backend/[a-z-]+-fastapi' \
-  .claude/skills/orderly-doc-governance .claude/hooks docs/governance docs/references docs/incidents docs/adr docs/0-Design/business-invariants.md docs/plans/governance-ledger.md
-# Expected: NO output. This is the DONE oracle.
+TARGETS=".claude/skills/orderly-doc-governance .claude/hooks docs/governance docs/references docs/incidents docs/adr docs/0-Design/business-invariants.md docs/plans/governance-ledger.md"
+# Class A — docs flat taxonomy
+grep -rnE 'docs/system-spec|docs/prd|docs/user-stories|docs/testing' $TARGETS
+# Class B — curated dev-doc names under docs/plans/ (bare docs/plans/ is legit, so target the filenames)
+grep -rnE 'docs/plans/(CI-CD-ARCHITECTURE|CI-CD-PARITY|ci-secrets|DEPLOYMENT-CHECKLIST|DEPLOYMENT-ENVIRONMENTS|DEPLOYMENT-TROUBLESHOOTING|DEVELOPMENT-PLAN|docker-deployment-guide|Infra-Runbook|PERFORMANCE-OPTIMIZATION-SUMMARY|PRD-US-GAP-REPORT|STATUS-SUMMARY|todo|CI-CD-TROUBLESHOOTING-GUIDE)' $TARGETS
+# Class C — backend microservice -fastapi (placeholder + concrete; NOT [a-z-]+-fastapi which misses <svc>)
+grep -rnE '\-fastapi' $TARGETS
+# ADR-0001 must not re-assert the flat rename
+grep -nE 'system-spec|settings\.local\.json|228 處' docs/adr/ADR-0001-docs-structure-and-governance-alignment.md
+# Expected: ALL FOUR return NO output (exit 1). Any hit = not done.
 ```
 - [ ] **Step 5:** No commit (verification only). Record results in handoff.md.
 
@@ -385,7 +408,7 @@ git diff --stat origin/main..HEAD
 
 - **AC1:** `.claude/skills/orderly-doc-governance/` present on `feat/orderly-doc-governance` with all 20 files (1 SKILL.md + 4 evals + 9 references + 6 templates).
 - **AC2:** Combined grep oracle (Task 8 Step 4) returns **0** dangling refs (Class A docs flat taxonomy + Class C backend `-fastapi`).
-- **AC3:** Class B fixed: no skill file treats `docs/plans/` root as curated-dev-doc home; inverted-history note corrected to reflect `main`'s numbered taxonomy.
+- **AC3:** Class B fixed: no file references a curated dev-doc by a `docs/plans/<name>` path; inverted-history note corrected to reflect `main`'s numbered taxonomy; **ADR-0001 rewritten** so it records main's actual decision (numbered kept, hooks in `settings.json`) and no longer asserts `system-spec` rename / `settings.local.json` / `228 處`.
 - **AC4:** Net-new canonical homes exist + linked from `docs/INDEX.md`: `docs/governance/`, `docs/references/`, `docs/incidents/`, `docs/adr/`, `docs/plans/governance-ledger.md`, `docs/0-Design/business-invariants.md`.
 - **AC5:** 3 hooks present, executable, registered in `.claude/settings.json` (valid JSON), and each verified to fire (Task 7 Step 3 exit codes match expectations).
 - **AC6:** No file landed under any flat-taxonomy path (`docs/system-spec/`, `docs/prd/`, `docs/user-stories/`, `docs/testing/` not created).
@@ -404,7 +427,18 @@ This adapt has a teardown-flavored oracle: the flat-taxonomy + microservice path
 | `docs/prd` | re-point | 沒碰到 | T-3 | → `docs/2-PRD` |
 | `docs/user-stories` | re-point | 沒碰到 | T-3 | → `docs/1-User-Story` |
 | `docs/testing` | re-point | 沒碰到 | T-3 | → `docs/4-Test` |
-| `docs/plans/{CI-CD,DEPLOYMENT,...,Infra-Runbook}` (curated-doc home) | re-point | 沒碰到 | T-4 | → `docs/3-Development-Plan` |
-| `backend/[a-z-]+-fastapi` | re-point | 沒碰到 | T-5 | → `backend/app/modules/<svc>` |
+| `docs/plans/(CI-CD-ARCHITECTURE\|...\|STATUS-SUMMARY\|todo\|CI-CD-TROUBLESHOOTING-GUIDE)` (curated-doc names) | re-point | 沒碰到 | T-4 | → `docs/3-Development-Plan`（bare `docs/plans/` stays legit）|
+| `-fastapi` (matches placeholder `<svc>-fastapi` + concrete `xxx-service-fastapi`) | re-point | 沒碰到 | T-5 | → `backend/app/modules/<svc>`；oracle uses `-fastapi` suffix not `[a-z-]+-fastapi` |
+| ADR-0001 stale decision (`system-spec` rename / `settings.local.json` / `228 處`) | rewrite | 沒碰到 | T-4 Step 6 | → record main's actual choice (numbered kept, settings.json) |
 
-Done = every row's grep returns 0 (verified Task 8 Step 4) AND each row has a real touching task (T-3/T-4/T-5), not a doc-only note.
+Done = every row's grep returns 0 (verified Task 8 Step 4, four-part oracle) AND each row has a real touching task (T-3/T-4/T-5), not a doc-only note.
+
+---
+
+## Changes Made — Round 1 (codex)
+
+Codex Round-1 verdict: REVISE — 3 must-fixes, all verified valid against the stale tree and applied:
+
+- **C1 (M1):** ADR-0001 is an `accepted` ADR recording the *flat-rename* decision (`0-Design → system-spec` … 228 refs) + hook wiring in `.claude/settings.local.json` — both false on main + contradicting D-1. Its `0-Design → system-spec` phrasing escaped the Class-A grep. → Task 4 Step 6 added: rewrite ADR-0001 to record main's actual decision (numbered kept = the ADR's own "Alternative A"; hooks in `settings.json`). AC3 + named-target table + Task-8 oracle updated to assert ADR-0001 no longer asserts the rename.
+- **C2 (M2):** Class-C file list missed `references/stage-gates.md:107`, and the oracle `backend/[a-z-]+-fastapi` does NOT match the placeholder `backend/<svc>-fastapi`. → Task 5 file list + alembic-on-monolith nuance added; oracle changed to `-fastapi` suffix (catches placeholder + concrete) in Task 5 + Task 8.
+- **C3 (M3):** Class-B refs live outside `project-paths.md` (`evals/smoke.json:9`, `deprecation-roadmap.md:17`, `stage-gates.md:103`, `plan-residency.md:21,146`), and Task-8 omitted Class B. Since bare `docs/plans/` is legit on main, the oracle targets the specific 3-Development-Plan filename set. → Task 4 expanded to 6 files; Task-8 done-oracle now four-part (Class A + Class B + Class C + ADR-0001).
