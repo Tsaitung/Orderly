@@ -35,7 +35,7 @@ docker compose -f compose.base.yml -f compose.dev.yml --profile admin up -d
 ## Dockerfile 來源
 
 - 後端 monolith：`backend/Dockerfile.monolith`（Cloud Build 設定 `backend/cloudbuild.monolith.yaml`）。
-- 前端：`Dockerfile.frontend`（Cloud Run 用 `Dockerfile.frontend.cloudrun`）。
+- 前端：`Dockerfile.frontend`（同一支用於本機與 Cloud Run，`PORT` 動態，`COPY . .` 以 repo root 為 context）。
 
 ## 端口與路由標準
 
