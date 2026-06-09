@@ -211,7 +211,7 @@
     {
       "id": 14,
       "name": "patch-failure-reread",
-      "prompt": "你預期 `backend/billing-service-fastapi/app/services/reconciliation_service.py` 內含某個 alias path，但 apply_patch 失敗了。重新讀實際檔案，依當前 repo state 更新 execution packet，再 patch。",
+      "prompt": "你預期 `backend/app/modules/billing/services/reconciliation_service.py` 內含某個 alias path，但 apply_patch 失敗了。重新讀實際檔案，依當前 repo state 更新 execution packet，再 patch。",
       "expected_output": "A repo-state-first response that re-reads the file, updates assumptions, and avoids reasoning from expectation alone.",
       "intent": "execute-within-approval",
       "fsm_path": "executing → execution_gate_blocked",

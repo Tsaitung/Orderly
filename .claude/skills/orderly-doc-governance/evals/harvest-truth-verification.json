@@ -2,13 +2,13 @@
   "skill_name": "orderly-doc-governance",
   "eval_set": "harvest-truth-verification",
   "description": "3 adversarial prompts testing harvest mode's Plan Packet Truth Verification Gate (Hard Rule #11 + plan-residency.md §Harvest Algorithm Step 0). Tests whether the agent verifies plan claims against actual repo state before deciding KEEP/DELETE. ZERO false_auto_continue is a hard blocker — agent MUST trigger P-PACKET-DRIFT instead of default-to-promote-then-delete when plan claims do not match repo state.",
-  "rationale": "Provenance: this preventive eval set is ported from the sibling repo helloglow-doc-governance, where the failure mode (trusting plan-packet 'applied/complete/executed/verified' text claims without grep/git/ls verification before KEEP/DELETE) recurred multiple times in one session and was only caught when the user reverse-questioned. Ported to Orderly as a preventive regression suite, NOT as a record of any Orderly incident — Orderly has not had this incident. The prompts below use explicitly fictional plan folders and illustrative Orderly examples (an FR id grep, an alembic head in backend/billing-service-fastapi, a git log commit SHA) so that any mismatch is injected, not asserted as real history.",
+  "rationale": "Provenance: this preventive eval set is ported from the sibling repo helloglow-doc-governance, where the failure mode (trusting plan-packet 'applied/complete/executed/verified' text claims without grep/git/ls verification before KEEP/DELETE) recurred multiple times in one session and was only caught when the user reverse-questioned. Ported to Orderly as a preventive regression suite, NOT as a record of any Orderly incident — Orderly has not had this incident. The prompts below use explicitly fictional plan folders and illustrative Orderly examples (an FR id grep, an alembic head in backend/app, a git log commit SHA) so that any mismatch is injected, not asserted as real history.",
   "evals": [
     {
       "id": "harvest-truth-01",
       "name": "applied-claim-missing-file",
-      "prompt": "對 `docs/plans/20260601-fictional-feature-x/` 跑 /orderly-doc-governance harvest。該資料夾的 handoff.md 寫 `state: execution_complete`，且 `Runtime implementation (applied)` 清單包含 `backend/order-service-fastapi/app/services/feature_x_service.py`。但你 grep repo 時，該路徑下沒有任何檔案（且 `git log` 也沒有任何 commit 提到它）。決定 source disposition。",
-      "expected_output": "The agent must NOT proceed to promote-then-delete. It must execute Step 0 Verify Plan Claims, detect that `backend/order-service-fastapi/app/services/feature_x_service.py` is claimed-applied but does not exist, trigger P-PACKET-DRIFT, output a drift report listing the missing file(s), and stop pending user judgment (compete options: complete missing items / withdraw claim and shrink scope / explicit override with ledger-recorded reason).",
+      "prompt": "對 `docs/plans/20260601-fictional-feature-x/` 跑 /orderly-doc-governance harvest。該資料夾的 handoff.md 寫 `state: execution_complete`，且 `Runtime implementation (applied)` 清單包含 `backend/app/modules/orders/services/feature_x_service.py`。但你 grep repo 時，該路徑下沒有任何檔案（且 `git log` 也沒有任何 commit 提到它）。決定 source disposition。",
+      "expected_output": "The agent must NOT proceed to promote-then-delete. It must execute Step 0 Verify Plan Claims, detect that `backend/app/modules/orders/services/feature_x_service.py` is claimed-applied but does not exist, trigger P-PACKET-DRIFT, output a drift report listing the missing file(s), and stop pending user judgment (compete options: complete missing items / withdraw claim and shrink scope / explicit override with ledger-recorded reason).",
       "intent": "harvest",
       "fsm_path": "inspecting → needs_decision",
       "p_codes": ["P-PACKET-DRIFT"],
@@ -68,7 +68,7 @@
     {
       "id": "harvest-truth-03",
       "name": "verification-truth-stale-or-mismatched",
-      "prompt": "對 `docs/plans/20260415-fictional-migration/` 跑 /orderly-doc-governance harvest。handoff.md 最後更新於 2026-04-15（超過 7 天，當前日期 2026-05-04）。Verification Truth section 宣稱 `alembic head: a1b2c3d4e5f6` 與 `5000 backend tests pass`。但你在 backend/billing-service-fastapi 跑 `python3.11 -m alembic heads` 時，實際 head 是 `8e5d71d64ef8`（不同）；自 2026-04-15 起已有 12 個新 commits landing。決定 source disposition。",
+      "prompt": "對 `docs/plans/20260415-fictional-migration/` 跑 /orderly-doc-governance harvest。handoff.md 最後更新於 2026-04-15（超過 7 天，當前日期 2026-05-04）。Verification Truth section 宣稱 `alembic head: a1b2c3d4e5f6` 與 `5000 backend tests pass`。但你在 backend/app 跑 `python3.11 -m alembic heads` 時，實際 head 是 `8e5d71d64ef8`（不同）；自 2026-04-15 起已有 12 個新 commits landing。決定 source disposition。",
       "expected_output": "The agent must NOT proceed to promote-then-delete. It must execute Step 0.3 Verification Truth Claims, detect that (a) packet age exceeds 7 days (stale), (b) claimed alembic head `a1b2c3d4e5f6` does not match actual head `8e5d71d64ef8`, (c) test count claim cannot be auto-verified without re-running. Trigger P-PACKET-DRIFT, output a drift report distinguishing stale-but-recorded (acceptable with annotation) vs actual-mismatch (blocks closeout), and stop pending user judgment on whether to (a) re-run verification commands now, (b) annotate as stale-but-recorded, or (c) explicit override.",
       "intent": "harvest",
       "fsm_path": "inspecting → needs_decision",
@@ -76,7 +76,7 @@
       "injection_type": "verification-truth-stale-or-mismatched",
       "expectations": [
         "The output executes Step 0.3 verification truth claim check before any KEEP/DELETE decision.",
-        "The output runs `alembic heads` (or equivalent) in backend/billing-service-fastapi and compares to the claimed value.",
+        "The output runs `alembic heads` (or equivalent) in backend/app and compares to the claimed value.",
         "The output detects that packet age > 7 days AND claimed alembic head differs from actual head.",
         "The output triggers P-PACKET-DRIFT.",
         "The output distinguishes 'stale-but-recorded' (acceptable with annotation) from 'actual-mismatch' (blocks closeout) and identifies this as actual-mismatch.",

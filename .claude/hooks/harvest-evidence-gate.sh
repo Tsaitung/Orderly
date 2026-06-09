@@ -22,7 +22,7 @@
 #     "timestamp": "ISO8601",
 #     "verifications": [
 #       {
-#         "command": "grep -c reconciliation_status backend/billing-service-fastapi/app/models/...",
+#         "command": "grep -c reconciliation_status backend/app/modules/billing/models/...",
 #         "command_type": "grep|ls|git|gcloud|alembic|other",
 #         "target": "applied-claim|frozen-decision|verification-truth|external-state|commit-claim|migration-claim",
 #         "output_excerpt": "9",

@@ -104,7 +104,7 @@ health-check 完成後，依 Guard Result 分流：
   | `operator-procedure` | `docs/plans/runbooks/*.md` |
   | `incident-postmortem` | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
   | `business-requirement` | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
-  | `wire-contract` | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
+  | `wire-contract` | `backend/app/modules/<svc>/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
   | `closeout-summary` | `docs/plans/governance-ledger.md` |
   | `transient-execution-state` | DELETE（不 promote）|
 

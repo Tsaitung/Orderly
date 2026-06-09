@@ -5,8 +5,8 @@ Orderly-specific 路徑、命名規則、scope 定義。
 > 背景：Orderly `docs/` 採**編號式**頂層命名（`0-Design` / `1-User-Story` / `2-PRD` /
 > `3-Development-Plan` / `4-Test` + `docs/plans/` 治理 run-state + 新增 `adr` / `governance` /
 > `references` / `incidents`）。本 skill 由 sibling repo `helloglow-doc-governance` 移植，
-> 原本對應 HelloGlow 的扁平命名（`system-spec` / `user-stories` / `prd` / `testing`），已全數
-> re-point 為 Orderly 的編號 taxonomy；HelloGlow 那套扁平改名在 Orderly **未採用**。
+> 原本對應 HelloGlow 的扁平 topic 命名（不帶數字編號），已全數 re-point 為 Orderly 的編號
+> taxonomy；HelloGlow 那套扁平改名在 Orderly **未採用**。
 
 ## Paths
 
@@ -18,7 +18,7 @@ Orderly-specific 路徑、命名規則、scope 定義。
 - Testing plans: `docs/4-Test/`
 - Derived surfaces:
   - `docs/INDEX.md`（總入口）
-  - 各區 `docs/<area>/INDEX.md`（`system-spec` / `user-stories` / `prd` / `plans` / `testing`）
+  - 各區 `docs/<area>/INDEX.md`（`0-Design` / `1-User-Story` / `2-PRD` / `3-Development-Plan` / `4-Test`）
   - `docs/4-Test/*.md` 的 coverage/status 鏡像欄位
   - （derived-surface candidate，尚未存在）跨模組 traceability mapping 表
 
@@ -117,19 +117,19 @@ Orderly-specific 路徑、命名規則、scope 定義。
 | `operator-procedure` | reusable-operational-rule | `docs/plans/runbooks/*.md` |
 | `incident-postmortem` | historical-evidence | `docs/incidents/{YYYY-MM-DD}-{slug}.md`（on demand）|
 | `business-requirement` | canonical-business-truth | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
-| `wire-contract` | technical-contract-truth | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
+| `wire-contract` | technical-contract-truth | `backend/app/modules/<svc>/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
 | `closeout-summary` | historical-evidence | `docs/plans/governance-ledger.md` |
 | `transient-execution-state` | execution-sequencing | DELETE（不 promote）|
 
 > harvest mode 用 9 類做 promotion routing；ledger / inspect-only summary 可用 broader 5 類做 high-level summary。兩層並用不衝突。
 
-### Backend Microservice 落點（wire-contract）
+### Backend Module 落點（wire-contract）
 
-Orderly 後端為微服務；`wire-contract` class 的 source of truth 依服務分散：
+Orderly 後端為**模組化單體**（modular monolith，單一 `backend/Dockerfile.monolith`）；`wire-contract` class 的 source of truth 依模組分散：
 
-`backend/<svc>-fastapi/app/{api,schemas,models}/`，其中 `<svc>` ∈
-{`user`, `order`, `product`, `acceptance`, `billing`, `notification`, `customer-hierarchy`, `supplier`, `api-gateway`}；
-跨服務共用 DTO 契約在 `shared/types/`。OpenAPI derived 由 `docs/0-Design/api-specification.yaml` 同步。
+`backend/app/modules/<svc>/`，其中 `<svc>` ∈
+{`users`, `orders`, `products`, `acceptance`, `billing`, `notifications`, `customer_hierarchy`, `suppliers`}（api-gateway 已併入單體，無獨立模組）；
+跨模組共用 DTO 契約在 `shared/types/`。Alembic 為單一 root（`backend/app/alembic`）。OpenAPI derived 由 `docs/0-Design/api-specification.yaml` 同步。
 
 ## Folder Prior Guidance
 

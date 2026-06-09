@@ -16,7 +16,7 @@ Orderly 文檔治理的 truth layers 固定為：
 
 以下文件為 derived surfaces：
 
-- `docs/INDEX.md` 與各區 `docs/<area>/INDEX.md`（`system-spec` / `user-stories` / `prd` / `plans` / `testing`）
+- `docs/INDEX.md` 與各區 `docs/<area>/INDEX.md`（`0-Design` / `1-User-Story` / `2-PRD` / `3-Development-Plan` / `4-Test`）
 - `docs/2-PRD/INDEX.md`
 - `docs/1-User-Story/INDEX.md`
 - `docs/4-Test/*.md` 的 coverage/status 鏡像欄位
