@@ -35,16 +35,19 @@ Quick checks for user endpoints via the API Gateway and directly against the use
 **Session 生命週期與入口**
 - [ ] `POST /auth/impersonation/start { target_user_id }` 簽發帶 `act_as` claim 的 token；`GET /auth/impersonation/current` 回正確 actor/impersonated/tenant/expires
 - [ ] `POST /auth/impersonation/stop` 還原超管原 session
-- [ ] 模擬 session 逾 TTL 自動失效，需重新發起
+- [ ] 模擬 access token 的 `exp` 等於 session TTL；TTL 自然到期且未呼叫 stop 時，舊 act-as token 打 protected 非 auth route 回 401/403
+- [ ] `start` 回應不含 refresh token；任何帶 `act_as` 的 refresh 嘗試不得產生新的 act-as access token
 - [ ] 使用者清單（US-AUTH-009）每列「切換到此帳號」可發起模擬；非 super_admin 不顯示該入口
-- [ ] 發起模擬要求超管 MFA 已通過
+- [ ] 發起模擬要求超管本次 session MFA 已通過；測試不得把 `mfa_enabled` 誤當 MFA-passed
 
 **角色切換預覽（view-as，US-AUTH-024）**
-- [ ] `POST /auth/role-switch { preview_role }` 改變介面導航/可見功能分區，但不授予特定租戶寫入權
-- [ ] 切換與還原皆記錄審計（`actor_id` + 預覽角色 + `timestamp`）
+- [ ] View-as 為純前端 nav-lens：切換 preview role 後只改變導航/可見功能分區；不呼叫 `/auth/role-switch`、不換 token、不改後端 identity
+- [ ] view-as 狀態下繞過前端直打 mutating endpoint 時，後端仍以真實 `super_admin` session 授權，不因 preview role 取得任何目標租戶寫入權
+- [ ] 切換與還原皆記錄前端預覽事件（`actor_id` + 預覽角色 + `timestamp`），不得被當作後端授權 audit
 
 **審計不可關閉**
-- [ ] 模擬期間所有寫入操作 → `audit_logs` 出現 `impersonation`（actor + impersonated + tenant），欄位非空
+- [ ] 模擬期間所有 mutating request（POST/PUT/PATCH/DELETE）先經 act-as audit middleware；缺 actor/target/tenant/session metadata 或 audit 寫入失敗時 fail closed，不執行未審計寫入
+- [ ] 成功的跨模組 mutating request（至少 orders/products/billing 各一條代表 route）→ `audit_logs` 出現 `impersonation`（actor + impersonated + tenant + method/path/request_id），欄位經 app 層斷言非空
 - [ ] `start` / `stop` 本身亦寫入審計
 
 ## Prerequisites

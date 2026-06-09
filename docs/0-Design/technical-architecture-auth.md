@@ -1362,9 +1362,11 @@ class SuperUserAuditLogger {
 - Impersonation does **not** grant, and does **not** inherit, the `super_user`
   override/bypass capabilities (§2.2 matrix). A super_admin acting-as a
   `restaurant_operator` can only do what that operator could do, within that tenant.
-- `role-switch` (view-as, US-AUTH-024) is a UI preview lens only; it scopes navigation
-  to a role's permission partition and does not by itself grant write access to any
-  specific tenant. Real writes into a tenant go through account impersonation.
+- `role-switch` (view-as, US-AUTH-024) is a frontend-only UI preview lens; it scopes
+  navigation to a role's permission partition and does not by itself grant write
+  access to any specific tenant. It MUST NOT call a backend role-switch endpoint,
+  issue or replace an access token, create a tenant session, or add an `act_as`
+  claim. Real writes into a tenant go through account impersonation.
 
 #### 10.3.2 Impersonation Token & Tenant Context
 
@@ -1381,7 +1383,7 @@ interface ImpersonationClaims {
     actor_id: string          // real super_admin user id
     actor_role: 'super_admin'
     started_at: string        // ISO8601
-    expires_at: string        // session TTL — auto-expires
+    expires_at: string        // exactly matches access-token exp and session TTL
     reason?: string           // optional justification captured at start
   }
 }
@@ -1393,24 +1395,40 @@ Authorization rule: downstream services authorize using `sub` / `tenant_id` / `r
 only for audit attribution and the UI banner. There is no code path where `act_as`
 widens `permissions` beyond the target role.
 
+Lifecycle rule:
+- the impersonation access token `exp` MUST equal the impersonation session TTL; it
+  must never outlive the Redis/session record
+- `start` MUST NOT issue a refresh token
+- `/auth/refresh` MUST reject any refresh attempt that carries `act_as`, and must never
+  mint a new act-as access token
+
 #### 10.3.3 API Endpoints (status: planned — synced to OpenAPI after implementation)
 
 ```
-POST /auth/impersonation/start    { target_user_id, reason? } -> { impersonation_token, expires_at }
+POST /auth/impersonation/start    { target_user_id, reason? } -> { impersonation_token, expires_at } // no refresh_token
 POST /auth/impersonation/stop     {}                          -> { restored: true }
 GET  /auth/impersonation/current  {}                          -> { actor_id, impersonated_user_id, tenant_id, expires_at } | null
-POST /auth/role-switch            { preview_role }            -> { preview_role }   // view-as, no tenant write grant
 ```
+
+View-as contract (US-AUTH-024): there is no `/auth/role-switch` runtime API in the
+security boundary. The frontend stores preview role state locally and filters
+navigation/visible feature groups only. Direct backend requests continue to be
+authorized as the real session identity.
 
 Guards on `/auth/impersonation/start`:
 - caller must be `super_admin` with a valid, MFA-passed session
 - `target_user_id` must resolve to an active account; resolve its `tenant_id` / `role` / `permissions`
 - issue a short-TTL impersonation token; original super_admin session is retained server-side for `stop`
+- implementation must define a session-level MFA-passed signal; `mfa_enabled` alone is
+  not sufficient because it only proves MFA is configured, not that this login passed MFA
 
 #### 10.3.4 Impersonation Audit (always-on)
 
-Every request made under an impersonation token MUST emit an audit event carrying both
-identities, so actions are traceable to the real actor:
+Every mutating request made under an impersonation token (POST/PUT/PATCH/DELETE, across
+auth, orders, products, billing, and future modules mounted in the monolith) MUST pass
+through an act-as audit middleware that emits an audit event carrying both identities
+before the business handler is allowed to perform a write. This avoids relying on
+per-endpoint opt-in call sites.
 
 ```typescript
 interface ImpersonationAuditEvent extends AuditEvent {
@@ -1419,13 +1437,19 @@ interface ImpersonationAuditEvent extends AuditEvent {
     impersonated_user_id: string
     tenant_id: string           // effective tenant
     session_started_at: string
+    request_method: string
+    request_path: string
+    request_id?: string
   }
 }
 ```
 
-Audit cannot be disabled for impersonated sessions. `start` / `stop` themselves are
-audited. This satisfies US-AUTH-023 acceptance (`actor_id` + `impersonated_user_id` +
-`tenant_id` + `action` + `timestamp`).
+Audit cannot be disabled for impersonated mutating requests. If actor, target, tenant,
+event type, or session metadata is missing, or if the audit write path is unavailable,
+the middleware fails closed before the business handler. `start` / `stop` themselves are
+audited through the impersonation service. This satisfies US-AUTH-023 acceptance
+(`actor_id` + `impersonated_user_id` + `tenant_id` + `action` + `timestamp`) while
+making the enforcement point explicit.
 
 ---
 

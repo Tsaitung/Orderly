@@ -8,8 +8,8 @@
 | File | Layer | Change |
 |------|-------|--------|
 | `docs/1-User-Story/by-module/01-auth-user-management.md` | US (truth) | + US-AUTH-023, US-AUTH-024；modify US-AUTH-009；+ 對照表 2 列 |
-| `docs/2-PRD/PRD-Auth-Module.md` | PRD (truth) | + Section 2.5 Impersonation / Act-as + 權限矩陣 + API（planned）|
-| `docs/0-Design/technical-architecture-auth.md` | System spec (truth) | + §10.3 Impersonation / Act-as Session System（token / tenant context / endpoints / audit）|
+| `docs/2-PRD/PRD-Auth-Module.md` | PRD (truth) | + Section 2.5 Impersonation / Act-as + 權限矩陣 + API（planned）；Round-6 補 TTL/no-refresh、act-as audit middleware、frontend-only view-as |
+| `docs/0-Design/technical-architecture-auth.md` | System spec (truth) | + §10.3 Impersonation / Act-as Session System（token / tenant context / endpoints / audit）；Round-6 補 frontend-only view-as + audit middleware |
 | `docs/4-Test/smoke-tests.md` | Test Plan | + Auth Test Plan — Impersonation / Act-as section |
 | `docs/4-Test/INDEX.md` | derived | + impersonation test-plan reference |
 | `docs/1-User-Story/INDEX.md` | derived | count 106→108；module 01 22→24；P1 31→32；P2 19→20；PRD-Auth 22→24 |
@@ -46,7 +46,10 @@
 - `POST /auth/impersonation/start`
 - `POST /auth/impersonation/stop`
 - `GET /auth/impersonation/current`
-- `POST /auth/role-switch`
+
+### View-as (frontend-only; no runtime API)
+- No `/auth/role-switch` backend endpoint, preview token, tenant session, or `act_as` claim.
+- View-as is local frontend UI state only; direct backend requests remain authorized as the real session.
 
 ### Token claim (planned)
 - `act_as` claim block: `{ actor_id, actor_role, started_at, expires_at, reason? }`
@@ -66,7 +69,7 @@
 | Identifier | US | PRD | Spec | Test Plan | Result |
 |------------|----|----|------|-----------|--------|
 | US-AUTH-023 | self | §2.5 | §10.3 | smoke impersonation | OK (ADR-0005 governance-pending) |
-| US-AUTH-024 | self | §2.5 | §10.3（role-switch）| smoke role-switch | OK |
+| US-AUTH-024 | self | §2.5 | §10.3（frontend-only view-as）| smoke view-as | OK |
 | US-AUTH-009 (mod) | self | §9.1 | — | — | OK (entry-point only) |
 | INV-auth-003 | US-AUTH-023 | §2.5 | §10.3.2 | smoke tenant-context | governance-pending |
 | ADR-0005 | US-AUTH-023/024 | §2.5 | §10.3 | — | governance-pending |

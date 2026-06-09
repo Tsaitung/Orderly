@@ -471,7 +471,7 @@
 - [ ] 租戶 context：effective `tenant_id` = 目標租戶；token 同時攜帶真實 actor（super_admin id）與被模擬 user id（雙 context，見 INV-auth-003）
 - [ ] 顯著標示：全程顯示「正在以 {帳號} 身分操作」橫幅 + 一鍵退出回超管身分
 - [ ] 時限：模擬 session 有最長存活時間並自動到期；逾時需重新發起
-- [ ] 完整審計：每筆操作記錄 `actor_id`（超管）、`impersonated_user_id`、`tenant_id`、`action`、`timestamp`；審計不可關閉
+- [ ] 完整審計：模擬期間每筆 mutating request 由不可關閉的 act-as audit middleware 記錄 `actor_id`（超管）、`impersonated_user_id`、`tenant_id`、`action`、`timestamp`；audit pre-write 失敗時拒絕該資料變更
 - [ ] 不繞過約束：模擬期間仍受目標角色權限與業務規則約束，**不繼承** `super_user` 的 override/bypass 能力
 - [ ] 安全前置：發起模擬需超管 MFA 已通過；可選填發起原因
 
@@ -488,10 +488,10 @@
 
 **驗收標準**:
 - [ ] 帳號選單提供「切換角色」清單（restaurant_* / supplier_* / platform_* 各角色視角）
-- [ ] 切換後以該角色的權限分區呈現導航與可見功能（預覽導向）
+- [ ] 切換後以該角色的權限分區呈現導航與可見功能（預覽導向）；此狀態只存在前端，不換 token、不改後端 identity
 - [ ] 顯著標示目前預覽角色 + 可一鍵還原超管視角
 - [ ] 預覽 vs 實際操作界線：角色切換用於檢視；要在特定租戶實際操作須走帳號模擬（US-AUTH-023）
-- [ ] 角色切換行為記錄審計（`actor_id` + 預覽角色 + `timestamp`）
+- [ ] 角色切換行為記錄前端預覽事件（`actor_id` + 預覽角色 + `timestamp`）；不得作為後端授權依據
 
 **來源**: [PRD-Auth-Module.md](../../2-PRD/PRD-Auth-Module.md) Section 2.5
 

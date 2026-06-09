@@ -1,12 +1,12 @@
 ---
 run_id: "20260609-super-admin-impersonation"
-state: changes_requested
+state: ready_for_implementation
 intent: "execute-within-approval"
 mode: "prepare-packet+freeze"
 scope: ["01", "auth"]
 risk_level: "high-risk"
-current_stage: "Stage 2.5 (implementation-vs-plan gap review done; rework required before dev)"
-pause_reason: "Round-5 gap review found 3 MUST-FIX (G1 TTL-by-exp, G2 no-refresh, G3 audit-enforcement) + 2 SHOULD-FIX (G4 audit-nullable, G5 view-as-write) + 1 VERIFY (G6 MFA-signal); plan edited, awaiting CLAUDE/CODEX rework + re-review"
+current_stage: "Stage 3 (Round-6 rework complete; ready for RED tests/runtime implementation)"
+pause_reason: ""
 missing_inputs: []
 safe_progress:
   - "US-AUTH-023/024 + US-AUTH-009 mod applied (us-edit)"
@@ -14,13 +14,15 @@ safe_progress:
   - "derived fixes applied (us-edit): platform-roles off-by-one, super-admin-guide stale, INDEX counts"
   - "ADR-0005 created + adr/README ledger row (governance)"
   - "INV-auth-003 added + INV-auth-001 exception note (governance)"
+  - "G3 resolved: add act-as audit middleware for mutating requests; pre-write audit and fail closed"
+  - "G5 resolved: view-as is frontend-only nav-lens; no backend role-switch endpoint or preview token"
 approval_status: draft_approved
 ---
 
 # Governance Run State — Super Admin Impersonation / Act-as
 
-> Design-completion marker: **needs_rework**（2026-06-09 Round-5 implementation-vs-plan gap review；先前為 `ready_for_implementation`）。
-> FSM frontmatter state = `changes_requested`（packet 組裝完成、決策已 freeze、primary docs 已落盤，但 Round-5 gap review 發現 6 項須修，plan 已編輯回 gap，等 CLAUDE/CODEX 重工後重審）。
+> Design-completion marker: **ready_for_implementation**（2026-06-10 Round-6 multi-agent rework + local re-review；Round-5 `needs_rework` 已收斂）。
+> FSM frontmatter state = `ready_for_implementation`（packet 組裝完成、決策已 freeze、Round-5/6 gap 已轉成明確實作契約；runtime code 尚未實作，下一步從 RED tests 開始）。
 
 ## Run Metadata
 
@@ -45,7 +47,7 @@ approval_status: draft_approved
 - Current active path: docs/plans/20260609-super-admin-impersonation/
 - Operating-state conflicts found: none
 - Reconciliation required before edits: no
-- Frontmatter ↔ Markdown consistency: pass（state=ready_for_review 兩處一致）
+- Frontmatter ↔ Markdown consistency: pass（state=ready_for_implementation 兩處一致；Round-6 local re-review 後更新）
 
 ## Authority Chain
 
@@ -124,17 +126,22 @@ approval_status: draft_approved
 |----|--------|-----|------|
 | G1 | MUST-FIX | session TTL < token `exp` 時，自然到期（無 stop→無 blacklist）的 act-as token 仍能打 protected route；middleware 不查 Redis session 存在性 | T2.8 新增；技術選型 session 失效段；釘 `exp == TTL` |
 | G2 | MUST-FIX | act-as 可 refresh → 短效 TTL 被繞過 | T2.9 新增；start 不簽 refresh、refresh 拒 `act_as` |
-| G3 | MUST-FIX/scope | 「全程審計不可關閉」靠不存在的「audit 中介層」；跨模組端點不呼叫 audit_service | T2.5 改寫；二選一（加 middleware 或收斂範圍）+ 落 PRD/spec |
+| G3 | MUST-FIX/scope | 「全程審計不可關閉」靠不存在的「audit 中介層」；跨模組端點不呼叫 audit_service | **RESOLVED**：T2.5 定案新增 act-as audit middleware；mutating request pre-write audit，失敗 fail-closed；已落 PRD/spec/test |
 | G4 | SHOULD-FIX | AuditLog actor/target/org 欄位 nullable=True，「非空」僅 app 層 | T2.5 加 app 斷言 + 測試 |
-| G5 | SHOULD-FIX | view-as「不授寫入」後端強制機制未定義 | T2.6 改寫；定機制 + 拒寫驗收 |
+| G5 | SHOULD-FIX | view-as「不授寫入」需明確 write boundary | **RESOLVED**：T2.6 定案純前端 nav-lens；無 `/auth/role-switch`、無 preview token；direct backend request 不受 preview state 影響 |
 | G6 | VERIFY | start guard「MFA-passed」信號來源未錨 | T2.2 note；實作前先驗信號存在 |
 
 - Approval 影響：**設計決策 D1/D2/D3 仍 FROZEN、未動**；本次只動 implementation plan/tasks 的技術 gap，不改已核准的需求決策。
-- 重工指派：CLAUDE 或 CODEX 修 G1-G6（G1/G2/G3 必修）後 re-review → 通過才 `ready_for_implementation`。
+- 重工結果：G1/G2/G3/G4/G5/G6 已完成 plan-level rework；G6 明確成為 runtime implementation precondition（先新增 recent-MFA signal），不再是未錨定 plan gap。
 
 ## Notes
 
+- 2026-06-10 CODEX G1/G2 rework progress: started code-anchor verification for auth/token/session paths before doc patch. Initial packet already names G1/G2, but needs exact anchors for `create_access_token` / `create_refresh_token`, refresh route behavior, `SessionService` TTL/JTI storage, and `AuthMiddleware` blacklist/`exp` enforcement so implementation can start without rediscovering these paths. No code edits planned; write scope remains this plan packet.
+- 2026-06-10 CODEX G1/G2 rework complete: exact anchors patched into `tasks.md`, `implementation-plan.md`, and `handoff.md`. G1 evidence: `core.py:58-66` supports `expires_delta` and writes `jti`; `session_service.py:24` has fixed 7-day `SESSION_TTL_SECONDS`; `session_service.py:61-147` `create_session()` lacks per-session TTL and `:122-137` writes session/JTI TTL from the fixed constant. Required implementation is now explicit: one `IMPERSONATION_SESSION_TTL_SECONDS` drives token `exp`, Redis session TTL, `user_sessions` expire, and `jti_session` TTL. G2 evidence: `core.py:70-76` signs refresh tokens; `/auth/refresh` (`auth/token.py:30-113`) is public, accepts bearer/body, validates only type/sub/token_version, and always issues new access+refresh without DB session/blacklist/act_as guard. Required implementation is now explicit: act-as start issues no usable refresh token and creates no refresh `UserSession`; refresh endpoint rejects `payload.act_as` before issuing tokens. Focused verification commands are recorded in `handoff.md`.
+- 2026-06-10 CODEX G4/G6 verification progress: exact anchors verified before doc patch. G4 evidence: `backend/app/modules/users/models/audit_log.py:89` `event_type nullable=True`, `:98` `user_id nullable=True`, `:102` `organization_id nullable=True`, `:105` `target_user_id nullable=True`, while `:115` `event_metadata nullable=False`; `backend/app/modules/users/services/audit_service.py:42-59` accepts nullable kwargs and `:92-107` writes them through without non-null validation. G6 evidence: `backend/app/modules/users/api/v1/auth/core.py:32-55` `_build_claims` has no MFA/recent-MFA claim; `:58-76` token creators add only `exp`/`type`/`jti`; `backend/app/modules/users/api/v1/mfa.py:425-453` MFA success signs normal access/refresh tokens from those claims; `backend/app/modules/users/models/session.py:8-17` session rows have no MFA-passed timestamp/flag; `backend/app/modules/users/services/session_service.py:104-118` Redis session payload has no MFA flag. Grep for `amr|acr|mfa_verified|mfa_passed|recent_mfa|last_mfa|auth_time|step_up` found no runtime signal in backend auth/session models. Problem: no existing MFA-passed/recent-MFA signal exists; G6 must be recorded as an implementation precondition/blocker, not assumed runtime behavior.
+- 2026-06-10 CODEX G3/G5 design-contract rework complete: G3 no longer remains a scope choice; canonical contract is an app-level act-as audit middleware for every impersonated mutating request (`POST`/`PUT`/`PATCH`/`DELETE`), with audit pre-write before handler and fail-closed behavior on missing context/write failure. G5 no longer uses a backend role-switch endpoint/token; canonical contract is pure frontend nav-lens local UI state, with direct backend requests still authorized as the real session. Updated PRD §2.5, tech-arch §10.3, smoke Test Plan, US-AUTH-023/024 acceptance, tasks T2.5/T2.6/T3.3/T4.1, implementation-plan, and handoff.
 - Open ambiguities that do not block: 模擬 session TTL 具體分鐘數 → 留 dev/PRD 細化（但 G1 要求 token `exp` 必須綁定該 TTL，故定 TTL 時同步定 `exp`）
-- Blockers: **Round-5 G1/G2/G3 為進實作前 MUST-FIX**（safety 紅線：TTL/refresh 失效契約 + 審計強制機制）
-- Next gate: **CLAUDE/CODEX 修 G1-G6 → re-review**；通過後才從 tasks.md T0.1（RED 整合測試）開始；上線前驗 INV-auth-003 / INV-auth-001
-- Governance Gate: **pass（設計治理）**；Implementation-readiness Gate: **changes_requested（Round-5 gap）**
+- 2026-06-10 local re-review result: **pass for implementation readiness**. G1/G2/G3 MUST-FIX red lines are now explicit contracts in PRD/spec/test/tasks; G4 app-layer assertion and G6 recent-MFA signal are explicit implementation tasks with tests. No runtime code has been implemented or verified yet.
+- Runtime implementation blockers/tasks: G1/G2 require code + focused tests; G4 requires app-layer non-null assertions + DB no-nullable-row tests; G6 requires deterministic recent-MFA signal + expiry tests before impersonation start guard can be claimed complete.
+- Next gate: start dev from `tasks.md` T0.1/T0.2 RED backend pytest → T1.1 contract → T2.* backend;上線前驗 INV-auth-003 / INV-auth-001
+- Governance Gate: **pass（設計治理）**；Implementation-readiness Gate: **pass（plan ready；runtime unimplemented）**

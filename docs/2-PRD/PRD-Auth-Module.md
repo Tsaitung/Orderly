@@ -163,31 +163,45 @@ Based on current system analysis:
   - `super_user`：緊急 break-glass，附加權限標記，跨租戶 override/bypass，24h 過期，>1h 雙人核准。
   - impersonation：日常支援/維運，化身單一帳號、受目標角色約束、不 override，session 時限自動到期。
   - 兩者不混用、不互相繼承權限；impersonation **不**繼承 `super_user` 的 override/bypass。
-- 角色切換（view-as role，US-AUTH-024）為**介面預覽**用途；要在特定租戶實際寫入須走帳號模擬（US-AUTH-023）。
+- 角色切換（view-as role，US-AUTH-024）為**純前端介面預覽**用途；要在特定租戶實際寫入須走帳號模擬（US-AUTH-023）。
 
 **租戶隔離調和（INV-auth-003）**：
 
 - 模擬 session 的 effective `tenant_id` = 目標帳號租戶；後端查詢據此正常帶租戶條件（不破壞 INV-auth-001 的「查詢必帶 tenant_id」）。
 - token 與 audit 同時記錄**真實 actor**（`super_admin` id）與**被模擬 user**（`impersonated_user_id`），形成雙 context；任一操作可回溯真實發起者。
 
+**Session 失效與 refresh 契約**：
+
+- 模擬 access token 的 `exp` 必須等於 impersonation session TTL；session 自然到期時，後端以 JWT `exp` 擋下舊 token，不能只靠 `current` 端點或前端橫幅判定。
+- `POST /auth/impersonation/start` 不簽發 refresh token；`/auth/refresh` 不得續發帶 `act_as` 的 access token。
+
+**審計與 view-as 強制契約**：
+
+- Impersonation 下所有 mutating request（POST/PUT/PATCH/DELETE，含跨模組 orders/products/billing）必須經由實作層的 act-as audit middleware 先寫入 actor + impersonated + effective tenant + method/path/request_id/session 的審計事件；必要 context 或審計寫入失敗時，請求必須 fail closed，不得執行未審計寫入。
+- 角色切換（view-as role，US-AUTH-024）是純前端介面預覽 lens：不呼叫後端 role-switch endpoint、不換 access token、不建立租戶 session、不帶 `act_as` claim。後端仍以真實 `super_admin` session 授權；view-as 只存在於前端 UI state，用來過濾可見導航分區，不能授予任何租戶寫入權。
+
 **Impersonation 權限矩陣**：
 
 | 能力 | `super_user`（緊急） | Impersonation（化身） | Role Switch（預覽） |
 |------|:--------------------:|:---------------------:|:-------------------:|
 | 進入他人租戶 | ✓（跨租戶同時可見）| ✓（化身單一帳號，effective tenant=目標）| ✗（僅介面視角）|
-| 權限範圍 | 超集 + override/bypass | 等同目標角色，受其約束 | 等同預覽角色（檢視）|
+| 權限範圍 | 超集 + override/bypass | 等同目標角色，受其約束 | 只影響前端可見分區，不改後端授權 |
 | Override 業務規則 | ✓（with justification）| ✗ | ✗ |
 | 時限 | 24h 預設 | session 時限自動到期 | 即時切換/還原 |
 | 啟用前置 | MFA + 原因 +（>1h 雙核准）| MFA 已通過 +（可選原因）| 超管身分即可 |
-| 審計 | 完整（actor）| 完整（actor + impersonated + tenant）| 切換事件記錄 |
+| 審計 | 完整（actor）| mutating request 強制審計（actor + impersonated + tenant）| 前端預覽事件 |
 | 顯著標示 | — | 全程橫幅 + 一鍵退出 | 預覽角色標示 + 還原 |
 
 **API（規格層，狀態：planned；實作後由 OpenAPI 同步）**：
 
-- `POST /auth/impersonation/start`：body `{ target_user_id, reason? }` → 簽發帶 `act_as` claim 的模擬 token（effective tenant = 目標租戶）。
+- `POST /auth/impersonation/start`：body `{ target_user_id, reason? }` → 簽發帶 `act_as` claim 的短效模擬 access token（effective tenant = 目標租戶；不回 refresh token）。
 - `POST /auth/impersonation/stop`：結束模擬，還原超管原 session。
 - `GET /auth/impersonation/current`：回傳目前模擬狀態（actor、impersonated、tenant、到期時間）。
-- `POST /auth/role-switch`（view-as）：body `{ preview_role }` → 以該角色視角呈現介面（不綁特定租戶寫入權）。
+
+**View-as（US-AUTH-024）實作契約**：
+
+- 不提供 `/auth/role-switch` 後端端點、不簽發 preview token、不接受 client 傳入 preview role 作為授權依據。
+- 前端以本地 UI state 呈現預覽角色的導航/可見功能分區；任何繞過前端直接打到後端的 mutating request，仍以原本 super_admin session 的真實後端身份判定，不因 view-as 取得任何 tenant 寫入能力。
 
 ---
 
