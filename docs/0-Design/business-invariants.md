@@ -13,13 +13,13 @@
 
 | ID | 不變式（白話） | Formal 條件 | 模組 | 驗證方式 | 來源 | 狀態 |
 |----|----------------|-------------|------|----------|------|------|
-| INV-order-001 | 訂單狀態只能沿固定 8 節點順序前進，不可跳轉/逆轉 | state ∈ {草稿→待確認→已確認→配送中→已送達→驗收中→已完成→已結算}，transition 僅允許相鄰前進（取消為明確例外路徑） | order | 狀態機 unit test：列舉合法/非法轉移；DB 觸發或 service 層 guard | `docs/user-stories/by-module/03-order-management.md:40` | confirmed |
-| INV-product-001 | 每個 SKU 前台展示有且僅有一張主圖片 | count(images where is_primary AND sku_id=X) == 1 | product | DB unique partial index 或 service assertion；API 回傳檢查 | `docs/user-stories/by-module/02-product-sku-management.md:205` | confirmed |
-| INV-billing-001 | 平台抽成依設定比例計算 | platform_fee == GMV × `platform_share_pct`（預設 30%） | billing | 結算計算 unit test 對拍；對帳匯出檢查 | `docs/prd/PRD-Billing-Master.md:187` | confirmed |
-| INV-billing-002 | Orderly 採「對帳為主、不開發票」；產對帳對照表（statement）而非 invoice | billing 流程輸出 statement；`statement_generation == true` | billing | 設定/流程檢查；不得出現 invoice 開立路徑 | `docs/prd/PRD-Billing-Master.md:168,171` | confirmed（policy constraint） |
+| INV-order-001 | 訂單狀態只能沿固定 8 節點順序前進，不可跳轉/逆轉 | state ∈ {草稿→待確認→已確認→配送中→已送達→驗收中→已完成→已結算}，transition 僅允許相鄰前進（取消為明確例外路徑） | order | 狀態機 unit test：列舉合法/非法轉移；DB 觸發或 service 層 guard | `docs/1-User-Story/by-module/03-order-management.md:40` | confirmed |
+| INV-product-001 | 每個 SKU 前台展示有且僅有一張主圖片 | count(images where is_primary AND sku_id=X) == 1 | product | DB unique partial index 或 service assertion；API 回傳檢查 | `docs/1-User-Story/by-module/02-product-sku-management.md:205` | confirmed |
+| INV-billing-001 | 平台抽成依設定比例計算 | platform_fee == GMV × `platform_share_pct`（預設 30%） | billing | 結算計算 unit test 對拍；對帳匯出檢查 | `docs/2-PRD/PRD-Billing-Master.md:187` | confirmed |
+| INV-billing-002 | Orderly 採「對帳為主、不開發票」；產對帳對照表（statement）而非 invoice | billing 流程輸出 statement；`statement_generation == true` | billing | 設定/流程檢查；不得出現 invoice 開立路徑 | `docs/2-PRD/PRD-Billing-Master.md:168,171` | confirmed（policy constraint） |
 | INV-auth-001 | 所有資料查詢強制帶 tenant_id；缺則拒絕或回 401/403 | ∀ query：tenant_id IS NOT NULL（租戶隔離） | auth / 全模組 | repository 層強制注入 tenant_id；整合測試驗跨租戶不可讀 | `CLAUDE.md` §Auth/User 整合風險與緩解（租戶隔離）+ §使用者資料模型 | confirmed |
 | INV-auth-002 | refresh token 綁 `token_version`；異常時 bump 版本，舊 token 立即失效 | token.token_version == user.token_version；bump 後舊 token 驗證失敗 | auth | 登入/refresh 整合測試：bump 後舊 token 應 401 | `CLAUDE.md` §Auth/User（Refresh 吊銷）| confirmed |
-| INV-acceptance-001 | 驗收差異/異常必須留紀錄（5 類異常標記 + 差異協商軌跡） | 任一驗收異常 → 對應 acceptance_discrepancy 紀錄存在 | acceptance | 驗收流程整合測試；異常標記寫入檢查 | `docs/user-stories/by-module/04-acceptance-receiving.md:42,82` | confirmed |
+| INV-acceptance-001 | 驗收差異/異常必須留紀錄（5 類異常標記 + 差異協商軌跡） | 任一驗收異常 → 對應 acceptance_discrepancy 紀錄存在 | acceptance | 驗收流程整合測試；異常標記寫入檢查 | `docs/1-User-Story/by-module/04-acceptance-receiving.md:42,82` | confirmed |
 
 ## 候選 Invariants（inferred — 需人工確認來源/公式後才可升 confirmed）
 

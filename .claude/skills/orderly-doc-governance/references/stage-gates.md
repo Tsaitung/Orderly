@@ -104,7 +104,7 @@ health-check 完成後，依 Guard Result 分流：
   | `operator-procedure` | `docs/plans/runbooks/*.md` |
   | `incident-postmortem` | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
   | `business-requirement` | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
-  | `wire-contract` | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/system-spec/api-specification.yaml` |
+  | `wire-contract` | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
   | `closeout-summary` | `docs/plans/governance-ledger.md` |
   | `transient-execution-state` | DELETE（不 promote）|
 
@@ -112,8 +112,8 @@ health-check 完成後，依 Guard Result 分流：
 
   | Source Status | 內容性質 | Destination |
   |---|---|---|
-  | Active / Hold | canonical-business-truth | `docs/prd/`, `docs/adr/`, `docs/references/` |
-  | Active / Hold | technical-contract-truth | `docs/system-spec/` |
+  | Active / Hold | canonical-business-truth | `docs/2-PRD/`, `docs/adr/`, `docs/references/` |
+  | Active / Hold | technical-contract-truth | `docs/0-Design/` |
   | Active / Hold | reusable-operational-rule | `docs/plans/runbooks/` 或 skill `references/` |
   | Reference / historical-only | 任何 | `docs/references/history/` |
 
@@ -131,8 +131,8 @@ health-check 完成後，依 Guard Result 分流：
 
 Active / Hold:In-Progress plans:
 - execution-sequencing / execution-state / residual follow-ups: keep
-- canonical-business-truth: must promote to docs/prd/, docs/adr/, docs/references/
-- technical-contract-truth: must promote to docs/system-spec/
+- canonical-business-truth: must promote to docs/2-PRD/, docs/adr/, docs/references/
+- technical-contract-truth: must promote to docs/0-Design/
 - reusable-operational-rule: must promote to docs/plans/runbooks/ or skill references/
 
 Reference plans (frozen historical):

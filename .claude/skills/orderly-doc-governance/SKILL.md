@@ -234,7 +234,7 @@ Health-check / inspect-only 不產生 primary-doc write set，也不得修改 so
     "timestamp": "ISO8601",
     "verifications": [
       {
-        "command": "the actual command (e.g. 'grep -c reconciliation_status docs/prd/PRD-Billing-Master.md')",
+        "command": "the actual command (e.g. 'grep -c reconciliation_status docs/2-PRD/PRD-Billing-Master.md')",
         "command_type": "grep|ls|git|gcloud|alembic|other",
         "target": "applied-claim|frozen-decision|verification-truth|external-state|commit-claim|migration-claim",
         "output_excerpt": "first ~80 chars of actual output",

@@ -8,9 +8,9 @@ This file stores durable rules about how the skill is operated and retained. It 
 
 `orderly-doc-governance` exists to govern 井然 Orderly documentation across:
 
-- `docs/user-stories/`
-- `docs/prd/`
-- `docs/system-spec/`
+- `docs/1-User-Story/`
+- `docs/2-PRD/`
+- `docs/0-Design/`
 - `docs/adr/`
 - derived traceability surfaces
 

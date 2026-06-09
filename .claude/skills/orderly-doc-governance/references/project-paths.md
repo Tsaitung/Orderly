@@ -8,20 +8,20 @@ Orderly-specific 路徑、命名規則、scope 定義。
 
 ## Paths
 
-- User Stories: `docs/user-stories/by-module/`（另有 `by-role/`、`playbooks/`）
-- PRD: `docs/prd/`（檔名為 `PRD-*.md`，**具名而非編號**）
-- System / Design specs: `docs/system-spec/`（topic 文件 + `design-system/`）
-- API contract: `docs/system-spec/api-specification.yaml`、`docs/system-spec/API-Endpoints-Essential.md`、`docs/system-spec/Frontend-Backend-Endpoint-Consistency.md`
+- User Stories: `docs/1-User-Story/by-module/`（另有 `by-role/`、`playbooks/`）
+- PRD: `docs/2-PRD/`（檔名為 `PRD-*.md`，**具名而非編號**）
+- System / Design specs: `docs/0-Design/`（topic 文件 + `design-system/`）
+- API contract: `docs/0-Design/api-specification.yaml`、`docs/0-Design/API-Endpoints-Essential.md`、`docs/0-Design/Frontend-Backend-Endpoint-Consistency.md`
 - ADR: `docs/adr/`
-- Testing plans: `docs/testing/`
+- Testing plans: `docs/4-Test/`
 - Derived surfaces:
   - `docs/INDEX.md`（總入口）
   - 各區 `docs/<area>/INDEX.md`（`system-spec` / `user-stories` / `prd` / `plans` / `testing`）
-  - `docs/testing/*.md` 的 coverage/status 鏡像欄位
+  - `docs/4-Test/*.md` 的 coverage/status 鏡像欄位
   - （derived-surface candidate，尚未存在）跨模組 traceability mapping 表
 
 > Orderly 沒有 HelloGlow 的 `docs/module-map.md` / `docs/USER_STORIES.md` /
-> `docs/USER_STORY_MAPPING.md` / `docs/testing/test-mapping-matrix.md`。navigation 以
+> `docs/USER_STORY_MAPPING.md` / `docs/4-Test/test-mapping-matrix.md`。navigation 以
 > `docs/INDEX.md` + 各區 `INDEX.md` 為準；上述 mapping 表若日後建立即視為 derived surface。
 
 ## Naming Rules
@@ -52,9 +52,9 @@ Orderly-specific 路徑、命名規則、scope 定義。
 ## Repo Artifact Roles
 
 - `canonical-truth`
-  - `docs/user-stories/`
-  - `docs/prd/`
-  - `docs/system-spec/`
+  - `docs/1-User-Story/`
+  - `docs/2-PRD/`
+  - `docs/0-Design/`
   - `docs/adr/`
 - `active-operating-state`
   - active run local:
@@ -96,8 +96,8 @@ Orderly-specific 路徑、命名規則、scope 定義。
 
 判斷規則：
 
-- `canonical-business-truth` → `docs/prd/`, `docs/adr/`, `docs/references/`
-- `technical-contract-truth` → `docs/system-spec/`, `docs/system-spec/api-specification.yaml`
+- `canonical-business-truth` → `docs/2-PRD/`, `docs/adr/`, `docs/references/`
+- `technical-contract-truth` → `docs/0-Design/`, `docs/0-Design/api-specification.yaml`
 - `reusable-operational-rule` → `docs/plans/runbooks/`, skill `references/`
 - `historical-evidence` → `docs/plans/governance-ledger.md`（closeout index）或 `docs/references/history/`（archived residue files）
 
@@ -113,7 +113,7 @@ Orderly-specific 路徑、命名規則、scope 定義。
 | `operator-procedure` | reusable-operational-rule | `docs/plans/runbooks/*.md` |
 | `incident-postmortem` | historical-evidence | `docs/incidents/{YYYY-MM-DD}-{slug}.md`（on demand）|
 | `business-requirement` | canonical-business-truth | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
-| `wire-contract` | technical-contract-truth | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/system-spec/api-specification.yaml` |
+| `wire-contract` | technical-contract-truth | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
 | `closeout-summary` | historical-evidence | `docs/plans/governance-ledger.md` |
 | `transient-execution-state` | execution-sequencing | DELETE（不 promote）|
 
@@ -125,7 +125,7 @@ Orderly 後端為微服務；`wire-contract` class 的 source of truth 依服務
 
 `backend/<svc>-fastapi/app/{api,schemas,models}/`，其中 `<svc>` ∈
 {`user`, `order`, `product`, `acceptance`, `billing`, `notification`, `customer-hierarchy`, `supplier`, `api-gateway`}；
-跨服務共用 DTO 契約在 `shared/types/`。OpenAPI derived 由 `docs/system-spec/api-specification.yaml` 同步。
+跨服務共用 DTO 契約在 `shared/types/`。OpenAPI derived 由 `docs/0-Design/api-specification.yaml` 同步。
 
 ## Folder Prior Guidance
 
@@ -135,7 +135,7 @@ folder 只提供 discovery prior，不提供最終 authority。
 - `docs/plans/` 根層 curated 開發文件預設為 `reusable-operational-rule` / `curated-durable-doc`
 - `docs/references/` 預設應以 stable truth / reference 為主
 - `docs/references/history/` 預設應以 archived historical residue 為主（不作為 active reference）
-- `docs/system-spec/` 預設應以 technical contract / design 為主
+- `docs/0-Design/` 預設應以 technical contract / design 為主
 
 若內容與 folder prior 不符，必須先走 `Content Ownership Extraction Gate`。
 

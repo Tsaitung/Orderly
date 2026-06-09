@@ -4,9 +4,9 @@
 - **Lifecycle Status**: proposed | accepted | superseded | withdrawn | reserved
 - **Date**: YYYY-MM-DD
 - **Cluster**: <billing | order | auth | product | acceptance | customer-hierarchy | ...>
-- **Primary PRD**: <docs/prd/PRD-*.md or —>
+- **Primary PRD**: <docs/2-PRD/PRD-*.md or —>
 - **FR References**: <NN-FR-### or —>
-- **US References**: <docs/user-stories/by-module/NN-*.md or —>
+- **US References**: <docs/1-User-Story/by-module/NN-*.md or —>
 - **Supersedes / Superseded By**: <ADR-NNN or —>
 - **Review By**: <YYYY-MM-DD for risk-acceptance ADRs, else —>
 

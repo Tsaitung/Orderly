@@ -21,8 +21,8 @@
 | `tech-debt-with-exit-trigger` | legacy code / workaround / deprecated surface + 明確 exit trigger | `docs/governance/deprecation-roadmap.md` 或 `docs/plans/todo.md`（Orderly 無專屬 legacy-debt-ledger；4 種 disposition：execute-now / defer-once / permanent-compatibility / retire）|
 | `operator-procedure` | 部署 rollout / migration / incident response 步驟 | `docs/plans/runbooks/*.md` |
 | `incident-postmortem` | 故障還原、根因、修復後保留的 historical evidence | `docs/incidents/{YYYY-MM-DD}-{slug}.md` |
-| `business-requirement` | 新 / 變更的 US / FR / Spec 條款 | `docs/user-stories/by-module/NN-*.md` + `docs/prd/PRD-*.md` + `docs/system-spec/*.md`（**禁止本 skill 直接寫**；走 `us-edit` skill handoff）|
-| `wire-contract` | API / DTO / event payload schema | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/system-spec/api-specification.yaml`（backend code 是 source of truth；OpenAPI derived 由 `api-specification.yaml` 同步）|
+| `business-requirement` | 新 / 變更的 US / FR / Spec 條款 | `docs/1-User-Story/by-module/NN-*.md` + `docs/2-PRD/PRD-*.md` + `docs/0-Design/*.md`（**禁止本 skill 直接寫**；走 `us-edit` skill handoff）|
+| `wire-contract` | API / DTO / event payload schema | `backend/<svc>-fastapi/app/{api,schemas,models}/` + `shared/types/` + `docs/0-Design/api-specification.yaml`（backend code 是 source of truth；OpenAPI derived 由 `api-specification.yaml` 同步）|
 | `closeout-summary` | run 結束後的單條紀要（誰、何時、結果、PR / commit）| `docs/plans/governance-ledger.md` |
 | `transient-execution-state` | plan / handoff / dev-reference / run log / interim matrices / scratch evidence | DELETE（promote 完畢後直接移除）|
 
@@ -147,7 +147,7 @@ verification 結果**必須持久化**到 harvest extraction-report 內 `§0 Ver
 - operator procedure → 新建或更新 `docs/plans/runbooks/*.md`
 - incident postmortem → 新建 `docs/incidents/{YYYY-MM-DD}-{slug}.md`
 - business requirement → **不直接寫**；輸出 `us-edit` handoff brief 給使用者，明列要動哪幾條 US / FR / Spec
-- wire contract → 確認 `backend/<svc>-fastapi/` code 已是 source of truth，跑 OpenAPI 同步 derived（`docs/system-spec/api-specification.yaml`）
+- wire contract → 確認 `backend/<svc>-fastapi/` code 已是 source of truth，跑 OpenAPI 同步 derived（`docs/0-Design/api-specification.yaml`）
 - closeout summary → append 一條 entry 至 `docs/plans/governance-ledger.md`
 - transient state → 不 promote，直接 delete
 

@@ -17,9 +17,9 @@ Orderly 文檔治理的 truth layers 固定為：
 以下文件為 derived surfaces：
 
 - `docs/INDEX.md` 與各區 `docs/<area>/INDEX.md`（`system-spec` / `user-stories` / `prd` / `plans` / `testing`）
-- `docs/prd/INDEX.md`
-- `docs/user-stories/INDEX.md`
-- `docs/testing/*.md` 的 coverage/status 鏡像欄位
+- `docs/2-PRD/INDEX.md`
+- `docs/1-User-Story/INDEX.md`
+- `docs/4-Test/*.md` 的 coverage/status 鏡像欄位
 
 Derived surfaces 只能鏡像 stabilized truth layers，不得新增：
 
@@ -34,11 +34,11 @@ Derived surfaces 只能鏡像 stabilized truth layers，不得新增：
 
 先用 `docs/INDEX.md` + 各區 `INDEX.md` 找模組邊界，再補讀該模組的：
 
-- user story module file（`docs/user-stories/by-module/NN-*.md`）
-- PRD file（`docs/prd/PRD-*.md`）
-- system spec（`docs/system-spec/*.md`）
-- API contract（`docs/system-spec/api-specification.yaml`）
-- test plan（`docs/testing/*.md`）
+- user story module file（`docs/1-User-Story/by-module/NN-*.md`）
+- PRD file（`docs/2-PRD/PRD-*.md`）
+- system spec（`docs/0-Design/*.md`）
+- API contract（`docs/0-Design/api-specification.yaml`）
+- test plan（`docs/4-Test/*.md`）
 
 ### ADR Cluster Scope
 

@@ -5,4 +5,4 @@
 
 | Run ID | 日期 | Scope | 結果摘要 | Promotion / 產物 |
 |--------|------|-------|----------|------------------|
-| 20260606-canonical-home-bootstrap | 2026-06-06 | full（canonical-home gap inspect + 建立） | 盤點 9-class home，補建 7 個缺口（business-invariants、ledger、runbooks/、incidents/、deprecation-roadmap、canonical-vocabulary、doc-governance-vocabulary） | 見 `docs/system-spec/business-invariants.md`、本 ledger、`docs/governance/`、`docs/references/`、`docs/incidents/`、`docs/plans/runbooks/`；health-check：`docs/plans/health-check-2026-06-06.md` |
+| 20260606-canonical-home-bootstrap | 2026-06-06 | full（canonical-home gap inspect + 建立） | 盤點 9-class home，補建 7 個缺口（business-invariants、ledger、runbooks/、incidents/、deprecation-roadmap、canonical-vocabulary、doc-governance-vocabulary） | 見 `docs/0-Design/business-invariants.md`、本 ledger、`docs/governance/`、`docs/references/`、`docs/incidents/`、`docs/plans/runbooks/`；health-check：`docs/plans/health-check-2026-06-06.md` |
