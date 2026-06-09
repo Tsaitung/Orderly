@@ -27,11 +27,11 @@
 
 | 候選 ID | 不變式（待確認） | 待釐清點 | 建議來源 |
 |---------|------------------|----------|----------|
-| INV-order-002? | 訂單總額 == Σ(品項數量 × 單價)（+稅/折扣規則） | 是否含稅、折扣、運費的精確公式未見於 US | order PRD / `order-service-fastapi` model |
+| INV-order-002? | 訂單總額 == Σ(品項數量 × 單價)（+稅/折扣規則） | 是否含稅、折扣、運費的精確公式未見於 US | order PRD / `backend/app/modules/orders` model |
 | INV-billing-003? | 結算金額 == Σ(已驗收明細金額) − 抽成/調整 | 結算與驗收的精確勾稽公式未見明文 | PRD-Billing-Master 結算章節 / billing service |
 | INV-billing-004? | 對帳對照表借貸/應收應付平衡 | 「平衡」的具體欄位與容差未明文 | PRD-Billing-Master §對帳策略 |
 | INV-acceptance-002? | 驗收數量 ≤ 訂單數量 | US 04 有「數量不符」異常，但**超收似為允許之異常情境**，故「≤」未必硬成立 → 須釐清是 hard 上界或 soft 告警 | acceptance PRD / business rule |
-| INV-product-002? | SKU 價格非負、稅率於合法區間 | 未見「非負」明文約束 | product PRD / `product-service-fastapi` model |
+| INV-product-002? | SKU 價格非負、稅率於合法區間 | 未見「非負」明文約束 | product PRD / `backend/app/modules/products` model |
 
 ## 維護
 - 每次 schema migration / 報表 / 結算邏輯變更，對照本檔驗至少一條相關 invariant（CLAUDE.md 規則）。
