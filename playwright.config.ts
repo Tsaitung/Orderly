@@ -11,7 +11,7 @@ const baseURL = process.env['PLAYWRIGHT_BASE_URL'] || 'http://localhost:5566'
 const isCI = !!process.env['CI']
 
 export default defineConfig({
-  testDir: './e2e',
+  testDir: './tests/e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
   forbidOnly: isCI,

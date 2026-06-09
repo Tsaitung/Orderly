@@ -38,7 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `scripts/` - 自動化腳本，依用途分目錄：root 只放 load-bearing 入口；`dev/`（一次性開發便利腳本）、`validation/`（設定驗證工具）、`perf/`（效能測試）、`ci/`、`database/`、`iam/`、`cloudbuild/` 等
 - `scripts/database/database_manager.py` - 統一資料庫管理工具（導出、導入、測試資料）
 - `scripts/database/seed_from_real_data.py` - 基於真實資料的完整測試腳本
-- `tests/` - 整合/單元測試（`tests/integration/`、`tests/unit/`、`tests/dev-utils/`）；`e2e/` 為 Playwright（`testDir` 釘死，不可移）
+- `tests/` - 所有測試集中：`tests/unit/`、`tests/integration/`、`tests/dev-utils/`、`tests/e2e/`（Playwright，`testDir: ./tests/e2e`）
 - `docs/` - 文件單一事實來源（見 `docs/INDEX.md`）
 
 ## 當前開發優先順序（2025-12-07）

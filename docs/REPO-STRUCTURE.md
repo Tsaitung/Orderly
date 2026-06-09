@@ -26,8 +26,9 @@
 │   ├── staging/          #   Cloud Run 服務 YAML + env-vars + schema baseline
 │   └── service-manifest.yaml   # CI 服務相依宣告（被 scripts/ci/detect-changes.py 讀）
 ├── scripts/              # 自動化腳本（依用途分目錄，見下方「scripts 規約」）
-├── tests/               # 整合 / 單元測試（unit/、integration/、dev-utils/）
-├── e2e/                 # Playwright E2E —— [釘 testDir './e2e'，不可移]
+├── tests/               # 所有測試集中於此
+│   ├── unit/  integration/  dev-utils/
+│   └── e2e/              #   Playwright E2E（playwright testDir './tests/e2e'）
 ├── docs/               # 文件單一事實來源（入口 docs/INDEX.md）
 ├── data/staging/v1/    # staging 資料快照 —— [.gcloudignore + scripts/database 相對路徑釘死]
 ├── .github/workflows/  # CI/CD（ci.yml, cd.yml, deploy-staging-permanent.yml…）

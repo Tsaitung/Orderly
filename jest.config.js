@@ -8,14 +8,14 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleDirectories: ['node_modules', '<rootDir>/'],
-  // e2e/ holds Playwright specs (@playwright/test); they must NOT be run by Jest.
+  // tests/e2e/ holds Playwright specs (@playwright/test); they must NOT be run by Jest.
   // CI's `jest --ci --shard` matches **/*.spec.ts and would otherwise pick them up
   // and fail (the narrow `make verify` testMatch hid this; CI runs the full suite).
   testPathIgnorePatterns: [
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/backend/',
-    '<rootDir>/e2e/',
+    '<rootDir>/tests/e2e/',
   ],
   collectCoverageFrom: [
     'src/app/**/*.{js,jsx,ts,tsx}',
