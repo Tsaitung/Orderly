@@ -27,18 +27,18 @@
 
 ## 已存在 code 位置
 
-- Auth backend：`backend/app/modules/users`（FastAPI modular monolith）
+- Auth backend：`backend/app/modules/users`（FastAPI modular monolith）；JWT 簽發/claims = `users/api/v1/auth/core.py`（`_build_claims`:32 + `create_access_token`）
 - 共用契約：`shared/types`
-- API Gateway middleware：JWT 驗證 + 上游 header（`x-user-id` / `x-tenant-id` / `x-role` / `x-permissions`）
-- Audit：既有 `audit_logs`（CLAUDE.md §Audit Log 開發指南）
+- Auth 中介層（monolith 實況）：**唯一活的** `AuthMiddleware` = `backend/libs/orderly_fastapi_core/middleware/auth.py`（main.py:128 註冊），`dispatch()` 解 JWT → `request.state.user_id`(=`sub`)/`tenant_id`(=`tenant_id` or `org_id`)/`permissions`。部分下游模組（products/orders/billing）另自讀 `X-Tenant-Id`/`X-User-ID`/`X-Org-Id` header（次要路徑）。**`backend/app/modules/gateway_compat/` 已退役、無 source（git ls-files 空），勿錨**
+- Audit：既有 `audit_logs` model（`audit_log.py`）+ `audit_service.log(user_id=,target_user_id=,organization_id=,metadata=)`（CLAUDE.md §Audit Log 開發指南）
 
 ## 待實作 code 位置（本次規格新增，code 尚未存在）
 
-- `backend/app/modules/users`：impersonation start/stop/current + role-switch endpoints、`act_as` claim 簽發、authz 化身、impersonation audit（待實作）
+- `backend/app/modules/users/api/v1/auth/`：impersonation start/stop/current + role-switch router；`core.py` 簽發帶 `act_as` 的 token（effective claims=target）；authz 化身；impersonation audit（待實作）
 - `shared/types`：impersonation DTO + `act_as` claim 型別（待實作）
-- API Gateway：`act_as` 透傳 + effective-context authorize（待實作）
-- frontend：使用者清單列入口 + 全域橫幅 + 角色切換選單（待實作）
-- Alembic：audit_logs 欄位遷移（若需）（待實作）
+- Auth 中介層：**happy-path 不需改** —— 既有 `AuthMiddleware` 解 act_as token 後 `request.state` 即反映 effective target（自動透傳）。authz 只需斷言 effective-only context（不繼承 actor `is_super_user`）（待實作驗證）
+- frontend：使用者清單列入口 + 全域橫幅 + 角色切換選單 + Playwright E2E 旅程（T3.0）（待實作）
+- Alembic：**預設 N/A** —— audit_logs 既有欄位（user_id/target_user_id/organization_id/event_metadata）已足；僅當 act_as 需 User/AuditLog 專屬持久欄位才遷移（待確認）
 
 ## 已知 runtime / doc drift
 

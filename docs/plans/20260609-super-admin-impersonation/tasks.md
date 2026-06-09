@@ -36,16 +36,16 @@
 - **T2.3** authz 化身（effective identity 契約）
   - 依賴：T2.1、T1.1
   - **effective identity 契約**：act-as token / auth context 必須同時保留 `actor_user_id`（super_admin）與 `effective_user_id`(= `impersonated_user_id`)。**業務授權與 current-user 行為一律用 effective target**（`role`/`permissions`/`organization_id` 皆取目標）；**audit 用 actor + target**；**禁止**從 actor 的 `is_super_user` 套用任何 override（即使 actor 本身是 super_user 也不繼承其權限到 effective context）。
-  - 產出：先讀 `gateway_compat/middleware/` 確認 auth context 傳遞機制，再讓下游 authorize 用 effective context；確保 `sub` 不被誤用成 actor id
-  - 驗收：act-as operator 不能做 operator 不可做的操作（403）；actor 為 super_admin 時 effective context 仍只有目標角色權限（不出現 super_user override）；INV-auth-001 仍成立（查詢帶 organization_id）
+  - 產出：**happy-path 不需新中介層** —— 既有 `AuthMiddleware`（`backend/libs/orderly_fastapi_core/middleware/auth.py:128`）`dispatch()` 已從 JWT claims 推導 `request.state.user_id`(=`sub`)/`tenant_id`/`permissions`。在 `core.py` 簽 act_as token 時令 `sub`/`tenant_id`/`permissions`/`role` = target → effective context 自動透傳。本 task 只需斷言：(a) `sub` 帶 target（非 actor id）；(b) `act_as.actor_id` 僅供 audit、不參與授權；(c) 不從 actor `is_super_user` 套 override
+  - 驗收：act-as operator 不能做 operator 不可做的操作（403）；actor 為 super_admin 時 effective context 仍只有目標角色權限（不出現 super_user override）；INV-auth-001 仍成立（查詢帶 organization_id）；`request.state.user_id` == target_user_id（不等於 actor）
 - **T2.4** 跨租戶隔離（INV-auth-003）
   - 依賴：T2.3
   - 產出：effective tenant = 目標租戶；不可讀其他租戶
   - 驗收：T0.2 轉綠
 - **T2.5** impersonation audit（不可關閉，複用既有 `AuditLog`）
   - 依賴：T2.3
-  - 產出：經既有 `audit_service.py` 寫 `AuditLog`，填 `user_id`(actor) + `target_user_id`(impersonated) + `organization_id`(tenant) + `event_metadata`(act_as session)；start/stop 入審計
-  - 驗收：審計案例轉綠；上述欄位非空（依 CLAUDE.md audit 規範）；複用既有欄位、不新增 schema
+  - 產出：呼叫既有 `audit_service.log(...)` 的 **keyword 簽名**（audit_service.py:42-106 已驗證，直接映射 `AuditLog` 欄位，不抄 `super_user_service.py` 的 dict-positional form）：`await audit_service.log(user_id=actor_id, target_user_id=impersonated_id, organization_id=tenant_id, event_type="impersonation_*", metadata={...act_as session...})`；start/stop 入審計
+  - 驗收：審計案例轉綠；`AuditLog.user_id`/`target_user_id`/`organization_id`/`event_metadata` 非空（依 CLAUDE.md audit 規範）；複用既有欄位、不新增 schema（audit_service.log 已支援全部 kwarg）
 - **T2.6** role-switch（view-as）endpoint
   - 依賴：T1.1
   - 產出：`POST /auth/role-switch`；介面預覽角色，不授特定租戶寫入權
@@ -57,6 +57,10 @@
 
 ## Group 3 — Frontend
 
+- **T3.0** impersonation 前端旅程 Playwright E2E（RED first，runtime validation）
+  - 依賴：T2.1（後端 start/stop 可用）
+  - 產出：`tests/e2e/` 新增 impersonation 旅程 spec（repo `testDir: ./tests/e2e`）；**先紅**，禁 `test.skip`/`test.fixme`
+  - 驗收：單一 critical 旅程 runtime 綠 —— super_admin 從使用者清單發起模擬 → 全域 banner 顯示「正在以 {帳號} 身分操作」→ 點一鍵退出 → 還原超管視角 **且** 前端持有的舊 act-as token 對後端呼叫回 401/403。理由：US-AUTH-023/024 為 user-facing UI 旅程，純後端 `tests/integration` 不證明 banner/退出真的能跑（runtime-validation guard）
 - **T3.1** 使用者清單「切換到此帳號」入口（super_admin only）
   - 依賴：T2.1
   - 產出：US-AUTH-009 清單列動作；非 super_admin 不顯示
@@ -74,8 +78,8 @@
 
 - **T4.1** 全 Test Plan 轉整合測試並通過
   - 依賴：T2.*、T3.*
-  - 產出：docs/4-Test/smoke-tests.md impersonation section → `tests/integration` 全綠
-  - 驗收：act-as 約束 / 跨租戶隔離 / 雙 context audit / TTL / 入口 各至少一條通過
+  - 產出：docs/4-Test/smoke-tests.md impersonation section → `tests/integration` 全綠 + T3.0 `tests/e2e` 旅程綠
+  - 驗收：act-as 約束 / 跨租戶隔離 / 雙 context audit / TTL / 入口 各至少一條 `tests/integration` 通過；**且** T3.0 Playwright 前端旅程 runtime 綠（banner + 退出 + 舊 token 401/403）
 - **T4.2** OpenAPI 同步
   - 依賴：T2.*
   - 產出：impersonation endpoints 由實作同步至 `docs/0-Design/api-specification.yaml`（planned → implemented）
