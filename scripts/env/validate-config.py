@@ -271,8 +271,8 @@ class ConfigValidator:
         """驗證 Docker Compose 配置"""
         compose_files = [
             'compose.base.yml',
-            'compose.dev.yml', 
-            'compose.services.yml',
+            'compose.dev.yml',
+            'compose.monolith.yml',
             'compose.staging.yml',
             'compose.prod.yml'
         ]
