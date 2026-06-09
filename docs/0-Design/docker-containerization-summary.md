@@ -31,7 +31,6 @@ docker compose -f compose.base.yml -f compose.dev.yml --profile admin up -d
 - `compose.monolith.yml`：**本機後端的真實來源** —— monolith + Postgres + Redis，self-contained；`.claude/restart.yaml` 與 `npm run dev:backend` 用它。
 - `compose.base.yml`：Postgres/Redis 服務 + 共用環境變數模板 + volume/network 定義。
 - `compose.dev.yml`：dev 覆寫（在 base 上曝露 DB host 端口 + 可選 admin tools）。
-- `compose.staging.yml` / `compose.prod.yml`：環境覆寫（image + ENVIRONMENT），供以容器模擬對應環境。
 
 ## Dockerfile 來源
 

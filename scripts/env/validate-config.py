@@ -272,9 +272,7 @@ class ConfigValidator:
         compose_files = [
             'compose.base.yml',
             'compose.dev.yml',
-            'compose.monolith.yml',
-            'compose.staging.yml',
-            'compose.prod.yml'
+            'compose.monolith.yml'
         ]
         
         missing_files = []
