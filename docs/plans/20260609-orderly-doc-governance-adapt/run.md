@@ -28,7 +28,7 @@ A naive copy would install a skill that tells every future agent to `grep docs/p
 3. Re-home `business-invariants.md` to `docs/0-Design/business-invariants.md`; create net-new homes `docs/governance/`, `docs/references/`, `docs/incidents/`, `docs/adr/`, `docs/plans/governance-ledger.md`.
 4. Hand-merge new doc entries into `main`'s existing `docs/INDEX.md`.
 5. Register all 3 hooks in `.claude/settings.json` (Stop / PreToolUse / PostToolUse) and verify each fires. *(Decision Queue D-1 resolved: register — user confirmed 2026-06-09.)*
-6. Verify: SKILL.md frontmatter valid; all `references/` paths resolve on `main`; evals present; grep oracle (Class A + Class C named targets) returns 0 dangling refs.
+6. Verify: SKILL.md frontmatter valid; all `references/` paths resolve on `main`; evals present; four-part grep oracle (Class A docs taxonomy + Class B curated-doc filenames + Class C `-fastapi` + ADR-0001 assertion) returns 0 dangling refs.
 7. Open a PR to `main` (await user go-ahead before push/merge).
 
 ## Out of Scope
