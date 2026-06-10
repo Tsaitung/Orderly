@@ -59,7 +59,6 @@
     "bullmq": "^5.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
-    "concurrently": "^9.2.1",
     "critters": "^0.0.23",
     "crypto-js": "^4.2.0",
     "date-fns": "^3.3.0",
@@ -114,6 +113,7 @@
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.0",
+    "concurrently": "^9.2.1",
     "ts-node": "^10.9.2",
     "tsx": "^4.7.0",
     "typescript": "^5.9.2"

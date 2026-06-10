@@ -35,6 +35,9 @@ backend/.venv/
 
 # /restart runtime state (machine-written)
 .claude/restart.state.json
+# session workflow artifacts (wf-*.js) and governance evidence (local hook only)
+.claude/wf-*.js
+.claude/.gov-harvest-evidence.json
 
 # IDE
 .vscode/

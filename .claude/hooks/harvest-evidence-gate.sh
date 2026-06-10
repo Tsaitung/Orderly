@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # PreToolUse hook for orderly-doc-governance harvest mode.
 #
-# Blocks Bash `rm -rf docs/plans/{date}-*/` and Edit on `docs/plans/governance-ledger.md`
+# Blocks Bash `rm -rf docs/plans/{date}-*/` and Edit on `docs/governance/governance-ledger.md`
 # unless a fresh, sufficient §0 verification evidence file exists at
 # ${CWD}/.claude/.gov-harvest-evidence.json.
 #
@@ -69,7 +69,7 @@ fi
 
 if [ "$TOOL_NAME" = "Edit" ]; then
   FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // ""')
-  if [[ "$FILE_PATH" == *"docs/plans/governance-ledger.md" ]]; then
+  if [[ "$FILE_PATH" == *"docs/governance/governance-ledger.md" ]]; then
     is_harvest_disposition=true
   fi
 fi

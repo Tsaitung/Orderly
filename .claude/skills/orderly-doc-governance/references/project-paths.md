@@ -67,22 +67,25 @@ Orderly-specific 路徑、命名規則、scope 定義。
 - `promoted-durable-knowledge`
   - `docs/references/` — active promoted knowledge（on demand；Orderly 尚未建立）
   - `docs/references/history/` — archived residue from completed governance runs（historical-only）
-  - `docs/plans/runbooks/`（Orderly 目前 `docs/3-Development-Plan/Infra-Runbook.md` 在 dev-plan 區；新 runbook 進 `docs/plans/runbooks/`）
-  - `docs/plans/governance-ledger.md`
+  - `docs/governance/runbooks/`（Orderly 目前 `docs/3-Development-Plan/Infra-Runbook.md` 在 dev-plan 區；新 runbook 進 `docs/governance/runbooks/`）
+  - `docs/governance/governance-ledger.md`
 - `curated-durable-doc`（Orderly-specific）
   - `docs/3-Development-Plan/` 的開發計畫文件（`CI-CD-ARCHITECTURE.md`、`DEPLOYMENT-*.md`、`DEVELOPMENT-PLAN.md`、`ci-secrets.md`、`PERFORMANCE-OPTIMIZATION-SUMMARY.md`、`PRD-US-GAP-REPORT.md`、`Infra-Runbook.md` 等）
-  - 這些是**長存 curated 文件**，住在 `docs/3-Development-Plan/`，不是 ephemeral governance run；治理 run-state 住在 `docs/plans/` 的 dated `{run-id}/` 子目錄 + `health-check-*.md` + `governance-ledger.md`
+  - 這些是**長存 curated 文件**，住在 `docs/3-Development-Plan/`，不是 ephemeral governance run；治理的 **transient** run-state 住在 `docs/plans/`（dated `{run-id}/` 子目錄 + `health-check-*.md` + `README.md`），治理的 **durable** 產物（`governance-ledger.md`、`runbooks/`）住在 `docs/governance/`
 - `transient-work-artifact`
   - `docs/plans/{date}-*/compact/*.md`
   - `docs/plans/{date}-*/*packet*.md`
   - scoped review / rewrite artifacts under `docs/plans/{date}-*/`
   - raw audit / verification artifacts before promotion
 
-> **重要分界**：HelloGlow `docs/plans/` 幾乎全是 ephemeral run packet。Orderly 把**長存的開發
-> 計畫 curated 文件**放在 `docs/3-Development-Plan/`，`docs/plans/` 只放 governance run-state
-> （dated `{run-id}/` 子目錄、`governance-ledger.md`、`runbooks/`、`health-check-*.md`、`README.md`）。
-> Content Residency / harvest 規則只針對 `docs/plans/` 的 dated `{run-id}/` 子目錄與治理產物，
-> **不得**把 `docs/3-Development-Plan/` 的 curated 開發文件當成 plan packet 來瘦身或刪除。
+> **重要分界（2026-06-09 user-directed convention）**：`docs/plans/` **整個是 transitional**，**不得**存放任何永久 canonical home。
+> - `docs/plans/` 只放 **transient** governance run-state：dated `{run-id}/` 子目錄、`health-check-*.md`、`README.md`（navigation）。
+> - 治理的 **durable** 產物移出 `docs/plans/`：`governance-ledger.md`（closeout index）、`runbooks/`（operator-procedure）住在 **`docs/governance/`**。
+> - **長存開發計畫 curated 文件**住在 `docs/3-Development-Plan/`（不是 ephemeral governance run）。
+>
+> Content Residency / harvest 規則只針對 `docs/plans/` 的 dated `{run-id}/` 子目錄（transient packet）。
+> **不得**把 `docs/governance/`（durable 治理產物）或 `docs/3-Development-Plan/`（curated 開發文件）當成 plan packet 來瘦身或刪除。
+> Rationale：plan packet 退役時 durable knowledge 升格到 canonical home；canonical home 本身不能也住在會被退役的 `docs/plans/` 內（否則升格目的地隨來源一起被刪）。
 
 ## Knowledge Ownership Types
 
@@ -102,8 +105,8 @@ Orderly-specific 路徑、命名規則、scope 定義。
 
 - `canonical-business-truth` → `docs/2-PRD/`, `docs/adr/`, `docs/references/`
 - `technical-contract-truth` → `docs/0-Design/`, `docs/0-Design/api-specification.yaml`
-- `reusable-operational-rule` → `docs/plans/runbooks/`, skill `references/`
-- `historical-evidence` → `docs/plans/governance-ledger.md`（closeout index）或 `docs/references/history/`（archived residue files）
+- `reusable-operational-rule` → `docs/governance/runbooks/`, skill `references/`
+- `historical-evidence` → `docs/governance/governance-ledger.md`（closeout index）或 `docs/references/history/`（archived residue files）
 
 ### Fine-grained 9-class (Harvest Mode)
 
@@ -114,11 +117,11 @@ Orderly-specific 路徑、命名規則、scope 定義。
 | `naming-canonical` | canonical-business-truth | `docs/references/canonical-vocabulary.md` / `docs/references/doc-governance-vocabulary.yaml`（on demand）|
 | `architectural-decision-frozen` | canonical-business-truth | `docs/adr/ADR-NNN-*.md`（含真正 trade-off 才升格 ADR；外部平台限制不算）|
 | `tech-debt-with-exit-trigger` | reusable-operational-rule | `docs/governance/deprecation-roadmap.md`（on demand）|
-| `operator-procedure` | reusable-operational-rule | `docs/plans/runbooks/*.md` |
+| `operator-procedure` | reusable-operational-rule | `docs/governance/runbooks/*.md` |
 | `incident-postmortem` | historical-evidence | `docs/incidents/{YYYY-MM-DD}-{slug}.md`（on demand）|
 | `business-requirement` | canonical-business-truth | US/PRD/Specs（走 `us-edit` handoff，不直接寫）|
 | `wire-contract` | technical-contract-truth | `backend/app/modules/<svc>/` + `shared/types/` + `docs/0-Design/api-specification.yaml` |
-| `closeout-summary` | historical-evidence | `docs/plans/governance-ledger.md` |
+| `closeout-summary` | historical-evidence | `docs/governance/governance-ledger.md` |
 | `transient-execution-state` | execution-sequencing | DELETE（不 promote）|
 
 > harvest mode 用 9 類做 promotion routing；ledger / inspect-only summary 可用 broader 5 類做 high-level summary。兩層並用不衝突。

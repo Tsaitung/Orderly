@@ -25,7 +25,7 @@ Rules:
 
 ## Governance Ledger Entry
 
-Write into `docs/plans/governance-ledger.md`.
+Write into `docs/governance/governance-ledger.md`.
 
 - Run ID:
 - Closed at:

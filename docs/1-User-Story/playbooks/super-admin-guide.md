@@ -3,7 +3,14 @@
 > **版本**: v1.0
 > **更新日期**: 2025-12-16
 > **適用對象**: 平台管理員、系統超管、開發團隊
-> **狀態**: 正式版
+> **狀態**: ⚠️ STALE / 待修訂（部分內容已過期）
+
+> **⚠️ 過期警告（2026-06-09）**：本指南下方多段描述**已過期**，與現行 canonical 真相不一致，**請勿照做**，待修訂：
+> - 「資料庫結構」「技術實作」段引用 **Prisma schema / `prisma.user`** —— 後端已是 SQLAlchemy + Alembic 模組化單體（見 ADR-0003），無 Prisma。
+> - 「API 端點」「使用範例」段以 **Email + 密碼** 建立超管（`POST /auth/super-admin`、`/auth/register`）—— 與 **US-AUTH-016（2026-06-08 改 Line/Google、移除 Email+密碼）** 矛盾，平台帳號不再有密碼。
+> - 本指南僅描述 **`super_user` 緊急 break-glass**（24h 過期、附加標記）；**不涵蓋**新的「**帳號模擬登入 / act-as**」能力（化身目標角色、進入任意租戶）。後者 canonical：US-AUTH-023/024、PRD-Auth Section 2.5、`docs/0-Design/technical-architecture-auth.md` §10.3、[ADR-0005](../../adr/ADR-0005-auth-super-admin-impersonation.md)、INV-auth-003。
+>
+> Canonical 真相以 US/PRD/Specs/ADR 為準；本 playbook 修訂前僅作歷史與緊急流程參考。
 
 ---
 

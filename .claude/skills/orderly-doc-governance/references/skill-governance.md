@@ -30,8 +30,8 @@ In scope for the skill package itself:
 
 - `.claude/skills/orderly-doc-governance/`
 - `docs/references/doc-governance-vocabulary.yaml`
-- `docs/plans/governance-ledger.md`
-- `docs/plans/runbooks/`
+- `docs/governance/governance-ledger.md`
+- `docs/governance/runbooks/`
 
 Out of scope for the skill package itself:
 
@@ -54,12 +54,12 @@ The skill uses four layers of state:
 - `docs/plans/health-check-<YYYY-MM-DD>.md`（health-check mode 完成摘要）
 
 3. Closed-run durable summary
-- `docs/plans/governance-ledger.md`
+- `docs/governance/governance-ledger.md`
 
 4. Stable governance rules
 - this file
 - other skill `references/*.md`
-- `docs/plans/runbooks/*.md`
+- `docs/governance/runbooks/*.md`
 
 ### Frontmatter State Mirror
 
@@ -122,4 +122,4 @@ The migration is complete only after:
 
 - the skill no longer references those files
 - active run-local state is written only under `docs/plans/<run-id>/`
-- closed-run summaries are written to `docs/plans/governance-ledger.md`
+- closed-run summaries are written to `docs/governance/governance-ledger.md`
